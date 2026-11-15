@@ -1,0 +1,57 @@
+{
+  "generated": "2026-11-04T18:48:37",
+  "godot": "D:\\Godot\\Godot_v4.7.2-stable_win64_console.exe",
+  "watchdog_seconds": 12.0,
+  "cases": [
+    {
+      "case": "mouse_headless",
+      "mode": "mouse",
+      "gui": false,
+      "command": [
+        "D:\\Godot\\Godot_v4.7.2-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "D:\\godot game\\星核旅人\\基础场景原型",
+        "res://tests/menu_quit_subprocess.tscn",
+        "--",
+        "--mode=mouse",
+        "--ready=D:\\godot game\\星核旅人\\基础场景原型\\tests\\logs\\menu_quit_ready_mouse_headless_20261104_184837.txt",
+        "--failure=D:\\godot game\\星核旅人\\基础场景原型\\tests\\logs\\menu_quit_failure_mouse_headless_20261104_184837.txt"
+      ],
+      "ready_file": "D:\\godot game\\星核旅人\\基础场景原型\\tests\\logs\\menu_quit_ready_mouse_headless_20261104_184837.txt",
+      "failure_file": "D:\\godot game\\星核旅人\\基础场景原型\\tests\\logs\\menu_quit_failure_mouse_headless_20261104_184837.txt",
+      "log": "D:\\godot game\\星核旅人\\基础场景原型\\tests\\logs\\menu_quit_subprocess_mouse_headless.log",
+      "pass": true,
+      "pid": 44136,
+      "returncode": 0,
+      "ready_text": "READY mode=mouse pid=61944 phase=menu quit_enabled=true focus=StartButton:<Button#60297316168> quit_rect=[P: (284.0, 212.0), S: (72.0, 20.0)]",
+      "failure_text": "",
+      "error": ""
+    },
+    {
+      "case": "keyboard_gui",
+      "mode": "keyboard",
+      "gui": true,
+      "command": [
+        "D:\\Godot\\Godot_v4.7.2-stable_win64_console.exe",
+        "--path",
+        "D:\\godot game\\星核旅人\\基础场景原型",
+        "res://tests/menu_quit_subprocess.tscn",
+        "--",
+        "--mode=keyboard",
+        "--ready=D:\\godot game\\星核旅人\\基础场景原型\\tests\\logs\\menu_quit_ready_keyboard_gui_20261104_184837.txt",
+        "--failure=D:\\godot game\\星核旅人\\基础场景原型\\tests\\logs\\menu_quit_failure_keyboard_gui_20261104_184837.txt"
+      ],
+      "ready_file": "D:\\godot game\\星核旅人\\基础场景原型\\tests\\logs\\menu_quit_ready_keyboard_gui_20261104_184837.txt",
+      "failure_file": "D:\\godot game\\星核旅人\\基础场景原型\\tests\\logs\\menu_quit_failure_keyboard_gui_20261104_184837.txt",
+      "log": "D:\\godot game\\星核旅人\\基础场景原型\\tests\\logs\\menu_quit_subprocess_keyboard_gui.log",
+      "pass": true,
+      "pid": 62772,
+      "returncode": 0,
+      "ready_text": "READY mode=keyboard pid=55508 phase=menu quit_enabled=true focus=StartButton:<Button#59777222411> quit_rect=[P: (284.0, 212.0), S: (72.0, 20.0)]",
+      "failure_text": "",
+      "error": ""
+    }
+  ],
+  "pass": true
+}

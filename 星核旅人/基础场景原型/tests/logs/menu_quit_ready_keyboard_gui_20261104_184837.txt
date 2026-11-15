@@ -1,0 +1,1 @@
+READY mode=keyboard pid=55508 phase=menu quit_enabled=true focus=StartButton:<Button#59777222411> quit_rect=[P: (284.0, 212.0), S: (72.0, 20.0)]

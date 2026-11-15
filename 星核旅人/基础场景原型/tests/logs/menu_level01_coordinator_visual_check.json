@@ -1,0 +1,13 @@
+{
+  "ui_base_equals_original_v1_overlay": true,
+  "exact_nearest_2x_captures": {
+    "initial": true,
+    "settings": true,
+    "camera_mid": true,
+    "camera_settled_before_entry": true,
+    "playable": true
+  },
+  "opaque_ui_pixels": 2820,
+  "opaque_ui_wrong_pixels": 0,
+  "scope": "Independent pixel checks on supplied actual engine captures, not a fresh GUI playback test."
+}

@@ -1,0 +1,26 @@
+Character asset notice
+======================
+
+The five PNGs in this folder were copied unchanged from:
+
+    D:\godot game\星核旅人\individual_sheets\
+    male_hero-idle.png
+    male_hero-walk.png
+    male_hero-run.png
+    male_hero-jump.png
+    male_hero-fall.png
+    male_hero-fall_loop.png
+
+The provided material does not include a character license or an author
+statement. The copy is for this internal course prototype only. Do not publish
+or redistribute these character assets until the project owner supplies
+documented permission covering the intended release.
+
+The original sheets are 128x128 per frame with transparent padding. The
+prototype does not treat the 128 px canvas as the character's visible size:
+the visible body is roughly 33-38 px high and the collision body is 12x30.
+
+The walk sheet is used for the default 10-frame walk state. Run is triggered
+only by left Shift or a same-direction double tap, not by a separate character
+file. No character-design sheet, combo sheet, zip, or author preview was copied
+into the project.

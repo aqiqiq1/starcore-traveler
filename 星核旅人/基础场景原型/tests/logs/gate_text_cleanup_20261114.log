@@ -1,0 +1,53 @@
+PASS L2 world label StartBayLabel removed
+PASS L2 world label RelayBayLabel removed
+PASS L2 world label LinkedBayLabel removed
+PASS L2 world label FinalBayLabel removed
+PASS L2 world label CorridorLabel removed
+PASS L2 world label ExitStatus removed
+PASS L2 HUD exists
+PASS compact header retained
+PASS short current objective remains
+PASS short core state remains
+PASS long record/field readout is not visible
+PASS no idle central prompt on normal spawn
+PASS no stored permanent recovery text
+PASS no permanent bottom recovery label
+PASS completion primary button retained
+PASS real E release prompt appears in bay range
+PASS idle walk has no repeating target prompt
+PASS one L2 GuideEcho remains
+PASS GuideEcho F prompt remains
+PASS real F opens GuideEcho
+PASS four teaching pages retained
+PASS failure recovery still gives a short toast
+PASS recovery does not restore a permanent bottom line
+PASS pause controls still list R restart
+PASS real Esc opens pause
+PASS L2 default shared FX does not open an unlocked gate
+PASS closed L2 keeps one linked core
+PASS closed L2 FX hidden
+PASS L2 real lock/record opens gate
+PASS L2 open gate shows shared FX
+PASS open L2 HUD stays short
+PASS L2 E takes core and closes gate
+PASS L2 E hides shared FX
+PASS L2 real R closes gate
+PASS L2 real R hides shared FX
+PASS shared FX constants remain 8/8
+PASS L1 default LevelExit enables the shared FX
+PASS L1 default LevelExit creates the FX sprite
+PASS L1 default sheet is v2 608x100
+PASS L1 opening/intro keeps gate FX hidden
+PASS L1 intro finished
+PASS L1 normal gameplay shows gate FX
+PASS L1 real Esc opens pause
+PASS L1 pause freezes gate FX
+PASS L1 resume advances gate FX
+PASS L1 R starts intro with gate FX closed
+PASS L1 R intro handoff restores gate FX
+PASS L1 reachable normal exit has visible FX
+PASS L1 real exit completes
+PASS L1 completed texture preserved
+PASS L1 completion hides gate FX
+PASS L1 title menu blocks gameplay
+PASS L1 menu keeps gate FX hidden

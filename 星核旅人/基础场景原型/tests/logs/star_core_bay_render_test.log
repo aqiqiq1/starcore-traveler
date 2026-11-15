@@ -1,0 +1,6 @@
+Star Core Traveler - GUI render check for star-core bay preview
+Godot 4.7.2-stable (official)  display=Windows
+normal: white=1024/500 base_pixels=2080 base_mean=0.712 background_mean=0.057 ok=true
+base_hidden_control: white=0/500 base_pixels=2080 base_mean=0.136 background_mean=0.057 ok=false
+negative control expected failure: OK
+regions: base=[P: (410, 210), S: (104, 20)] background=[P: (8, 54), S: (6, 6)]

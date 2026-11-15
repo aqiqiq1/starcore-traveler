@@ -1,0 +1,33 @@
+HighStep z-order focused check - 2026-11-12
+Godot: 4.7.2-stable (official)
+One GUI load, two render states. Only the existing 03 screenshot is re-captured.
+This does not replay test_art_guide_pass (147-check pre-fix run).
+
+--- attributes ---
+PASS  HighStep position/size unchanged (56x14, bottom 288)
+PASS  both HighStep V3 slices exist
+PASS  only HighStep visual/decor are raised to z=6 (got 6 / 6)
+PASS  HighStep slices keep local position (0,0)
+PASS  HighStep slices keep Nearest filtering
+PASS  HighStep slices keep scale 1 / white modulate
+PASS  player stays at z=5
+PASS  player scale remains 1
+PASS  player collision remains 12x30
+PASS  main bridge and RightLedge slices keep their z-order
+PASS  guard root z-order unchanged (z=3)
+
+--- under HighStep render ---
+PASS  under-step player stands on ground y=320 (got 320.00)
+CAPTURED res://screenshots/art_guide_pass_03_level02_under_highstep.png size=(640, 360)
+RE-CAPTURED only res://screenshots/art_guide_pass_03_level02_under_highstep.png
+PASS  front stone occludes hair at y284..287 (changed pixels=160)
+PASS  no extra facade occludes the player below y288 (changed pixels=0)
+
+--- on-top HighStep render ---
+PASS  on-top player feet stay at step top y=274 (got 274.00)
+PASS  on-top player remains grounded on the step
+PASS  platform front edge does not cover the body above y=274 (changed pixels=0)
+foot/sole overlap pixels at y274..275: 80 (expected small; body above y274 unchanged)
+
+HIGHSTEP_Z_SUMMARY pass=17 fail=0
+RESULT: PASS

@@ -1,0 +1,29 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/star_core_bay_visual.gd" id="1_bay"]
+[ext_resource type="Texture2D" path="res://assets/star_core_bay/star_core_bay_base.png" id="2_base"]
+[ext_resource type="Texture2D" path="res://assets/star_core_bay/star_core_bay_glass.png" id="3_glass"]
+[ext_resource type="PackedScene" path="res://scenes/star_core_visual.tscn" id="4_core"]
+[ext_resource type="Script" path="res://scripts/star_core_bay_lock_mark.gd" id="5_lock"]
+
+[node name="StarCoreBayVisual" type="Node2D"]
+texture_filter = 1
+script = ExtResource("1_bay")
+
+[node name="Base" type="Sprite2D" parent="."]
+z_index = 1
+texture_filter = 1
+texture = ExtResource("2_base")
+
+[node name="LockMark" type="Node2D" parent="."]
+z_index = 1
+script = ExtResource("5_lock")
+
+[node name="Core" parent="." instance=ExtResource("4_core")]
+z_index = 2
+show_state_badge = false
+
+[node name="Glass" type="Sprite2D" parent="."]
+z_index = 3
+texture_filter = 1
+texture = ExtResource("3_glass")

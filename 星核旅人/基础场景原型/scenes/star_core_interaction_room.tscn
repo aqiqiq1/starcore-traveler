@@ -1,0 +1,86 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/star_core_interaction_room.gd" id="1_room"]
+[ext_resource type="Script" path="res://scripts/terrain_strip.gd" id="2_strip"]
+[ext_resource type="Texture2D" path="res://assets/map/ruin_platform_tiles.png" id="3_atlas"]
+[ext_resource type="PackedScene" path="res://scenes/star_core_bay_interactable.tscn" id="4_bay"]
+[ext_resource type="PackedScene" path="res://scenes/star_core_carrier.tscn" id="5_core"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_floor"]
+size = Vector2(640, 40)
+
+[node name="StarCoreInteractionRoom" type="Node2D"]
+process_mode = 1
+script = ExtResource("1_room")
+field_range = 100.0
+inner_radius = 40.0
+full_radius = 64.0
+outer_fade = 18.0
+
+[node name="TerrainTop" type="Node2D" parent="."]
+z_index = -1
+position = Vector2(0, 320)
+script = ExtResource("2_strip")
+texture = ExtResource("3_atlas")
+region = Rect2(16, 0, 16, 16)
+strip_size = Vector2(640, 16)
+
+[node name="TerrainFill" type="Node2D" parent="."]
+z_index = -1
+position = Vector2(0, 336)
+script = ExtResource("2_strip")
+texture = ExtResource("3_atlas")
+region = Rect2(16, 16, 16, 16)
+strip_size = Vector2(640, 24)
+
+[node name="TerrainBody" type="StaticBody2D" parent="."]
+position = Vector2(320, 340)
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TerrainBody"]
+shape = SubResource("RectangleShape2D_floor")
+
+[node name="Bays" type="Node2D" parent="."]
+
+[node name="StartBay" parent="Bays" instance=ExtResource("4_bay")]
+position = Vector2(120, 304)
+bay_name = "START"
+start_locked = true
+
+[node name="TargetBay" parent="Bays" instance=ExtResource("4_bay")]
+position = Vector2(520, 304)
+bay_name = "TARGET"
+start_locked = false
+
+[node name="Core" parent="." instance=ExtResource("5_core")]
+position = Vector2(120, 312)
+
+[node name="PlayerSpawn" type="Marker2D" parent="."]
+position = Vector2(48, 320)
+
+[node name="StartBayLabel" type="Label" parent="."]
+offset_left = 72.0
+offset_top = 244.0
+offset_right = 168.0
+offset_bottom = 260.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.66, 0.78, 0.76, 1)
+theme_override_colors/font_outline_color = Color(0.01, 0.02, 0.025, 0.95)
+theme_override_constants/outline_size = 1
+theme_override_font_sizes/font_size = 8
+text = "START BAY"
+horizontal_alignment = 1
+
+[node name="TargetBayLabel" type="Label" parent="."]
+offset_left = 472.0
+offset_top = 244.0
+offset_right = 568.0
+offset_bottom = 260.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.66, 0.78, 0.76, 1)
+theme_override_colors/font_outline_color = Color(0.01, 0.02, 0.025, 0.95)
+theme_override_constants/outline_size = 1
+theme_override_font_sizes/font_size = 8
+text = "TARGET BAY"
+horizontal_alignment = 1

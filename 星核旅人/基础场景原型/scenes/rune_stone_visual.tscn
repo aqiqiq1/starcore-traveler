@@ -1,0 +1,19 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/rune_stone_visual.gd" id="1_rune_stone"]
+[ext_resource type="Texture2D" path="res://assets/rune_stone/rune_stone_sleep.png" id="2_sleep"]
+[ext_resource type="Texture2D" path="res://assets/rune_stone/rune_stone_gold.png" id="3_gold"]
+[ext_resource type="Texture2D" path="res://assets/rune_stone/rune_stone_cyan.png" id="4_cyan"]
+
+[node name="RuneStoneVisual" type="Node2D"]
+texture_filter = 1
+script = ExtResource("1_rune_stone")
+
+[node name="Base" type="Sprite2D" parent="."]
+texture_filter = 1
+texture = ExtResource("2_sleep")
+
+[node name="Accent" type="Sprite2D" parent="."]
+z_index = 1
+texture_filter = 1
+texture = ExtResource("3_gold")

@@ -1,0 +1,358 @@
+Art guide pass asset staging - 2026-11-12
+Project: D:\godot game\星核旅人\基础场景原型
+== PNG contract checks (backup) ==
+PASS  assets/map/ruin_platform_tiles.png exists
+PASS  assets/art_pass_20261112/ruin_platform_tiles_warmgrey.png exists
+PASS  derived SHA matches manifest: assets/art_pass_20261112/ruin_platform_tiles_warmgrey.png
+PASS  pre-replacement runtime SHA matches old source manifest: assets/map/ruin_platform_tiles.png
+PASS  runtime size (192, 32) == (192, 32): ruin_platform_tiles.png
+PASS  runtime mode RGBA (got RGBA): ruin_platform_tiles.png
+PASS  runtime has alpha channel: ruin_platform_tiles.png
+PASS  derived size (192, 32) == (192, 32): ruin_platform_tiles_warmgrey.png
+PASS  derived mode RGBA (got RGBA): ruin_platform_tiles_warmgrey.png
+PASS  derived has alpha channel: ruin_platform_tiles_warmgrey.png
+PASS  assets/level02_platform_v3/layer_platform_visual_640.png exists
+PASS  assets/art_pass_20261112/level02_platform_visual_highstep_trim_640.png exists
+PASS  derived SHA matches manifest: assets/art_pass_20261112/level02_platform_visual_highstep_trim_640.png
+PASS  pre-replacement runtime SHA matches old source manifest: assets/level02_platform_v3/layer_platform_visual_640.png
+PASS  runtime size (640, 360) == (640, 360): layer_platform_visual_640.png
+PASS  runtime mode RGBA (got RGBA): layer_platform_visual_640.png
+PASS  runtime has alpha channel: layer_platform_visual_640.png
+PASS  derived size (640, 360) == (640, 360): level02_platform_visual_highstep_trim_640.png
+PASS  derived mode RGBA (got RGBA): level02_platform_visual_highstep_trim_640.png
+PASS  derived has alpha channel: level02_platform_visual_highstep_trim_640.png
+PASS  assets/level02_platform_v3/layer_platform_decor_640.png exists
+PASS  assets/art_pass_20261112/level02_platform_decor_seams_640.png exists
+PASS  derived SHA matches manifest: assets/art_pass_20261112/level02_platform_decor_seams_640.png
+PASS  pre-replacement runtime SHA matches old source manifest: assets/level02_platform_v3/layer_platform_decor_640.png
+PASS  runtime size (640, 360) == (640, 360): layer_platform_decor_640.png
+PASS  runtime mode RGBA (got RGBA): layer_platform_decor_640.png
+PASS  runtime has alpha channel: layer_platform_decor_640.png
+PASS  derived size (640, 360) == (640, 360): level02_platform_decor_seams_640.png
+PASS  derived mode RGBA (got RGBA): level02_platform_decor_seams_640.png
+PASS  derived has alpha channel: level02_platform_decor_seams_640.png
+PASS  atlas alpha is byte-identical between old runtime and warm-grey derived
+PASS  atlas remains 192x32 = 12 x 2 tiles of 16 px
+PASS  atlas grid is integral 16 px
+PASS  left HighStep visual alpha is 0 for y>=288 under x152..207
+PASS  left HighStep still has visible pixels at y287 (collision bottom 288)
+PASS  main bridge/right ledge visual pixels are unchanged outside the HighStep trim
+PASS  neutral short groove visible at seam centre x=260 (marked=13)
+PASS  neutral short groove visible at seam centre x=284 (marked=13)
+PASS  neutral short groove visible at seam centre x=324 (marked=13)
+PASS  neutral short groove visible at seam centre x=348 (marked=13)
+PASS  neutral short groove visible at seam centre x=372 (marked=13)
+PASS  assets/guide_echo_20261112/guide_echo_idle_4f.png exists
+PASS  guide sheet remains 192x64 (got (192, 64))
+PASS  guide sheet RGBA (got RGBA)
+PASS  guide sheet SHA matches its manifest
+PASS  guide manifest frames are 4 x 48x64
+PASS  guide frame 0 bbox inside 48x64
+PASS  guide frame 0 foot anchor is (24,60)
+PASS  guide frame 1 bbox inside 48x64
+PASS  guide frame 1 foot anchor is (24,60)
+PASS  guide frame 2 bbox inside 48x64
+PASS  guide frame 2 foot anchor is (24,60)
+PASS  guide frame 3 bbox inside 48x64
+PASS  guide frame 3 foot anchor is (24,60)
+KEPT existing archive (not overwritten): D:\godot game\星核旅人\项目归档\美术优化前运行资源_20261112.zip
+== Backup ZIP checks ==
+PASS  backup ZIP exists: D:\godot game\星核旅人\项目归档\美术优化前运行资源_20261112.zip
+PASS  ZIP keeps relative path: assets/map/ruin_platform_tiles.png
+PASS  ZIP entry hash matches pre-replacement runtime: assets/map/ruin_platform_tiles.png
+PASS  ZIP keeps relative path: assets/level02_platform_v3/layer_platform_visual_640.png
+PASS  ZIP entry hash matches pre-replacement runtime: assets/level02_platform_v3/layer_platform_visual_640.png
+PASS  ZIP keeps relative path: assets/level02_platform_v3/layer_platform_decor_640.png
+PASS  ZIP entry hash matches pre-replacement runtime: assets/level02_platform_v3/layer_platform_decor_640.png
+PASS  ZIP CRC test passes
+
+SUMMARY stage=backup pass=62 fail=0
+RESULT: PASS
+== Runtime replacement checks ==
+== PNG contract checks (verify) ==
+PASS  assets/map/ruin_platform_tiles.png exists
+PASS  assets/art_pass_20261112/ruin_platform_tiles_warmgrey.png exists
+PASS  derived SHA matches manifest: assets/art_pass_20261112/ruin_platform_tiles_warmgrey.png
+PASS  runtime size (192, 32) == (192, 32): ruin_platform_tiles.png
+PASS  runtime mode RGBA (got RGBA): ruin_platform_tiles.png
+PASS  runtime has alpha channel: ruin_platform_tiles.png
+PASS  derived size (192, 32) == (192, 32): ruin_platform_tiles_warmgrey.png
+PASS  derived mode RGBA (got RGBA): ruin_platform_tiles_warmgrey.png
+PASS  derived has alpha channel: ruin_platform_tiles_warmgrey.png
+PASS  assets/level02_platform_v3/layer_platform_visual_640.png exists
+PASS  assets/art_pass_20261112/level02_platform_visual_highstep_trim_640.png exists
+PASS  derived SHA matches manifest: assets/art_pass_20261112/level02_platform_visual_highstep_trim_640.png
+PASS  runtime size (640, 360) == (640, 360): layer_platform_visual_640.png
+PASS  runtime mode RGBA (got RGBA): layer_platform_visual_640.png
+PASS  runtime has alpha channel: layer_platform_visual_640.png
+PASS  derived size (640, 360) == (640, 360): level02_platform_visual_highstep_trim_640.png
+PASS  derived mode RGBA (got RGBA): level02_platform_visual_highstep_trim_640.png
+PASS  derived has alpha channel: level02_platform_visual_highstep_trim_640.png
+PASS  assets/level02_platform_v3/layer_platform_decor_640.png exists
+PASS  assets/art_pass_20261112/level02_platform_decor_seams_640.png exists
+PASS  derived SHA matches manifest: assets/art_pass_20261112/level02_platform_decor_seams_640.png
+PASS  runtime size (640, 360) == (640, 360): layer_platform_decor_640.png
+PASS  runtime mode RGBA (got RGBA): layer_platform_decor_640.png
+PASS  runtime has alpha channel: layer_platform_decor_640.png
+PASS  derived size (640, 360) == (640, 360): level02_platform_decor_seams_640.png
+PASS  derived mode RGBA (got RGBA): level02_platform_decor_seams_640.png
+PASS  derived has alpha channel: level02_platform_decor_seams_640.png
+PASS  atlas alpha is byte-identical between old runtime and warm-grey derived
+PASS  atlas remains 192x32 = 12 x 2 tiles of 16 px
+PASS  atlas grid is integral 16 px
+PASS  left HighStep visual alpha is 0 for y>=288 under x152..207
+PASS  left HighStep still has visible pixels at y287 (collision bottom 288)
+PASS  main bridge/right ledge visual pixels are unchanged outside the HighStep trim
+PASS  neutral short groove visible at seam centre x=260 (marked=13)
+PASS  neutral short groove visible at seam centre x=284 (marked=13)
+PASS  neutral short groove visible at seam centre x=324 (marked=13)
+PASS  neutral short groove visible at seam centre x=348 (marked=13)
+PASS  neutral short groove visible at seam centre x=372 (marked=13)
+PASS  assets/guide_echo_20261112/guide_echo_idle_4f.png exists
+PASS  guide sheet remains 192x64 (got (192, 64))
+PASS  guide sheet RGBA (got RGBA)
+PASS  guide sheet SHA matches its manifest
+PASS  guide manifest frames are 4 x 48x64
+PASS  guide frame 0 bbox inside 48x64
+PASS  guide frame 0 foot anchor is (24,60)
+PASS  guide frame 1 bbox inside 48x64
+PASS  guide frame 1 foot anchor is (24,60)
+PASS  guide frame 2 bbox inside 48x64
+PASS  guide frame 2 foot anchor is (24,60)
+PASS  guide frame 3 bbox inside 48x64
+PASS  guide frame 3 foot anchor is (24,60)
+PASS  runtime PNG is byte-identical to approved derived asset: assets/map/ruin_platform_tiles.png
+PASS  runtime PNG is byte-identical to approved derived asset: assets/level02_platform_v3/layer_platform_visual_640.png
+PASS  runtime PNG is byte-identical to approved derived asset: assets/level02_platform_v3/layer_platform_decor_640.png
+== Backup ZIP checks ==
+PASS  backup ZIP exists: D:\godot game\星核旅人\项目归档\美术优化前运行资源_20261112.zip
+PASS  ZIP keeps relative path: assets/map/ruin_platform_tiles.png
+PASS  ZIP entry hash matches pre-replacement runtime: assets/map/ruin_platform_tiles.png
+PASS  ZIP keeps relative path: assets/level02_platform_v3/layer_platform_visual_640.png
+PASS  ZIP entry hash matches pre-replacement runtime: assets/level02_platform_v3/layer_platform_visual_640.png
+PASS  ZIP keeps relative path: assets/level02_platform_v3/layer_platform_decor_640.png
+PASS  ZIP entry hash matches pre-replacement runtime: assets/level02_platform_v3/layer_platform_decor_640.png
+PASS  ZIP CRC test passes
+PASS  read-only approved source layer exists: D:\godot game\星核旅人\自制素材\第二关平台完整造型预览_V3\layer_platform_visual_640.png
+PASS  approved source layer remains untouched: D:\godot game\星核旅人\自制素材\第二关平台完整造型预览_V3\layer_platform_visual_640.png
+PASS  read-only approved source layer exists: D:\godot game\星核旅人\自制素材\第二关平台完整造型预览_V3\layer_platform_decor_640.png
+PASS  approved source layer remains untouched: D:\godot game\星核旅人\自制素材\第二关平台完整造型预览_V3\layer_platform_decor_640.png
+
+SUMMARY stage=verify pass=66 fail=0
+RESULT: PASS
+== Runtime replacement checks ==
+== PNG contract checks (verify) ==
+PASS  assets/map/ruin_platform_tiles.png exists
+PASS  assets/art_pass_20261112/ruin_platform_tiles_warmgrey.png exists
+PASS  derived SHA matches manifest: assets/art_pass_20261112/ruin_platform_tiles_warmgrey.png
+PASS  runtime size (192, 32) == (192, 32): ruin_platform_tiles.png
+PASS  runtime mode RGBA (got RGBA): ruin_platform_tiles.png
+PASS  runtime has alpha channel: ruin_platform_tiles.png
+PASS  derived size (192, 32) == (192, 32): ruin_platform_tiles_warmgrey.png
+PASS  derived mode RGBA (got RGBA): ruin_platform_tiles_warmgrey.png
+PASS  derived has alpha channel: ruin_platform_tiles_warmgrey.png
+PASS  assets/level02_platform_v3/layer_platform_visual_640.png exists
+PASS  assets/art_pass_20261112/level02_platform_visual_highstep_trim_640.png exists
+PASS  derived SHA matches manifest: assets/art_pass_20261112/level02_platform_visual_highstep_trim_640.png
+PASS  runtime size (640, 360) == (640, 360): layer_platform_visual_640.png
+PASS  runtime mode RGBA (got RGBA): layer_platform_visual_640.png
+PASS  runtime has alpha channel: layer_platform_visual_640.png
+PASS  derived size (640, 360) == (640, 360): level02_platform_visual_highstep_trim_640.png
+PASS  derived mode RGBA (got RGBA): level02_platform_visual_highstep_trim_640.png
+PASS  derived has alpha channel: level02_platform_visual_highstep_trim_640.png
+PASS  assets/level02_platform_v3/layer_platform_decor_640.png exists
+PASS  assets/art_pass_20261112/level02_platform_decor_seams_640.png exists
+PASS  derived SHA matches manifest: assets/art_pass_20261112/level02_platform_decor_seams_640.png
+PASS  runtime size (640, 360) == (640, 360): layer_platform_decor_640.png
+PASS  runtime mode RGBA (got RGBA): layer_platform_decor_640.png
+PASS  runtime has alpha channel: layer_platform_decor_640.png
+PASS  derived size (640, 360) == (640, 360): level02_platform_decor_seams_640.png
+PASS  derived mode RGBA (got RGBA): level02_platform_decor_seams_640.png
+PASS  derived has alpha channel: level02_platform_decor_seams_640.png
+PASS  atlas alpha is byte-identical between old runtime and warm-grey derived
+PASS  atlas remains 192x32 = 12 x 2 tiles of 16 px
+PASS  atlas grid is integral 16 px
+PASS  left HighStep visual alpha is 0 for y>=288 under x152..207
+PASS  left HighStep still has visible pixels at y287 (collision bottom 288)
+PASS  main bridge/right ledge visual pixels are unchanged outside the HighStep trim
+PASS  neutral short groove visible at seam centre x=260 (marked=13)
+PASS  neutral short groove visible at seam centre x=284 (marked=13)
+PASS  neutral short groove visible at seam centre x=324 (marked=13)
+PASS  neutral short groove visible at seam centre x=348 (marked=13)
+PASS  neutral short groove visible at seam centre x=372 (marked=13)
+PASS  assets/guide_echo_20261112/guide_echo_idle_4f.png exists
+PASS  guide sheet remains 192x64 (got (192, 64))
+PASS  guide sheet RGBA (got RGBA)
+PASS  guide sheet SHA matches its manifest
+PASS  guide manifest frames are 4 x 48x64
+PASS  guide frame 0 bbox inside 48x64
+PASS  guide frame 0 foot anchor is (24,60)
+PASS  guide frame 1 bbox inside 48x64
+PASS  guide frame 1 foot anchor is (24,60)
+PASS  guide frame 2 bbox inside 48x64
+PASS  guide frame 2 foot anchor is (24,60)
+PASS  guide frame 3 bbox inside 48x64
+PASS  guide frame 3 foot anchor is (24,60)
+PASS  runtime PNG is byte-identical to approved derived asset: assets/map/ruin_platform_tiles.png
+PASS  runtime PNG is byte-identical to approved derived asset: assets/level02_platform_v3/layer_platform_visual_640.png
+PASS  runtime PNG is byte-identical to approved derived asset: assets/level02_platform_v3/layer_platform_decor_640.png
+== Backup ZIP checks ==
+PASS  backup ZIP exists: D:\godot game\星核旅人\项目归档\美术优化前运行资源_20261112.zip
+PASS  ZIP keeps relative path: assets/map/ruin_platform_tiles.png
+PASS  ZIP entry hash matches pre-replacement runtime: assets/map/ruin_platform_tiles.png
+PASS  ZIP keeps relative path: assets/level02_platform_v3/layer_platform_visual_640.png
+PASS  ZIP entry hash matches pre-replacement runtime: assets/level02_platform_v3/layer_platform_visual_640.png
+PASS  ZIP keeps relative path: assets/level02_platform_v3/layer_platform_decor_640.png
+PASS  ZIP entry hash matches pre-replacement runtime: assets/level02_platform_v3/layer_platform_decor_640.png
+PASS  ZIP CRC test passes
+PASS  read-only approved source layer exists: D:\godot game\星核旅人\自制素材\第二关平台完整造型预览_V3\layer_platform_visual_640.png
+PASS  approved source layer remains untouched: D:\godot game\星核旅人\自制素材\第二关平台完整造型预览_V3\layer_platform_visual_640.png
+PASS  read-only approved source layer exists: D:\godot game\星核旅人\自制素材\第二关平台完整造型预览_V3\layer_platform_decor_640.png
+PASS  approved source layer remains untouched: D:\godot game\星核旅人\自制素材\第二关平台完整造型预览_V3\layer_platform_decor_640.png
+
+SUMMARY stage=verify pass=66 fail=0
+RESULT: PASS
+== Runtime replacement checks ==
+== PNG contract checks (verify) ==
+PASS  assets/map/ruin_platform_tiles.png exists
+PASS  assets/art_pass_20261112/ruin_platform_tiles_warmgrey.png exists
+PASS  derived SHA matches manifest: assets/art_pass_20261112/ruin_platform_tiles_warmgrey.png
+PASS  runtime size (192, 32) == (192, 32): ruin_platform_tiles.png
+PASS  runtime mode RGBA (got RGBA): ruin_platform_tiles.png
+PASS  runtime has alpha channel: ruin_platform_tiles.png
+PASS  derived size (192, 32) == (192, 32): ruin_platform_tiles_warmgrey.png
+PASS  derived mode RGBA (got RGBA): ruin_platform_tiles_warmgrey.png
+PASS  derived has alpha channel: ruin_platform_tiles_warmgrey.png
+PASS  assets/level02_platform_v3/layer_platform_visual_640.png exists
+PASS  assets/art_pass_20261112/level02_platform_visual_highstep_trim_640.png exists
+PASS  derived SHA matches manifest: assets/art_pass_20261112/level02_platform_visual_highstep_trim_640.png
+PASS  runtime size (640, 360) == (640, 360): layer_platform_visual_640.png
+PASS  runtime mode RGBA (got RGBA): layer_platform_visual_640.png
+PASS  runtime has alpha channel: layer_platform_visual_640.png
+PASS  derived size (640, 360) == (640, 360): level02_platform_visual_highstep_trim_640.png
+PASS  derived mode RGBA (got RGBA): level02_platform_visual_highstep_trim_640.png
+PASS  derived has alpha channel: level02_platform_visual_highstep_trim_640.png
+PASS  assets/level02_platform_v3/layer_platform_decor_640.png exists
+PASS  assets/art_pass_20261112/level02_platform_decor_seams_640.png exists
+PASS  derived SHA matches manifest: assets/art_pass_20261112/level02_platform_decor_seams_640.png
+PASS  runtime size (640, 360) == (640, 360): layer_platform_decor_640.png
+PASS  runtime mode RGBA (got RGBA): layer_platform_decor_640.png
+PASS  runtime has alpha channel: layer_platform_decor_640.png
+PASS  derived size (640, 360) == (640, 360): level02_platform_decor_seams_640.png
+PASS  derived mode RGBA (got RGBA): level02_platform_decor_seams_640.png
+PASS  derived has alpha channel: level02_platform_decor_seams_640.png
+PASS  atlas alpha is byte-identical between old runtime and warm-grey derived
+PASS  atlas remains 192x32 = 12 x 2 tiles of 16 px
+PASS  atlas grid is integral 16 px
+PASS  left HighStep visual alpha is 0 for y>=288 under x152..207
+PASS  left HighStep still has visible pixels at y287 (collision bottom 288)
+PASS  main bridge/right ledge visual pixels are unchanged outside the HighStep trim
+PASS  neutral short groove visible at seam centre x=260 (marked=13)
+PASS  neutral short groove visible at seam centre x=284 (marked=13)
+PASS  neutral short groove visible at seam centre x=324 (marked=13)
+PASS  neutral short groove visible at seam centre x=348 (marked=13)
+PASS  neutral short groove visible at seam centre x=372 (marked=13)
+PASS  assets/guide_echo_20261112/guide_echo_idle_4f.png exists
+PASS  guide sheet remains 192x64 (got (192, 64))
+PASS  guide sheet RGBA (got RGBA)
+PASS  guide sheet SHA matches its manifest
+PASS  guide manifest frames are 4 x 48x64
+PASS  guide frame 0 bbox inside 48x64
+PASS  guide frame 0 foot anchor is (24,60)
+PASS  guide frame 1 bbox inside 48x64
+PASS  guide frame 1 foot anchor is (24,60)
+PASS  guide frame 2 bbox inside 48x64
+PASS  guide frame 2 foot anchor is (24,60)
+PASS  guide frame 3 bbox inside 48x64
+PASS  guide frame 3 foot anchor is (24,60)
+PASS  runtime PNG is byte-identical to approved derived asset: assets/map/ruin_platform_tiles.png
+PASS  runtime PNG is byte-identical to approved derived asset: assets/level02_platform_v3/layer_platform_visual_640.png
+PASS  runtime PNG is byte-identical to approved derived asset: assets/level02_platform_v3/layer_platform_decor_640.png
+== Backup ZIP checks ==
+PASS  backup ZIP exists: D:\godot game\星核旅人\项目归档\美术优化前运行资源_20261112.zip
+PASS  ZIP keeps relative path: assets/map/ruin_platform_tiles.png
+PASS  ZIP entry hash matches pre-replacement runtime: assets/map/ruin_platform_tiles.png
+PASS  ZIP keeps relative path: assets/level02_platform_v3/layer_platform_visual_640.png
+PASS  ZIP entry hash matches pre-replacement runtime: assets/level02_platform_v3/layer_platform_visual_640.png
+PASS  ZIP keeps relative path: assets/level02_platform_v3/layer_platform_decor_640.png
+PASS  ZIP entry hash matches pre-replacement runtime: assets/level02_platform_v3/layer_platform_decor_640.png
+PASS  ZIP CRC test passes
+PASS  read-only approved source layer exists: D:\godot game\星核旅人\自制素材\第二关平台完整造型预览_V3\layer_platform_visual_640.png
+PASS  approved source layer remains untouched: D:\godot game\星核旅人\自制素材\第二关平台完整造型预览_V3\layer_platform_visual_640.png
+PASS  read-only approved source layer exists: D:\godot game\星核旅人\自制素材\第二关平台完整造型预览_V3\layer_platform_decor_640.png
+PASS  approved source layer remains untouched: D:\godot game\星核旅人\自制素材\第二关平台完整造型预览_V3\layer_platform_decor_640.png
+
+SUMMARY stage=verify pass=66 fail=0
+RESULT: PASS
+== Runtime replacement checks ==
+== PNG contract checks (verify) ==
+PASS  assets/map/ruin_platform_tiles.png exists
+PASS  assets/art_pass_20261112/ruin_platform_tiles_warmgrey.png exists
+PASS  derived SHA matches manifest: assets/art_pass_20261112/ruin_platform_tiles_warmgrey.png
+PASS  runtime size (192, 32) == (192, 32): ruin_platform_tiles.png
+PASS  runtime mode RGBA (got RGBA): ruin_platform_tiles.png
+PASS  runtime has alpha channel: ruin_platform_tiles.png
+PASS  derived size (192, 32) == (192, 32): ruin_platform_tiles_warmgrey.png
+PASS  derived mode RGBA (got RGBA): ruin_platform_tiles_warmgrey.png
+PASS  derived has alpha channel: ruin_platform_tiles_warmgrey.png
+PASS  assets/level02_platform_v3/layer_platform_visual_640.png exists
+PASS  assets/art_pass_20261112/level02_platform_visual_highstep_trim_640.png exists
+PASS  derived SHA matches manifest: assets/art_pass_20261112/level02_platform_visual_highstep_trim_640.png
+PASS  runtime size (640, 360) == (640, 360): layer_platform_visual_640.png
+PASS  runtime mode RGBA (got RGBA): layer_platform_visual_640.png
+PASS  runtime has alpha channel: layer_platform_visual_640.png
+PASS  derived size (640, 360) == (640, 360): level02_platform_visual_highstep_trim_640.png
+PASS  derived mode RGBA (got RGBA): level02_platform_visual_highstep_trim_640.png
+PASS  derived has alpha channel: level02_platform_visual_highstep_trim_640.png
+PASS  assets/level02_platform_v3/layer_platform_decor_640.png exists
+PASS  assets/art_pass_20261112/level02_platform_decor_seams_640.png exists
+PASS  derived SHA matches manifest: assets/art_pass_20261112/level02_platform_decor_seams_640.png
+PASS  runtime size (640, 360) == (640, 360): layer_platform_decor_640.png
+PASS  runtime mode RGBA (got RGBA): layer_platform_decor_640.png
+PASS  runtime has alpha channel: layer_platform_decor_640.png
+PASS  derived size (640, 360) == (640, 360): level02_platform_decor_seams_640.png
+PASS  derived mode RGBA (got RGBA): level02_platform_decor_seams_640.png
+PASS  derived has alpha channel: level02_platform_decor_seams_640.png
+PASS  atlas alpha is byte-identical between old runtime and warm-grey derived
+PASS  atlas remains 192x32 = 12 x 2 tiles of 16 px
+PASS  atlas grid is integral 16 px
+PASS  left HighStep visual alpha is 0 for y>=288 under x152..207
+PASS  left HighStep still has visible pixels at y287 (collision bottom 288)
+PASS  main bridge/right ledge visual pixels are unchanged outside the HighStep trim
+PASS  neutral short groove visible at seam centre x=260 (marked=13)
+PASS  neutral short groove visible at seam centre x=284 (marked=13)
+PASS  neutral short groove visible at seam centre x=324 (marked=13)
+PASS  neutral short groove visible at seam centre x=348 (marked=13)
+PASS  neutral short groove visible at seam centre x=372 (marked=13)
+PASS  assets/guide_echo_20261112/guide_echo_idle_4f.png exists
+PASS  guide sheet remains 192x64 (got (192, 64))
+PASS  guide sheet RGBA (got RGBA)
+PASS  guide sheet SHA matches its manifest
+PASS  guide manifest frames are 4 x 48x64
+PASS  guide frame 0 bbox inside 48x64
+PASS  guide frame 0 foot anchor is (24,60)
+PASS  guide frame 1 bbox inside 48x64
+PASS  guide frame 1 foot anchor is (24,60)
+PASS  guide frame 2 bbox inside 48x64
+PASS  guide frame 2 foot anchor is (24,60)
+PASS  guide frame 3 bbox inside 48x64
+PASS  guide frame 3 foot anchor is (24,60)
+PASS  runtime PNG is byte-identical to approved derived asset: assets/map/ruin_platform_tiles.png
+PASS  runtime PNG is byte-identical to approved derived asset: assets/level02_platform_v3/layer_platform_visual_640.png
+PASS  runtime PNG is byte-identical to approved derived asset: assets/level02_platform_v3/layer_platform_decor_640.png
+== Backup ZIP checks ==
+PASS  backup ZIP exists: D:\godot game\星核旅人\项目归档\美术优化前运行资源_20261112.zip
+PASS  ZIP keeps relative path: assets/map/ruin_platform_tiles.png
+PASS  ZIP entry hash matches pre-replacement runtime: assets/map/ruin_platform_tiles.png
+PASS  ZIP keeps relative path: assets/level02_platform_v3/layer_platform_visual_640.png
+PASS  ZIP entry hash matches pre-replacement runtime: assets/level02_platform_v3/layer_platform_visual_640.png
+PASS  ZIP keeps relative path: assets/level02_platform_v3/layer_platform_decor_640.png
+PASS  ZIP entry hash matches pre-replacement runtime: assets/level02_platform_v3/layer_platform_decor_640.png
+PASS  ZIP CRC test passes
+PASS  read-only approved source layer exists: D:\godot game\星核旅人\自制素材\第二关平台完整造型预览_V3\layer_platform_visual_640.png
+PASS  approved source layer remains untouched: D:\godot game\星核旅人\自制素材\第二关平台完整造型预览_V3\layer_platform_visual_640.png
+PASS  read-only approved source layer exists: D:\godot game\星核旅人\自制素材\第二关平台完整造型预览_V3\layer_platform_decor_640.png
+PASS  approved source layer remains untouched: D:\godot game\星核旅人\自制素材\第二关平台完整造型预览_V3\layer_platform_decor_640.png
+
+SUMMARY stage=verify pass=66 fail=0
+RESULT: PASS

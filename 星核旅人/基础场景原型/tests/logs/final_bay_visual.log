@@ -1,0 +1,172 @@
+﻿Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Star Core Traveler - star-core bay visual test
+Godot 4.7.2-stable (official)  display=headless
+
+== PROJECT AND LAYOUT CONFIG ==
+[PASS] project logic viewport remains 640x360
+[PASS] project default texture filter remains nearest
+[PASS] default main scene is unchanged (bay is not wired into gameplay)
+
+== COMPONENT CONTRACT AND LAYER ORDER ==
+[PASS] bay scene instantiates as StarCoreBayVisual
+[PASS] bay root is Node2D
+[PASS] bay root uses nearest filtering
+[PASS] bay has no collision, area, or body nodes
+[PASS] bay owns Base, LockMark, Core, and Glass children | 4
+[PASS] bay script is @tool (editor-visible)
+[PASS] Base and Glass sprites exist
+[PASS] LockMark is a separate code-drawn child node
+[PASS] Core is the existing StarCoreVisual instance
+[PASS] get_base_sprite returns the Base layer
+[PASS] get_glass_sprite returns the Glass layer
+[PASS] get_core_visual returns the Core layer
+[PASS] get_lock_marker returns the LockMark layer
+[PASS] LockMark script is @tool
+[PASS] Base shares the bay origin
+[PASS] LockMark shares the bay origin
+[PASS] Core shares the bay origin
+[PASS] Glass shares the bay origin
+[PASS] Base and Glass are centered on the same origin
+[PASS] all sprite layers are displayed 1:1
+[PASS] all sprite layers use nearest filtering
+[PASS] all bay z indices are non-negative: Base=1, LockMark=1, Core=2, Glass=3
+[PASS] layer order is Base/LockMark < Core < Glass
+[PASS] LockMark is between Base and Core in tree order so it draws over the pedestal
+[PASS] core is in the purple LOCKED state
+[PASS] original bottom-right core badge is disabled
+[PASS] core still exposes its visual badge kind
+[PASS] core has its existing 16x16 texture
+[PASS] core texture is 16x16
+[PASS] declared bay source size is 32x32
+[PASS] bay rect is 32x32 around the origin
+[PASS] core rect is 16x16 around the origin
+[PASS] pedestal top is local y=+8
+[PASS] core bottom meets, but does not overlap, the pedestal top
+[PASS] core rect does not intersect the pedestal rect
+[PASS] lock marker is a 4x3 mark on the pedestal
+[PASS] LockMark draws the same 4x3 rect exposed by the bay
+[PASS] lock marker sits on the pedestal, below the core
+[PASS] lock marker never overlaps the core rect
+[PASS] lock marker stays inside the 32x32 bay
+[PASS] occupied defaults to true
+[PASS] show_lock_marker defaults to true
+[PASS] occupied bay draws the lock marker by default
+[PASS] occupied is exposed to the inspector
+[PASS] show_lock_marker is exposed to the inspector
+[PASS] Base and Glass art are loaded
+[PASS] no bay layer reports missing art
+[PASS] safe loader returns null for a missing path
+
+== PNG DIMENSIONS, ALPHA, AND CORE CLEARANCE ==
+[PASS] all three bay PNGs load
+[PASS] existing purple core PNG loads
+[PASS] base PNG is 32x32
+[PASS] glass PNG is 32x32
+[PASS] empty composite PNG is 32x32
+[PASS] core PNG remains 16x16
+[PASS] base keeps an alpha channel
+[PASS] glass keeps an alpha channel
+[PASS] empty composite keeps an alpha channel
+[PASS] base pixels start at image y=24 | [P: (2, 24), S: (28, 8)]
+[PASS] base pixels reach the bottom of the canvas | [P: (2, 24), S: (28, 8)]
+[PASS] glass stays above the pedestal body (y=1..24) | [P: (1, 1), S: (30, 24)]
+[PASS] base has no pixels above y=24; it stays behind the core
+[PASS] base does not occupy the core's 16x16 rect
+[PASS] glass is fully transparent over the core's 16x16 rect
+[PASS] glass alpha over the core rect is exactly 0
+[PASS] core stays inside the glass outer silhouette on every core row
+[PASS] base has a substantial opaque silhouette | 208
+[PASS] base reads as a white/light pedestal, not a dark base | mean=0.770
+[PASS] base has a small gold rune accent, not a gold-covered base | 8
+[PASS] glass has a few bright white reflections | 12
+[PASS] glass edge is pale cyan | 149
+[PASS] empty composite contains no purple core pixels
+[PASS] empty composite center is fully transparent: no baked core, only the glass interior
+
+== OCCUPIED DISPLAY TOGGLE ==
+[PASS] occupied bay starts with the core visible
+[PASS] occupied bay starts with the lock mark enabled
+[PASS] occupied=false is applied
+[PASS] occupied=false hides the core
+[PASS] occupied=false hides the actual LockMark node
+[PASS] occupied=false reports the lock mark hidden
+[PASS] occupied=false does not change the purple core state
+[PASS] core badge stays off while empty
+[PASS] occupied=true restores the core
+[PASS] occupied=true restores the actual LockMark node
+[PASS] occupied=true reports the lock mark visible
+[PASS] show_lock_marker=false hides the actual LockMark node
+[PASS] hiding the lock mark does not hide the core
+[PASS] show_lock_marker=true restores the actual LockMark node
+
+== LID ANIMATION (STATIC OCCUPIED API PRESERVED) ==
+[PASS] lid animation has a Glass node
+[PASS] default lid state is closed/visible
+[PASS] default closed glass stays at the old static transform
+[PASS] default lid progress is zero
+[PASS] glass uses the side-to-centre lid shader
+[PASS] closed glass has a full reveal mask
+[PASS] mask animation does not squash or move the glass
+[PASS] short open animation reaches fully open
+[PASS] fully open glass is hidden
+[PASS] open glass keeps a 1:1 transform (no scale.y squash)
+[PASS] open glass is fully discarded by the shader mask
+[PASS] mid-close mask keeps both side walls symmetrically
+[PASS] mask visibility is mirrored left/right
+[PASS] top centre is still open at 33% closed
+[PASS] lower side wall is already closed at 33%
+[PASS] upper side remains at 66% open
+[PASS] only the lower side remains at 80% open
+[PASS] top centre is the last pixel to close
+[PASS] fully open mask hides even the lower side
+[PASS] fully closed mask shows the original dome
+[PASS] short close animation reaches fully closed
+[PASS] closed glass returns to the old static transform
+[PASS] closed mask is full again
+[PASS] set_lid_open_immediately(true) is compatible
+[PASS] set_lid_open_immediately(false) is compatible
+
+== STANDALONE 640x360 PREVIEW ==
+PREVIEW_BAY_ART loaded_instances=4 missing=
+[PASS] preview scene instantiates
+[PASS] preview canvas is 640x360 | (640.0, 360.0)
+[PASS] preview contains no physics nodes
+[PASS] preview shows empty and occupied twice (1x and 4x) | 4
+[PASS] preview names all four bay instances | ["Empty_1x", "Occupied_1x", "Empty_4x", "Occupied_4x"]
+[PASS] preview provides empty/occupied at 1x and 4x
+[PASS] 1x bay instances are actual size
+[PASS] 4x bay instances use integer 4x magnification
+[PASS] empty bays are not occupied
+[PASS] occupied bays are occupied
+[PASS] empty 1x bay hides its core
+[PASS] empty 4x bay hides its core
+[PASS] occupied 1x bay shows its core
+[PASS] occupied 4x bay shows its core
+[PASS] all preview bay instances keep nearest filtering
+[PASS] all preview bay instances have both bay PNGs
+[PASS] all preview cores stay 16x16
+[PASS] preview contains the real idle-frame player reference
+[PASS] player reference sits on the 1x ground line
+[PASS] player reference is shown at 1:1
+[PASS] player reference uses nearest filtering
+[PASS] player reference uses the original idle sheet via AtlasTexture
+[PASS] player idle frame is the real 32x37 visible crop
+[PASS] all preview labels are ASCII-only | 28
+[PASS] preview has title, scale, layer, and footer labels | 28
+[PASS] preview has a title
+[PASS] preview clearly says it is not gameplay
+[PASS] preview labels the true 1x row
+[PASS] preview labels the 4x near view
+[PASS] preview labels empty and occupied at 1x
+[PASS] preview labels empty and occupied at 4x
+[PASS] preview labels the true-scale player reference
+[PASS] preview names the layer order and code-drawn lock mark
+[PASS] preview shows art readiness status
+[PASS] preview reports all bay art loaded
+[PASS] preview lists excluded systems
+[PASS] preview marks the asset as a pending first-pass, not final art
+
+RESULT pass=151 fail=0 skipped=0
+STAR_CORE_BAY_VISUAL_TEST_RESULT pass=151 fail=0 skipped=0
+

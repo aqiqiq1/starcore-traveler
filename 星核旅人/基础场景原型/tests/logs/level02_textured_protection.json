@@ -1,0 +1,974 @@
+{
+    "baseline":  "C:\\Users\\aqiqiqi\\AppData\\Local\\Temp\\opencode\\level02-textured-perforated-ffa4c6df8e3b44328d827caee2d44882\\protected.json",
+    "count":  138,
+    "changed":  0,
+    "pass":  true,
+    "files":  [
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\anchor_room.gd",
+                      "exists":  true,
+                      "expected":  "2819328E65F517ED53A01E6C4CC1150D69E481489678A0045F39DC2E777C59F1",
+                      "actual":  "2819328E65F517ED53A01E6C4CC1150D69E481489678A0045F39DC2E777C59F1",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\background.gd",
+                      "exists":  true,
+                      "expected":  "3CAE81B7FF4A909493CFA3CC3BB58ABE57EA0D1ED1492BBFA1BFC85B320F29D1",
+                      "actual":  "3CAE81B7FF4A909493CFA3CC3BB58ABE57EA0D1ED1492BBFA1BFC85B320F29D1",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\bay_rune_link.gd",
+                      "exists":  true,
+                      "expected":  "E993256EAA883625DE0510E90AA332468EF4B7D6C43D214B707C279B3682DE89",
+                      "actual":  "E993256EAA883625DE0510E90AA332468EF4B7D6C43D214B707C279B3682DE89",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\debug_overlay.gd",
+                      "exists":  true,
+                      "expected":  "4F1C62339C1B1E15ED2B29087C940352854047C84F8EAE8840821F26D3B39A1E",
+                      "actual":  "4F1C62339C1B1E15ED2B29087C940352854047C84F8EAE8840821F26D3B39A1E",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\hud.gd",
+                      "exists":  true,
+                      "expected":  "31C534DB2DB0593A81097797F0F49D44207D8B50C2FDD2B72F283248C2A6FF58",
+                      "actual":  "31C534DB2DB0593A81097797F0F49D44207D8B50C2FDD2B72F283248C2A6FF58",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\input_setup.gd",
+                      "exists":  true,
+                      "expected":  "35F2E4FDE6DD02DE0331522C4285E36758C68A573A68F2F8D56217B0202D067C",
+                      "actual":  "35F2E4FDE6DD02DE0331522C4285E36758C68A573A68F2F8D56217B0202D067C",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\level_01.gd",
+                      "exists":  true,
+                      "expected":  "02F0F39D38774E41F458149156AF03EECBD3D9F023997458C9AB210FFB255AD7",
+                      "actual":  "02F0F39D38774E41F458149156AF03EECBD3D9F023997458C9AB210FFB255AD7",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\level_checkpoint.gd",
+                      "exists":  true,
+                      "expected":  "8ACFEB8CAB5EA09C259FD52A6406BBA841A70FB7F417BDC438600053183F2782",
+                      "actual":  "8ACFEB8CAB5EA09C259FD52A6406BBA841A70FB7F417BDC438600053183F2782",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\level_exit.gd",
+                      "exists":  true,
+                      "expected":  "42BCCEB161D49C0856CA451ECADE93E860F76CB047E206BEC36D7D3DC2B00BA4",
+                      "actual":  "42BCCEB161D49C0856CA451ECADE93E860F76CB047E206BEC36D7D3DC2B00BA4",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\level_guide.gd",
+                      "exists":  true,
+                      "expected":  "309F6A24F5921BF70714FAA91909D18BF2809D4D52EC8561C5DEEF07492C4F77",
+                      "actual":  "309F6A24F5921BF70714FAA91909D18BF2809D4D52EC8561C5DEEF07492C4F77",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\level_hud.gd",
+                      "exists":  true,
+                      "expected":  "ED6491500D430621267C36817E4F515B9F6DCC04FF1A46B9D1FF7D6030B1C849",
+                      "actual":  "ED6491500D430621267C36817E4F515B9F6DCC04FF1A46B9D1FF7D6030B1C849",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\level_terrain_block.gd",
+                      "exists":  true,
+                      "expected":  "44E045D51A0AFECB2D9B36B00D00F41E025F4EEFA308E535CAB3A0ADE92CB768",
+                      "actual":  "44E045D51A0AFECB2D9B36B00D00F41E025F4EEFA308E535CAB3A0ADE92CB768",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\main.gd",
+                      "exists":  true,
+                      "expected":  "7775C6D8D75BCF3D3EF32D813CA6C91E8FF955C21F09D5942E7DDFD2F8176238",
+                      "actual":  "7775C6D8D75BCF3D3EF32D813CA6C91E8FF955C21F09D5942E7DDFD2F8176238",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\player.gd",
+                      "exists":  true,
+                      "expected":  "5711828A3FF6C9E01A21D515B3B8A57EB467E56B4765B53C8A591082E17C76DA",
+                      "actual":  "5711828A3FF6C9E01A21D515B3B8A57EB467E56B4765B53C8A591082E17C76DA",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\polarity_badge.gd",
+                      "exists":  true,
+                      "expected":  "B3365F53FE6D904D035FC942A5FB95EE97E51D5974FBE20D67467803FDE8359E",
+                      "actual":  "B3365F53FE6D904D035FC942A5FB95EE97E51D5974FBE20D67467803FDE8359E",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\polarity_link_visual.gd",
+                      "exists":  true,
+                      "expected":  "7F2D68F93696C0689700A28BD65E5E30B8561A17438B27F39C5000E2CFD27319",
+                      "actual":  "7F2D68F93696C0689700A28BD65E5E30B8561A17438B27F39C5000E2CFD27319",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\polarity_record_test_room.gd",
+                      "exists":  true,
+                      "expected":  "C75C7A636E37F10F41591E2BCD664B779FC29575038E1B8907A03FBE7747F42F",
+                      "actual":  "C75C7A636E37F10F41591E2BCD664B779FC29575038E1B8907A03FBE7747F42F",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\polarity_record_test_standalone.gd",
+                      "exists":  true,
+                      "expected":  "33FBA4178B29CC2314CFE0BD313FFE1215E15E3131E6715697F72B93BA8E946D",
+                      "actual":  "33FBA4178B29CC2314CFE0BD313FFE1215E15E3131E6715697F72B93BA8E946D",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\rune_stone_field.gd",
+                      "exists":  true,
+                      "expected":  "8513FB6C5F379CD25BB2737CE591ED12C15D971E649706E2F81D366EB04D1640",
+                      "actual":  "8513FB6C5F379CD25BB2737CE591ED12C15D971E649706E2F81D366EB04D1640",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\rune_stone_visual.gd",
+                      "exists":  true,
+                      "expected":  "DA5E5B4735F29E48C415985A96F105D991BEB9E804632CA460D7159E3B33C55B",
+                      "actual":  "DA5E5B4735F29E48C415985A96F105D991BEB9E804632CA460D7159E3B33C55B",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\start_menu.gd",
+                      "exists":  true,
+                      "expected":  "B18656BA614CB5284DC0A7812AD5115586F3540885C45C7CF65D5087A3A9F799",
+                      "actual":  "B18656BA614CB5284DC0A7812AD5115586F3540885C45C7CF65D5087A3A9F799",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\star_core_bay_interactable.gd",
+                      "exists":  true,
+                      "expected":  "C03465DF004E0B53155E95D7442E422501E28CDABC6017AC3DDE1F2FAA6E050E",
+                      "actual":  "C03465DF004E0B53155E95D7442E422501E28CDABC6017AC3DDE1F2FAA6E050E",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\star_core_bay_lock_mark.gd",
+                      "exists":  true,
+                      "expected":  "BE290B5F71038DE450EFD3879A212FCE27306D9D9CD00F6D2B47B328C8F62DFE",
+                      "actual":  "BE290B5F71038DE450EFD3879A212FCE27306D9D9CD00F6D2B47B328C8F62DFE",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\star_core_bay_visual.gd",
+                      "exists":  true,
+                      "expected":  "61EE376EDA3E549D22AABDC269EE712B7C73C045D8627E25A03A6E38EAFDA77B",
+                      "actual":  "61EE376EDA3E549D22AABDC269EE712B7C73C045D8627E25A03A6E38EAFDA77B",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\star_core_carrier.gd",
+                      "exists":  true,
+                      "expected":  "A68FA3D11395D38B83927728A2FDDA0DC340DEF3940D3490E6B61A7A1397CF96",
+                      "actual":  "A68FA3D11395D38B83927728A2FDDA0DC340DEF3940D3490E6B61A7A1397CF96",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\star_core_interaction_room.gd",
+                      "exists":  true,
+                      "expected":  "AEC27B86131B4AE338B59D4F319C30A9B0AFB027CF738A09CFF0067EF9E10A60",
+                      "actual":  "AEC27B86131B4AE338B59D4F319C30A9B0AFB027CF738A09CFF0067EF9E10A60",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\star_core_interaction_standalone.gd",
+                      "exists":  true,
+                      "expected":  "12A8A590BE94552AA00FF3F7A1C93C7C31A0447F3B3D87F7640FC05730B81678",
+                      "actual":  "12A8A590BE94552AA00FF3F7A1C93C7C31A0447F3B3D87F7640FC05730B81678",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\star_core_visual.gd",
+                      "exists":  true,
+                      "expected":  "0061051976DB10C5184611AA40CBC40555129D8FF7E3F8013220A3BF04232263",
+                      "actual":  "0061051976DB10C5184611AA40CBC40555129D8FF7E3F8013220A3BF04232263",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\terrain_strip.gd",
+                      "exists":  true,
+                      "expected":  "1B38A2F98E4CE8B44643999E3DFEC58B5FBBB7740C163123A0E1FC5F227B0EE1",
+                      "actual":  "1B38A2F98E4CE8B44643999E3DFEC58B5FBBB7740C163123A0E1FC5F227B0EE1",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\tutorial_stele.gd",
+                      "exists":  true,
+                      "expected":  "CF8D8238A503D9351210E6FC799E9CF9278DAA3ABF65ED43DD784689F4B31F37",
+                      "actual":  "CF8D8238A503D9351210E6FC799E9CF9278DAA3ABF65ED43DD784689F4B31F37",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\backgrounds\\cloud_ruins_ds03.gd",
+                      "exists":  true,
+                      "expected":  "9EE7E7C64681D536A90CAAC71293BA430676FF6D9DF7B5E62852A1057001B2A5",
+                      "actual":  "9EE7E7C64681D536A90CAAC71293BA430676FF6D9DF7B5E62852A1057001B2A5",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\backgrounds\\cloud_ruins_ds03_data.gd",
+                      "exists":  true,
+                      "expected":  "BBEA9703E169BCDC7D1BE34767AF67EB8AC3E4521FF394A9FDC161F0692A860A",
+                      "actual":  "BBEA9703E169BCDC7D1BE34767AF67EB8AC3E4521FF394A9FDC161F0692A860A",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\ui\\display_options.gd",
+                      "exists":  true,
+                      "expected":  "57ED6C20A060F5756CBC5BA27983D15268BFD11D652BDA5CAFCB296231B565B0",
+                      "actual":  "57ED6C20A060F5756CBC5BA27983D15268BFD11D652BDA5CAFCB296231B565B0",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\ui\\display_settings_controller.gd",
+                      "exists":  true,
+                      "expected":  "8B6038C726911D5C5F8C098A3B57F63A7799B3A6392676978FEF6D84BDA200DF",
+                      "actual":  "8B6038C726911D5C5F8C098A3B57F63A7799B3A6392676978FEF6D84BDA200DF",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\ui\\pixel_menu_button.gd",
+                      "exists":  true,
+                      "expected":  "6357FAF70DD21084C6398257EDA397BD7218D7D999FE947FCB145DE56187585A",
+                      "actual":  "6357FAF70DD21084C6398257EDA397BD7218D7D999FE947FCB145DE56187585A",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\ui\\pixel_volume_slider.gd",
+                      "exists":  true,
+                      "expected":  "1741F3AB599A2B5AF2DFBFD8F14DECD7C7D02B392AD447A6DC196F2E174B8BDC",
+                      "actual":  "1741F3AB599A2B5AF2DFBFD8F14DECD7C7D02B392AD447A6DC196F2E174B8BDC",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\level_01.tscn",
+                      "exists":  true,
+                      "expected":  "4BE9A344B7A74BF7D930ACE0138B542D25F16719D74123B8880C3263150CEE71",
+                      "actual":  "4BE9A344B7A74BF7D930ACE0138B542D25F16719D74123B8880C3263150CEE71",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\main.tscn",
+                      "exists":  true,
+                      "expected":  "0644D2A6FD8BB1BCA6961575E36EBDDF192947FD34543CFAF8DFE5AA72A13B56",
+                      "actual":  "0644D2A6FD8BB1BCA6961575E36EBDDF192947FD34543CFAF8DFE5AA72A13B56",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\player.tscn",
+                      "exists":  true,
+                      "expected":  "3B48294B267E4E1FD232C1CE877CFE6B7961AF39282EA034F3FC879EDA02A292",
+                      "actual":  "3B48294B267E4E1FD232C1CE877CFE6B7961AF39282EA034F3FC879EDA02A292",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\polarity_link_visual.tscn",
+                      "exists":  true,
+                      "expected":  "4F25F58082A0C428357F281A25477BDBB9464BCF3B5AE9092747A527FCF7C712",
+                      "actual":  "4F25F58082A0C428357F281A25477BDBB9464BCF3B5AE9092747A527FCF7C712",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\polarity_record_test_room.tscn",
+                      "exists":  true,
+                      "expected":  "824C04630D89651861A6013D77A3A98C56DC3B5458D56D1F03FD2C4176BC673E",
+                      "actual":  "824C04630D89651861A6013D77A3A98C56DC3B5458D56D1F03FD2C4176BC673E",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\polarity_record_test_room_standalone.tscn",
+                      "exists":  true,
+                      "expected":  "124336999A5919BFC500FC7B25B7D5971D297C8D959FB1E8649312ECF50C6C83",
+                      "actual":  "124336999A5919BFC500FC7B25B7D5971D297C8D959FB1E8649312ECF50C6C83",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\rune_stone_field.tscn",
+                      "exists":  true,
+                      "expected":  "D360BA5C4E8F17A0E3E97266594BAC05402DC6CC15A56BAF6FBB896922F59EAE",
+                      "actual":  "D360BA5C4E8F17A0E3E97266594BAC05402DC6CC15A56BAF6FBB896922F59EAE",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\rune_stone_visual.tscn",
+                      "exists":  true,
+                      "expected":  "1881525D2D573958AE783B07004CABB355666DDEA7C64DECA7B399B8B7A3F43B",
+                      "actual":  "1881525D2D573958AE783B07004CABB355666DDEA7C64DECA7B399B8B7A3F43B",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\start_menu.tscn",
+                      "exists":  true,
+                      "expected":  "40C9279B95B04E64D69BFB8C8F670693E71C656800BD75A68123595EF021D705",
+                      "actual":  "40C9279B95B04E64D69BFB8C8F670693E71C656800BD75A68123595EF021D705",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\star_core_bay_interactable.tscn",
+                      "exists":  true,
+                      "expected":  "C8831F79733226431A9DCF80567ACD8622A9A615E07AD2DC74566091E3A9B9AE",
+                      "actual":  "C8831F79733226431A9DCF80567ACD8622A9A615E07AD2DC74566091E3A9B9AE",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\star_core_bay_visual.tscn",
+                      "exists":  true,
+                      "expected":  "7233E539224C9E668D451E1589231AD8B933DDE3EDC9BA82711F04FECEC2A898",
+                      "actual":  "7233E539224C9E668D451E1589231AD8B933DDE3EDC9BA82711F04FECEC2A898",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\star_core_carrier.tscn",
+                      "exists":  true,
+                      "expected":  "EEBC821E47BA9778F7D32D8F704793B3000B3F6AB022F4E0A74E6C0ED84EC778",
+                      "actual":  "EEBC821E47BA9778F7D32D8F704793B3000B3F6AB022F4E0A74E6C0ED84EC778",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\star_core_interaction_room.tscn",
+                      "exists":  true,
+                      "expected":  "38B2BBD83CFA8366019E2A19A6AA233109437E170CFB8E2FC19C1DB503EEA2E0",
+                      "actual":  "38B2BBD83CFA8366019E2A19A6AA233109437E170CFB8E2FC19C1DB503EEA2E0",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\star_core_interaction_standalone.tscn",
+                      "exists":  true,
+                      "expected":  "BE01D98A3053DC64EED5BBCAE97A19E366A88026BDA407BA21AF9DC721358E19",
+                      "actual":  "BE01D98A3053DC64EED5BBCAE97A19E366A88026BDA407BA21AF9DC721358E19",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\star_core_visual.tscn",
+                      "exists":  true,
+                      "expected":  "AE6ECC3FF7D30A6616E2C65027FFACDFE0B6789459D11EDD159E44AA80DC9BD6",
+                      "actual":  "AE6ECC3FF7D30A6616E2C65027FFACDFE0B6789459D11EDD159E44AA80DC9BD6",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\tutorial_stele.tscn",
+                      "exists":  true,
+                      "expected":  "2F731ACF2E88FF7E0EFE943FCD240F68BE723EA469C6F8C8BF44279B38E48FC9",
+                      "actual":  "2F731ACF2E88FF7E0EFE943FCD240F68BE723EA469C6F8C8BF44279B38E48FC9",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\tutorial_stele_demo.tscn",
+                      "exists":  true,
+                      "expected":  "6340418921916020752794065BD6014459722D7A131308D393C1148D9D6E9F84",
+                      "actual":  "6340418921916020752794065BD6014459722D7A131308D393C1148D9D6E9F84",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\backgrounds\\cloud_ruins_ds03.tscn",
+                      "exists":  true,
+                      "expected":  "C8B65DECD6F1324264C2711F79BC1308C68294625A12108017A8730DC17B1A0C",
+                      "actual":  "C8B65DECD6F1324264C2711F79BC1308C68294625A12108017A8730DC17B1A0C",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\decorations\\doric_column_base.tscn",
+                      "exists":  true,
+                      "expected":  "88E1DF09DEC8796B583D8167060848A14970F882995BD7BA58F1BAAE5359D0C5",
+                      "actual":  "88E1DF09DEC8796B583D8167060848A14970F882995BD7BA58F1BAAE5359D0C5",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\decorations\\doric_column_broken.tscn",
+                      "exists":  true,
+                      "expected":  "D1BDE58DB380C08C7199B5589AA79BF78ACB636A2F72587AED6B8CF7329F94E4",
+                      "actual":  "D1BDE58DB380C08C7199B5589AA79BF78ACB636A2F72587AED6B8CF7329F94E4",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\decorations\\doric_column_fallen.tscn",
+                      "exists":  true,
+                      "expected":  "C5E1119AAE0FB075C0E8D17EC966579EA37ACC09BC1B6330CD379E191A6C7DFF",
+                      "actual":  "C5E1119AAE0FB075C0E8D17EC966579EA37ACC09BC1B6330CD379E191A6C7DFF",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\decorations\\doric_column_tall.tscn",
+                      "exists":  true,
+                      "expected":  "F1A596C6FDD6B2C8A852E40D565DD5ACD4FB2CAFC57D954BD9C0C07996965F99",
+                      "actual":  "F1A596C6FDD6B2C8A852E40D565DD5ACD4FB2CAFC57D954BD9C0C07996965F99",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_v7.png",
+                      "exists":  true,
+                      "expected":  "0C81488D74EB87B0219EA3EAD2AA31F074C1A371AB9A7ABA0984B67A4A0F9092",
+                      "actual":  "0C81488D74EB87B0219EA3EAD2AA31F074C1A371AB9A7ABA0984B67A4A0F9092",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\source_manifest.json",
+                      "exists":  true,
+                      "expected":  "ADF9FD39560A3CAF348058272A65EF18667EE05F9C53DAEE0283912FC7252A37",
+                      "actual":  "ADF9FD39560A3CAF348058272A65EF18667EE05F9C53DAEE0283912FC7252A37",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\runtime_config.json",
+                      "exists":  true,
+                      "expected":  "C1E7B4779416D0E268B130BE7EE286D32CC4EB87DD87BD7F80FA1C9605859899",
+                      "actual":  "C1E7B4779416D0E268B130BE7EE286D32CC4EB87DD87BD7F80FA1C9605859899",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\source_manifest.json",
+                      "exists":  true,
+                      "expected":  "CE5D6ABF3E3CA4FE68AE76A771986AC09F8C19FDCA2689736E55C757B3C0BAB8",
+                      "actual":  "CE5D6ABF3E3CA4FE68AE76A771986AC09F8C19FDCA2689736E55C757B3C0BAB8",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\art_assets\\arch_stone.png",
+                      "exists":  true,
+                      "expected":  "2254D1D4971F291BE06149DBD237138FB4C4D65B3DF3A09CD5D68B629700EC9E",
+                      "actual":  "2254D1D4971F291BE06149DBD237138FB4C4D65B3DF3A09CD5D68B629700EC9E",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\art_assets\\base_sky_640x360.png",
+                      "exists":  true,
+                      "expected":  "F2860676C097E512FAC79792B23581B6437BB2A2555612A27D55AD06780CC12B",
+                      "actual":  "F2860676C097E512FAC79792B23581B6437BB2A2555612A27D55AD06780CC12B",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\art_assets\\g1_left_bridge.png",
+                      "exists":  true,
+                      "expected":  "371011A39A6FBC1867CBA8239A6588FD9F83DD911B0098361E1A15C4F524B207",
+                      "actual":  "371011A39A6FBC1867CBA8239A6588FD9F83DD911B0098361E1A15C4F524B207",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\art_assets\\g2_right_bridge.png",
+                      "exists":  true,
+                      "expected":  "7F587EB24F6B8F6118A4DCFE8CF94EA6CE887D55B3D04D5F07F98C08113F8242",
+                      "actual":  "7F587EB24F6B8F6118A4DCFE8CF94EA6CE887D55B3D04D5F07F98C08113F8242",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\art_assets\\g3_left_hall_island.png",
+                      "exists":  true,
+                      "expected":  "307D5F0AC6838C064F2AB3545EA1A9031133F0C17925109681C234BE5AABDA89",
+                      "actual":  "307D5F0AC6838C064F2AB3545EA1A9031133F0C17925109681C234BE5AABDA89",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\art_assets\\g4_far_courtyard.png",
+                      "exists":  true,
+                      "expected":  "F854433BE3D07F938464CFD7CCF095C469EE70D88237EED7225D509AD7C9E824",
+                      "actual":  "F854433BE3D07F938464CFD7CCF095C469EE70D88237EED7225D509AD7C9E824",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\art_assets\\g5_right_temple_island.png",
+                      "exists":  true,
+                      "expected":  "23A0E64D4569F894237195B2CA43D06784CC77839FD6F9D5A7C1032EBD8574F8",
+                      "actual":  "23A0E64D4569F894237195B2CA43D06784CC77839FD6F9D5A7C1032EBD8574F8",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\art_assets\\rock_remnants_static.png",
+                      "exists":  true,
+                      "expected":  "6F75D933681605170EAADB27DCFEE578A4C99B5C493A957202CCAC306CD676C4",
+                      "actual":  "6F75D933681605170EAADB27DCFEE578A4C99B5C493A957202CCAC306CD676C4",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\common\\debris_central.png",
+                      "exists":  true,
+                      "expected":  "29A101D1107139990A21EAFD899BED978BDB313DCDEF987E290FC239C64B0EB7",
+                      "actual":  "29A101D1107139990A21EAFD899BED978BDB313DCDEF987E290FC239C64B0EB7",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\common\\debris_cluster.png",
+                      "exists":  true,
+                      "expected":  "F90912C8131D5835BC353ED9875832099A7FC80D1E32DFC0B8A68B8A0EAA9946",
+                      "actual":  "F90912C8131D5835BC353ED9875832099A7FC80D1E32DFC0B8A68B8A0EAA9946",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\common\\debris_low.png",
+                      "exists":  true,
+                      "expected":  "C47FD5557650F05E4F9C468069C782D829FD56200D7FD2B579141FED0C6C0BE3",
+                      "actual":  "C47FD5557650F05E4F9C468069C782D829FD56200D7FD2B579141FED0C6C0BE3",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\common\\debris_tiny.png",
+                      "exists":  true,
+                      "expected":  "FB387E17062918B8CDCBFF7DA5A3998FBB58B89A38A4AF1DDC587D6EBDB9A8D2",
+                      "actual":  "FB387E17062918B8CDCBFF7DA5A3998FBB58B89A38A4AF1DDC587D6EBDB9A8D2",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\common\\sea_main.png",
+                      "exists":  true,
+                      "expected":  "C1C5DCC1B09A578D21FB3BFB57BF27C4AACF0AFE1D7A6E37F1FCBF3839F2C2CF",
+                      "actual":  "C1C5DCC1B09A578D21FB3BFB57BF27C4AACF0AFE1D7A6E37F1FCBF3839F2C2CF",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\common\\sea_near.png",
+                      "exists":  true,
+                      "expected":  "FFC79BD7E1E035EC1F7F7DA88A953EFFEFB3FEA6C72378FF84BEAA80F559F996",
+                      "actual":  "FFC79BD7E1E035EC1F7F7DA88A953EFFEFB3FEA6C72378FF84BEAA80F559F996",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\common\\shadow_central.png",
+                      "exists":  true,
+                      "expected":  "FAF5A907103EC6E6BF96AD28E31581E0D972ADD0C38617215B54D290EB0FFC01",
+                      "actual":  "FAF5A907103EC6E6BF96AD28E31581E0D972ADD0C38617215B54D290EB0FFC01",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\common\\shadow_cluster.png",
+                      "exists":  true,
+                      "expected":  "0E90AF352019B897CCA37F142F37D5A03A0550249FC3F58F0098E6514D9A9D0B",
+                      "actual":  "0E90AF352019B897CCA37F142F37D5A03A0550249FC3F58F0098E6514D9A9D0B",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\common\\shadow_low.png",
+                      "exists":  true,
+                      "expected":  "532BE50EF00CEA9D47165AAF2F73639F1C28A247242040C46BA74915ED2B6737",
+                      "actual":  "532BE50EF00CEA9D47165AAF2F73639F1C28A247242040C46BA74915ED2B6737",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\common\\sky_bank_left.png",
+                      "exists":  true,
+                      "expected":  "09B8B37C6BC1940C64EB89FFAC4CA47EC8AE13F37006CA6B5D77D3E3407DB821",
+                      "actual":  "09B8B37C6BC1940C64EB89FFAC4CA47EC8AE13F37006CA6B5D77D3E3407DB821",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\common\\sky_bank_right.png",
+                      "exists":  true,
+                      "expected":  "FA253012CB50C8F3BA2C559D2FDDCC8790DD7B913BFBA332F91D177E7198D44E",
+                      "actual":  "FA253012CB50C8F3BA2C559D2FDDCC8790DD7B913BFBA332F91D177E7198D44E",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\common\\sky_high_chip.png",
+                      "exists":  true,
+                      "expected":  "E96FF5B67DB74D86DBDE263C0A97B7E64FB4F23C2DA88F732AEC2088431EDC9F",
+                      "actual":  "E96FF5B67DB74D86DBDE263C0A97B7E64FB4F23C2DA88F732AEC2088431EDC9F",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\common\\sky_left_wisp.png",
+                      "exists":  true,
+                      "expected":  "AE0303F947B0E64F8485E3C781430E4EFF1F30DACB50C743851A7337EF27EE00",
+                      "actual":  "AE0303F947B0E64F8485E3C781430E4EFF1F30DACB50C743851A7337EF27EE00",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\common\\sky_low_wisp_l.png",
+                      "exists":  true,
+                      "expected":  "7347A0B5BF6092D5EC48BAAAB022CDCB8E25A47BF625221E7A1E65058D0560AD",
+                      "actual":  "7347A0B5BF6092D5EC48BAAAB022CDCB8E25A47BF625221E7A1E65058D0560AD",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\common\\sky_low_wisp_r.png",
+                      "exists":  true,
+                      "expected":  "01F20E64E503998E37775E2E0B07022C1459BA1AFD88A6867FACE5E919F0D05F",
+                      "actual":  "01F20E64E503998E37775E2E0B07022C1459BA1AFD88A6867FACE5E919F0D05F",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_ds03\\common\\sky_mid_wisp.png",
+                      "exists":  true,
+                      "expected":  "675B35E4A349A5066318DEF3CE01A4FEB37D7A10C3FA91295C313880CE5062EF",
+                      "actual":  "675B35E4A349A5066318DEF3CE01A4FEB37D7A10C3FA91295C313880CE5062EF",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\characters\\male_hero-fall.png",
+                      "exists":  true,
+                      "expected":  "200EA67D437ED5824B2C5F66FE471E30D6F8007266383EBA5DCC1B71742A8413",
+                      "actual":  "200EA67D437ED5824B2C5F66FE471E30D6F8007266383EBA5DCC1B71742A8413",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\characters\\male_hero-fall_loop.png",
+                      "exists":  true,
+                      "expected":  "96B43A2E4AC73D55943207BB836273BB33845520C7D34CBC337159A290325277",
+                      "actual":  "96B43A2E4AC73D55943207BB836273BB33845520C7D34CBC337159A290325277",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\characters\\male_hero-idle.png",
+                      "exists":  true,
+                      "expected":  "5E3B80A9DC6425F57121B0820E285B4580BDFA2ED944CFEEDF2BD61D8A92AA8F",
+                      "actual":  "5E3B80A9DC6425F57121B0820E285B4580BDFA2ED944CFEEDF2BD61D8A92AA8F",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\characters\\male_hero-jump.png",
+                      "exists":  true,
+                      "expected":  "CF79AD07CF1DC84B9B83C753E76C01150182425E452C48D92E636C7B12EE956E",
+                      "actual":  "CF79AD07CF1DC84B9B83C753E76C01150182425E452C48D92E636C7B12EE956E",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\characters\\male_hero-run.png",
+                      "exists":  true,
+                      "expected":  "35CDCC9DDD8B577D44C40CDCC8FF5E667CC32D78A713E5BA5470174644A07C9A",
+                      "actual":  "35CDCC9DDD8B577D44C40CDCC8FF5E667CC32D78A713E5BA5470174644A07C9A",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\characters\\male_hero-walk.png",
+                      "exists":  true,
+                      "expected":  "2A2E47A6A5F681402A973D8012FC1B8AB5255F7FADA2EA28DF8AAA892421FD0E",
+                      "actual":  "2A2E47A6A5F681402A973D8012FC1B8AB5255F7FADA2EA28DF8AAA892421FD0E",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\checkpoint_exit\\checkpoint_active.png",
+                      "exists":  true,
+                      "expected":  "CBA0C92BF76B911D4B96AE48DE141F71C3C80BB13379DF14814E3ED3A30CB99D",
+                      "actual":  "CBA0C92BF76B911D4B96AE48DE141F71C3C80BB13379DF14814E3ED3A30CB99D",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\checkpoint_exit\\checkpoint_inactive.png",
+                      "exists":  true,
+                      "expected":  "F6AEDC7225FAB5EBF6403DDE666CB2B8F198199FC1C9BDA2D59EEF4D118646C6",
+                      "actual":  "F6AEDC7225FAB5EBF6403DDE666CB2B8F198199FC1C9BDA2D59EEF4D118646C6",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\checkpoint_exit\\exit_completed.png",
+                      "exists":  true,
+                      "expected":  "647325F7D0F6F9DABCAC2BE38B35035FC3A1E833DE0F95523A1E3C19FC42E7DB",
+                      "actual":  "647325F7D0F6F9DABCAC2BE38B35035FC3A1E833DE0F95523A1E3C19FC42E7DB",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\checkpoint_exit\\exit_open.png",
+                      "exists":  true,
+                      "expected":  "9CE2857344474DE877894384CC1FCA2CEE7B642BA3D58D7DB560B6ABD0EA8C16",
+                      "actual":  "9CE2857344474DE877894384CC1FCA2CEE7B642BA3D58D7DB560B6ABD0EA8C16",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\doric_columns\\doric_column_base.png",
+                      "exists":  true,
+                      "expected":  "F25ADE68E3F78D1BA448A9D3AEF7DE51E70980E5FE92E9735104D4FC733328F5",
+                      "actual":  "F25ADE68E3F78D1BA448A9D3AEF7DE51E70980E5FE92E9735104D4FC733328F5",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\doric_columns\\doric_column_broken.png",
+                      "exists":  true,
+                      "expected":  "6603FEEA5494F5E9377153ED44EDC44D3DD0880DD2F1A08AD33CBCFE81D1B420",
+                      "actual":  "6603FEEA5494F5E9377153ED44EDC44D3DD0880DD2F1A08AD33CBCFE81D1B420",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\doric_columns\\doric_column_fallen.png",
+                      "exists":  true,
+                      "expected":  "185D0300A44DCD6BA4501254DA4FBBA0F66B487DA908F5ADA7D7B3F96A8B5B61",
+                      "actual":  "185D0300A44DCD6BA4501254DA4FBBA0F66B487DA908F5ADA7D7B3F96A8B5B61",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\doric_columns\\doric_column_tall.png",
+                      "exists":  true,
+                      "expected":  "3D919EF5167470B3E36929D6CCACF4BFD6714C4EA628CF062F3BA4E589C8E475",
+                      "actual":  "3D919EF5167470B3E36929D6CCACF4BFD6714C4EA628CF062F3BA4E589C8E475",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\doric_columns\\source_manifest.json",
+                      "exists":  true,
+                      "expected":  "9213BEC591131BAA75BB2A36391ADCDB4C3DB134B2C3C4C4BE7F2B3FDAC0EDC1",
+                      "actual":  "9213BEC591131BAA75BB2A36391ADCDB4C3DB134B2C3C4C4BE7F2B3FDAC0EDC1",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\fonts\\tutorial_zh.ttf",
+                      "exists":  true,
+                      "expected":  "58A0AC8784BFB0ED70B788A9CF815D00FCAD9DAA9E0517B8D1C244B4F912E3D6",
+                      "actual":  "58A0AC8784BFB0ED70B788A9CF815D00FCAD9DAA9E0517B8D1C244B4F912E3D6",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\map\\background2.png",
+                      "exists":  true,
+                      "expected":  "4351DC8631B1BCEC12176E81A415FC26931D9AAFD80F0B525948BA8662779809",
+                      "actual":  "4351DC8631B1BCEC12176E81A415FC26931D9AAFD80F0B525948BA8662779809",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\map\\background4.png",
+                      "exists":  true,
+                      "expected":  "B0D0667651C851E46C094382F829C32D00C0F7BEE41A791933F0171E913D4F25",
+                      "actual":  "B0D0667651C851E46C094382F829C32D00C0F7BEE41A791933F0171E913D4F25",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\map\\ruin_platform_tiles.png",
+                      "exists":  true,
+                      "expected":  "3A9FC34281FE33B17194C706B666BD8E0A9B4F0B697DC426481EF7199EF8B5B2",
+                      "actual":  "3A9FC34281FE33B17194C706B666BD8E0A9B4F0B697DC426481EF7199EF8B5B2",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\menu\\main_menu_focus_quit_640.png",
+                      "exists":  true,
+                      "expected":  "A3CB107696D9BD456F81AC144CBC6AF4E94AD3AAA549C4409352A23207B7543B",
+                      "actual":  "A3CB107696D9BD456F81AC144CBC6AF4E94AD3AAA549C4409352A23207B7543B",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\menu\\main_menu_focus_settings_640.png",
+                      "exists":  true,
+                      "expected":  "36D3EC59B8AB4061D1D7A61D8E752254C0F8879C0A37214FDE5F2DC54A6D36F3",
+                      "actual":  "36D3EC59B8AB4061D1D7A61D8E752254C0F8879C0A37214FDE5F2DC54A6D36F3",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\menu\\main_menu_focus_start_640.png",
+                      "exists":  true,
+                      "expected":  "F8493FB05CE3525C95181D744C6228FF209C41C3125C575DF5B5184BEFED66A4",
+                      "actual":  "F8493FB05CE3525C95181D744C6228FF209C41C3125C575DF5B5184BEFED66A4",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\menu\\main_menu_quit_640.png",
+                      "exists":  true,
+                      "expected":  "A711BF97BA072502ED0099D364A9F9333E421282692C230B4CE0988233E23017",
+                      "actual":  "A711BF97BA072502ED0099D364A9F9333E421282692C230B4CE0988233E23017",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\menu\\main_menu_ui_640.png",
+                      "exists":  true,
+                      "expected":  "7C85D1F5BDFD3BB268CB653496CA1C6482B5BF278250095923C0DC3AF5E0262B",
+                      "actual":  "7C85D1F5BDFD3BB268CB653496CA1C6482B5BF278250095923C0DC3AF5E0262B",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\menu\\settings_panel_640.png",
+                      "exists":  true,
+                      "expected":  "6D4518F8F55B773F5C4ECF1A8C753B94CF2D4E03B162D1EB428198ACAAFA196D",
+                      "actual":  "6D4518F8F55B773F5C4ECF1A8C753B94CF2D4E03B162D1EB428198ACAAFA196D",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\menu\\settings_return_focus_640.png",
+                      "exists":  true,
+                      "expected":  "0E349CAE40A2BFD05955C55C2D4956AC620E0B1950DF5B282BC2E70A29329739",
+                      "actual":  "0E349CAE40A2BFD05955C55C2D4956AC620E0B1950DF5B282BC2E70A29329739",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\rune_stone\\rune_stone_cyan.png",
+                      "exists":  true,
+                      "expected":  "8DF389BA6AB4BE8D0FF3B6B55F9596733B95C4E2EA9BC308B47A721FA0C0BE88",
+                      "actual":  "8DF389BA6AB4BE8D0FF3B6B55F9596733B95C4E2EA9BC308B47A721FA0C0BE88",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\rune_stone\\rune_stone_gold.png",
+                      "exists":  true,
+                      "expected":  "57A56AD27D2500CB4863D0EC3AF865342BE3E602A1FC78655845CE5B7319AD32",
+                      "actual":  "57A56AD27D2500CB4863D0EC3AF865342BE3E602A1FC78655845CE5B7319AD32",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\rune_stone\\rune_stone_sleep.png",
+                      "exists":  true,
+                      "expected":  "D723660D52F91083263A7BD8617AE0D05D5BE2095DBA16292F343F74B8E75E33",
+                      "actual":  "D723660D52F91083263A7BD8617AE0D05D5BE2095DBA16292F343F74B8E75E33",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\star_core\\star_core_locked.png",
+                      "exists":  true,
+                      "expected":  "40A36F519BC495F217D88C96C04F0A4503DA9BE15DE75198A4B3DA2844AD557A",
+                      "actual":  "40A36F519BC495F217D88C96C04F0A4503DA9BE15DE75198A4B3DA2844AD557A",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\star_core\\star_core_locked_12f.png",
+                      "exists":  true,
+                      "expected":  "1A7F8BFCB6F2C770B07002AAD2D3419108971E731363297EE424FCE975E63F4C",
+                      "actual":  "1A7F8BFCB6F2C770B07002AAD2D3419108971E731363297EE424FCE975E63F4C",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\star_core\\star_core_negative.png",
+                      "exists":  true,
+                      "expected":  "B21B819251B1F067E0DC16000DD8EDE83D1A71281208216F9C7D644F42ADA216",
+                      "actual":  "B21B819251B1F067E0DC16000DD8EDE83D1A71281208216F9C7D644F42ADA216",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\star_core\\star_core_negative_12f.png",
+                      "exists":  true,
+                      "expected":  "E99FAB67C35CDC9CC9A1BF9EC70D92340105341FB82B286237146A70B0C09B23",
+                      "actual":  "E99FAB67C35CDC9CC9A1BF9EC70D92340105341FB82B286237146A70B0C09B23",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\star_core\\star_core_positive.png",
+                      "exists":  true,
+                      "expected":  "9A72E93BC6DE4EFFAA297191248FD5428D97500D5FB241D9E440BE67D7082266",
+                      "actual":  "9A72E93BC6DE4EFFAA297191248FD5428D97500D5FB241D9E440BE67D7082266",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\star_core\\star_core_positive_12f.png",
+                      "exists":  true,
+                      "expected":  "282E668FA72ED504ABCBE6AEBB9BFADFDB398DE4E1796109540D15C4E6D4FA23",
+                      "actual":  "282E668FA72ED504ABCBE6AEBB9BFADFDB398DE4E1796109540D15C4E6D4FA23",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\star_core_bay\\star_core_bay_base.png",
+                      "exists":  true,
+                      "expected":  "A43F68E93AF9D5DF0569A50D1970F45452D1A3748D2D9EB31657943A06FAA1FD",
+                      "actual":  "A43F68E93AF9D5DF0569A50D1970F45452D1A3748D2D9EB31657943A06FAA1FD",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\star_core_bay\\star_core_bay_empty.png",
+                      "exists":  true,
+                      "expected":  "35A4FA6DECA16B740B5524EBCD9FDF2C99910EA127329D14B88AB16AD6BA5C2F",
+                      "actual":  "35A4FA6DECA16B740B5524EBCD9FDF2C99910EA127329D14B88AB16AD6BA5C2F",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\star_core_bay\\star_core_bay_glass.png",
+                      "exists":  true,
+                      "expected":  "F65D4277B7B4156918CB98FD74A9C090A6FC0F39DCF9353579BA250B786D7143",
+                      "actual":  "F65D4277B7B4156918CB98FD74A9C090A6FC0F39DCF9353579BA250B786D7143",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\talisman\\glow_cyan_4f.png",
+                      "exists":  true,
+                      "expected":  "AB534B32CB506D76C538D996DE4CEACEE34C27BC2BAF32D29F162FA6EAB1E0BA",
+                      "actual":  "AB534B32CB506D76C538D996DE4CEACEE34C27BC2BAF32D29F162FA6EAB1E0BA",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\talisman\\glow_gold_4f.png",
+                      "exists":  true,
+                      "expected":  "48C274D0D866BA5B1CE861000CE3DF63124F811E51B1E1C5512DABD45F864ACC",
+                      "actual":  "48C274D0D866BA5B1CE861000CE3DF63124F811E51B1E1C5512DABD45F864ACC",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\talisman\\manifest.json",
+                      "exists":  true,
+                      "expected":  "01F0129A9DA3D471D0A5DB8A73E21C1143C3F912DE0B1C40C44B1BBE04CE9628",
+                      "actual":  "01F0129A9DA3D471D0A5DB8A73E21C1143C3F912DE0B1C40C44B1BBE04CE9628",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\talisman\\switch_ring_cyan_4f.png",
+                      "exists":  true,
+                      "expected":  "7B40F2B5815BA33DE3AE20CE96208F5B52BD81D86DB31D99EC63D6CF14180DED",
+                      "actual":  "7B40F2B5815BA33DE3AE20CE96208F5B52BD81D86DB31D99EC63D6CF14180DED",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\talisman\\switch_ring_gold_4f.png",
+                      "exists":  true,
+                      "expected":  "7A8FB1E9DC95F23E2D4FE34B40DC6921343094D47C5ED22DBE67B4CD0213DCE5",
+                      "actual":  "7A8FB1E9DC95F23E2D4FE34B40DC6921343094D47C5ED22DBE67B4CD0213DCE5",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\talisman\\talisman_cyan.png",
+                      "exists":  true,
+                      "expected":  "6905E0448BDF085BDBE413CF71C34DBAC6CC6C46F030667E43EB8C90CA4B6C3F",
+                      "actual":  "6905E0448BDF085BDBE413CF71C34DBAC6CC6C46F030667E43EB8C90CA4B6C3F",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\talisman\\talisman_gold.png",
+                      "exists":  true,
+                      "expected":  "1567D719C61B35F99896FC972F36A79D01B8D994162217B70DF48945AC4EA049",
+                      "actual":  "1567D719C61B35F99896FC972F36A79D01B8D994162217B70DF48945AC4EA049",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\tutorial_stele\\tutorial_stele_cyan.png",
+                      "exists":  true,
+                      "expected":  "316FB202ABE104A5CFEF47E8F4FEE06B2BF095224DAC954221ACBAE35E6B6B9F",
+                      "actual":  "316FB202ABE104A5CFEF47E8F4FEE06B2BF095224DAC954221ACBAE35E6B6B9F",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\tutorial_stele\\tutorial_stele_frames.png",
+                      "exists":  true,
+                      "expected":  "CCE4F708290F2722F6AD99AE32B80F96F43CD229FB2541D0BEBA16CB99ED28CE",
+                      "actual":  "CCE4F708290F2722F6AD99AE32B80F96F43CD229FB2541D0BEBA16CB99ED28CE",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\tutorial_stele\\tutorial_stele_gold.png",
+                      "exists":  true,
+                      "expected":  "F3A8DB5C04DA5937949846425CA85325548F16CF11D5FD3D9D9952CD7938592B",
+                      "actual":  "F3A8DB5C04DA5937949846425CA85325548F16CF11D5FD3D9D9952CD7938592B",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\tutorial_stele\\tutorial_stele_grey.png",
+                      "exists":  true,
+                      "expected":  "AD4BBEBB3A5168B71C22F6920EC04307F213F31EDD44B57CF04B8F0394258FFB",
+                      "actual":  "AD4BBEBB3A5168B71C22F6920EC04307F213F31EDD44B57CF04B8F0394258FFB",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\tutorial_stele\\tutorial_stele_groove_mask.png",
+                      "exists":  true,
+                      "expected":  "610932F70B09781A4B3B5BD2748EB423CA201203070E3DDCEBCBE909B14D0876",
+                      "actual":  "610932F70B09781A4B3B5BD2748EB423CA201203070E3DDCEBCBE909B14D0876",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\assets\\tutorial_stele\\tutorial_stele_manifest.json",
+                      "exists":  true,
+                      "expected":  "DDB352DCD8B2FB1F51EF12F317207E5612629DD7C7AC9966BCC28F4E237C814E",
+                      "actual":  "DDB352DCD8B2FB1F51EF12F317207E5612629DD7C7AC9966BCC28F4E237C814E",
+                      "match":  true
+                  },
+                  {
+                      "path":  "D:\\godot game\\星核旅人\\基础场景原型\\project.godot",
+                      "exists":  true,
+                      "expected":  "FCFC61E314F61B21DD2878238BA15F973A41324C8547B48277CB3B8CB71CAAC1",
+                      "actual":  "FCFC61E314F61B21DD2878238BA15F973A41324C8547B48277CB3B8CB71CAAC1",
+                      "match":  true
+                  }
+              ]
+}

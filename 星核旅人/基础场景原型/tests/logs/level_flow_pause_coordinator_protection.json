@@ -1,0 +1,15 @@
+﻿{
+    "checked":  146,
+    "unchanged":  141,
+    "changed":  [
+                    "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\level_01.gd",
+                    "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\level_02.gd",
+                    "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\level_02_hud.gd",
+                    "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\level_hud.gd",
+                    "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\start_menu.gd"
+                ],
+    "unexpected":  [
+                       null
+                   ],
+    "scope":  "Coordinator independent file protection check; no replay of gameplay suites"
+}

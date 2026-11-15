@@ -1,0 +1,84 @@
+Star Core Traveler - checkpoint / exit warm-stone material fidelity
+Godot-independent Pillow check; no image is written.
+source script: D:\godot game\星核旅人\自制素材\恢复点与通关门概念示意\generate_preview.py
+doric reference: D:\godot game\星核旅人\基础场景原型\assets\doric_columns\doric_column_tall.png
+
+[PASS] concept generator imports
+[PASS] generator P[out] is the documented Doric tone  (#42373e == #42373e)
+[PASS] generator P[dark] is the documented Doric tone  (#594a51 == #594a51)
+[PASS] generator P[groove] is the documented Doric tone  (#67575d == #67575d)
+[PASS] generator P[shade] is the documented Doric tone  (#716064 == #716064)
+[PASS] generator P[stone] is the documented Doric tone  (#8f807e == #8f807e)
+[PASS] generator P[mid] is the documented Doric tone  (#a0918a == #a0918a)
+[PASS] generator P[light] is the documented Doric tone  (#aea197 == #aea197)
+[PASS] generator P[glint] is the documented Doric tone  (#b5a99e == #b5a99e)
+[PASS] non-stone accent P[moss] is still defined
+[PASS] non-stone accent P[leaf] is still defined
+[PASS] non-stone accent P[cyan] is still defined
+[PASS] non-stone accent P[ice] is still defined
+[PASS] non-stone accent P[gold] is still defined
+[PASS] pre-revision art reconstructed from the same geometry functions
+[PASS] reconstructed old pixels match coordinator baseline: checkpoint_inactive.png
+[PASS] reconstructed old pixels match coordinator baseline: checkpoint_active.png
+[PASS] reconstructed old pixels match coordinator baseline: exit_open.png
+[PASS] reconstructed old pixels match coordinator baseline: exit_completed.png
+[PASS] target tone comes from doric_column_tall.png: out  ((66, 55, 62))
+[PASS] target tone comes from doric_column_tall.png: dark  ((89, 74, 81))
+[PASS] target tone comes from doric_column_tall.png: groove  ((103, 87, 93))
+[PASS] target tone comes from doric_column_tall.png: shade  ((113, 96, 100))
+[PASS] target tone comes from doric_column_tall.png: stone  ((143, 128, 126))
+[PASS] target tone comes from doric_column_tall.png: mid  ((160, 145, 138))
+[PASS] target tone comes from doric_column_tall.png: light  ((174, 161, 151))
+[PASS] target tone comes from doric_column_tall.png: glint  ((181, 169, 158))
+[PASS] all eight stone roles keep ascending luminance  (59.1, 79.3, 92.5, 101.5, 132.3, 148.7, 163.7, 171.3)
+
+-- checkpoint_inactive.png --
+[PASS] source and runtime PNG exist: checkpoint_inactive.png
+[PASS] canvas size unchanged: checkpoint_inactive.png  ((40, 36))
+[PASS] source PNG matches the current generator and documented palette: checkpoint_inactive.png
+[PASS] alpha mask unchanged pixel for pixel: checkpoint_inactive.png
+[PASS] only documented stone RGB substitutions: checkpoint_inactive.png
+[PASS] all eight Doric tones visible: checkpoint_inactive.png  (out=55, dark=52, groove=19, shade=73, stone=134, mid=61, light=98, glint=14)
+[PASS] stone pixels were remapped: checkpoint_inactive.png  (506 changed, 934 non-stone pixels preserved)
+[PASS] runtime copy is byte-identical to source: checkpoint_inactive.png
+       sha256 f6aedc7225fab5ebf6403dde666cb2b8f198199fc1c9bda2d59eef4d118646c6
+       remap out:55, dark:52, groove:19, shade:73, stone:134, mid:61, light:98, glint:14
+
+-- checkpoint_active.png --
+[PASS] source and runtime PNG exist: checkpoint_active.png
+[PASS] canvas size unchanged: checkpoint_active.png  ((40, 36))
+[PASS] source PNG matches the current generator and documented palette: checkpoint_active.png
+[PASS] alpha mask unchanged pixel for pixel: checkpoint_active.png
+[PASS] only documented stone RGB substitutions: checkpoint_active.png
+[PASS] all eight Doric tones visible: checkpoint_active.png  (out=55, dark=52, groove=19, shade=73, stone=134, mid=61, light=98, glint=14)
+[PASS] stone pixels were remapped: checkpoint_active.png  (506 changed, 934 non-stone pixels preserved)
+[PASS] runtime copy is byte-identical to source: checkpoint_active.png
+       sha256 cba0c92bf76b911d4b96ae48de141f71c3c80bb13379df14814e3ed3a30cb99d
+       remap out:55, dark:52, groove:19, shade:73, stone:134, mid:61, light:98, glint:14
+
+-- exit_open.png --
+[PASS] source and runtime PNG exist: exit_open.png
+[PASS] canvas size unchanged: exit_open.png  ((76, 100))
+[PASS] source PNG matches the current generator and documented palette: exit_open.png
+[PASS] alpha mask unchanged pixel for pixel: exit_open.png
+[PASS] only documented stone RGB substitutions: exit_open.png
+[PASS] all eight Doric tones visible: exit_open.png  (out=433, dark=507, groove=15, shade=382, stone=487, mid=617, light=262, glint=4)
+[PASS] stone pixels were remapped: exit_open.png  (2707 changed, 4893 non-stone pixels preserved)
+[PASS] runtime copy is byte-identical to source: exit_open.png
+       sha256 9ce2857344474de877894384cc1fca2cee7b642ba3d58d7db560b6abd0ea8c16
+       remap out:433, dark:507, groove:15, shade:382, stone:487, mid:617, light:262, glint:4
+
+-- exit_completed.png --
+[PASS] source and runtime PNG exist: exit_completed.png
+[PASS] canvas size unchanged: exit_completed.png  ((76, 100))
+[PASS] source PNG matches the current generator and documented palette: exit_completed.png
+[PASS] alpha mask unchanged pixel for pixel: exit_completed.png
+[PASS] only documented stone RGB substitutions: exit_completed.png
+[PASS] all eight Doric tones visible: exit_completed.png  (out=433, dark=497, groove=15, shade=382, stone=487, mid=616, light=262, glint=4)
+[PASS] stone pixels were remapped: exit_completed.png  (2696 changed, 4904 non-stone pixels preserved)
+[PASS] runtime copy is byte-identical to source: exit_completed.png
+       sha256 647325f7d0f6f9dabcac2be38b35035fc3a1e833de0f95523a1e3c19fc42e7db
+       remap out:433, dark:497, groove:15, shade:382, stone:487, mid:616, light:262, glint:4
+
+MATERIAL_SUMMARY pass=60 fail=0
+RESULT: PASS

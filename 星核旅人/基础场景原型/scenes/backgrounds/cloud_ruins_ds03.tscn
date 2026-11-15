@@ -1,0 +1,75 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/backgrounds/cloud_ruins_ds03.gd" id="1_ds03"]
+
+[node name="CloudRuinsDS03" type="Node2D"]
+texture_filter = 1
+script = ExtResource("1_ds03")
+
+[node name="Base" type="Node2D" parent="."]
+texture_filter = 1
+
+[node name="Sky" type="Node2D" parent="."]
+texture_filter = 1
+
+[node name="SkyBankLeft" type="Node2D" parent="Sky"]
+texture_filter = 1
+
+[node name="SkyBankRight" type="Node2D" parent="Sky"]
+texture_filter = 1
+
+[node name="SkyMidWisp" type="Node2D" parent="Sky"]
+texture_filter = 1
+
+[node name="SkyLowWispR" type="Node2D" parent="Sky"]
+texture_filter = 1
+
+[node name="SkyLeftWisp" type="Node2D" parent="Sky"]
+texture_filter = 1
+
+[node name="SkyLowWispL" type="Node2D" parent="Sky"]
+texture_filter = 1
+
+[node name="SkyHighChip" type="Node2D" parent="Sky"]
+texture_filter = 1
+
+[node name="Groups" type="Node2D" parent="."]
+texture_filter = 1
+
+[node name="G3" type="Node2D" parent="Groups"]
+texture_filter = 1
+
+[node name="G4" type="Node2D" parent="Groups"]
+texture_filter = 1
+
+[node name="G5" type="Node2D" parent="Groups"]
+texture_filter = 1
+
+[node name="G1" type="Node2D" parent="Groups"]
+texture_filter = 1
+
+[node name="G2" type="Node2D" parent="Groups"]
+texture_filter = 1
+
+[node name="SeaMain" type="Node2D" parent="."]
+texture_filter = 1
+clip_children = 2
+
+[node name="ShadowsMain" type="Node2D" parent="SeaMain"]
+texture_filter = 1
+
+[node name="Arch" type="Node2D" parent="."]
+texture_filter = 1
+
+[node name="SeaNear" type="Node2D" parent="."]
+texture_filter = 1
+clip_children = 2
+
+[node name="ShadowsNear" type="Node2D" parent="SeaNear"]
+texture_filter = 1
+
+[node name="Rocks" type="Node2D" parent="."]
+texture_filter = 1
+
+[node name="Debris" type="Node2D" parent="."]
+texture_filter = 1

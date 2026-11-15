@@ -1,0 +1,87 @@
+{
+  "source_dir": "自制素材/第二关平台完整造型预览_V3 (read-only approved layers)",
+  "visual_file": "layer_platform_visual_640.png",
+  "visual_sha256": "EE8D38E32684BD1170563C2784FA3E241D64818D2F1DFA7DF0F922677CB04290",
+  "decor_file": "layer_platform_decor_640.png",
+  "decor_sha256": "58C58508ABD051ED79F52C2EC53401B1BD8B243156050B17C97F529FC0A82A9F",
+  "expected_file": "level02_v3_platform_expected.png",
+  "expected_sha256": "A66442DEE14EF6951936604671F05C8EBD5DC8FEA6E2F9587D6E5F6A40CADFC4",
+  "expected_definition": "exact alpha composite of approved visual layer then approved decor layer, 640x360 RGBA; used only by the controlled render validation",
+  "attached_slices": {
+    "main_visual": {
+      "parent": "UpperDeck",
+      "world_rect": [
+        232,
+        264,
+        168,
+        36
+      ],
+      "position_in_parent": [
+        232,
+        264
+      ]
+    },
+    "main_decor": {
+      "parent": "UpperDeck",
+      "world_rect": [
+        232,
+        264,
+        168,
+        36
+      ],
+      "position_in_parent": [
+        232,
+        264
+      ]
+    },
+    "high_step_visual": {
+      "parent": "HighStep",
+      "world_rect": [
+        152,
+        274,
+        56,
+        26
+      ],
+      "position_in_parent": [
+        0,
+        0
+      ]
+    },
+    "high_step_decor": {
+      "parent": "HighStep",
+      "world_rect": [
+        152,
+        274,
+        56,
+        26
+      ],
+      "position_in_parent": [
+        0,
+        0
+      ]
+    },
+    "right_ledge_visual": {
+      "parent": "RightLedge",
+      "world_rect": [
+        400,
+        276,
+        32,
+        24
+      ],
+      "position_in_parent": [
+        0,
+        0
+      ]
+    }
+  },
+  "runtime_replacement": {
+    "applied": "2026-11-12",
+    "backup_zip_from_project_root": "../项目归档/美术优化前运行资源_20261112.zip",
+    "note": "visual_sha256/decor_sha256 above describe the pre-replacement approved layers. The two runtime files now hold the art-pass derived versions; use these current hashes below, not the old source hashes, to identify the running PNGs.",
+    "current_visual_sha256": "0849BA133E7A2B8A950EC0B87E959499022A6C538566E5F5121E197847BD181F",
+    "current_decor_sha256": "5C2283F9BA29998B57D076A880D444F6B05992930B3A24613A6DF7D0DD53400D",
+    "read_only_source_dir_from_project_root": "../自制素材/第二关平台完整造型预览_V3",
+    "changes": "left HighStep visible bottom trimmed to y287 with alpha clear at y>=288; five neutral 3 px seam grooves at x260/284/324/348/372; main bridge and right short ledge slices unchanged"
+  },
+  "note": "No collision. All visual pixels are above y=300, so the core lane y=300..319 and ground y>=320 stay clear."
+}

@@ -1,0 +1,82 @@
+{
+  "baseline": "C:\\Users\\aqiqiqi\\AppData\\Local\\Temp\\opencode\\gate_text_cleanup_before_20261114.json",
+  "baseline_count": 219,
+  "same": 214,
+  "changed": [
+    "scenes/level_02.tscn",
+    "scripts/level_01.gd",
+    "scripts/level_02.gd",
+    "scripts/level_02_hud.gd",
+    "scripts/level_exit.gd"
+  ],
+  "authorized_changed": [
+    "scenes/level_02.tscn",
+    "scripts/level_01.gd",
+    "scripts/level_02.gd",
+    "scripts/level_02_hud.gd",
+    "scripts/level_exit.gd"
+  ],
+  "unauthorized_changed": [],
+  "missing": [],
+  "approved_assets": {
+    "assets/level02_conductive_stone/conductive_roof_256x32.png": "a0908de7f920f36b65930e0462c1a0c494c946e24033292a92010b9ca0db0e2c",
+    "assets/level02_conductive_stone/conductive_sill_160x60.png": "24866145e2c8029fcf2771b931190ffbeb2a5773fbbe17b634d4b24841ac1ee0",
+    "assets/level02_conductive_stone/conductive_lip_40x12.png": "2e56228a026a2cb4bb169e01348098cca34e0f613cabba332d45793d5cfb8664",
+    "assets/level02_conductive_stone/return_platform_48x12.png": "2d54f91cd4cae985c9c6f6c726aaab6d62938e03abaf54cc4525581cf08ff3d4",
+    "assets/checkpoint_exit/gate_portal_fx_v2_8f.png": "a8cb426d809e4827f756c8f7e3a289feabd05d10c420313e71b6ac63b7f00cbe",
+    "assets/guide_echo_20261113/guide_echo_idle_6f_s40.png": "6cf0c33b22558d429c415d28ce394b70a6641c224a407f16a16489749574a746"
+  },
+  "protected": {
+    "guide_echo_original": "2acaa0e55e8f68de8881295f82e04b7361187c8e08977c37cfb13c59c80bc233",
+    "l1_scene": "c5f2a3b2ace56c5078d663bcdf619f5697b23cff4f6cf4c4ee041e694565758a",
+    "player_scene": "3b48294b267e4e1fd232c1ce877cfe6b7961af39282ea034f3fc879eda02a292",
+    "ds03_scene": "c8b65decd6f1324264c2711f79bc1308c68294625a12108017a8730dc17b1a0c",
+    "project": "fcfc61e314f61b21dd2878238ba15f973a41324c8547b48277cb3b8cb71caac1",
+    "archive_gdignore": "13d7de2ed9f17097e13569727c7acd53b78bc44e765b4bc40f1723517dabb153",
+    "preview_level_02": "ac48a16e881d530a5443cf594839aaa02ec73db85ba07bd87a4ac85df8168cc0"
+  },
+  "backup_ok": 10,
+  "backup_total": 10,
+  "backup": [
+    {
+      "path": "scenes/level_01.tscn",
+      "ok": true
+    },
+    {
+      "path": "scenes/level_02.tscn",
+      "ok": true
+    },
+    {
+      "path": "scripts/level_02.gd",
+      "ok": true
+    },
+    {
+      "path": "scripts/level_02_hud.gd",
+      "ok": true
+    },
+    {
+      "path": "scenes/decorations/doric_column_tall.tscn",
+      "ok": true
+    },
+    {
+      "path": "scenes/decorations/doric_column_broken.tscn",
+      "ok": true
+    },
+    {
+      "path": "scenes/decorations/doric_column_base.tscn",
+      "ok": true
+    },
+    {
+      "path": "scripts/bay_rune_link.gd",
+      "ok": true
+    },
+    {
+      "path": "scripts/rune_stone_field.gd",
+      "ok": true
+    },
+    {
+      "path": "scripts/tutorial_stele.gd",
+      "ok": true
+    }
+  ]
+}

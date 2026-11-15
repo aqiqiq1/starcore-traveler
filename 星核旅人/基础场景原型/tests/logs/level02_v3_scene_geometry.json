@@ -1,0 +1,193 @@
+{
+  "scene": "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\level_02.tscn",
+  "baseline": "C:\\Users\\aqiqiqi\\AppData\\Local\\Temp\\opencode\\level02-v3-integration-259daf40bd564a7ab06062fb84d226cb\\level_02.tscn",
+  "checks": {
+    "TerrainTop": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "TerrainFill": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "TerrainBody": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "TerrainBody/CollisionShape2D": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "HighStep": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "UpperDeck/CorridorEntryPier": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "UpperDeck/DeckBeamA": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "UpperDeck/DeckBeamB": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "UpperDeck/DeckBeamC": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "UpperDeck/CorridorExitPier": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "UpperDeck/WalkBeamA": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "UpperDeck/WalkBeamB": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "UpperDeck/WalkBeamC": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "UpperDeck/WalkBeamD": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "RightLedge": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "PlayerSpawn": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "Bays/StartBay": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "Bays/TargetBay": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "Core": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "Player": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "Exit": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {}
+    },
+    "StartStele": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {
+        "pages": {
+          "before": "PackedStringArray(\"靠近星核仓按 E 释放星核。\\n释放时，星核会取与你相反的相性。\", \"按 Q 与星核同相，将它推入下层低廊。\\n低廊只容星核通过，人要走上层石栅。\\n石栅缝隙可施力，实体石块会遮挡。\", \"右侧与星核异相，吸引它靠近石座。\\n靠近后按 E 入仓，再前往出口。\")",
+          "after": "PackedStringArray(\"靠近星核仓按 E 释放星核。\\n释放时，星核会取与你相反的相性。\", \"按 Q 与星核同相，将它推入下层低廊。\\n低廊只容星核通过，人要走上层桥面。\\n桥面五处嵌缝可施力，实体石段会遮挡。\", \"右侧与星核异相，吸引它靠近石座。\\n靠近后按 E 入仓，再前往出口。\")"
+        }
+      }
+    },
+    "CorridorLabel": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {
+        "offset_bottom": {
+          "before": "258.0",
+          "after": "224.0"
+        },
+        "offset_top": {
+          "before": "246.0",
+          "after": "212.0"
+        }
+      }
+    },
+    "UpperLabel": {
+      "exists_before": true,
+      "exists_after": true,
+      "diffs": {
+        "offset_bottom": {
+          "before": "258.0",
+          "after": "224.0"
+        },
+        "offset_top": {
+          "before": "246.0",
+          "after": "212.0"
+        },
+        "text": {
+          "before": "\"上层石栅 · 缝隙可施力\"",
+          "after": "\"嵌缝可施力 · 实体段遮挡\""
+        }
+      }
+    }
+  },
+  "allowed_text_and_label_layout_changes": [
+    {
+      "node": "StartStele",
+      "property": "pages",
+      "before": "PackedStringArray(\"靠近星核仓按 E 释放星核。\\n释放时，星核会取与你相反的相性。\", \"按 Q 与星核同相，将它推入下层低廊。\\n低廊只容星核通过，人要走上层石栅。\\n石栅缝隙可施力，实体石块会遮挡。\", \"右侧与星核异相，吸引它靠近石座。\\n靠近后按 E 入仓，再前往出口。\")",
+      "after": "PackedStringArray(\"靠近星核仓按 E 释放星核。\\n释放时，星核会取与你相反的相性。\", \"按 Q 与星核同相，将它推入下层低廊。\\n低廊只容星核通过，人要走上层桥面。\\n桥面五处嵌缝可施力，实体石段会遮挡。\", \"右侧与星核异相，吸引它靠近石座。\\n靠近后按 E 入仓，再前往出口。\")"
+    },
+    {
+      "node": "CorridorLabel",
+      "property": "offset_bottom",
+      "before": "258.0",
+      "after": "224.0"
+    },
+    {
+      "node": "CorridorLabel",
+      "property": "offset_top",
+      "before": "246.0",
+      "after": "212.0"
+    },
+    {
+      "node": "UpperLabel",
+      "property": "offset_bottom",
+      "before": "258.0",
+      "after": "224.0"
+    },
+    {
+      "node": "UpperLabel",
+      "property": "offset_top",
+      "before": "246.0",
+      "after": "212.0"
+    },
+    {
+      "node": "UpperLabel",
+      "property": "text",
+      "before": "\"上层石栅 · 缝隙可施力\"",
+      "after": "\"嵌缝可施力 · 实体段遮挡\""
+    }
+  ],
+  "unexpected_changes": [],
+  "all_physical_fields_same": true
+}

@@ -1,0 +1,46 @@
+Star Core Traveler - DS03 shadow refresh probe (before_fix)
+Godot 4.7.2-stable (official)  display=Windows
+
+-- T0: NORMAL DRAW MATCHES A FORCED REFERENCE --
+[PASS] t=0 normal frame equals forced-shadow reference  (facfadd58c6176076cc90507ef96f26e83003e3f718513eef701d0f0e66fd005)
+[PASS] forced reference rebuilds ShadowsMain draw  ()
+[PASS] forced reference rebuilds ShadowsNear draw  ()
+t0 draw counts: { "sea_main": 1, "sea_near": 1, "groups": 1, "debris": 1, "shadows_main": 2, "shadows_near": 2 }
+t0 shadow placements: { "sea_main": [{ "t": 0.0, "placements": [{ "name": "shadow_central", "surface": "sea_main", "sx": 317.0, "sy": 266.0, "alpha": 1.0, "width": 40, "height": 12, "bob": 0.0, "high": false, "grow": 0, "cloud_top": 262 }, { "name": "shadow_cluster", "surface": "sea_main", "sx": 272.309432506681, "sy": 279.136790633351, "alpha": 1.0, "width": 30, "height": 9, "bob": 1.72641873329775, "high": false, "grow": 0, "cloud_top": 276 }] }, { "t": 0.0, "placements": [{ "name": "shadow_central", "surface": "sea_main", "sx": 317.0, "sy": 266.0, "alpha": 1.0, "width": 40, "height": 12, "bob": 0.0, "high": false, "grow": 0, "cloud_top": 262 }, { "name": "shadow_cluster", "surface": "sea_main", "sx": 272.309432506681, "sy": 279.136790633351, "alpha": 1.0, "width": 30, "height": 9, "bob": 1.72641873329775, "high": false, "grow": 0, "cloud_top": 276 }] }], "sea_near": [{ "t": 0.0, "placements": [{ "name": "shadow_low", "surface": "sea_near", "sx": 243.347572639823, "sy": 318.021358959734, "alpha": 1.0, "width": 28, "height": 9, "bob": 3.26213680088529, "high": false, "grow": 0, "cloud_top": 309 }] }, { "t": 0.0, "placements": [{ "name": "shadow_low", "surface": "sea_near", "sx": 243.347572639823, "sy": 318.021358959734, "alpha": 1.0, "width": 28, "height": 9, "bob": 3.26213680088529, "high": false, "grow": 0, "cloud_top": 309 }] }] }
+
+-- T=5.625: NORMAL TIME ADVANCE MUST REFRESH BOTH SHADOWS --
+[PASS] clock is frozen for the scripted time step  ()
+t=5.625 draw counts after normal advance: { "sea_main": 2, "sea_near": 2, "groups": 2, "debris": 2, "shadows_main": 2, "shadows_near": 2 } (delta from { "sea_main": 1, "sea_near": 1, "groups": 1, "debris": 1, "shadows_main": 2, "shadows_near": 2 })
+[PASS] clock reads 5.625 s  (5.625)
+[FAIL] normal set_background_time rebuilds ShadowsMain draw  (2 -> 2)
+[FAIL] normal set_background_time rebuilds ShadowsNear draw  (2 -> 2)
+[PASS] normal set_background_time rebuilds SeaMain draw  (1 -> 2)
+[PASS] normal set_background_time rebuilds Debris draw  (1 -> 2)
+shadow draw recorder at 5.625: { "sea_main": [{ "t": 0.0, "placements": [{ "name": "shadow_central", "surface": "sea_main", "sx": 317.0, "sy": 266.0, "alpha": 1.0, "width": 40, "height": 12, "bob": 0.0, "high": false, "grow": 0, "cloud_top": 262 }, { "name": "shadow_cluster", "surface": "sea_main", "sx": 272.309432506681, "sy": 279.136790633351, "alpha": 1.0, "width": 30, "height": 9, "bob": 1.72641873329775, "high": false, "grow": 0, "cloud_top": 276 }] }, { "t": 0.0, "placements": [{ "name": "shadow_central", "surface": "sea_main", "sx": 317.0, "sy": 266.0, "alpha": 1.0, "width": 40, "height": 12, "bob": 0.0, "high": false, "grow": 0, "cloud_top": 262 }, { "name": "shadow_cluster", "surface": "sea_main", "sx": 272.309432506681, "sy": 279.136790633351, "alpha": 1.0, "width": 30, "height": 9, "bob": 1.72641873329775, "high": false, "grow": 0, "cloud_top": 276 }] }], "sea_near": [{ "t": 0.0, "placements": [{ "name": "shadow_low", "surface": "sea_near", "sx": 243.347572639823, "sy": 318.021358959734, "alpha": 1.0, "width": 28, "height": 9, "bob": 3.26213680088529, "high": false, "grow": 0, "cloud_top": 309 }] }, { "t": 0.0, "placements": [{ "name": "shadow_low", "surface": "sea_near", "sx": 243.347572639823, "sy": 318.021358959734, "alpha": 1.0, "width": 28, "height": 9, "bob": 3.26213680088529, "high": false, "grow": 0, "cloud_top": 309 }] }] }
+[FAIL] ShadowsMain drew at 5.625 with grown/faded placement  ()
+[FAIL] ShadowsNear drew at 5.625  ()
+normal-vs-forced at 5.625: changed=805 bbox=(243,266)-(360,326)
+[FAIL] normal 5.625 frame equals forced-shadow reference (no stale shadow pixels)  ({ "changed": 805, "min_x": 243, "min_y": 266, "max_x": 360, "max_y": 326 })
+[FAIL] normal 5.625 frame is pixel-identical to reference  ()
+
+-- PAUSE FREEZES DRAW / RESUME CONTINUES --
+[PASS] clock is paused at this point  ()
+[PASS] paused clock does not advance  (5.625)
+[PASS] paused clock does not redraw any shadow or sea layer  ({ "sea_main": 2, "sea_near": 2, "groups": 2, "debris": 2, "shadows_main": 3, "shadows_near": 3 })
+[PASS] resume advances the clock  (5.625 -> 5.925)
+[FAIL] resume redraws ShadowsMain  (3 -> 3)
+[FAIL] resume redraws ShadowsNear  (3 -> 3)
+
+-- LIVE _PROCESS: SHADOWS FOLLOW THE CLOCK --
+[PASS] live process advances the clock  (5.925 -> 6.429)
+[PASS] live process redraws sea_main  (74 -> 195)
+[PASS] live process redraws sea_near  (74 -> 195)
+[PASS] live process redraws groups  (74 -> 195)
+[PASS] live process redraws debris  (74 -> 195)
+[FAIL] live process redraws shadows_main  (3 -> 3)
+[FAIL] live process redraws shadows_near  (3 -> 3)
+[PASS] ShadowsMain draw recorder has entries  ()
+[FAIL] last ShadowsMain draw used the live clock  (5.625)
+
+TEST_SUMMARY pass=17 fail=11 rendered=true
+RESULT: FAIL

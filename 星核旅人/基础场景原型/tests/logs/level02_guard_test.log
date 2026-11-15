@@ -1,0 +1,145 @@
+=== Level 02 polarity guard integration - focused headless test ===
+Godot 4.7.2-stable (official)  display=headless
+
+--- A. LOAD / HEAD READOUT / EXPERIMENT ---
+[PASS] formal level 02 loads with player and bridge guard
+[PASS] level player uses the local swing/hit subclass, not the shared script
+[PASS] guard starts ACTIVE  (ACTIVE)
+[PASS] guard starts at 3 / 3 HP
+[PASS] guard keeps its fixed initial bright phase
+[PASS] approved 0.28 / 0.12 / 0.30 / 0.15 s slam timing is unchanged  (0.28/0.12/0.30/0.15)
+[PASS] player short knockback / 0.15 s reaction / 0.6 s protection unchanged  (0.15 / 0.60 / 160)
+[PASS] no polarity word/sign above the guard by default
+[PASS] show_polarity_label defaults false
+[PASS] HP readout stays on a high-z child  (10)
+[PASS] 3-pip HP bar rectangle remains  ([P: (326.0, 208.0), S: (42.0, 6.0)])
+[PASS] formal upper platform is still the real x=232..400, top 264, 6 px deck  ([P: (232.0, 264.0), S: (168.0, 6.0)])
+[PASS] both world labels moved to y<=200 so the guard bar at y=208 is clear  (200.0 / 200.0)
+[PASS] label bottoms stay above the guard HP bar  (label=200 bar_top=208)
+[PASS] test setup can switch guard to the blue phase
+[PASS] orange-gold and cyan-blue body phases stay distinguishable  ((1.0, 0.6627, 0.302, 1.0) / (0.3922, 0.7843, 1.0, 1.0))
+[PASS] each phase uses its own orange/blue body sheet  (res://assets/experiments/polarity_golem/enemy/orange/golem_1_walk.png / res://assets/experiments/polarity_golem/enemy/blue/golem_1_idle.png)
+[PASS] head stays wordless in either colour phase
+[PASS] standalone experiment guard head also defaults wordless
+[PASS] experiment head has no polarity text under the latest rule
+[PASS] experiment debug HUD still exposes enemy polarity for diagnosis  (敌方　辉相 +　HP ●●●)
+[PASS] level-02 stele has six short pages of at most three lines  (6 pages)
+[PASS] stele covers: 相反
+[PASS] stele covers: 低廊
+[PASS] stele covers: 嵌缝
+[PASS] stele covers: 橙金
+[PASS] stele covers: 青蓝
+[PASS] stele covers: 扣血
+[PASS] stele covers: 牵引
+[PASS] stele covers: 8 秒
+[PASS] stele covers: 入仓
+[PASS] stele covers: 出口
+[PASS] stele never requires killing or claims automatic storage
+[PASS] shared pause page is present
+[PASS] pause controls right column lists J for the guard swing  ([["移动", "A / D · ← / →"], ["奔跑", "左Shift"], ["跳跃", "空格"], ["切换相性", "Q"], ["挥击守卫", "J"], ["释放 / 入仓", "E"], ["阅读石碑", "F"], ["重来本关", "R"], ["暂停菜单", "Esc"]])
+
+--- B. BRIDGE-ONLY SPAWN / BOUNDED PATROL ---
+[PASS] guard authored foot point is (344,264)  ((344.0, 264.0))
+[PASS] guard reset starts at the authored bridge point  ((348.0, 264.0))
+[PASS] guard floor_y comes from the bridge top, not the experiment 288  (264)
+[PASS] pull/knockback world clamp is the safe bridge strip 244..388  ((244.0, 388.0))
+[PASS] patrol strip is 260..376  ((260.0, 376.0))
+[PASS] pursuit strip is 244..388  ((244.0, 388.0))
+[PASS] guard collision body is 20 x 30  ((20.0, 30.0))
+[PASS] four seconds of patrol never leaves the legal bridge strip or falls  (x 260.1..375.1 y 264.0..264.0)
+[PASS] patrol actually stays inside 260..376  (x 260.1..375.1)
+[PASS] guard foot stays exactly on y=264 (no lower corridor, no floor 288)  (y 264.00..264.00)
+[PASS] guard never teleports to the old experiment point x=420
+
+--- C. GROUND PLAYER 56 px BELOW / NO SLAM THROUGH DECK ---
+[PASS] a player 56 px below on the ground never makes the bridge guard slam  (PATROL)
+[PASS] no hit reaches the ground player  (0)
+[PASS] player remains on the real ground  (y=320.0)
+[PASS] forced telegraphed slam still cannot hit the ground player  (BLOCKED / hits=0)
+[PASS] strike result is MISS/BLOCKED, never HIT  (BLOCKED)
+
+--- D. RIGHT LEDGE 32x24 / PLAYER BLOCK / CORE PASS ---
+[PASS] RightLedge block_size is the fixed 32 x 24  ((32.0, 24.0))
+[PASS] RightLedge real rect is x=400..432, y=276..300  ([P: (400.0, 276.0), S: (32.0, 24.0)])
+[PASS] ledge bottom is y=300, matching the approved facade lower edge
+[PASS] net clearance under the ledge is 20 px
+[PASS] 16 px core still fits the 20 px under-ledge band  ((12.0, 16.0))
+[PASS] walking into the right underpass is blocked by real collision  (min x=438.0)
+[PASS] running into the right underpass is blocked by real collision  (min x=438.0)
+[PASS] jumping into the right underpass never crosses the real face  (end=(391.7724, 263.9252))
+[PASS] same-phase field pushes the core out under/past the right ledge  (core x=445.3)
+[PASS] core stays on the 20 px lower band, not embedded in the ledge  (y=311.9)
+[PASS] same-phase field can recover the core back under the ledge  (core x=428.7)
+[PASS] the bridge guard never adds a hit during ground transport  (1 -> 1)
+[PASS] a real upper seam passes the unchanged attraction ray to the core  (ATTRACT blocked=false)
+[PASS] the seam field moves the core through the real 8 px opening  (core x 320.6 -> 332.3)
+
+--- E. REAL J/Q COMBAT ---
+[PASS] one real J press makes exactly one swing; held echo adds none  (0 -> 1)
+[PASS] same-phase J removes exactly 1 HP  (2)
+[PASS] same-phase J damages and knocks the guard back  (damage=1 knock=1)
+[PASS] J never activates, pushes or stores the star core
+[PASS] same-phase J interrupts the raised slam  (HURT)
+[PASS] the interrupted slam has no delayed hit  (0)
+[PASS] interrupted guard still lost one HP  (2)
+[PASS] real Q switches the player to the blue phase
+[PASS] opposite-phase J deals no damage  (3)
+[PASS] opposite-phase J performs one tether pull  (1)
+[PASS] opposite-phase pull does not cancel the already-raised slam  (ATTACK 0.03->0.22)
+
+--- F. SCATTER / PAUSE / R RESTORE ---
+[PASS] final same-phase hit scatters the guard  (0)
+[PASS] guard enters the scatter/reassemble state  (SCATTERING)
+[PASS] guard reaches the visible wait state  (RUBBLE)
+[PASS] wait uses authentic die frame 11 and stays visible  (frame=11 visible=true)
+[PASS] neutral scatter countdown stays readable  (8.0秒后重组)
+[PASS] countdown text carries no polarity word
+[PASS] Esc opens the real pause page
+[PASS] scatter wait timer freezes while paused  (8.00 -> 7.98)
+[PASS] J cannot fire through the pause page
+[PASS] Esc resumes the level
+[PASS] R leaves the level incomplete
+[PASS] R restores the player spawn  ((36.0, 320.0))
+[PASS] R restores the guard bridge spawn  ((349.0, 264.0))
+[PASS] R restores guard full HP, initial phase and ACTIVE AI  (3 HP true ACTIVE)
+[PASS] R clears any in-flight player swing
+[PASS] R clears player hit protection/reaction
+[PASS] R releases the completion input lock
+
+--- F2. PAUSE RESTART / FALL / CORE OUT RESET ---
+[PASS] pause page is open before a paused R restart
+[PASS] paused R returns to play
+[PASS] paused R restores guard spawn/HP/phase/AI  ((349.0, 264.0) 3HP true ACTIVE)
+[PASS] fall reset returns the player to spawn  ((36.0, 320.0))
+[PASS] fall reset restores guard spawn/HP/phase  ((349.0, 264.0) 3HP true)
+[PASS] fall reset clears player hit protection/reaction
+[PASS] core-out reset returns the player to spawn  ((36.0, 320.0))
+[PASS] core-out reset deactivates the moving core
+[PASS] core-out reset restores guard spawn/HP/phase/AI  ((348.0, 264.0) 3HP true ACTIVE)
+
+--- G. LOCAL INTEGRATION ROUTE ---
+  SETUP core=(343,312,negative) player=(142,320); target bay still EMPTY
+[PASS] real jump route reaches the upper bridge  ((249.6478, 263.924))
+[PASS] player meets the guard on the bridge and real J lands  (guard=(296.0726, 264.0) player=(249.6478, 263.924))
+[PASS] player descends on the right and can still meet the core side  ((470.1565, 319.9253))
+[PASS] core remains in the lower corridor after the bridge fight  (core x=343.8)
+  ground pull 0 player=(439.2463, 319.9253) core=(395.5481, 312.0) status=ATTRACT
+  ground pull 1 player=(469.0331, 319.9253) core=(434.6288, 312.0) status=NEAR / STABLE
+  ground pull 2 player=(507.1573, 319.9253) core=(484.3663, 312.0) status=NEAR / STABLE
+  ground pull 3 player=(556.9465, 319.9253) core=(534.1669, 312.0) status=NEAR / STABLE
+[PASS] real 100 px field brings the core into the target seat  (player=(556.9465, 319.9253) core=(534.1669, 312.0))
+[PASS] real E stores and locks the target bay  (core=(520.0, 312.0))
+[PASS] real exit gate completes the local integrated route  (completed=true)
+[PASS] completion hard-locks the level player
+[PASS] completion freezes the guard AI/timers
+[PASS] completion leaves no live guard slam  (GAP)
+[PASS] J cannot fire on the completion page
+[PASS] completion input lock keeps the player from walking behind the panel  (x 582.45 -> 582.45)
+[PASS] no post-completion slam reaction is accepted
+[PASS] override remains after a would-be 0.6 s protection window  (override=true)
+[PASS] R clears the completion page
+[PASS] R restores the guard after completion  ((349.0, 264.0) 3HP true)
+[PASS] R releases the completion lock and player override
+
+TEST_SUMMARY pass=119 fail=0
+RESULT: PASS

@@ -1,0 +1,226 @@
+Star Core Traveler - independent rune-stone visual test
+Godot 4.7.2-stable (official)  display=headless
+
+== PROJECT AND ASSET CONFIG ==
+[PASS] project logic viewport is 640x360
+[PASS] project default texture filter is nearest
+
+== CONCEPT-DERIVED 32x32 STATE PNGS ==
+[PASS] sleep state PNG loads as an Image
+[PASS] gold state PNG loads as an Image
+[PASS] cyan state PNG loads as an Image
+[PASS] sleep source is 32x32 | (32, 32)
+[PASS] gold source is 32x32 | (32, 32)
+[PASS] cyan source is 32x32 | (32, 32)
+[PASS] sleep keeps an alpha channel
+[PASS] gold keeps an alpha channel
+[PASS] cyan keeps an alpha channel
+[PASS] sleep corners are transparent
+[PASS] direct NEAREST of the approved 96px concept yields the expected 535 px shell | 535
+[PASS] all three states share the exact same shell and crack silhouette
+[PASS] gold replaces the dormant core/reflection with the concept's gold light | 147
+[PASS] cyan replaces the dormant core/reflection with the concept's cyan light | 147
+[PASS] gold and cyan states are clearly distinct | 147
+[PASS] dormant state contains no gold or cyan light | gold=0 cyan=0
+[PASS] gold state keeps the concept's baked gold core | 29
+[PASS] cyan state keeps the concept's baked cyan core | 29
+[PASS] legacy two-layer shell/mask textures are gone
+
+== COMPONENT CONTRACT ==
+[PASS] scene instantiates as RuneStoneVisual
+[PASS] component root is Node2D
+[PASS] root uses nearest filtering
+[PASS] component script is @tool
+[PASS] component owns only Base and Accent sprites
+[PASS] component has no collision, area or physics nodes
+[PASS] Base sprite exists
+[PASS] Accent sprite exists
+[PASS] Base uses nearest filtering
+[PASS] Base is centered at 1:1
+[PASS] Base is not mirrored or rotated
+[PASS] Accent uses nearest filtering
+[PASS] Accent is centered at 1:1
+[PASS] Accent is not mirrored or rotated
+[PASS] sleep base stays under the gold/cyan accent
+[PASS] default polarity is positive
+[PASS] default visual is energized for existing callers
+[PASS] default hint kind is plus
+[PASS] hint is hidden by default
+[PASS] default transition duration is 0.22 s
+[PASS] declared source size is 32x32
+[PASS] stone occupies the 32x32 rect around the origin
+[PASS] hint is outside the stone body
+[PASS] hint floats above and right of the stone
+[PASS] all three concept state PNGs load for the component
+[PASS] base texture is 32x32
+[PASS] accent texture is 32x32
+[PASS] base shows the sleep state
+[PASS] settled positive accent is the gold state
+[PASS] settled state shows the accent at full alpha
+[PASS] imported sleep texture matches the source PNG | cache check
+[PASS] imported gold texture matches the source PNG | cache check
+[PASS] imported cyan texture matches the source PNG | cache check
+[PASS] settled positive colour is #f4cd63
+[PASS] base keeps its concept colours
+[PASS] accent keeps its concept colours at full alpha
+[PASS] polarity_positive is exposed to the inspector
+[PASS] energized is exposed to the inspector
+[PASS] show_polarity_hint is exposed to the inspector
+[PASS] transition_duration is exposed to the inspector
+[PASS] all four interface properties are present | ["polarity_positive", "energized", "show_polarity_hint", "transition_duration"]
+[PASS] transition_finished signal is declared
+[PASS] transition_finished carries one positive argument
+[PASS] public set_polarity method exists
+[PASS] settled component does not run an autonomous process
+
+== STATE SWITCH AND FIXED STONE ==
+[PASS] positive state uses a small plus hint
+[PASS] plus hint stays outside the stone
+[PASS] immediate negative switches state
+[PASS] immediate negative shows #5fe1e6
+[PASS] immediate negative shows the concept cyan state
+[PASS] immediate negative shows the accent fully
+[PASS] immediate change does not leave a transition running
+[PASS] immediate change emits no transition_finished signal
+[PASS] negative state uses a small minus hint
+[PASS] negative state reuses the exact sleep base texture
+[PASS] sleep base is the approved dormant state
+[PASS] stone transform is fixed
+[PASS] layer transforms stay fixed across polarity
+[PASS] only the accent state changes; sleep base is untouched
+[PASS] same-state non-immediate call is a no-op
+[PASS] immediate positive restores the gold state
+[PASS] restored positive colour is #f4cd63
+[PASS] immediate positive shows the concept gold state
+[PASS] hint returns to plus
+[PASS] restoring positive immediate still emits no signal
+[PASS] hint can be switched off again
+
+== TRANSITION, PAUSE AND SIGNAL ==
+[PASS] non-immediate switch starts a transition
+[PASS] target polarity is negative immediately
+[PASS] applied polarity is still positive until the transition ends
+[PASS] transition does not finish synchronously
+[PASS] active transition enables process
+[PASS] transition starts from the old full gold accent
+[PASS] first fifth reaches the dim phase
+[PASS] old gold light gets darker first
+[PASS] dim phase is visibly subdued
+[PASS] old gold accent fades instead of switching instantly | 0.41700960219479
+[PASS] dim phase keeps the old gold state image
+[PASS] transition never tints the sleep base
+[PASS] transition keeps the sleep base texture
+[PASS] transition does not move the base
+[PASS] transition does not move the accent
+[PASS] transition does not rotate or move the stone
+[PASS] pause keeps the transition unfinished
+[PASS] pause freezes transition elapsed time
+[PASS] pause freezes transition progress
+[PASS] pause freezes the accent alpha
+[PASS] pause emits no transition_finished
+[PASS] second fifth crosses into the relight phase
+[PASS] relight phase shows the target cyan state image
+[PASS] target accent starts near zero after the dim | 0.03009431646512
+[PASS] target cyan accent rises during the second half
+[PASS] new cyan light rises after the dim phase
+[PASS] unpaused transition completes
+[PASS] completed progress is 1.0
+[PASS] applied polarity becomes negative
+[PASS] completed light is exactly #5fe1e6
+[PASS] completed transition settles on the full cyan state
+[PASS] completed transition keeps the sleep base and its transform
+[PASS] one transition_finished(false) is emitted
+[PASS] process turns off after completion
+[PASS] completed transition keeps the stone fixed
+[PASS] reverse gold accent rises during the second half
+[PASS] new gold light rises after the dim phase
+[PASS] reverse transition settles toward the concept gold state
+[PASS] reverse transition emits one transition_finished(true)
+[PASS] reverse transition ends at gold
+[PASS] immediate call cancels an active transition
+[PASS] immediate call applies positive at once
+[PASS] cancelled transition snaps to the full gold state
+[PASS] cancelled transition emits no completion signal
+[PASS] cancelled transition turns process off
+[PASS] transition duration clamps to 0.05 s
+[PASS] transition duration clamps to 2.0 s
+
+== INACTIVE / CONCEPT SLEEP / FIRST LIGHT-UP ==
+[PASS] set_energized(false) puts the stone dormant
+[PASS] dormant switch leaves no transition running
+[PASS] dormant stone reports no plus/minus hint kind
+[PASS] dormant API reports the dark colour | (0.032, 0.043, 0.047, 1.0)
+[PASS] dormant state hides the gold/cyan accent | 0.0
+[PASS] dormant state keeps the concept sleep image
+[PASS] dormant state leaves the sleep image untouched
+[PASS] sleep image is the approved dormant state
+[PASS] dormant state does not move, rotate or scale the stone
+[PASS] dormant switch emits no completion
+[PASS] dormant stone runs no autonomous process
+[PASS] test keeps the hint flag true while dormant
+[PASS] dormant stone suppresses the +/- draw despite the true flag
+[PASS] energize_to starts a sleep-to-colour transition
+[PASS] energize_to target is GOLD
+[PASS] first light-up starts at zero progress
+[PASS] first light-up starts with the accent hidden
+[PASS] first light-up does not finish synchronously
+[PASS] early first light-up is still visibly dark | (0.0326, 0.0439, 0.0479, 1.0)
+[PASS] during the dim half the sleep base still shows no accent
+[PASS] first light-up accent rises in the second half
+[PASS] first light-up rises toward the target colour | (0.5391, 0.4613, 0.2359, 1.0)
+[PASS] first light-up target shows the concept gold image
+[PASS] first light-up finishes
+[PASS] first light-up ends at exactly #f4cd63
+[PASS] first light-up ends with the full gold accent
+[PASS] first light-up emits one transition_finished(true)
+[PASS] energized stone restores the plus hint kind
+[PASS] energized stone can draw the true hint flag
+[PASS] dormant switch cancels an in-flight polarity transition
+[PASS] cancelled transition falls back to the dark sleep state
+[PASS] cancelled transition hides the accent
+[PASS] cancelled transition still draws no dormant +/- hint
+
+== 640x360 STANDALONE PREVIEW ==
+[PASS] preview scene instantiates
+[PASS] preview canvas is 640x360 | (640.0, 360.0)
+[PASS] preview contains no physics nodes
+[PASS] preview shows two polarities at two integer scales | 4
+[PASS] both polarities appear twice
+[PASS] both 1x and 4x views exist
+[PASS] near hint is forced only on the 1x examples
+[PASS] all stones share the 260 px review baseline
+[PASS] all preview stones use nearest filtering
+[PASS] all preview stones loaded the three concept state PNGs
+[PASS] original character 1x example exists
+[PASS] character uses a cropped AtlasTexture
+[PASS] character crop is idle #0 visible pixels
+[PASS] character visible crop is displayed at 32x37
+[PASS] character comparison is actual 1x, not scaled
+[PASS] character comparison uses nearest filtering
+[PASS] character feet share the stone baseline
+[PASS] all preview labels are ASCII-only
+[PASS] preview has title, state, scale, comparison and status labels | 18
+[PASS] preview has a title
+[PASS] preview states that it is not gameplay
+[PASS] preview is marked as concept-derived direct NEAREST, not first-pass art
+[PASS] preview labels the original character at 1x
+[PASS] preview labels the forced near hint
+[PASS] preview labels the 4x near view
+[PASS] preview states both states use the same stone
+[PASS] preview documents the SPACE transition demo
+[PASS] preview documents the dim-then-relight transition
+[PASS] preview reports all three concept states loaded
+[PASS] preview reports the approved direct NEAREST conversion
+[PASS] preview lists excluded systems
+[PASS] left column starts gold
+[PASS] right column starts cyan
+[PASS] SPACE demo starts a transition
+[PASS] both 4x examples animate through set_polarity
+[PASS] demo clears its busy state after both columns finish
+[PASS] columns swap to cyan and gold
+[PASS] left column label updates to cyan
+[PASS] right column label updates to gold
+[PASS] 1x hint label accents follow the swapped columns
+[PASS] footer marks the scene as visual-only
+
+RESULT pass=208 fail=0 skipped=0

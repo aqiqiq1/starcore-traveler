@@ -1,0 +1,11 @@
+.godot/
+.openchamber/
+__pycache__/
+*.pyc
+.env
+.env.*
+export_credentials.cfg
+
+基础场景原型/previews/
+基础场景原型/screenshots/
+基础场景原型/项目归档/

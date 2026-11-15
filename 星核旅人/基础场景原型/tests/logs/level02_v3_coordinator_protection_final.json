@@ -1,0 +1,11 @@
+﻿{
+    "checked":  142,
+    "changed":  [
+                    "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\level02_block.gd",
+                    "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\level_02.tscn"
+                ],
+    "unexpected":  [
+                       null
+                   ],
+    "scope":  "Coordinator final post-label-fix independent baseline hash check"
+}

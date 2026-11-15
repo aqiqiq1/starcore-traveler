@@ -1,0 +1,164 @@
+{
+ "asset": "guide_echo_idle_6f",
+ "display_name": "守望者残响",
+ "usage": "第一关两处固定显现共用的同一守望者残响待机帧；正式游戏只按 48x64 帧显示，不依赖 previews 目录",
+ "sheet": {
+  "path": "assets/guide_echo_20261113/guide_echo_idle_6f.png",
+  "size": [
+   288,
+   64
+  ],
+  "frame_size": [
+   48,
+   64
+  ],
+  "frame_count": 6,
+  "layout": "横排 6 帧，每帧 48x64；帧序 0..5",
+  "sha256": "2ACAA0E55E8F68DE8881295F82E04B7361187C8E08977C37CFB13C59C80BC233",
+  "byte_identical_to": "previews/art_reference_20261112/watcher_echo_idle_6f.png (approved final preview sheet, same SHA-256)"
+ },
+ "anchor": {
+  "foot": [
+   24,
+   60
+  ],
+  "sprite_offset": [
+   -24,
+   -60
+  ],
+  "note": "Sprite2D centered=false, position (-24,-60), scale 1, Nearest；脚底锚 (24,60) 与旧 4 帧组件一致"
+ },
+ "playback": {
+  "fps": 4,
+  "note": "预览与正式关都是 4 fps；暂停/菜单/完成/失焦时冻结在同一帧"
+ },
+ "bounds": "每帧主可见轮廓 x8..40；f0 y13..58（呼吸最高一起），f1..f5 y14..58；48x64 帧内不裁切",
+ "frames": [
+  {
+   "frame": 0,
+   "rect_in_sheet": [
+    0,
+    0,
+    48,
+    64
+   ],
+   "bbox": [
+    8,
+    13,
+    41,
+    59
+   ],
+   "foot_anchor": [
+    24,
+    60
+   ]
+  },
+  {
+   "frame": 1,
+   "rect_in_sheet": [
+    48,
+    0,
+    48,
+    64
+   ],
+   "bbox": [
+    8,
+    14,
+    41,
+    59
+   ],
+   "foot_anchor": [
+    24,
+    60
+   ]
+  },
+  {
+   "frame": 2,
+   "rect_in_sheet": [
+    96,
+    0,
+    48,
+    64
+   ],
+   "bbox": [
+    8,
+    14,
+    41,
+    59
+   ],
+   "foot_anchor": [
+    24,
+    60
+   ]
+  },
+  {
+   "frame": 3,
+   "rect_in_sheet": [
+    144,
+    0,
+    48,
+    64
+   ],
+   "bbox": [
+    8,
+    14,
+    41,
+    59
+   ],
+   "foot_anchor": [
+    24,
+    60
+   ]
+  },
+  {
+   "frame": 4,
+   "rect_in_sheet": [
+    192,
+    0,
+    48,
+    64
+   ],
+   "bbox": [
+    8,
+    14,
+    41,
+    59
+   ],
+   "foot_anchor": [
+    24,
+    60
+   ]
+  },
+  {
+   "frame": 5,
+   "rect_in_sheet": [
+    240,
+    0,
+    48,
+    64
+   ],
+   "bbox": [
+    8,
+    14,
+    41,
+    59
+   ],
+   "foot_anchor": [
+    24,
+    60
+   ]
+  }
+ ],
+ "source": {
+  "third_party": "LuizMelo Wizard Pack (Idle.png), CC0 - the author page allows free and commercial use without credit; pack SHA-256 41167557A3401E7156B6557CFEC932457D333059C6F6393BF958B6B4FE3A2291",
+  "source_url": "https://luizmelo.itch.io/wizard-pack",
+  "original_idle_sha256": "E1583FA16CCA3EBAC9C7D560DCA0EB351FF8720D0EE592EC4876EF5F704B51F1",
+  "derivation": "本地派生：头脸为原作者 Idle.png 未调色头块按固定 ROI/0.75 最近邻取样直接合成，眼/眉/鼻/须/紫帽未被重画；身体用同一作者的袖子/袍色按固定列区与行带重采样，袍前置三阶收进兜帽紫色家族；外轮廓为 1 px 深紫黑描边；空手臂在最后一步按上述行带加厚。全部步骤脚本化、可复现（previews/art_reference_20261112/derive_watcher_echo.py），本文件是其输出的逐字节拷贝。",
+  "not_hand_drawn": "没有手工重绘五官；派生说明与逐帧数据见 previews/art_reference_20261112/README.md 与 source_manifest.json"
+ },
+ "notes": [
+  "运行时不得引用 previews/ 或 Temp 路径；本文件即为唯一运行素材",
+  "旧 4 帧素材 assets/guide_echo_20261112/guide_echo_idle_4f.png 保留未动，可用于回退",
+  "正式关第一关两处显现与台词、第二关石碑/守卫/运输均未改动"
+ ]
+}

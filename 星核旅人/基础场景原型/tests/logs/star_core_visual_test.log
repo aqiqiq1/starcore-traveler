@@ -1,0 +1,115 @@
+Star Core Traveler - independent star-core visual test
+Godot 4.7.2-stable (official)  display=headless
+
+== PROJECT AND ASSET CONFIG ==
+[PASS] project logic viewport is 640x360
+[PASS] project default texture filter is nearest
+
+== COMPONENT CONTRACT ==
+[PASS] component scene instantiates as StarCoreVisual
+[PASS] component root is Node2D
+[PASS] root uses nearest filtering
+[PASS] component owns only the Gem sprite child (no logic nodes)
+[PASS] component has no collision or area nodes
+[PASS] component script is @tool (visible in editor)
+[PASS] state enum is LOCKED/POSITIVE/NEGATIVE in order
+[PASS] default state is LOCKED
+[PASS] state is exposed to the inspector
+[PASS] state is an enum export
+[PASS] state enum labels are present | Locked:0,Positive:1,Negative:2
+[PASS] Gem sprite exists
+[PASS] Gem sprite is centered on the component origin
+[PASS] Gem sprite uses nearest filtering
+[PASS] Gem sprite is displayed 1:1
+[PASS] Gem sprite is not mirrored
+[PASS] Gem sprite is not tinted or recoloured
+[PASS] declared source size is 16x16
+[PASS] gem occupies the 16x16 rect around origin
+[PASS] state badge never overlaps the gem body
+[PASS] state badge sits outside the gem's bottom-right corner
+[PASS] LOCKED points at the locked PNG
+[PASS] LOCKED uses the lock badge
+[PASS] badge and missing placeholder default on
+[PASS] safe loader returns null for a missing path without throwing
+
+== STATE SWITCHING AND ART FALLBACK ==
+[PASS] state 0 applies through the exported property
+[PASS] state 0 resolves the expected path
+[PASS] path lookup by state 0 is stable
+[PASS] state 0 selects the expected badge
+[PASS] state 0 keeps source colours untinted
+[PASS] state 0 badge and sprite remain unmirrored
+[PASS] state 0 loaded a Texture2D
+[PASS] state 0 texture is 16x16
+[PASS] state 0 texture keeps an alpha channel
+[PASS] state 0 auto-updated the Gem sprite
+[PASS] state 1 applies through the exported property
+[PASS] state 1 resolves the expected path
+[PASS] path lookup by state 1 is stable
+[PASS] state 1 selects the expected badge
+[PASS] state 1 keeps source colours untinted
+[PASS] state 1 badge and sprite remain unmirrored
+[PASS] state 1 loaded a Texture2D
+[PASS] state 1 texture is 16x16
+[PASS] state 1 texture keeps an alpha channel
+[PASS] state 1 auto-updated the Gem sprite
+[PASS] state 2 applies through the exported property
+[PASS] state 2 resolves the expected path
+[PASS] path lookup by state 2 is stable
+[PASS] state 2 selects the expected badge
+[PASS] state 2 keeps source colours untinted
+[PASS] state 2 badge and sprite remain unmirrored
+[PASS] state 2 loaded a Texture2D
+[PASS] state 2 texture is 16x16
+[PASS] state 2 texture keeps an alpha channel
+[PASS] state 2 auto-updated the Gem sprite
+[PASS] every reported-ready PNG resolves in ResourceLoader
+[PASS] set_core_state switches state
+[PASS] refresh keeps the current state
+[INFO] all 3 star-core PNGs are present and 16x16
+
+== STANDALONE PREVIEW ==
+[PASS] preview scene instantiates
+[PASS] preview canvas is 640x360 | (640.0, 360.0)
+[PASS] preview contains no physics nodes
+[PASS] preview shows three states twice (1x and 4x) | 6
+[PASS] preview core keeps 16x16 source
+[PASS] preview core keeps 16x16 source
+[PASS] preview core keeps 16x16 source
+[PASS] preview core keeps 16x16 source
+[PASS] preview core keeps 16x16 source
+[PASS] preview core keeps 16x16 source
+[PASS] each state appears twice
+[PASS] all states have both actual-size and 4x near views | ["0@1", "0@4", "1@1", "1@4", "2@1", "2@4"]
+[PASS] preview never mirrors the cores
+[PASS] preview label is ASCII-only | STAR CORE VISUAL PREVIEW
+[PASS] preview label is ASCII-only | VISUAL COMPONENT ONLY  /  NOT GAMEPLAY  /  12 FRAMES  /  16x16 FRAME AT 1:1 NEAREST
+[PASS] preview label is ASCII-only | LOCKED
+[PASS] preview label is ASCII-only | STORED / LOCKED
+[PASS] preview label is ASCII-only | ACTUAL SIZE (1x)
+[PASS] preview label is ASCII-only | NEAR VIEW (4x, INTEGER SCALE)
+[PASS] preview label is ASCII-only | POSITIVE
+[PASS] preview label is ASCII-only | GOLD / PLUS
+[PASS] preview label is ASCII-only | ACTUAL SIZE (1x)
+[PASS] preview label is ASCII-only | NEAR VIEW (4x, INTEGER SCALE)
+[PASS] preview label is ASCII-only | NEGATIVE
+[PASS] preview label is ASCII-only | CYAN / MINUS
+[PASS] preview label is ASCII-only | ACTUAL SIZE (1x)
+[PASS] preview label is ASCII-only | NEAR VIEW (4x, INTEGER SCALE)
+[PASS] preview label is ASCII-only | ART STATUS: 3/3 state sheets loaded at 12 FPS; each frame is 16x16. Colours come from the 192x16 source sheets; badges are code-drawn.
+[PASS] preview label is ASCII-only | LOOP 01/12  |  12 FPS  |  FRAME SHOWN 16x16; SOURCE SHEET 192x16
+[PASS] preview label is ASCII-only | STATE BADGES ARE DRAWN IN CODE, OUTSIDE THE 16x16 FRAME AND NEVER MIRRORED OR ROTATED.
+[PASS] preview label is ASCII-only | SOURCE SHEETS ARE 192x16 (12 FRAMES); EACH DISPLAYED FRAME IS 16x16. 4x MAGNIFICATION IS PREVIEW ONLY.
+[PASS] preview label is ASCII-only | VISUAL PREVIEW ONLY - NO PHYSICS, SUCTION, INTERACTION, OR STAR-CORE BAY LOGIC.
+[PASS] preview has title, state, scale, and status labels | 19
+[PASS] preview has a title
+[PASS] preview states that it is not gameplay
+[PASS] preview labels actual-size row
+[PASS] preview labels integer near view
+[PASS] preview names all states
+[PASS] preview shows art readiness status
+[PASS] preview lists excluded systems
+[PASS] preview reports all art loaded
+[PASS] preview reports 12 FPS sheet playback
+
+RESULT pass=102 fail=0 skipped=0

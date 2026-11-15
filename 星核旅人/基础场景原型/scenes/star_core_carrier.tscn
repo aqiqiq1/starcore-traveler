@@ -1,0 +1,28 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/star_core_carrier.gd" id="1_carrier"]
+[ext_resource type="PackedScene" path="res://scenes/star_core_visual.tscn" id="2_visual"]
+[ext_resource type="Script" path="res://scripts/polarity_badge.gd" id="3_badge"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_core"]
+size = Vector2(12, 16)
+
+[node name="StarCoreCarrier" type="CharacterBody2D"]
+z_index = 4
+collision_layer = 0
+collision_mask = 0
+motion_mode = 0
+visible = false
+script = ExtResource("1_carrier")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_core")
+
+[node name="Visual" parent="." instance=ExtResource("2_visual")]
+show_state_badge = false
+
+[node name="PolarityMark" type="Node2D" parent="."]
+position = Vector2(0, -20)
+z_index = 2
+scale = Vector2(0.55, 0.55)
+script = ExtResource("3_badge")

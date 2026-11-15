@@ -1,0 +1,257 @@
+[gd_scene load_steps=29 format=3]
+
+[ext_resource type="Script" path="res://scripts/level_02.gd" id="1_level"]
+[ext_resource type="Script" path="res://scripts/level_02_hud.gd" id="2_hud"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="3_player"]
+[ext_resource type="PackedScene" path="res://scenes/level02_bay.tscn" id="4_bay"]
+[ext_resource type="PackedScene" path="res://scenes/star_core_carrier.tscn" id="5_core"]
+[ext_resource type="Script" path="res://scripts/level_checkpoint.gd" id="6_checkpoint"]
+[ext_resource type="Script" path="res://scripts/level_exit.gd" id="7_exit"]
+[ext_resource type="PackedScene" path="res://scenes/backgrounds/cloud_ruins_ds03.tscn" id="8_background"]
+[ext_resource type="Script" path="res://scripts/level02_block.gd" id="9_block"]
+[ext_resource type="PackedScene" path="res://scenes/rune_stone_field.tscn" id="10_rune"]
+[ext_resource type="PackedScene" path="res://scenes/polarity_link_visual.tscn" id="11_link_visual"]
+[ext_resource type="Script" path="res://scripts/bay_rune_link.gd" id="12_link"]
+[ext_resource type="Texture2D" path="res://assets/bridge_stone_v1/generated/l2_ground_1792x40.png" id="14_ground"]
+[ext_resource type="Texture2D" path="res://assets/level02_conductive_stone/conductive_sill_160x60.png" id="17_wall"]
+[ext_resource type="Texture2D" path="res://assets/level02_conductive_stone/conductive_lip_40x12.png" id="18_lip"]
+[ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_broken.tscn" id="19_col_broken"]
+[ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_base.tscn" id="20_col_base"]
+[ext_resource type="Script" path="res://scripts/terrain_strip.gd" id="21_strip"]
+[ext_resource type="PackedScene" path="res://scenes/narrative/guide_echo.tscn" id="22_guide"]
+[ext_resource type="Texture2D" path="res://assets/level02_conductive_stone/conductive_roof_256x32.png" id="23_roof"]
+[ext_resource type="Texture2D" path="res://assets/level02_conductive_stone/return_platform_48x12.png" id="24_return"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ground"]
+size = Vector2(1792, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_exit"]
+size = Vector2(36, 76)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_checkpoint"]
+size = Vector2(40, 72)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_roof"]
+size = Vector2(256, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_return"]
+size = Vector2(48, 12)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(160, 60)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lip"]
+size = Vector2(40, 12)
+
+[node name="Level02" type="Node2D"]
+process_mode = 3
+process_physics_priority = -10
+script = ExtResource("1_level")
+core_min_x = 16.0
+core_max_x = 1776.0
+core_kill_y = 400.0
+
+[node name="Background" type="CanvasLayer" parent="."]
+process_mode = 1
+layer = -10
+
+[node name="CloudRuinsDS03" parent="Background" instance=ExtResource("8_background")]
+
+[node name="GroundVisual" type="Node2D" parent="."]
+
+[node name="Deck" type="Sprite2D" parent="GroundVisual"]
+position = Vector2(0, 320)
+texture_filter = 1
+centered = false
+texture = ExtResource("14_ground")
+
+[node name="TerrainTop" type="Node2D" parent="."]
+visible = false
+script = ExtResource("21_strip")
+
+[node name="TerrainFill" type="Node2D" parent="."]
+visible = false
+script = ExtResource("21_strip")
+
+[node name="TerrainBody" type="StaticBody2D" parent="."]
+position = Vector2(896, 340)
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TerrainBody"]
+shape = SubResource("RectangleShape2D_ground")
+
+[node name="ConductiveRoof" type="StaticBody2D" parent="."]
+position = Vector2(464, 268)
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ConductiveRoof"]
+position = Vector2(128, 16)
+shape = SubResource("RectangleShape2D_roof")
+
+[node name="Visual" type="Sprite2D" parent="ConductiveRoof"]
+texture_filter = 1
+centered = false
+texture = ExtResource("23_roof")
+
+[node name="LinkedWall" type="StaticBody2D" parent="."]
+position = Vector2(1080, 240)
+script = ExtResource("9_block")
+legacy_art_enabled = false
+block_size = Vector2(160, 60)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LinkedWall"]
+position = Vector2(80, 30)
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="Visual" type="Sprite2D" parent="LinkedWall"]
+texture_filter = 1
+centered = false
+texture = ExtResource("17_wall")
+
+[node name="LinkedLip" type="StaticBody2D" parent="."]
+position = Vector2(1040, 240)
+script = ExtResource("9_block")
+legacy_art_enabled = false
+block_size = Vector2(40, 12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LinkedLip"]
+position = Vector2(20, 6)
+shape = SubResource("RectangleShape2D_lip")
+
+[node name="Visual" type="Sprite2D" parent="LinkedLip"]
+texture_filter = 1
+centered = false
+texture = ExtResource("18_lip")
+
+[node name="ReturnPlatform" type="StaticBody2D" parent="."]
+position = Vector2(1264, 280)
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ReturnPlatform"]
+position = Vector2(24, 6)
+shape = SubResource("RectangleShape2D_return")
+
+[node name="Visual" type="Sprite2D" parent="ReturnPlatform"]
+texture_filter = 1
+centered = false
+texture = ExtResource("24_return")
+
+[node name="Bays" type="Node2D" parent="."]
+process_mode = 1
+
+[node name="StartBay" parent="Bays" instance=ExtResource("4_bay")]
+position = Vector2(128, 304)
+bay_name = "起始仓"
+start_locked = true
+
+[node name="RelayBay" parent="Bays" instance=ExtResource("4_bay")]
+position = Vector2(352, 304)
+bay_name = "中继仓"
+start_locked = false
+
+[node name="LinkedBay" parent="Bays" instance=ExtResource("4_bay")]
+position = Vector2(960, 304)
+bay_name = "联动仓"
+start_locked = false
+
+[node name="TargetBay" parent="Bays" instance=ExtResource("4_bay")]
+position = Vector2(1568, 304)
+bay_name = "最终仓"
+start_locked = false
+
+[node name="Core" parent="." instance=ExtResource("5_core")]
+process_mode = 1
+position = Vector2(128, 312)
+
+[node name="PlayerSpawn" type="Marker2D" parent="."]
+position = Vector2(36, 320)
+
+[node name="StartStele" parent="." instance=ExtResource("22_guide")]
+process_mode = 1
+position = Vector2(80, 320)
+player_path = NodePath("../Player")
+near_range = 56.0
+pages = PackedStringArray("E 释放星核：核会取你的反相。\nQ 只切玩家，不切核。", "同相推开、异相吸引。\n先把星核送入中继仓。", "特殊石构是完整实体：人、核都被挡住，\n只有玩家—核护符力能穿过。\n核仍走下方 20px 通道。", "E 存入联动仓会记录核的相性，\n脉冲后点亮符石；取核记录保持。\n失败回最近稳定仓，R 整关重来。")
+
+[node name="Player" parent="." instance=ExtResource("3_player")]
+process_mode = 1
+position = Vector2(36, 320)
+allow_self_reset = false
+show_head_polarity = false
+world_left = 6.0
+world_right = 1786.0
+kill_y = 400.0
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0
+limit_left = 0
+limit_top = 0
+limit_right = 1792
+limit_bottom = 360
+
+[node name="RuneField" parent="." instance=ExtResource("10_rune")]
+position = Vector2(1040, 150)
+initial_active = false
+initial_positive = true
+auto_hint_in_range = false
+
+[node name="PolarityLink" parent="." instance=ExtResource("11_link_visual")]
+source_path = NodePath("../Bays/LinkedBay")
+target_path = NodePath("../RuneField")
+link_arc_height = -16.0
+
+[node name="LinkController" type="Node2D" parent="."]
+script = ExtResource("12_link")
+bay_path = NodePath("../Bays/LinkedBay")
+field_path = NodePath("../RuneField")
+link_visual_path = NodePath("../PolarityLink")
+
+[node name="RelayCheckpoint" type="Area2D" parent="."]
+position = Vector2(400, 320)
+z_index = -1
+script = ExtResource("6_checkpoint")
+trigger_size = Vector2(40, 72)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RelayCheckpoint"]
+position = Vector2(0, -36)
+shape = SubResource("RectangleShape2D_checkpoint")
+
+[node name="LinkedCheckpoint" type="Area2D" parent="."]
+position = Vector2(880, 320)
+z_index = -1
+script = ExtResource("6_checkpoint")
+trigger_size = Vector2(40, 72)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LinkedCheckpoint"]
+position = Vector2(0, -36)
+shape = SubResource("RectangleShape2D_checkpoint")
+
+[node name="Exit" type="Area2D" parent="."]
+z_index = 3
+position = Vector2(1680, 320)
+script = ExtResource("7_exit")
+trigger_size = Vector2(36, 76)
+label_text = ""
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Exit"]
+position = Vector2(0, -38)
+shape = SubResource("RectangleShape2D_exit")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+process_mode = 3
+layer = 10
+script = ExtResource("2_hud")
+
+[node name="BrokenColumn" parent="." instance=ExtResource("19_col_broken")]
+position = Vector2(800, 320)
+z_index = -1
+
+[node name="BaseColumn" parent="." instance=ExtResource("20_col_base")]
+position = Vector2(1320, 320)
+z_index = -1
+
+

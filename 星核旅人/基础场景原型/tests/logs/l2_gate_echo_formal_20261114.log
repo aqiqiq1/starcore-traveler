@@ -1,0 +1,51 @@
+PASS L2 exit opts into v2 gate FX
+PASS L2 gate FX is 8-frame
+PASS L2 gate sheet is 608x100
+PASS canonical closed state is really closed
+PASS closed state holds one core in the linked bay
+PASS closed state keeps record/field
+PASS closed state has exactly one core
+PASS closed state hides gate FX
+PASS closed HUD names the linked bay
+PASS open state satisfies the real gate contract
+PASS open state holds one core in the final bay
+PASS open state keeps linked record/field
+PASS open state has exactly one core
+PASS open state shows the gate FX
+PASS gate FX advances at 8 fps
+PASS real Esc opens the formal pause menu
+PASS real Esc freezes the gate FX
+PASS real Esc resumes
+PASS resume advances the gate FX
+PASS gate camera unchanged
+PASS real E takes the final-bay core out
+PASS E revokes gate readiness
+PASS E keeps linked record/field
+PASS E keeps exactly one core
+PASS E hides gate FX
+PASS gate can be reopened for R
+PASS real R closes the gate
+PASS real R hides gate FX
+PASS real R restores the original open exit frame
+PASS R keeps exactly one core
+PASS R leaves the formal GuideEcho usable
+PASS real ready exit completes the level
+PASS LevelExit completed state is preserved
+PASS completed gate uses original completed texture
+PASS formal completion page appears
+PASS completion hides gate FX
+PASS L2 GuideEcho has four pages
+PASS L2 page 3 explains conductive stone
+PASS L2 has no TutorialStele group
+PASS L2 has one GuideEcho
+PASS L2 GuideEcho shows F prompt
+PASS real F opens L2 GuideEcho page 1
+PASS real Esc suspends L2 GuideEcho
+PASS real Esc clears the page
+PASS resume unsuspends L2 GuideEcho
+PASS F can reopen after pause
+PASS real R clears L2 GuideEcho
+PASS R leaves L2 GuideEcho usable
+PASS R does not duplicate L2 GuideEcho
+PASS L2 GuideEcho leaves range
+PASS L2 GuideEcho fades out

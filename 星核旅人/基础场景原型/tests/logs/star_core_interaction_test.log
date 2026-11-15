@@ -1,0 +1,235 @@
+Star Core Traveler - star-core bay interaction test
+Godot 4.7.2-stable (official)  display=headless  physics=60
+
+== ENVIRONMENT / SCENE / INPUT ==
+[PASS] logic viewport is 640x360
+[PASS] default main scene remains main.tscn
+[PASS] F2 remains bound
+[PASS] F4 is bound
+[PASS] E is bound
+[PASS] Q remains bound
+[PASS] main scene instantiates InteractionRoom
+[PASS] room has a scene-authored StartBay
+[PASS] room has a scene-authored TargetBay
+[PASS] room has a scene-authored floor collision
+[PASS] room has an editable PlayerSpawn marker
+[PASS] start bay begins LOCKED
+[PASS] target bay begins OPEN/EMPTY
+[PASS] moving core begins disabled
+[PASS] room owns exactly one moving core | 1
+[PASS] basic HUD hint advertises F4 | Q: POLARITY   R: RESET   ESC: PAUSE   F3: DEBUG   F2: ANCHOR   F4: CORE BAY   F7: RECORD TEST
+[PASS] interaction range is the approved ~100 px trial, not 190 | 100.0
+[PASS] near-follow stable zone is around 30..45 px | 40.0
+[PASS] full-strength band starts before the outer edge | 64.0
+[PASS] outer fade is a short zero-force edge band | 18.0
+
+== F4 ENTRY / EXIT / F2-F4 CLEANUP ==
+[PASS] F4 enters the interaction room
+[PASS] interaction room controller is active and visible
+[PASS] player spawns at the interaction-room marker | (48.0, 320.0)
+[PASS] interaction HUD panels are visible
+[PASS] anchor/state panels are hidden in interaction mode
+[PASS] base-room collision is disabled in interaction
+[PASS] anchor-room collision stays disabled
+[PASS] interaction floor collision is enabled
+[PASS] HUD shows the player polarity line | PLAYER GOLD +   CORE LOCKED
+[PASS] HUD shows the core polarity/state line | PLAYER GOLD +   CORE LOCKED
+[PASS] F3 enables interaction range/line debug
+[PASS] F3 disables interaction debug
+[PASS] F4 exits to the basic room
+[PASS] interaction room deactivates on exit
+[PASS] basic collision returns on exit
+[PASS] HUD returns to the basic layout
+[PASS] exit clears any pending external force
+[PASS] F2 enters the anchor room
+[PASS] anchor collision is active
+[PASS] interaction floor stays off in anchor room
+[PASS] F4 from anchor switches to interaction
+[PASS] anchor controller is deactivated
+[PASS] anchor collision is disabled after F4
+[PASS] interaction floor is enabled after F4
+[PASS] anchor force is cleared across rooms
+[PASS] interaction spawn is restored after cross-room switch
+[PASS] F2 from interaction enters anchor and deactivates core room
+[PASS] core-room collision and core are disabled
+[PASS] F2 returns to the basic room
+[PASS] interaction room re-enters for the interaction tests
+
+== FULL LOOP: HETEROPOLAR PULL -> MANUAL E STORE -> RELEASE -> RETURN ==
+[PASS] loop starts with GOLD player polarity
+[PASS] start bay is locked after reset
+[PASS] target bay is empty/open after reset
+[PASS] standing near the start bay shows an E release preview | E: RELEASE CYAN - (START)
+[PASS] GOLD player previews a CYAN - snapshot | E: RELEASE CYAN - (START)
+[PASS] E starts the opening sequence
+[PASS] E snapshots opposite polarity (CYAN -)
+[PASS] GOLD player opening toast announces CYAN - | RELEASE SNAPSHOT: CYAN -
+[PASS] start bay lid is opening
+[PASS] core is not released until the lid is fully open
+[PASS] core becomes active after the lid opens
+[PASS] released core keeps the snapshot CYAN -
+[PASS] core exits to the safe start-bay side point | (160.0, 312.0)
+[PASS] start bay is empty/open after release
+[PASS] release does not duplicate the core
+[PASS] released core starts at rest | 0.000
+[PASS] GOLD player / CYAN core reports ATTRACT
+[PASS] core is pulled toward the player from its left side | 158.3 -> 142.7
+[PASS] core remains active during the walk
+[PASS] heteropolar follow reaches the far half of the room | (516.9534, 311.9253)
+[PASS] walking to the target without E never auto-stores the core
+[PASS] no success before the player stores the core
+[PASS] three-party proximity shows E: STORE CORE (TARGET) | E: STORE CORE (TARGET)
+[PASS] core is inside the target's small seat zone
+[PASS] player stays inside the target bay interaction range | player_x=555.1
+  near-follow at target: player_x=555.1 core_x=517.0 gap=39.8 status=NEAR / STABLE
+[PASS] E selects the target bay
+[PASS] manual E starts the target closing animation
+[PASS] manual E brakes/hides the core
+[PASS] target owns the stored purple core
+[PASS] manual target store shows the success hint
+[PASS] store toast names the manual action | CORE STORED - LID CLOSING
+[PASS] success does not stop room physics
+[PASS] target bay reaches LOCKED after manual store
+[PASS] target lid is fully closed
+[PASS] manual store does not duplicate the core
+[PASS] near the locked target E previews re-release | E: RELEASE CYAN - (TARGET)
+[PASS] target re-release snapshots CYAN - for GOLD player
+[PASS] core re-releases from the target after opening
+[PASS] re-released core stays CYAN -
+[PASS] player is on the right of the target at re-release | player_x=554.9
+[PASS] target release uses the away-from-player side point | (480.0, 312.0)
+[PASS] target bay is empty/open after re-release
+[PASS] core follows the player back across the room
+[PASS] heteropolar return brings the core back to the start half | (117.3799, 312.0)
+[PASS] return position shows E: STORE CORE (START) | E: STORE CORE (START)
+[PASS] player stays inside the start bay interaction range | player_x=80.0
+[PASS] returning core is inside the start bay seat
+[PASS] target remains empty/open after return
+  near-follow at start: player_x=80.0 core_x=117.4 gap=39.1 status=NEAR / STABLE
+[PASS] E selects the start bay for return storage
+[PASS] return storage starts the start lid closing
+[PASS] return storage brakes the core
+[PASS] return storage still keeps exactly one core
+[PASS] start bay locks after return store
+[PASS] room stays live after the full return loop
+
+== SAME-SIGN PUSH / RUN BOUNDARY ==
+[PASS] core active for same-sign push
+[PASS] Q makes player and core CYAN - for same-sign push
+[PASS] same-sign physical push moves the core right | 155.5 -> 254.2
+[PASS] same-sign state is readable during physical push | REPEL
+[PASS] same-sign push keeps one core
+[PASS] run test never raises the core beyond its 120 px/s cap
+  run boundary: player_x=316.0 core_x=224.5 gap=91.5 status=ATTRACT
+[PASS] run can leave the ~100 px field | gap=375.3
+[PASS] outside the range is reported as OUT OF RANGE | OUT OF RANGE
+[PASS] out-of-range core does not resume chasing after the run | x 258.7 -> 258.7
+[PASS] out-of-range core coasts to rest | vx=0.0
+  run beyond range: player_x=634.0 core_x=258.7 gap=375.3 status=OUT OF RANGE
+
+== SECOND INITIAL POLARITY / RAPID E / HOLD ==
+[PASS] second scenario starts with CYAN player
+[PASS] CYAN player previews a GOLD + snapshot | E: RELEASE GOLD + (START)
+[PASS] CYAN player opening toast announces GOLD + | RELEASE SNAPSHOT: GOLD +
+[PASS] Q during opening changes the player to GOLD
+[PASS] Q during opening keeps the GOLD + snapshot
+[PASS] rapid E keeps the single opening sequence
+[PASS] rapid E does not change the GOLD + snapshot
+[PASS] second-polarity release completes
+[PASS] initial CYAN player releases a GOLD + core
+[PASS] rapid E keeps one core
+[PASS] fresh CYAN run releases an active GOLD core
+[PASS] GOLD core is pulled along by the CYAN player | 158.3 -> 216.5
+[PASS] fresh CYAN follow stays in field range | NEAR / STABLE
+[PASS] fresh CYAN follow keeps one core
+[PASS] held E does not duplicate the core
+[PASS] held E still performs exactly one release
+[PASS] start bay is open after held E release
+
+== PAUSE MID-LID / R FULL RESET ==
+[PASS] lid is mid-animation before pause | 0.25
+[PASS] Esc pauses during the lid animation
+[PASS] pause freezes the lid progress
+[PASS] pause freezes the player position
+[PASS] pause freezes the player velocity
+[PASS] pause prevents the pending release
+[PASS] Esc resumes the room
+[PASS] pending release finishes after resume
+[PASS] R returns to the interaction spawn | (48.0, 320.0)
+[PASS] R restores GOLD player polarity
+[PASS] R increments the reset count
+[PASS] R restores start LOCKED and target OPEN
+[PASS] R hides the moving core
+[PASS] R clears the success hint
+[PASS] R does not duplicate the core
+
+== MANUAL E STORE / THREE-PARTY PROXIMITY / FOCUS / CORE OUT ==
+[PASS] core inside the small bay seat is store-eligible
+[PASS] core outside the small bay seat is not eligible
+[PASS] a loaded bay is not a store target
+[PASS] empty target without a core names the unavailable E action | E: NO CORE TO STORE (TARGET)
+[PASS] E at an empty bay without a core does not store
+[PASS] invalid E explains itself in the toast | E IGNORED - NO CORE TO STORE (TARGET)
+[PASS] core active for manual store checks
+[PASS] core just outside the seat is not automatically stored
+[PASS] out-of-seat E preview names the target and reason | E: STORE UNAVAILABLE (TARGET) - CORE NOT IN BAY SEAT
+[PASS] E outside the seat does not store
+[PASS] out-of-seat E toast explains the refusal | E IGNORED - CORE NOT IN BAY SEAT (TARGET)
+[PASS] core in the seat but player far from the bay cannot store
+[PASS] three-party proximity shows manual E: STORE | E: STORE CORE (TARGET)
+[PASS] high-speed core is accepted by manual E (no speed gate)
+[PASS] manual E brakes/hides the core before closing
+[PASS] target owns the core after manual E
+[PASS] focus loss clears Shift and double-tap intent
+[PASS] core active before out-of-bounds test
+[PASS] out-of-bounds core is disabled
+[PASS] out-of-bounds restores start LOCKED / target OPEN
+[PASS] out-of-bounds restores the player spawn
+[PASS] out-of-bounds clears success
+[PASS] out-of-bounds keeps one core
+
+== FIELD SIGN / RANGE / NEAR / OCCLUSION / TWO-WAY ==
+[PASS] opposite signs report ATTRACT
+[PASS] opposite signs pull the core toward the player
+[PASS] opposite signs pull the player toward the core
+[PASS] same signs report REPEL
+[PASS] same signs push the core away from the player
+[PASS] same signs push the player away from the core
+[PASS] core acceleration is bounded by its base strength
+[PASS] 40..60 px walking trail remains inside the attract field | distance=42.6
+[PASS] walking-trail force still points at the player
+[PASS] inside the near-follow stable zone is NEAR/STABLE | NEAR / STABLE d=30.8
+[PASS] inside the near-follow stable zone force is zero
+[PASS] one pixel inside the ~100 px range still has force | d=99.0 force=5.53
+[PASS] force cuts to zero exactly at the ~100 px range
+[PASS] outside the range is OUT OF RANGE
+[PASS] out-of-range force is zero
+[PASS] close range is NEAR/STABLE
+[PASS] near force is neutral
+[PASS] zero distance has no NaN
+[PASS] zero distance stays finite
+[PASS] solid terrain blocks the centre line
+[PASS] blocked force is zero
+
+== CORE SPEED / GROUND DRAG / NO BODY PUSH ==
+[PASS] core active for physics-limit checks
+[PASS] core horizontal speed is capped at 120 | vx=120.0
+[PASS] ground drag stops a free core | vx=0.0
+[PASS] player body cannot push the core | x 300.000 -> 300.000
+[PASS] core is still active after body overlap
+[PASS] overlapping test is outside the force band | NEAR / STABLE
+[PASS] F2 from an active core deactivates the interaction room
+[PASS] active core is disabled on cross-room switch
+[PASS] external force is cleared on cross-room switch
+[PASS] F4 return resets start LOCKED / target OPEN
+[PASS] returning keeps one hidden core
+
+== STANDALONE SCENE ENTRY ==
+[PASS] standalone wrapper activates its room
+[PASS] standalone player starts at the room spawn | (48.0, 320.0)
+[PASS] standalone room starts with LOCKED start / OPEN target
+[PASS] standalone HUD starts in interaction mode
+[PASS] standalone HUD shows player/core state
+[PASS] standalone room owns one moving core
+
+RESULT pass=207 fail=0 skipped=0

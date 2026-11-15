@@ -1,0 +1,108 @@
+=== Polarity Golem AI / slam - headless smoke ===
+Godot 4.7.2-stable (official)  display=headless
+
+--- 1. REAL LOAD / TUNING ---
+[PASS] experiment scene, player, golem and HUD load
+  AI tuning: { "patrol_left": 240.0, "patrol_right": 520.0, "pursuit_left": 200.0, "pursuit_right": 536.0, "patrol_speed": 60.0, "pursue_speed": 100.0, "alert_range": 120.0, "alert_release_range": 148.0, "stop_distance": 34.0, "attack_trigger_distance": 42.0, "windup_time": 0.28, "strike_time": 0.12, "recover_time": 0.3, "gap_time": 0.15, "windup_frames": 6, "strike_frames": 2, "strike_zone_forward": 26.0, "strike_zone_size": (26.0, 20.0), "post_reassembly_idle": 0.4 }
+[PASS] golem starts ACTIVE on patrol  (ACTIVE / PATROL)
+[PASS] bounded patrol strip is 240..520  ((240.0, 520.0))
+[PASS] patrol 60 px/s, approach 100 px/s  (60 / 100)
+[PASS] alert range is 120 px  (120)
+[PASS] slam timing is 0.28 / 0.12 / 0.30 / 0.15 s  (0.28/0.12/0.30/0.15)
+[PASS] live box is the forward fist area (26 px ahead, 26x20), not full screen  ((26.0, 20.0))
+[PASS] golem uses a real multi-frame strip at load  (10)
+[PASS] player slam reaction is 0.15 s / 0.6 s protection / 160 px/s  (0.15 / 0.60 / 160)
+[PASS] idle sheet is 8x90x64 and attack sheet is 11x90x64  ((720.0, 64.0) / (990.0, 64.0))
+[PASS] player has no HP pool: a slam only knocks back  (has get_hp=false)
+[PASS] HUD keeps native 12 px text  (12)
+
+--- 2. REAL PATROL / ALERT APPROACH / FIRST SLAM ---
+[PASS] far player: golem walks about 60 px in 1 s instead of idling  (x 423.0 -> 483.0)
+[PASS] patrol uses the authentic walk sheet  (res://assets/experiments/polarity_golem/enemy/orange/golem_1_walk.png)
+[PASS] player inside ~120 px triggers a real approach
+[PASS] facing only mirrors the Sprite, not the head readout  (sprite flip=true head scale=(1.0, 1.0))
+[PASS] standing in front gets a real slam  (frame=63)
+[PASS] first slam lands in the ~1 s range (approach + 0.28 s warning)  (1.05 s)
+[PASS] the first slam applies one hit  (1)
+[PASS] strike code is HIT  (HIT)
+[PASS] hit starts the 0.6 s protection window  (0.60 s)
+[PASS] the short 0.15 s hit reaction is active right after contact  (0.08 s)
+[PASS] the reaction ends within about 0.15 s  (0.00 s)
+[PASS] slam visibly pushes the player away by a short distance  (x 300.0 -> 270.2 (29.8 px))
+[PASS] knockback stays on the real floor  (y=288.0)
+[PASS] the 0.15 s reaction has already ended  (0.00 s)
+[PASS] the same slam cannot knock the player a second time  (1)
+
+--- 3. ONE KNOCKBACK PER SLAM / 0.6 s PROTECTION ---
+[PASS] setup got one natural slam hit  (1)
+[PASS] strike window does not add a second hit  (1)
+[PASS] new contact is rejected while protection is active
+[PASS] rejected protection contact adds no hit  (1)
+[PASS] protection is still active about one third of a second after contact  (0.23 s)
+[PASS] protection expires and a later contact is accepted  (count=2)
+[PASS] knockback stays visible even while the player holds toward the enemy  (x 305.3 -> 286.7)
+  natural hit x=300.0; protection-gated manual contacts verified
+
+--- 4a. REAL J SAME PHASE CANCELS THE WINDUP ---
+[PASS] golem reaches the arm-raise warning  (举臂预警)
+[PASS] same-phase J removes 1 HP during the warning  (hp=2)
+[PASS] the hurt knockback moves the golem before the AI resumes  (x 380.0 -> 410.0)
+[PASS] the slam is interrupted (HURT / no ATTACK phase)  (HURT / HURT)
+[PASS] cancelled slam never lands a delayed hit in its original window  (0)
+[PASS] no strike was resolved by the interrupted slam
+
+--- 4b. OPPOSITE PULL = NO DAMAGE, SLAM CONTINUES ---
+[PASS] Q really switches the player to 澜相 -  (false)
+[PASS] golem is in the same windup before the opposite J  (举臂预警)
+[PASS] opposite J resolves as a zero-damage close pull  (PULL_ALREADY_CLOSE)
+[PASS] opposite pull changes no HP  (hp=3)
+[PASS] the existing slam still reaches its strike segment
+[PASS] the slam still hits the player after the pull  (1)
+[PASS] the landed slam interrupts the in-flight player swing
+[PASS] the interrupted swing leaves no delayed HP damage  (hp=3)
+
+--- 5. DODGE / WALL ---
+[PASS] windup before the behind-dodge
+[PASS] stepping behind the locked slam avoids the fist  (0)
+[PASS] windup before the jump-dodge
+[PASS] jumping over the downward fist avoids it  (feet y=246.8)
+[PASS] a wall between the fist and the player blocks the slam  (BLOCKED)
+[PASS] blocked slam applies no knockback  (0)
+[PASS] wall-adjacent slam still knocks back  (1)
+[PASS] player knockback is stopped by the real low wall, never teleported through  (x=538.0 (wall left 544, body half 6))
+[PASS] real low wall blocks alert/approach across it  (PATROL)
+[PASS] no slam through the real low wall  (0)
+
+--- 6. PAUSE FREEZES AI / WINDUP / PROTECTION ---
+[PASS] Esc pauses the experiment
+[PASS] patrol is frozen while paused  (x 434.00 -> 434.00)
+[PASS] Esc resumes the experiment
+[PASS] windup for the pause check
+[PASS] windup timer and attack frame freeze while paused  (0.050 / 1)
+[PASS] pause setup got one natural hit  (1)
+[PASS] 0.6 s protection countdown freezes while paused  (0.583 -> 0.583)
+[PASS] paused player knockback does not continue  ((297.6805, 288.0))
+
+--- 7. SCATTER / REASSEMBLE / PAUSE / R (shortened wait) ---
+  TEST SETUP: scatter wait shortened to 0.5 s (production default 8.0 s)
+[PASS] windup before the killing same-phase J
+[PASS] same-phase J scatters the golem at 0 HP  (SCATTERING hp=0)
+[PASS] die sequence reaches the rubble wait  (RUBBLE)
+[PASS] RUBBLE holds authentic die frame 11 visibly  (frame=11 res://assets/experiments/polarity_golem/enemy/orange/golem_1_die.png)
+[PASS] shortened wait is active  (0.50)
+[PASS] no patrol/pursue/attack while scattered  (RUBBLE)
+[PASS] reassembly countdown freezes while paused  (0.483 -> 0.483)
+[PASS] R while paused resumes the experiment
+[PASS] R restores ACTIVE / full HP / initial patrol  (ACTIVE hp=3 PATROL)
+[PASS] R restores the golem spawn (AI resumes patrol from there)  ((425.0, 288.0))
+[PASS] R clears protection and hit count  (protect=0.00 count=0)
+[PASS] R restores the player spawn  ((80.0, 288.0))
+[PASS] windup before the reassembly test kill
+[PASS] reassembly returns to ACTIVE  (ACTIVE)
+[PASS] reassembly happens at the scatter spot  (394.9 vs 394.9)
+[PASS] reassembly restores 3 HP  (hp=3)
+[PASS] revive does not hit with zero warning in the first 0.3 s  (0)
+[PASS] the first post-revive slam still has the full windup warning  (0.80 s after ACTIVE)
+
+TEST_SUMMARY pass=84 fail=0
+RESULT: PASS

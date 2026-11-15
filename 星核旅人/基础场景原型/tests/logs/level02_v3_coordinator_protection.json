@@ -1,0 +1,14 @@
+{
+  "baseline_checked": 142,
+  "changed_allowed": [
+    "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\level02_block.gd",
+    "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\level_02.tscn"
+  ],
+  "unexpected": [],
+  "missing": [],
+  "ground_nodes_exact": {
+    "TerrainTop": true,
+    "TerrainFill": true,
+    "TerrainBody": true
+  }
+}

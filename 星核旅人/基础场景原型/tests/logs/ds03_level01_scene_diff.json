@@ -1,0 +1,14 @@
+{
+  "removed": [
+    "-[gd_scene load_steps=26 format=3]"
+  ],
+  "added": [
+    "+[gd_scene load_steps=27 format=3]",
+    "+[ext_resource type=\"PackedScene\" path=\"res://scenes/backgrounds/cloud_ruins_ds03.tscn\" id=\"17_ds03\"]",
+    "+visible = false",
+    "+",
+    "+[node name=\"CloudRuinsDS03\" parent=\"Background\" instance=ExtResource(\"17_ds03\")]"
+  ],
+  "world_related_changes": [],
+  "only_background_branch": true
+}

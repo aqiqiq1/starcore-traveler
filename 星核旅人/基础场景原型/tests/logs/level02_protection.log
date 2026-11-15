@@ -1,0 +1,8 @@
+Level 02 shared-file protection check
+Baseline: C:\Users\aqiqiqi\AppData\Local\Temp\opencode\level02-greybox-44b74ba93d654b0b801ee3993608cebc\protected.json
+Checked: 138 existing scene/script/asset files
+Changed: 0
+Missing: 0
+Result: PASS
+
+The baseline covers existing scenes, scripts and assets. New level_02 scene/scripts/tests/screenshots/logs and the docs/LEVEL02_BRIEF.md delivery note are additions; the brief note is allowed by the task and does not remove constraints. No existing PNG or source image was overwritten.

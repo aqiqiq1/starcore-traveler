@@ -1,0 +1,73 @@
+Star Core Traveler - near-follow test (100 px trial)
+Godot 4.7.2-stable (official)  physics=60
+
+== DEFAULT FIELD ==
+[PASS] trial range is about 100 px | 100.0
+[PASS] stable inner zone is about 30..45 px | 40.0
+[PASS] full-strength band starts before the outer edge | 64.0
+[PASS] outer fade is present | 18.0
+[PASS] near stable zone has zero force, not a position snap
+[PASS] zero distance stays finite and safe
+
+== GOLD -> CYAN WALK FOLLOW / TARGET STORE / RETURN ==
+[PASS] GOLD player E releases an active CYAN core without Q
+  walk right: ticks=202 trail(min/mean/max)=38.2/42.6/51.9 out=0 core_max_v=120
+[PASS] normal walk produced enough trailing samples
+[PASS] normal walk never leaves the 100 px field
+[PASS] steady walk trailing minimum is in the 30..60 px band | min=38.2
+[PASS] steady walk trailing mean is in the 30..60 px band | mean=42.6
+[PASS] steady walk trailing maximum stays at or below 60 px | max=51.9
+[PASS] core never exceeds its 120 px/s cap | 120.0
+[PASS] walking without E never auto-stores or auto-succeeds
+  stop right: gap_start=37.2 gap_end=27.5 core_v=0.0 jitter=0.00 player_drift=1.87 core_drift=12.50
+[PASS] walk stop settles at a readable near distance | gap=27.5
+[PASS] core is at rest after stopping | vx=0.0
+[PASS] tail distance does not jitter | 0.00 px
+[PASS] player does not glide after releasing the walk key | drift=1.87 px
+[PASS] both bodies are stationary in the stop tail | player=0.00 core=0.00 px
+[PASS] core settles in the target seat with the player in bay range
+[PASS] three-party E store becomes available | E: STORE CORE (TARGET)
+[PASS] E manually stores the core in the target
+[PASS] target store reports success
+[PASS] target bay finishes closing
+[PASS] target re-release creates a core on the away-from-player side
+[PASS] re-release uses the left safe point because the player is on the right | (480.0, 312.0)
+[PASS] released core starts inside the 100 px field | 74.7
+  walk left: ticks=191 trail(min/mean/max)=38.2/41.9/46.5 out=0
+[PASS] return walk never leaves the 100 px field
+[PASS] return steady trailing minimum is in the 30..60 px band | min=38.2
+[PASS] return steady trailing mean is in the 30..60 px band | mean=41.9
+[PASS] return steady trailing maximum stays at or below 60 px | max=46.5
+  stop left: gap_start=38.4 gap_end=34.0 core_v=0.0 jitter=0.00 player_drift=-1.88 core_drift=-6.60
+[PASS] return stop settles at a readable near distance | gap=34.0
+[PASS] return stop tail does not jitter
+[PASS] return player does not glide after stopping | drift=-1.88 px
+[PASS] return stop tail keeps both bodies stationary | player=0.00 core=0.00 px
+[PASS] returning core settles in the start seat
+[PASS] return E store becomes available | E: STORE CORE (START)
+[PASS] E manually stores the returning core in the start bay
+[PASS] start bay finishes closing
+
+== STOP / RESUME FOLLOW ==
+[PASS] core active before the stop/resume check
+[PASS] resume test stop settles near the player | gap=33.1
+[PASS] core is at rest before resuming | vx=0.0
+[PASS] core resumes following after the player walks again | 272.1 -> 363.2
+[PASS] resumed follow stays in range | 37.9
+[PASS] resumed follow is still powered | NEAR / STABLE
+  stop/resume: stop_gap=33.1 core_x 272.1 -> 363.2 gap=37.9
+
+== SAME-SIGN REPEL / RUN BOUNDARY / NO OUT-OF-RANGE CHASE ==
+[PASS] same-sign 40..60 px field is REPEL | REPEL
+[PASS] same-sign force pushes the core away
+[PASS] same-sign force pushes the player away
+[PASS] core stays active during run
+[PASS] run does not raise the core above 120 px/s
+  run 90 frames: gap=91.8 status=ATTRACT
+[PASS] run can leave the 100 px field | gap=375.4
+[PASS] run beyond the field reports OUT OF RANGE | OUT OF RANGE
+[PASS] out-of-range core does not resume chasing | x 258.7 -> 258.7
+[PASS] out-of-range core coasts to rest | vx=0.0
+  run 210 frames: gap=375.4 status=OUT OF RANGE
+
+RESULT pass=54 fail=0 skipped=0

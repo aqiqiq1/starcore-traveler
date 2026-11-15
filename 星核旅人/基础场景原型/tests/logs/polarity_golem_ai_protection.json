@@ -1,0 +1,26 @@
+{
+  "round": "polarity_golem_ai_enemy_interference",
+  "generated_at": "2026-11-12T02:28:02",
+  "protected_count": 34,
+  "unchanged_count": 34,
+  "mismatch_count": 0,
+  "protected_scope": "project.godot; scenes/player.tscn; scenes/level_01.tscn; scenes/level_02.tscn; scripts/player.gd; font + license; 12 experiment copy PNGs; existing 3 screenshots; 14 read-only source PNGs",
+  "change_whitelist": [
+    "scripts/experiments/polarity_golem_enemy.gd",
+    "scripts/experiments/polarity_golem_player.gd",
+    "scripts/experiments/polarity_golem_experiment.gd",
+    "docs/ENEMY_POLARITY_PROTOTYPE.md",
+    "tests/test_polarity_golem_ai.gd",
+    "tests/test_polarity_golem_ai.tscn",
+    "tests/capture_polarity_golem_ai.gd",
+    "tests/capture_polarity_golem_ai.tscn",
+    "tests/logs/polarity_golem_ai_smoke.log",
+    "tests/logs/polarity_golem_ai_stdout.log",
+    "tests/logs/polarity_golem_ai_capture_stdout.log",
+    "tests/logs/polarity_golem_ai_protection.json",
+    "screenshots/polarity_golem_ai_windup.png",
+    "screenshots/polarity_golem_ai_hit.png",
+    "(auto-generated .uid/.import for new scripts/images; not part of the protected baseline)"
+  ],
+  "mismatches": []
+}

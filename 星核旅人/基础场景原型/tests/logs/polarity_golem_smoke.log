@@ -1,0 +1,130 @@
+=== Polarity Golem Experiment - headless smoke ===
+Godot 4.7.2-stable (official)  display=headless
+
+--- 1. PARSE / LOAD ---
+[PASS] experiment scene instantiates
+[PASS] player, golem and HUD resolve
+[PASS] player uses the independent attack subclass, not a copied player scene  (res://scripts/experiments/polarity_golem_player.gd)
+[PASS] golem uses the experiment enemy script  (res://scripts/experiments/polarity_golem_enemy.gd)
+[PASS] R is owned by the experiment root, not the shared player
+[PASS] HUD/enemy reuse the existing tutorial font  (res://assets/fonts/tutorial_zh.ttf)
+[PASS] player spawns at (80, 288)  ((80.0, 288.0))
+[PASS] golem spawns at (420, 288)  ((420.0, 288.0))
+[PASS] golem starts 3 HP active  (hp=3 state=ACTIVE)
+[PASS] golem starts ORANGE / 辉 (+)  (◇ 辉 +)
+[PASS] production scatter wait default is 8.0 s  (8.0s)
+[PASS] room has floor + one low wall collision  (2)
+[PASS] golem body never collides with the player  (layer=0)
+[PASS] golem idle is 8 frames of 90x64  (sheet=(720.0, 64.0) hframes=8)
+[PASS] golem sprite offset aligns the 90x64 strip feet to the node origin  ((-45.0, -64.0))
+[PASS] HUD shows enemy polarity symbol and HP pips  (敌方　◇ 辉 +　HP ●●●)
+[PASS] HUD shows J ready  (J 挥击：就绪)
+[PASS] HUD shows golem state  (状态：活动（HP 3/3）)
+
+--- 2a. REAL J / SAME PHASE / ONE RESOLUTION PER SWING ---
+[PASS] J starts an actual swing  (true)
+[PASS] first real J produces swing id 1  (1)
+[PASS] hit resolves inside the forward hit window  (命中段)
+[PASS] same-polarity hit removes exactly 1 HP  (hp=2)
+[PASS] one damage application for the swing  (1)
+[PASS] same-phase hit applies one knockback  (1)
+[PASS] golem is visibly knocked away  (x 350.0 -> 362.3)
+[PASS] result code is HIT  (HIT)
+[PASS] held J + echo does not create a second swing  (1)
+[PASS] held J + echo never repeats damage  (hp=2)
+[PASS] same swing id cannot resolve twice  (DUPLICATE_SWING)
+[PASS] duplicate resolution changes no HP  (hp=2)
+
+--- 2b. REVERSE / OUT OF RANGE = NO HIT ---
+[PASS] enemy behind the player takes no damage  (hp=3)
+[PASS] behind result is MISS_BEHIND  (MISS_BEHIND)
+[PASS] same-phase target beyond reach takes no damage  (hp=3)
+[PASS] far result is MISS_RANGE  (MISS_RANGE)
+[PASS] miss applies no knockback  (0)
+
+--- 2c. Q MID-SWING SNAPSHOT / OPPOSITE PULL = ZERO DAMAGE ---
+[PASS] Q during the swing really flips player polarity  (false)
+[PASS] swing polarity snapshot stays GOLD  (true)
+[PASS] in-flight swing still deals same-phase damage after Q  (hp=2)
+[PASS] next swing resolves as PULL  (PULL)
+[PASS] opposite-phase pull deals zero damage  (hp=2)
+[PASS] one pull applied  (1)
+[PASS] pull setup starts outside safe distance  (89.8)
+[PASS] golem is pulled toward the player  (89.8 -> 46.0)
+[PASS] pull stops before overlapping the player  (46.0)
+[PASS] pull settles near the 46 px safe distance  (46.0)
+
+--- 2d. TAB ENEMY POLARITY ENTRY ---
+[PASS] reset restores ORANGE / 辉 (+)  (◇ 辉 +)
+[PASS] Tab flips the golem to BLUE / 澜 (-)  (◆ 澜 -)
+[PASS] HUD shows the non-colour 澜 symbol  (敌方　◆ 澜 -　HP ●●●)
+[PASS] Tab flips back to ORANGE / 辉 (+)  (◇ 辉 +)
+
+--- 2e. SOLID WALL BLOCKS ATTACK / TETHER ---
+[PASS] wall-test player is CYAN  (false)
+[PASS] room wall between player and golem reports BLOCKED  (BLOCKED)
+[PASS] blocked tether deals no damage  (hp=3)
+[PASS] blocked tether does not pull through the wall  (x=596.0)
+  room wall rect=[P: (544.0, 240.0), S: (32.0, 48.0)]  player_x=500.0  golem_x=596.0
+[PASS] thin wall inside attack reach blocks the same-phase swing  (BLOCKED)
+[PASS] same-phase wall block deals no damage  (hp=3)
+[PASS] wall-adjacent same-phase hit still damages  (hp=2)
+[PASS] knockback stops before penetrating the room wall  (x 530.0 -> 534.0 (wall left 544))
+[PASS] edge same-phase hit damages  (hp=2)
+[PASS] same-phase knockback clamps at the 612 world bound  (x=612.0 (bound 612))
+
+--- 3. SCATTER / WAIT / REASSEMBLE (shortened test wait) ---
+  TEST SETUP: scatter wait shortened to 0.35 s (production default 8.0 s)
+[PASS] TEST SETUP: golem HP set to 1 for the kill flow  (hp=1)
+[PASS] same-phase killing hit removes the last HP  (hp=0)
+[PASS] HP 0 enters the die/scatter sequence  (SCATTERING)
+[PASS] die sheet uses 13 frame slots  (13)
+[PASS] die sequence ends in rubble wait  (RUBBLE)
+[PASS] the empty 13th die frame (index 12) is never shown  (max_frame=11)
+[PASS] shortened wait is active and visible  (0.35s)
+[PASS] rubble is not attackable  (RUBBLE)
+[PASS] rubble has no layer-1 body  (layer=0)
+[PASS] attack during rubble is rejected as INACTIVE  (INACTIVE)
+[PASS] attack during rubble cannot damage  (hp=0)
+[PASS] attack does not interrupt the rebuild state  (RUBBLE)
+[PASS] player is not pushed off the rubble spot  (x=364.9)
+[PASS] player stays on solid floor over rubble  (y=288.0)
+[PASS] golem returns to ACTIVE after the shortened wait  (ACTIVE)
+[PASS] reassembly restores full 3 HP  (hp=3)
+[PASS] reassembly happens at the scatter spot, not the initial spawn  (364.9 vs 364.9)
+[PASS] reassembly preserves the golem polarity  (◇ 辉 +)
+[PASS] no delayed post-death damage was applied  (1)
+
+--- 4. PAUSE FREEZE / R DURING RUBBLE ---
+[PASS] Esc pauses the experiment  (true)
+[PASS] pause overlay is visible  (true)
+[PASS] attack animation timer freezes while paused  (0.0833 -> 0.0833)
+[PASS] attack sprite frame freezes while paused  (1 -> 1)
+[PASS] Esc resumes the experiment  (false)
+  TEST SETUP: scatter wait shortened to 3.0 s for the pause countdown check
+[PASS] golem reaches rubble for the pause check  (RUBBLE)
+[PASS] Esc pauses during the rubble countdown  (true)
+[PASS] rubble countdown freezes while paused  (2.82 -> 2.82)
+[PASS] rubble state freezes while paused  (RUBBLE)
+[PASS] R while paused also resumes the experiment  (false)
+[PASS] R while waiting restores the golem active at full HP  (ACTIVE hp=3)
+[PASS] R restores the golem spawn position  ((420.0, 288.0))
+[PASS] R restores the initial ORANGE polarity  (◇ 辉 +)
+[PASS] R restores the player spawn  ((80.0, 288.0))
+[PASS] R restores player GOLD polarity  (true)
+[PASS] R clears the last attack result  ({  })
+[PASS] R setup: a swing is in flight  (true)
+[PASS] R cancels the in-flight swing  (false)
+[PASS] R clears the swing cooldown  (0.0000)
+
+--- 5. FOCUS LOSS AUTO-PAUSE / INPUT CLEAR ---
+[PASS] focus-loss setup is holding left Shift + D  (shift=true sprint=true)
+[PASS] focus loss auto-pauses  (true)
+[PASS] focus loss shows the pause overlay  (true)
+[PASS] pause overlay explains the focus-loss reason  (窗口失焦：已自动暂停)
+[PASS] focus loss clears Shift and sprint latches  (shift=false sprint=false)
+[PASS] focus loss clears double-tap run  (false)
+[PASS] Esc resumes after focus-loss pause  (false)
+
+TEST_SUMMARY pass=104 fail=0
+RESULT: PASS

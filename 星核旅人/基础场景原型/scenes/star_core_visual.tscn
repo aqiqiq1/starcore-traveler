@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/star_core_visual.gd" id="1_core_visual"]
+
+[node name="StarCoreVisual" type="Node2D"]
+texture_filter = 1
+script = ExtResource("1_core_visual")
+animation_fps = 12.0
+
+[node name="Gem" type="Sprite2D" parent="."]
+texture_filter = 1

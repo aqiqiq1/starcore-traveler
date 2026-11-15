@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OpenGL API 3.3.0 NVIDIA 616.56 - Compatibility - Using Device: NVIDIA - NVIDIA GeForce RTX 4060 Laptop GPU
+
+CAPTURED level02_v3_01_start.png size=(640, 360)
+CAPTURED level02_v3_02_jump_face.png size=(640, 360)
+CAPTURED level02_v3_02b_under_step.png size=(640, 360)
+CAPTURED level02_v3_03_upper_seam.png size=(640, 360)
+CAPTURED level02_v3_04_upper_seam_debug.png size=(640, 360)
+CAPTURED level02_v3_05_target.png size=(640, 360)
+CAPTURED level02_v3_06_stored.png size=(640, 360)
+CAPTURED level02_v3_07_complete.png size=(640, 360)
+MANIFEST_WRITTEN res://screenshots/MANIFEST_LEVEL02_V3.txt
+LEVEL02_V3_CAPTURE_DONE completed=true count=1 core_x=520.0 player=(581.4579, 319.9253)

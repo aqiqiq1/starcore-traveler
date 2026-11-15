@@ -1,0 +1,53 @@
+guide echo production check - 2026-11-13
+Godot: 4.7.2-stable (official)
+PASS runtime sheet loads
+PASS runtime sheet is 288x64 (6 x 48x64)
+PASS runtime sheet slices into 6 frames
+PASS level 01 has exactly two GuideEcho nodes (got 2)
+PASS both guide accessors resolve
+PASS first echo at (250,300)
+PASS second echo at (735,300)
+PASS sprite node exists
+PASS sprite uses the 20261113 runtime sheet
+PASS sprite hframes == 6
+PASS sprite keeps Nearest
+PASS sprite offset (-24,-60)
+PASS sprite scale 1
+PASS sprite not centered
+PASS foot anchor (24,60)
+PASS three authored pages
+PASS starts on frame 0
+PASS sprite node exists
+PASS sprite uses the 20261113 runtime sheet
+PASS sprite hframes == 6
+PASS sprite keeps Nearest
+PASS sprite offset (-24,-60)
+PASS sprite scale 1
+PASS sprite not centered
+PASS foot anchor (24,60)
+PASS three authored pages
+PASS starts on frame 0
+PASS no dialogue on level load
+PASS page index -1 on level load
+PASS idle frame advances (f0 -> f2)
+PASS idle frame stays in 0..5
+PASS player in range
+PASS prompt visible on approach
+PASS approach does not open the dialogue
+PASS real F opens page 1
+PASS page index 0 after first F
+PASS second F turns to page 2
+PASS third F turns to page 3
+PASS fourth F closes the dialogue
+PASS prompt returns after closing
+PASS reopened for the pause gate
+PASS idle frame frozen while paused
+PASS F does not page while paused
+PASS dialogue survives the pause without an input leak
+PASS leaving range closes prompt and page
+PASS dialogue open on page 1 for the capture
+PASS screenshot written
+CAPTURED D:/godot game/星核旅人/基础场景原型/screenshots/guide_echo_production_20261113.png size=(640, 360)
+PASS level 02 still has no GuideEcho
+PASS level 02 player still instantiates
+RESULT fails=0

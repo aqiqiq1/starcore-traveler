@@ -1,0 +1,257 @@
+{
+  "cache": ".godot/global_script_class_cache.cfg",
+  "cache_sha256": "0d82ac84eb146b9db65e8cbbfa1071a6b8f4c98c619f64a9b086c8efb2fed340",
+  "archive_refs": 0,
+  "pairs": [
+    [
+      "AnchorRoom",
+      "res://scripts/anchor_room.gd"
+    ],
+    [
+      "BayRuneLink",
+      "res://scripts/bay_rune_link.gd"
+    ],
+    [
+      "CloudRuinsDS03",
+      "res://scripts/backgrounds/cloud_ruins_ds03.gd"
+    ],
+    [
+      "CloudRuinsDS03Data",
+      "res://scripts/backgrounds/cloud_ruins_ds03_data.gd"
+    ],
+    [
+      "CompactLevelHeader",
+      "res://scripts/ui/compact_level_header.gd"
+    ],
+    [
+      "DebugOverlay",
+      "res://scripts/debug_overlay.gd"
+    ],
+    [
+      "DisplayOptions",
+      "res://scripts/ui/display_options.gd"
+    ],
+    [
+      "DisplaySettingsController",
+      "res://scripts/ui/display_settings_controller.gd"
+    ],
+    [
+      "GuideEcho",
+      "res://scripts/narrative/guide_echo.gd"
+    ],
+    [
+      "Level01",
+      "res://scripts/level_01.gd"
+    ],
+    [
+      "Level01HUD",
+      "res://scripts/level_hud.gd"
+    ],
+    [
+      "Level02",
+      "res://scripts/level_02.gd"
+    ],
+    [
+      "Level02Block",
+      "res://scripts/level02_block.gd"
+    ],
+    [
+      "Level02HUD",
+      "res://scripts/level_02_hud.gd"
+    ],
+    [
+      "LevelCheckpoint",
+      "res://scripts/level_checkpoint.gd"
+    ],
+    [
+      "LevelExit",
+      "res://scripts/level_exit.gd"
+    ],
+    [
+      "LevelGuide",
+      "res://scripts/level_guide.gd"
+    ],
+    [
+      "LevelTerrainBlock",
+      "res://scripts/level_terrain_block.gd"
+    ],
+    [
+      "PixelMenuButton",
+      "res://scripts/ui/pixel_menu_button.gd"
+    ],
+    [
+      "PixelVolumeSlider",
+      "res://scripts/ui/pixel_volume_slider.gd"
+    ],
+    [
+      "PolarityBadge",
+      "res://scripts/polarity_badge.gd"
+    ],
+    [
+      "PolarityLinkVisual",
+      "res://scripts/polarity_link_visual.gd"
+    ],
+    [
+      "PolarityRecordTestRoom",
+      "res://scripts/polarity_record_test_room.gd"
+    ],
+    [
+      "PrototypeBackground",
+      "res://scripts/background.gd"
+    ],
+    [
+      "PrototypeHUD",
+      "res://scripts/hud.gd"
+    ],
+    [
+      "PrototypeMain",
+      "res://scripts/main.gd"
+    ],
+    [
+      "PrototypePlayer",
+      "res://scripts/player.gd"
+    ],
+    [
+      "RuneStoneField",
+      "res://scripts/rune_stone_field.gd"
+    ],
+    [
+      "RuneStoneVisual",
+      "res://scripts/rune_stone_visual.gd"
+    ],
+    [
+      "StarCoreBayInteractable",
+      "res://scripts/star_core_bay_interactable.gd"
+    ],
+    [
+      "StarCoreBayLockMark",
+      "res://scripts/star_core_bay_lock_mark.gd"
+    ],
+    [
+      "StarCoreBayPreview",
+      "res://tools/preview_star_core_bay.gd"
+    ],
+    [
+      "StarCoreBayVisual",
+      "res://scripts/star_core_bay_visual.gd"
+    ],
+    [
+      "StarCoreCarrier",
+      "res://scripts/star_core_carrier.gd"
+    ],
+    [
+      "StarCoreInteractionRoom",
+      "res://scripts/star_core_interaction_room.gd"
+    ],
+    [
+      "StarCoreVisual",
+      "res://scripts/star_core_visual.gd"
+    ],
+    [
+      "StartMenu",
+      "res://scripts/start_menu.gd"
+    ],
+    [
+      "TerrainStrip",
+      "res://scripts/terrain_strip.gd"
+    ],
+    [
+      "TutorialStele",
+      "res://scripts/tutorial_stele.gd"
+    ]
+  ],
+  "expected": {
+    "RuneStoneField": "res://scripts/rune_stone_field.gd",
+    "BayRuneLink": "res://scripts/bay_rune_link.gd",
+    "Level02": "res://scripts/level_02.gd",
+    "Level02HUD": "res://scripts/level_02_hud.gd",
+    "TutorialStele": "res://scripts/tutorial_stele.gd",
+    "CompactLevelHeader": "res://scripts/ui/compact_level_header.gd"
+  },
+  "backup": [
+    {
+      "path": "scenes/level_01.tscn",
+      "sha256": "5e9186fa4b30e49041a303c7ffa4ef3cdc2cc6de4ff9748f028fa5afc4341d72",
+      "ok": true
+    },
+    {
+      "path": "scenes/level_02.tscn",
+      "sha256": "0a5ed2378c4a9747e1f1a2d12f88e74c699dc5561a1764254e50db082d32f19b",
+      "ok": true
+    },
+    {
+      "path": "scripts/level_02.gd",
+      "sha256": "29b2aaf82a3d89c6f9275ba2fdb5da2a3a93058c3fb3049ffcea06a49d6fe467",
+      "ok": true
+    },
+    {
+      "path": "scripts/level_02_hud.gd",
+      "sha256": "62bdb82990049b5d332d49f6ffa7c9469df1cf1e669fb8188c9993011d686f27",
+      "ok": true
+    },
+    {
+      "path": "scenes/decorations/doric_column_tall.tscn",
+      "sha256": "f1a596c6fdd6b2c8a852e40d565dd5acd4fb2cafc57d954bd9c0c07996965f99",
+      "ok": true
+    },
+    {
+      "path": "scenes/decorations/doric_column_broken.tscn",
+      "sha256": "d1bde58db380c08c7199b5589aa79bf78acb636a2f72587aed6b8cf7329f94e4",
+      "ok": true
+    },
+    {
+      "path": "scenes/decorations/doric_column_base.tscn",
+      "sha256": "88e1df09dec8796b583d8167060848a14970f882995bd7ba58f1baae5359d0c5",
+      "ok": true
+    },
+    {
+      "path": "scripts/bay_rune_link.gd",
+      "sha256": "e993256eaa883625de0510e90aa332468ef4b7d6c43d214b707c279b3682de89",
+      "ok": true
+    },
+    {
+      "path": "scripts/rune_stone_field.gd",
+      "sha256": "8513fb6c5f379cd25bb2737ce591ed12c15d971e649706e2f81d366eb04d1640",
+      "ok": true
+    },
+    {
+      "path": "scripts/tutorial_stele.gd",
+      "sha256": "cf8d8238a503d9351210e6fc799e9cf9278daa3abf65ed43dd784689f4b31f37",
+      "ok": true
+    }
+  ],
+  "uids": [
+    {
+      "name": "bay_rune_link.gd",
+      "scope": "formal",
+      "uid": "uid://bn5f8kjnukbv0"
+    },
+    {
+      "name": "level_02.gd",
+      "scope": "formal",
+      "uid": "uid://bq14rom565ad6"
+    },
+    {
+      "name": "level_02_hud.gd",
+      "scope": "formal",
+      "uid": "uid://bugb7ksw03dnu"
+    },
+    {
+      "name": "rune_stone_field.gd",
+      "scope": "formal",
+      "uid": "uid://boqdbafikg0qw"
+    },
+    {
+      "name": "tutorial_stele.gd",
+      "scope": "formal",
+      "uid": "uid://cr3iqdjo2cw3a"
+    }
+  ],
+  "failures": [
+    "missing backup UID for bay_rune_link.gd",
+    "missing backup UID for level_02.gd",
+    "missing backup UID for level_02_hud.gd",
+    "missing backup UID for rune_stone_field.gd",
+    "missing backup UID for tutorial_stele.gd"
+  ]
+}

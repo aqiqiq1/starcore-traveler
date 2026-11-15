@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/star_core_bay_interactable.gd" id="1_interact"]
+[ext_resource type="PackedScene" path="res://scenes/star_core_bay_visual.tscn" id="2_bay_visual"]
+
+[node name="StarCoreBayInteractable" type="Node2D"]
+script = ExtResource("1_interact")
+
+[node name="BayVisual" parent="." instance=ExtResource("2_bay_visual")]

@@ -1,0 +1,315 @@
+[gd_scene load_steps=31 format=3]
+
+[ext_resource type="Script" path="res://scripts/level_01.gd" id="1_level"]
+[ext_resource type="Script" path="res://scripts/level_hud.gd" id="2_hud"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="3_player"]
+[ext_resource type="PackedScene" path="res://scenes/narrative/guide_echo.tscn" id="4_guide"]
+[ext_resource type="PackedScene" path="res://scenes/rune_stone_field.tscn" id="5_rune"]
+[ext_resource type="Script" path="res://scripts/level_terrain_block.gd" id="6_terrain"]
+[ext_resource type="Script" path="res://scripts/level_checkpoint.gd" id="7_checkpoint"]
+[ext_resource type="Script" path="res://scripts/level_exit.gd" id="8_exit"]
+[ext_resource type="Script" path="res://scripts/level_guide.gd" id="9_guide"]
+[ext_resource type="Texture2D" path="res://assets/map/background2.png" id="10_far"]
+[ext_resource type="Texture2D" path="res://assets/map/background4.png" id="11_near"]
+[ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_tall.tscn" id="12_doric_tall"]
+[ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_broken.tscn" id="13_doric_broken"]
+[ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_base.tscn" id="14_doric_base"]
+[ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_fallen.tscn" id="15_doric_fallen"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/cloud_ruins_v7.png" id="16_v7"]
+[ext_resource type="PackedScene" path="res://scenes/backgrounds/cloud_ruins_ds03.tscn" id="17_ds03"]
+[ext_resource type="PackedScene" path="res://scenes/start_menu.tscn" id="18_menu"]
+[ext_resource type="Texture2D" path="res://assets/bridge_stone_v1/generated/l1_start_1024x64.png" id="19_l1_start"]
+[ext_resource type="Texture2D" path="res://assets/bridge_stone_v1/generated/l1_high_336x144.png" id="20_l1_high"]
+[ext_resource type="Texture2D" path="res://assets/bridge_stone_v1/generated/l1_far_496x64.png" id="21_l1_far"]
+
+[sub_resource type="Gradient" id="Gradient_sky"]
+offsets = PackedFloat32Array(0, 0.56, 0.82, 1)
+colors = PackedColorArray(0.027, 0.078, 0.106, 1, 0.063, 0.176, 0.208, 1, 0.165, 0.318, 0.314, 1, 0.075, 0.169, 0.188, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_sky"]
+gradient = SubResource("Gradient_sky")
+width = 4
+height = 360
+fill_from = Vector2(0, 0)
+fill_to = Vector2(0, 1)
+
+[sub_resource type="Gradient" id="Gradient_mist"]
+offsets = PackedFloat32Array(0, 0.55, 1)
+colors = PackedColorArray(0.44, 0.68, 0.66, 0, 0.50, 0.73, 0.70, 0.07, 0.58, 0.78, 0.74, 0.16)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_mist"]
+gradient = SubResource("Gradient_mist")
+width = 4
+height = 140
+fill_from = Vector2(0, 0)
+fill_to = Vector2(0, 1)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_start"]
+size = Vector2(1024, 64)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_high"]
+size = Vector2(336, 144)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_far"]
+size = Vector2(496, 64)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_checkpoint"]
+size = Vector2(40, 72)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_exit"]
+size = Vector2(36, 76)
+
+[node name="Level01" type="Node2D"]
+process_mode = 3
+process_physics_priority = -10
+script = ExtResource("1_level")
+
+[node name="Background" type="CanvasLayer" parent="."]
+layer = -10
+
+[node name="Sky" type="TextureRect" parent="Background"]
+visible = false
+offset_right = 640.0
+offset_bottom = 360.0
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_sky")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="FarRuins" type="TextureRect" parent="Background"]
+visible = false
+offset_top = 88.0
+offset_right = 640.0
+offset_bottom = 360.0
+mouse_filter = 2
+texture = ExtResource("10_far")
+expand_mode = 1
+stretch_mode = 0
+texture_filter = 1
+modulate = Color(0.38, 0.57, 0.58, 0.44)
+
+[node name="NearRuins" type="TextureRect" parent="Background"]
+visible = false
+offset_left = -8.0
+offset_top = 158.0
+offset_right = 648.0
+offset_bottom = 360.0
+mouse_filter = 2
+texture = ExtResource("11_near")
+expand_mode = 1
+stretch_mode = 0
+texture_filter = 1
+modulate = Color(0.18, 0.34, 0.36, 0.42)
+
+[node name="Mist" type="TextureRect" parent="Background"]
+visible = false
+offset_top = 208.0
+offset_right = 640.0
+offset_bottom = 360.0
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_mist")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="CloudRuinsV7" type="TextureRect" parent="Background"]
+visible = false
+offset_right = 640.0
+offset_bottom = 360.0
+mouse_filter = 2
+texture = ExtResource("16_v7")
+expand_mode = 1
+stretch_mode = 0
+texture_filter = 1
+modulate = Color(1, 1, 1, 1)
+
+[node name="CloudRuinsDS03" parent="Background" instance=ExtResource("17_ds03")]
+
+[node name="World" type="Node2D" parent="."]
+process_mode = 1
+
+[node name="PitCloudBack" type="Polygon2D" parent="World"]
+visible = false
+z_index = -1
+color = Color(0.74, 0.9, 0.86, 0.1)
+polygon = PackedVector2Array(1180, 360, 1180, 330, 1205, 326, 1235, 316, 1268, 320, 1300, 308, 1335, 315, 1370, 306, 1405, 314, 1440, 308, 1475, 318, 1500, 314, 1500, 360)
+
+[node name="PitCloudFront" type="Polygon2D" parent="World"]
+visible = false
+z_index = -1
+color = Color(0.78, 0.93, 0.88, 0.16)
+polygon = PackedVector2Array(1195, 360, 1195, 344, 1220, 338, 1252, 330, 1284, 334, 1316, 326, 1348, 332, 1382, 324, 1418, 332, 1452, 326, 1480, 336, 1480, 360)
+
+[node name="PitCloudGlow" type="Polygon2D" parent="World"]
+visible = false
+z_index = -1
+color = Color(0.84, 0.96, 0.9, 0.07)
+polygon = PackedVector2Array(1210, 360, 1210, 352, 1250, 348, 1290, 352, 1330, 344, 1370, 350, 1410, 344, 1450, 350, 1470, 346, 1470, 360)
+
+[node name="StartGround" type="StaticBody2D" parent="World"]
+position = Vector2(-160, 300)
+z_index = 0
+script = ExtResource("6_terrain")
+block_size = Vector2(1024, 64)
+draw_visual = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/StartGround"]
+position = Vector2(512, 32)
+shape = SubResource("RectangleShape2D_start")
+
+[node name="GroundVisual" type="Sprite2D" parent="World/StartGround"]
+texture_filter = 1
+centered = false
+texture = ExtResource("19_l1_start")
+
+[node name="HighPlatform" type="StaticBody2D" parent="World"]
+position = Vector2(864, 220)
+z_index = 0
+script = ExtResource("6_terrain")
+block_size = Vector2(336, 144)
+draw_visual = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/HighPlatform"]
+position = Vector2(168, 72)
+shape = SubResource("RectangleShape2D_high")
+
+[node name="GroundVisual" type="Sprite2D" parent="World/HighPlatform"]
+texture_filter = 1
+centered = false
+texture = ExtResource("20_l1_high")
+
+[node name="FarBank" type="StaticBody2D" parent="World"]
+position = Vector2(1456, 300)
+z_index = 0
+script = ExtResource("6_terrain")
+block_size = Vector2(496, 64)
+draw_visual = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/FarBank"]
+position = Vector2(248, 32)
+shape = SubResource("RectangleShape2D_far")
+
+[node name="GroundVisual" type="Sprite2D" parent="World/FarBank"]
+texture_filter = 1
+centered = false
+texture = ExtResource("21_l1_far")
+
+[node name="Player" parent="World" instance=ExtResource("3_player")]
+position = Vector2(-60, 300)
+allow_self_reset = false
+show_head_polarity = false
+world_left = -220.0
+world_right = 1936.0
+kill_y = 430.0
+
+[node name="Camera2D" type="Camera2D" parent="World/Player"]
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0
+limit_left = 0
+limit_top = 0
+limit_right = 1952
+limit_bottom = 360
+
+[node name="GuideEchoMeeting" parent="World" instance=ExtResource("4_guide")]
+position = Vector2(250, 300)
+player_path = NodePath("../Player")
+pages = PackedStringArray("旅人，归路已经断了。\n我曾守望悬庭，如今只余回声。\n前方还有一扇通往外侧的旧门。", "群岛靠埋在石中的星核维系。\n它们并未熄灭，只是回路断了。\n把力量送回石座，道路才会回应。", "胸前的护符，是旧日的通行凭证。\n它能改变你自身的相性。\n金色叫辉相，青色叫澜相。")
+
+[node name="GuideEchoHighstep" parent="World" instance=ExtResource("4_guide")]
+position = Vector2(735, 300)
+player_path = NodePath("../Player")
+pages = PackedStringArray("我能指路，不能替你跨过去。\nA/D移动，左Shift奔跑，空格跳跃。\n靠近那枚符石，按Q试着切相。", "与符石异相，便会被它吸引。\n借这股力登上高台。\n再切成同相，让它把你推开。", "看准落脚点，再借力越过断桥。\n路上若见守卫，它们仍听旧令。\n别恋战；你要找的是离开的路。")
+
+[node name="RuneStoneHigh" parent="World" instance=ExtResource("5_rune")]
+position = Vector2(864, 155)
+z_index = 2
+initial_active = true
+initial_positive = true
+auto_hint_in_range = false
+
+[node name="RuneStonePit" parent="World" instance=ExtResource("5_rune")]
+position = Vector2(1360, 150)
+z_index = 2
+initial_active = true
+initial_positive = true
+auto_hint_in_range = false
+
+[node name="Checkpoint" type="Area2D" parent="World"]
+position = Vector2(1120, 220)
+z_index = 2
+script = ExtResource("7_checkpoint")
+trigger_size = Vector2(40, 72)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Checkpoint"]
+position = Vector2(0, -36)
+shape = SubResource("RectangleShape2D_checkpoint")
+
+[node name="Exit" type="Area2D" parent="World"]
+position = Vector2(1840, 300)
+z_index = 3
+script = ExtResource("8_exit")
+trigger_size = Vector2(36, 76)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Exit"]
+position = Vector2(0, -38)
+shape = SubResource("RectangleShape2D_exit")
+
+[node name="IntroEnd" type="Marker2D" parent="World"]
+position = Vector2(100, 300)
+
+[node name="Guide" type="Node2D" parent="World"]
+z_index = 100
+script = ExtResource("9_guide")
+pit_guide_rect = Rect2(1200, 220, 256, 140)
+
+[node name="Decorations" type="Node2D" parent="World"]
+
+[node name="DoricTallEntry" parent="World/Decorations" instance=ExtResource("12_doric_tall")]
+position = Vector2(150, 300)
+z_index = -1
+
+[node name="DoricBaseMidway" parent="World/Decorations" instance=ExtResource("14_doric_base")]
+position = Vector2(390, 300)
+z_index = -1
+
+[node name="DoricBrokenMidway" parent="World/Decorations" instance=ExtResource("13_doric_broken")]
+position = Vector2(435, 300)
+z_index = -1
+
+[node name="DoricTallRoadside" parent="World/Decorations" instance=ExtResource("12_doric_tall")]
+position = Vector2(575, 300)
+z_index = -1
+
+[node name="DoricFallenRoadside" parent="World/Decorations" instance=ExtResource("15_doric_fallen")]
+position = Vector2(608, 300)
+z_index = -1
+
+[node name="DoricBaseHighTerrace" parent="World/Decorations" instance=ExtResource("14_doric_base")]
+position = Vector2(955, 220)
+z_index = -1
+
+[node name="DoricFallenHighTerrace" parent="World/Decorations" instance=ExtResource("15_doric_fallen")]
+position = Vector2(1000, 220)
+z_index = -1
+
+[node name="DoricTallFarBank" parent="World/Decorations" instance=ExtResource("12_doric_tall")]
+position = Vector2(1600, 300)
+z_index = -1
+
+[node name="DoricBrokenFarBank" parent="World/Decorations" instance=ExtResource("13_doric_broken")]
+position = Vector2(1650, 300)
+z_index = -1
+
+[node name="DoricFallenFarBank" parent="World/Decorations" instance=ExtResource("15_doric_fallen")]
+position = Vector2(1682, 300)
+z_index = -1
+
+[node name="HUD" type="CanvasLayer" parent="."]
+process_mode = 3
+layer = 10
+script = ExtResource("2_hud")
+
+[node name="MenuCamera" type="Camera2D" parent="."]
+position = Vector2(320, -180)
+enabled = false
+
+[node name="StartMenu" parent="." instance=ExtResource("18_menu")]

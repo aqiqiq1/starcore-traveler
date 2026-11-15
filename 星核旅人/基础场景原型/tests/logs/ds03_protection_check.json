@@ -1,0 +1,61 @@
+{
+  "ok": true,
+  "checks": [
+    {
+      "name": "protected project.godot",
+      "ok": true,
+      "detail": "current=FCFC61E314F61B21DD2878238BA15F973A41324C8547B48277CB3B8CB71CAAC1 expected=FCFC61E314F61B21DD2878238BA15F973A41324C8547B48277CB3B8CB71CAAC1"
+    },
+    {
+      "name": "protected scripts/player.gd",
+      "ok": true,
+      "detail": "current=5711828A3FF6C9E01A21D515B3B8A57EB467E56B4765B53C8A591082E17C76DA expected=5711828A3FF6C9E01A21D515B3B8A57EB467E56B4765B53C8A591082E17C76DA"
+    },
+    {
+      "name": "protected assets/backgrounds/cloud_ruins_v7.png",
+      "ok": true,
+      "detail": "current=0C81488D74EB87B0219EA3EAD2AA31F074C1A371AB9A7ABA0984B67A4A0F9092 expected=0C81488D74EB87B0219EA3EAD2AA31F074C1A371AB9A7ABA0984B67A4A0F9092"
+    },
+    {
+      "name": "level_01.gd unchanged from baseline (no gameplay hook)",
+      "ok": true,
+      "detail": "DBC24205827BBAD97AC820C2CE228D96DE94D8A8DD47F3A748E0379BB4269D07"
+    },
+    {
+      "name": "DS03 config lists 24 assets",
+      "ok": true,
+      "detail": "24"
+    },
+    {
+      "name": "24 DS03 source PNGs match their recorded hashes",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "24 runtime PNGs are byte copies of the source",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "runtime config is a byte copy",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "DS03 source code files still match the protected baseline",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "F5 main scene remains scenes/main.tscn",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "baseline_level_01_tscn": "C:\\Users\\aqiqiqi\\AppData\\Local\\Temp\\opencode\\godot-ds03-integration-c6f339df6ebc4196afd4fda9b7daf907\\level_01.tscn",
+  "notes": [
+    "level_01.tscn diff is limited to load_steps, one DS03 ext_resource, CloudRuinsV7 visible=false, and the CloudRuinsDS03 instance under Background.",
+    "No World node/property was edited; level_01.gd is byte-identical to the baseline copy.",
+    "DS03 source directory is read-only; no original generator was run."
+  ]
+}

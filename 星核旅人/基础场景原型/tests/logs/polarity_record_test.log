@@ -1,0 +1,246 @@
+Star Core Traveler - bay record / rune link test
+Godot 4.7.2-stable (official)  display=headless  physics=60
+
+== ENVIRONMENT / INPUT ==
+[PASS] logic viewport stays 640x360
+[PASS] default main scene remains main.tscn
+[PASS] F7 is bound for the record test room
+[PASS] F2 remains bound
+[PASS] F4 remains bound
+[PASS] E remains bound
+[PASS] Q remains bound
+[PASS] test room and rune field scenes are present
+
+== INITIAL STATE / NO INVENTED HISTORY ==
+[PASS] standalone wrapper activates the record room
+[PASS] record room, link controller and rune field are visible/resolved
+[PASS] target bay is the linked record bay
+[PASS] linked bay begins OPEN/EMPTY
+[PASS] linked bay begins with NO record
+[PASS] empty record label is explicit
+[PASS] start bay begins LOCKED with the preloaded core
+[PASS] the preloaded purple core is not counted as history
+[PASS] moving core begins disabled
+[PASS] room owns exactly one core | 1
+[PASS] rune field begins INACTIVE
+[PASS] dormant field keeps its internal GOLD + default
+[PASS] rune visual begins dormant with dark cracks
+[PASS] dormant rune visual offers no +/- hint
+[PASS] dormant rune visual draws no near hint
+[PASS] initial in-range field sample is INACTIVE | INACTIVE
+[PASS] initial inactive field force is exactly zero
+[PASS] link begins with no pulse or field request
+[PASS] link visual begins idle
+[PASS] record lamp begins neutral/unavailable
+[PASS] neutral lamp does not fake a gold record | (0.498, 0.5765, 0.5608, 1.0)
+[PASS] neutral lamp has no plus/minus symbol
+[PASS] link reports no record
+[PASS] record/link HUD panel is visible
+[PASS] HUD starts with NO RECORD | BAY: NO RECORD   LAMP: NEUTRAL
+[PASS] HUD stage starts with NO RECORD | STAGE: NO RECORD   R: CLEAR RECORD / RESET
+[PASS] HUD names the dormant stone INACTIVE, not a fake GOLD + | STONE: INACTIVE   FIELD: INACTIVE   F(+0,+0)
+[PASS] HUD does not present the dormant internal default as live GOLD
+[PASS] link field label is INACTIVE while dormant | INACTIVE
+[PASS] rune link is registered once as the extra player-force provider
+[PASS] player starts GOLD +
+[PASS] player starts at the room spawn | (48.0, 320.0)
+
+== EMPTY E / NO FAKE RECORD ==
+[FAIL] empty linked bay E preview explains there is no core | E: RELEASE CYAN - (START)
+[PASS] invalid E never records
+[PASS] invalid E never stores
+[PASS] invalid E emits no record signal
+[PASS] lamp stays neutral after invalid E
+
+== RECORD BELONGS TO THE STORED-IN BAY ==
+[FAIL] E is offered at the start bay seat | E: CORE IS FREE - BRING TO AN EMPTY BAY
+[FAIL] start bay records the CYAN core in its own data slot
+[PASS] linked bay does not inherit another bay's record
+[PASS] a store in the unlinked start bay neither pulses nor lights the linked lamp
+[PASS] unlinked start-bay storage does not activate the stone
+[PASS] unlinked storage leaves the dormant stone at zero force
+[PASS] R clears the bay-specific start record too
+
+== FULL FLOW: RELEASE -> WALK -> E STORE -> PULSE -> REAL FORCE FLIP ==
+[FAIL] GOLD player release snapshots CYAN - for the core
+[FAIL] release toast names the core snapshot | RESET - RECORD CLEARED / STONE INITIAL
+[PASS] Q during opening changes only the player
+[FAIL] Q during opening leaves the core snapshot CYAN -
+[FAIL] core activates after the lid opens
+[PASS] released core keeps its CYAN - snapshot
+[PASS] player returns to GOLD + for transport
+[PASS] at store time the player is GOLD and the core is CYAN
+[PASS] walking over the empty bay does not auto-record
+[FAIL] core is inside the linked bay seat | (376.0, 312.0)
+[FAIL] HUD offers manual E store | E: RELEASE CYAN - (START)
+[FAIL] manual E starts closing and locks the core
+[FAIL] record captures the CORE's CYAN -, not the GOLD player or purple display
+[FAIL] valid E emits exactly one CYAN record event
+[FAIL] record lamp is immediately CYAN at store acceptance
+[FAIL] the existing pulse starts after the record lamp update
+[PASS] field stays INACTIVE during the pulse
+[PASS] dormant field keeps its internal GOLD + default
+[PASS] pulse-time sample is INACTIVE | INACTIVE
+[PASS] pulse-time field force is exactly zero
+[FAIL] HUD shows the real record, pulse and INACTIVE stone | BAY: NO RECORD   LAMP: NEUTRAL | STAGE: NO RECORD   R: CLEAR RECORD / RESET | STONE: INACTIVE   FIELD: INACTIVE   F(+0,+0)
+[PASS] Q during store closing changes the player
+[FAIL] Q during store closing leaves the record CYAN -
+[FAIL] Q during store closing leaves the lamp CYAN -
+[PASS] pre-activation force sample is INACTIVE | INACTIVE
+[PASS] pre-activation force sample is exactly zero | (0.0, 0.0)
+[PASS] dormant stone does not move the player | dx=0.00
+[FAIL] pulse arrival starts a dark-to-colour light-up, not an early activation
+[FAIL] the first light-up has energized the visual target
+[PASS] field is still INACTIVE during the first light-up | INACTIVE
+[PASS] field force is still exactly zero during the first light-up
+[PASS] no field commit is emitted before the light-up finishes
+[FAIL] field becomes active when the first light-up finishes
+[FAIL] field commits CYAN - only after its visual finishes
+[PASS] field transition is complete
+[FAIL] link reports the stone live | NO RECORD
+[FAIL] new CYAN field + GOLD player reports ATTRACT | INACTIVE
+[FAIL] new field force points right | (0.0, 0.0)
+[FAIL] real physics moves the player right under the new field | dx=0.00
+[FAIL] activated in-range stone now draws the +/- hint
+[FAIL] record persists after the pulse and field commit
+[FAIL] linked bay finishes LOCKED with the lid closed
+[PASS] full flow keeps exactly one core
+
+== TAKEOUT KEEPS RECORD AND STONE ==
+[FAIL] loaded linked bay offers E release | E: STORE UNAVAILABLE (START) - CORE NOT IN BAY SEAT
+[FAIL] CYAN player releasing snapshots GOLD + for the new core
+[FAIL] release does not clear the CYAN record
+[FAIL] core re-releases as GOLD +
+[PASS] linked bay is empty/open after release
+[FAIL] linked bay keeps the most recent CYAN record
+[FAIL] rune stone stays active CYAN after takeout
+[FAIL] record lamp stays CYAN after takeout
+[PASS] takeout emits no new record event
+[PASS] takeout starts no pulse
+
+== OVERWRITE + R DURING FIELD TRANSITION ==
+[PASS] different-polarity core is eligible at the linked seat | E: STORE CORE (LINKED)
+[FAIL] second store overwrites the record with the core's GOLD +
+[FAIL] overwrite emits one GOLD record event
+[FAIL] lamp changes to GOLD immediately at overwrite
+[FAIL] field is still CYAN during the new pulse
+[PASS] overwrite starts a new pulse
+[FAIL] field is mid-transition from CYAN to GOLD when R is pressed
+[PASS] R returns to spawn
+[PASS] R restores player GOLD +
+[PASS] R restores the start bay with the preloaded core
+[PASS] R clears the start bay record
+[PASS] R restores linked bay OPEN/EMPTY and clears its record
+[PASS] R immediately restores the field to INACTIVE
+[PASS] R restores the dormant internal GOLD + default
+[PASS] R returns the visual to dark cracks
+[PASS] R restores the dormant visual's internal GOLD target
+[PASS] R clears in-flight pulse and field request
+[PASS] R clears the link stage
+[PASS] R returns the lamp to neutral/no record
+[PASS] no stale field activation lands after R
+[PASS] R emits no delayed field commit
+[PASS] record does not reappear after waiting
+
+== NEWER RECORD CANCELS AN OLD FIRST LIGHT-UP ==
+[PASS] setup is mid first light-up toward CYAN
+[PASS] newer record cancels the older first light-up before it activates
+[PASS] newer record clears the older field request
+[PASS] newer record starts its own pulse
+[PASS] newer record updates the lamp immediately to GOLD
+[PASS] late completion from the cancelled light-up cannot activate the stone
+[PASS] late completion from the cancelled light-up emits no commit
+[PASS] newer record's pulse starts a fresh first light-up
+[PASS] newest record wins and activates the stone GOLD
+[PASS] only the newest record causes one final activation commit | 1
+
+== SAME-POLARITY STORE IS A VALID RECORD ==
+[PASS] setup records GOLD +
+[PASS] same GOLD store keeps a valid GOLD record
+[FAIL] same-polarity store still emits one record event
+[FAIL] same-polarity store still updates the lamp and plays the pulse
+[PASS] same-polarity request does not change the live GOLD field
+[PASS] same-polarity request settles without a stuck transition
+[PASS] same-polarity link returns to LIVE
+[PASS] same-polarity field stays active GOLD and idle
+
+== FIRST STORE EQUAL TO INITIAL DEFAULT STILL ACTIVATES ==
+[PASS] setup begins with a dormant stone
+[PASS] dormant internal default is GOLD +
+[PASS] GOLD core is recorded immediately
+[PASS] lamp and pulse react even though the target equals the internal default
+[PASS] same-as-default store does not activate early
+[PASS] same-as-default store has zero field force during the pulse
+[PASS] pulse arrival starts the first light-up for the default-colour target
+[PASS] link does not settle merely because the dormant internal sign matches
+[PASS] no commit is emitted before the same-as-default light-up finishes
+[PASS] force is still zero while the same-colour target lights up
+[PASS] same-as-default first store finishes as an active GOLD stone
+[PASS] same-as-default first store emits one final commit | 1
+[PASS] link settles only after the real commit
+[PASS] activated GOLD field repels a GOLD player
+[PASS] activated GOLD field attracts a CYAN player
+
+== PAUSE FREEZES THE LINK PULSE ==
+[PASS] pulse is in flight before pause | 0.16
+[PASS] Esc pauses the tree
+[PASS] pulse progress is frozen while paused
+[PASS] pause does not deliver the request or activate the dormant field
+[PASS] Esc resumes the tree
+[PASS] pulse completes and the first light-up commits after resume
+
+== R DURING PULSE CLEARS EVERYTHING ==
+[PASS] pulse is active before R
+[PASS] R stops the in-flight visual pulse
+[PASS] R clears both bay records
+[PASS] R restores the field to INACTIVE
+[PASS] R returns the visual to dark cracks after an interrupted pulse
+[PASS] no stale field request lands after R
+[PASS] room stays clean and dormant after waiting
+
+== CORE FORCE + RUNE FORCE: ONE SUM, CORE UNAFFECTED BY RUNE ==
+[PASS] combined-force setup has a live GOLD rune stone
+[PASS] combined-force setup has a CYAN core
+[PASS] combined-force setup keeps the player GOLD
+[PASS] rune field reports its own REPEL for the GOLD player | REPEL
+[PASS] core pair pulls the player toward the CYAN core | (279.1486, 0.0)
+[PASS] rune stone pushes the GOLD player away | (-2399.917, 20.01314)
+[PASS] combined player force is the exact sum, not a later overwrite | pair=(279.1486, 0.0) rune=(-2399.917, 20.01314) combined=(-2120.768, 20.01314)
+[PASS] core acceleration still comes only from the player-core pair | actual=(-576.9071, 0.0) expected=(-578.5483, 0.0)
+[PASS] the rune stone does not hold the core back or pull it | 479.84 -> 475.39
+[PASS] combined forces keep exactly one core
+
+== NO AUTO STORE / LONG E / UNIQUE CORE ==
+[PASS] core resting in an empty seat is never auto-stored/recorded
+[PASS] no pulse without an accepted E
+[PASS] out-of-seat E does not record
+[PASS] held E performs one valid store with the core's CYAN record
+[PASS] held E emits exactly one record event | 1
+[PASS] held E never duplicates the core
+[PASS] held E leaves the core stored, not duplicated
+
+== ROOM EXIT CLEARS IN-FLIGHT WORK ==
+[PASS] pulse active before exiting the room
+[PASS] room exit stops the link pulse
+[PASS] room exit clears pending link requests
+[PASS] room exit restores the field to INACTIVE
+[PASS] room exit returns the rune visual to dark cracks
+[PASS] room exit unregisters the force provider
+[PASS] room exit clears the player's external force
+[PASS] no stale field request activates the stone while the room is inactive
+[PASS] re-entering the room re-registers the link once
+[PASS] re-entering starts clean with no record and a dormant field
+[PASS] re-entry restores the record HUD panel
+
+== F7 MAIN ENTRY / FRESH STANDALONE ==
+[PASS] basic HUD advertises the F7 record test | Q: POLARITY   R: RESET   ESC: PAUSE   F3: DEBUG   F2: ANCHOR   F4: CORE BAY   F7: RECORD TEST
+[PASS] main scene still loads normally with the F7 entry
+[PASS] a fresh standalone entry activates
+[PASS] fresh entry has LOCKED start and no history
+[PASS] fresh entry has OPEN linked bay and no history
+[PASS] fresh entry restores the field to INACTIVE
+[PASS] fresh dormant field keeps the internal GOLD + default
+[PASS] fresh dormant field offers no +/- hint
+[PASS] fresh entry still owns exactly one core
+
+RESULT pass=168 fail=42 skipped=0

@@ -1,0 +1,15 @@
+Level 02 textured/perforated GUI capture log
+Godot: 4.7.2-stable (official)
+Display: Windows  window: (1280, 720)  viewport: (640.0, 360.0)
+route=real InputMap/key events; no teleport/test force/direct store/complete call
+CAPTURED level02_textured_01_start.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_textured_01_start.png
+upper landing player=(249.6478, 263.924) core=(342.4996, 311.9253)
+upper seam active player=(383.2697, 263.924) core=(342.9318, 311.9253) dist=74.8 force=(334.3136, -522.144)
+CAPTURED level02_textured_02_upper_gap.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_textured_02_upper_gap.png
+upper seam displacement core 344.89 -> 360.14 force_x=0.0
+ground pull 0 player=(473.8597, 319.9253) core=(451.222, 311.9253) status=NEAR / STABLE
+ground pull 1 player=(523.6542, 319.9253) core=(500.8324, 311.9253) status=NEAR / STABLE
+CAPTURED level02_textured_03_target.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_textured_03_target.png
+CAPTURED level02_textured_04_stored.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_textured_04_stored.png
+CAPTURED level02_textured_05_complete.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_textured_05_complete.png
+FINAL completed=true count=1 core_x=520.0 player=(581.7446, 319.9253)

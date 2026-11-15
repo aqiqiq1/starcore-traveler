@@ -1,0 +1,31 @@
+PASS L2 StartStele has four short pages
+PASS L2 stele is F-only (no auto page)
+PASS near stele shows the F reading prompt
+PASS approaching does not auto-open a page
+PASS F opens page 1
+PASS page 1 has transport text
+PASS pause suspends the stele
+PASS pause resume unsuspends the stele
+PASS resume returns to the F prompt
+PASS R clears the stele page
+PASS R returns to spawn
+PASS D walks at 100
+PASS walk produces real movement
+PASS A walks at 100
+PASS A produces real left movement
+PASS left Shift+D targets 160
+PASS left Shift sets sprint intent
+PASS right Shift does not run
+PASS right Shift leaves sprint off
+PASS same-direction double tap locks run
+PASS double tap targets 160
+PASS run latch is active before pause
+PASS Esc paused the level
+PASS pause/resume clears the Shift latch
+PASS run latch is active before focus loss
+PASS focus loss clears the Shift latch
+PASS focus loss clears double-tap lock
+PASS completion setup reaches the result page
+PASS R closes the result page
+PASS R after completion restores normal walking
+PASS R after completion really moves

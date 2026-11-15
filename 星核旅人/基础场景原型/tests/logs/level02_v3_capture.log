@@ -1,0 +1,19 @@
+Level 02 V3 continuous platform GUI capture log
+Godot: 4.7.2-stable (official)
+Display: Windows  window: (1280, 720)  viewport: (640.0, 360.0)
+route=real InputMap/key events; no teleport/test force/direct store/complete call
+visual=V3 approved non-collision slices; legacy Level02Block atlas drawing off in level_02.tscn
+CAPTURED level02_v3_01_start.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_v3_01_start.png
+CAPTURED level02_v3_02_jump_face.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_v3_02_jump_face.png
+CAPTURED level02_v3_02b_under_step.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_v3_02b_under_step.png
+upper landing player=(249.6478, 263.924) core=(341.394, 311.9253)
+upper seam active player=(383.0633, 263.924) core=(342.5947, 311.9253) dist=74.9 force=(335.0808, -521.652)
+CAPTURED level02_v3_03_upper_seam.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_v3_03_upper_seam.png
+CAPTURED level02_v3_04_upper_seam_debug.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_v3_04_upper_seam_debug.png
+upper seam displacement core 343.81 -> 359.39 force_x=0.0
+ground pull 0 player=(475.1051, 319.9253) core=(452.2067, 311.9253) status=NEAR / STABLE
+ground pull 1 player=(524.8906, 319.9253) core=(502.1235, 311.9253) status=NEAR / STABLE
+CAPTURED level02_v3_05_target.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_v3_05_target.png
+CAPTURED level02_v3_06_stored.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_v3_06_stored.png
+CAPTURED level02_v3_07_complete.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_v3_07_complete.png
+FINAL completed=true count=1 core_x=520.0 player=(581.4579, 319.9253)

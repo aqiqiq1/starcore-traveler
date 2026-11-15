@@ -1,0 +1,7 @@
+﻿{
+    "exit_code":  0,
+    "captured_at":  "2026-11-06T02:23:57",
+    "note":  "Independent Godot process exited through the real SceneTree.quit(0) button handler.",
+    "mode":  "real GUI; real mouse click on the pause-menu quit button",
+    "process":  "test_pause_quit_subprocess.tscn"
+}

@@ -1,0 +1,33 @@
+--- baseline/level_01.tscn
++++ current/level_01.tscn
+@@ -1,4 +1,4 @@
+-[gd_scene load_steps=26 format=3]
++[gd_scene load_steps=27 format=3]
+ 
+ [ext_resource type="Script" path="res://scripts/level_01.gd" id="1_level"]
+ [ext_resource type="Script" path="res://scripts/level_hud.gd" id="2_hud"]
+@@ -16,6 +16,7 @@
+ [ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_base.tscn" id="14_doric_base"]
+ [ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_fallen.tscn" id="15_doric_fallen"]
+ [ext_resource type="Texture2D" path="res://assets/backgrounds/cloud_ruins_v7.png" id="16_v7"]
++[ext_resource type="PackedScene" path="res://scenes/backgrounds/cloud_ruins_ds03.tscn" id="17_ds03"]
+ 
+ [sub_resource type="Gradient" id="Gradient_sky"]
+ offsets = PackedFloat32Array(0, 0.56, 0.82, 1)
+@@ -107,6 +108,7 @@
+ stretch_mode = 0
+ 
+ [node name="CloudRuinsV7" type="TextureRect" parent="Background"]
++visible = false
+ offset_right = 640.0
+ offset_bottom = 360.0
+ mouse_filter = 2
+@@ -115,6 +117,8 @@
+ stretch_mode = 0
+ texture_filter = 1
+ modulate = Color(1, 1, 1, 1)
++
++[node name="CloudRuinsDS03" parent="Background" instance=ExtResource("17_ds03")]
+ 
+ [node name="World" type="Node2D" parent="."]
+ process_mode = 1
