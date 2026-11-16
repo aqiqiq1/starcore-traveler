@@ -498,7 +498,7 @@ func _build_settings_layer() -> Control:
 
 	_return_button = _hit_button("ReturnButton", RETURN_RECT)
 	layer_control.add_child(_return_button)
-	_return_button.pressed.connect(_close_settings)
+	_return_button.pressed.connect(_on_return_pressed)
 	_return_button.focus_entered.connect(_refresh_return_focus)
 	_return_button.focus_exited.connect(_refresh_return_focus)
 	_return_button.mouse_entered.connect(_refresh_return_focus)
@@ -799,6 +799,7 @@ func _on_start_pressed() -> void:
 		return
 	if _display != null and _display.is_pending():
 		return
+	DemoAudio.play_ui_click()
 	_start_locked = true
 	_start_request_count += 1
 	_start_button.release_focus()
@@ -821,6 +822,7 @@ func _on_settings_pressed() -> void:
 		return
 	if _display != null and _display.is_pending():
 		return
+	DemoAudio.play_ui_click()
 	_open_settings()
 
 
@@ -831,6 +833,7 @@ func _on_quit_pressed() -> void:
 		return
 	# Accepting the quit locks every menu hot zone before the process exits, so
 	# a double click or a held Enter cannot run the handler twice.
+	DemoAudio.play_ui_click()
 	_quit_locked = true
 	_start_button.release_focus()
 	_settings_button.release_focus()
@@ -844,6 +847,17 @@ func _on_quit_pressed() -> void:
 	_focus_quit_rect.visible = false
 	quit_requested.emit()
 	get_tree().quit(0)
+
+
+## Settings "返回" is a real Button. Confirm it only when it will actually
+## close (no pending display confirmation), so a blocked return stays silent.
+func _on_return_pressed() -> void:
+	if not _settings_open:
+		return
+	if _display != null and _display.is_pending():
+		return
+	DemoAudio.play_ui_click()
+	_close_settings()
 
 
 func _start_sequence() -> void:

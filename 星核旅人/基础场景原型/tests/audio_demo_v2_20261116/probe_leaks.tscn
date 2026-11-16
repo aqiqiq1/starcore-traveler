@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tests/audio_demo_v2_20261116/probe_leaks.gd" id="1_probe"]
+
+[node name="ProbeLeaks" type="Node"]
+script = ExtResource("1_probe")

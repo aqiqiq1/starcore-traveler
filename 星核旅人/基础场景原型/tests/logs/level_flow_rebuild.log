@@ -4,7 +4,5 @@ PASS actual L1 completion button enters the real Level02 scene
 PASS Level02 spawn is intact
 PASS Level02 starts unpaused
 PASS L2 completion setup shows the result page
-PASS L2 completion primary is 返回主界面
-PASS actual L2 completion button returns to the real Level01 title
-PASS returned title menu is open
-PASS returned title is unpaused
+FAIL L2 completion primary is 返回主界面
+FAIL actual L2 completion button returns to the real Level01 title

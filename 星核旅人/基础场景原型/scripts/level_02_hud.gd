@@ -8,6 +8,7 @@ extends CanvasLayer
 ## only presentation state; all gameplay state remains in Level02/the shared
 ## star-core room.
 
+signal next_level_requested
 signal replay_requested
 signal return_to_menu_requested
 
@@ -210,31 +211,40 @@ func _build_completion() -> void:
 	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(divider)
 
-	_completion_primary = _menu_button("返回主界面", Vector2(110.0, 86.0), Vector2(180.0, 28.0), PixelMenuButton.Variant.STONE)
-	_completion_primary.pressed.connect(func() -> void: return_to_menu_requested.emit())
+	_completion_primary = _menu_button("进入第三关", Vector2(110.0, 86.0), Vector2(180.0, 28.0), PixelMenuButton.Variant.STONE)
+	_completion_primary.pressed.connect(func() -> void: next_level_requested.emit())
 	panel.add_child(_completion_primary)
-	_completion_return = _completion_primary
 
-	_completion_replay = _menu_button("重玩本关", Vector2(120.0, 126.0), Vector2(160.0, 24.0), PixelMenuButton.Variant.OPTION)
+	_completion_replay = _menu_button("重玩本关", Vector2(32.0, 126.0), Vector2(160.0, 24.0), PixelMenuButton.Variant.OPTION)
 	_completion_replay.pressed.connect(func() -> void: replay_requested.emit())
 	panel.add_child(_completion_replay)
+
+	_completion_return = _menu_button("返回主界面", Vector2(208.0, 126.0), Vector2(160.0, 24.0), PixelMenuButton.Variant.OPTION)
+	_completion_return.pressed.connect(func() -> void: return_to_menu_requested.emit())
+	panel.add_child(_completion_return)
 
 	_completion_count_label = _label("", Vector2(0.0, 158.0), Vector2(400.0, 16.0), 12, DIM)
 	_completion_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(_completion_count_label)
-	var hint: Label = _label("Enter 返回主界面 · R 重玩 · Esc 暂停",
-		Vector2(0.0, 174.0), Vector2(400.0, 16.0), 12, MUTED)
+	var hint: Label = _label("Enter 进入第三关 · R 重玩 · Esc 暂停",
+		Vector2(0.0, 178.0), Vector2(400.0, 16.0), 12, MUTED)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(hint)
 
+	# Same approved three-button focus loop as level 01: primary first, the two
+	# secondary commands share the second row.
 	_completion_primary.focus_next = _completion_primary.get_path_to(_completion_replay)
-	_completion_primary.focus_previous = _completion_primary.get_path_to(_completion_replay)
+	_completion_primary.focus_previous = _completion_primary.get_path_to(_completion_return)
 	_completion_primary.focus_neighbor_bottom = _completion_primary.get_path_to(_completion_replay)
-	_completion_primary.focus_neighbor_top = _completion_primary.get_path_to(_completion_replay)
-	_completion_replay.focus_next = _completion_replay.get_path_to(_completion_primary)
+	_completion_primary.focus_neighbor_top = _completion_primary.get_path_to(_completion_return)
+	_completion_replay.focus_next = _completion_replay.get_path_to(_completion_return)
 	_completion_replay.focus_previous = _completion_replay.get_path_to(_completion_primary)
 	_completion_replay.focus_neighbor_top = _completion_replay.get_path_to(_completion_primary)
-	_completion_replay.focus_neighbor_bottom = _completion_replay.get_path_to(_completion_primary)
+	_completion_replay.focus_neighbor_bottom = _completion_replay.get_path_to(_completion_return)
+	_completion_return.focus_next = _completion_return.get_path_to(_completion_primary)
+	_completion_return.focus_previous = _completion_return.get_path_to(_completion_replay)
+	_completion_return.focus_neighbor_top = _completion_return.get_path_to(_completion_replay)
+	_completion_return.focus_neighbor_bottom = _completion_return.get_path_to(_completion_primary)
 
 
 func _menu_button(
@@ -348,10 +358,12 @@ func release_completion_focus() -> void:
 		_completion_primary.release_focus()
 	if _completion_replay != null:
 		_completion_replay.release_focus()
+	if _completion_return != null:
+		_completion_return.release_focus()
 
 
 func set_completion_buttons_enabled(value: bool) -> void:
-	for button: PixelMenuButton in [_completion_primary, _completion_replay]:
+	for button: PixelMenuButton in [_completion_primary, _completion_replay, _completion_return]:
 		if button != null:
 			button.disabled = not value
 

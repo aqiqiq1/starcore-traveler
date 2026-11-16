@@ -1,0 +1,34 @@
+PASS E releases the one transport core (opposite phase)
+PASS HUD names the rune bay
+PASS real leading move puts the same core in the rune-bay seat
+PASS E stores the core and records its own phase
+PASS rune-bay store sets the RUNE recovery stage
+PASS only one moving core exists after the store
+PASS record pulse really lights the rune stone
+PASS rune takes the stored core's phase
+PASS opposite-phase rune lift carries the player up and over the ledge edge
+PASS Q to same phase lets the player land on the fixed-device ledge
+PASS player reaches the fixed device
+PASS E turns the device's own colourless core purple
+PASS device uses the active purple texture
+PASS device starts the floating-stone cycle
+PASS device sets the DEVICE recovery stage
+PASS all five stones really rise
+SETUP float_duration=5.0, warning_time=1.4 for the timeout check; device already started by real E
+PASS player stands on the first raised floating stone
+PASS real warning starts before the sink
+PASS falling with the sinking stone restores at the device, not the level start
+PASS timeout clears the old float cycle
+PASS device/stage survive the float timeout
+PASS restore keeps the single transport core stored, no duplicate
+PASS restore keeps the rune/link record live
+PASS restore uses the stored player phase
+PASS E at the device starts a fresh float cycle after the timeout
+PASS second cycle raises every stone again
+PASS step 1: ledge -> block 1
+PASS step 2: block 2 -> higher block 3
+PASS step 3: block 3 -> block 4
+PASS step 4: block 4 -> block 5
+PASS step 5: block 5 -> safe landing buffer
+PASS safe buffer checkpoint records the ARENA stage
+PASS buffer checkpoint lights up

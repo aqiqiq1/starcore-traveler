@@ -77,6 +77,9 @@ func _gui_input(event: InputEvent) -> void:
 			_pressed_inside = false
 			queue_redraw()
 			if Rect2(Vector2.ZERO, size).has_point(mouse.position):
+				# Accepted press only: disabled / mouse-up outside already
+				# returned above, so a blocked button stays silent.
+				DemoAudio.play_ui_click()
 				pressed.emit()
 			accept_event()
 		return
@@ -85,6 +88,7 @@ func _gui_input(event: InputEvent) -> void:
 		if not key.pressed or key.echo:
 			return
 		if key.keycode == KEY_ENTER or key.keycode == KEY_KP_ENTER or key.keycode == KEY_SPACE:
+			DemoAudio.play_ui_click()
 			pressed.emit()
 			accept_event()
 

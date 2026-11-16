@@ -1,0 +1,254 @@
+[gd_scene load_steps=27 format=3]
+
+[ext_resource type="Script" path="res://scripts/level_03.gd" id="1_level"]
+[ext_resource type="Script" path="res://scripts/level03/l3_hud.gd" id="2_hud"]
+[ext_resource type="PackedScene" path="res://scenes/level03/l3_player.tscn" id="3_player"]
+[ext_resource type="PackedScene" path="res://scenes/level02_bay.tscn" id="4_bay"]
+[ext_resource type="PackedScene" path="res://scenes/star_core_carrier.tscn" id="5_core"]
+[ext_resource type="PackedScene" path="res://scenes/backgrounds/cloud_ruins_ds03.tscn" id="6_ds03"]
+[ext_resource type="PackedScene" path="res://scenes/rune_stone_field.tscn" id="7_rune"]
+[ext_resource type="PackedScene" path="res://scenes/polarity_link_visual.tscn" id="8_link_visual"]
+[ext_resource type="Script" path="res://scripts/bay_rune_link.gd" id="9_link"]
+[ext_resource type="Script" path="res://scripts/level03/l3_fixed_device.gd" id="10_device"]
+[ext_resource type="Script" path="res://scripts/level03/l3_float_route.gd" id="11_route"]
+[ext_resource type="PackedScene" path="res://scenes/level03/float_block.tscn" id="12_block"]
+[ext_resource type="PackedScene" path="res://scenes/level03/guard.tscn" id="13_guard"]
+[ext_resource type="PackedScene" path="res://scenes/level03/gate.tscn" id="14_gate"]
+[ext_resource type="PackedScene" path="res://scenes/level03/cinematic.tscn" id="15_cine"]
+[ext_resource type="Script" path="res://scripts/level03/l3_audio.gd" id="16_audio"]
+[ext_resource type="Script" path="res://scripts/level03/l3_terrain.gd" id="17_terrain"]
+[ext_resource type="Script" path="res://scripts/level_checkpoint.gd" id="19_checkpoint"]
+[ext_resource type="Texture2D" path="res://assets/level03_prototype/gate_closed_empty.png" id="21_far_gate"]
+[ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_tall.tscn" id="23_col_tall"]
+[ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_broken.tscn" id="24_col_broken"]
+[ext_resource type="Script" path="res://scripts/terrain_strip.gd" id="25_strip"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_terrain"]
+size = Vector2(560, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_checkpoint"]
+size = Vector2(40, 72)
+
+[node name="Level03" type="Node2D"]
+process_physics_priority = -10
+script = ExtResource("1_level")
+core_min_x = 0.0
+core_max_x = 2520.0
+core_kill_y = 430.0
+
+[node name="Background" type="CanvasLayer" parent="."]
+process_mode = 1
+layer = -10
+
+[node name="CloudRuinsDS03" parent="Background" instance=ExtResource("6_ds03")]
+
+[node name="TerrainTop" type="Node2D" parent="."]
+visible = false
+script = ExtResource("25_strip")
+
+[node name="TerrainFill" type="Node2D" parent="."]
+visible = false
+script = ExtResource("25_strip")
+
+[node name="TerrainBody" type="StaticBody2D" parent="."]
+position = Vector2(280, 340)
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TerrainBody"]
+shape = SubResource("RectangleShape2D_terrain")
+
+[node name="Terrain" type="Node2D" parent="."]
+process_mode = 1
+z_index = 2
+
+[node name="GroundAVisual" type="Node2D" parent="Terrain"]
+position = Vector2(0, 320)
+script = ExtResource("17_terrain")
+block_rect = Rect2(0, 0, 560, 40)
+make_collision = false
+
+[node name="Ledge" type="Node2D" parent="Terrain"]
+position = Vector2(512, 210)
+script = ExtResource("17_terrain")
+block_rect = Rect2(0, 0, 388, 110)
+
+[node name="UpperPlatform" type="Node2D" parent="Terrain"]
+position = Vector2(240, 130)
+script = ExtResource("17_terrain")
+block_rect = Rect2(0, 0, 160, 26)
+one_way = true
+
+[node name="Buffer" type="Node2D" parent="Terrain"]
+position = Vector2(1482, 252)
+script = ExtResource("17_terrain")
+block_rect = Rect2(0, 0, 178, 68)
+
+[node name="ArenaStep" type="Node2D" parent="Terrain"]
+position = Vector2(1660, 290)
+script = ExtResource("17_terrain")
+block_rect = Rect2(0, 0, 40, 30)
+
+[node name="Arena" type="Node2D" parent="Terrain"]
+position = Vector2(1700, 320)
+script = ExtResource("17_terrain")
+block_rect = Rect2(0, 0, 520, 40)
+
+[node name="CityGround" type="Node2D" parent="Terrain"]
+position = Vector2(2220, 320)
+script = ExtResource("17_terrain")
+block_rect = Rect2(0, 0, 300, 40)
+tint = Color(0.99, 0.96, 0.9, 1)
+
+[node name="Decorations" type="Node2D" parent="."]
+process_mode = 1
+
+[node name="ColumnGround" parent="Decorations" instance=ExtResource("23_col_tall")]
+position = Vector2(430, 320)
+z_index = 0
+
+[node name="ColumnBrokenGround" parent="Decorations" instance=ExtResource("24_col_broken")]
+position = Vector2(500, 320)
+
+[node name="ColumnLedge" parent="Decorations" instance=ExtResource("24_col_broken")]
+position = Vector2(876, 210)
+
+[node name="ColumnArenaLeft" parent="Decorations" instance=ExtResource("23_col_tall")]
+position = Vector2(1780, 320)
+
+[node name="Bays" type="Node2D" parent="."]
+process_mode = 1
+
+[node name="StartBay" parent="Bays" instance=ExtResource("4_bay")]
+position = Vector2(150, 304)
+bay_name = "起始仓"
+start_locked = true
+release_max_x = 2224.0
+
+[node name="TargetBay" parent="Bays" instance=ExtResource("4_bay")]
+position = Vector2(330, 304)
+bay_name = "符石仓"
+start_locked = false
+release_max_x = 2224.0
+
+[node name="Core" parent="." instance=ExtResource("5_core")]
+process_mode = 1
+position = Vector2(150, 312)
+
+[node name="PlayerSpawn" type="Marker2D" parent="."]
+position = Vector2(40, 320)
+
+[node name="Player" parent="." instance=ExtResource("3_player")]
+process_mode = 1
+position = Vector2(40, 320)
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0
+limit_left = 0
+limit_top = 0
+limit_right = 2520
+limit_bottom = 360
+
+[node name="RuneField" parent="." instance=ExtResource("7_rune")]
+process_mode = 1
+position = Vector2(505, 175)
+z_index = 2
+initial_active = false
+initial_positive = true
+auto_hint_in_range = false
+
+[node name="PolarityLink" parent="." instance=ExtResource("8_link_visual")]
+process_mode = 1
+source_path = NodePath("../Bays/TargetBay")
+target_path = NodePath("../RuneField")
+link_arc_height = -16.0
+
+[node name="LinkController" type="Node2D" parent="."]
+process_mode = 1
+script = ExtResource("9_link")
+bay_path = NodePath("../Bays/TargetBay")
+field_path = NodePath("../RuneField")
+link_visual_path = NodePath("../PolarityLink")
+
+[node name="FixedDevice" type="Node2D" parent="."]
+process_mode = 1
+z_index = 3
+position = Vector2(290, 130)
+script = ExtResource("10_device")
+interaction_range = 50.0
+foot_y = 130.0
+
+[node name="FloatRoute" type="Node2D" parent="."]
+process_mode = 1
+z_index = 2
+script = ExtResource("11_route")
+stagger = 0.06
+
+[node name="Block1" parent="FloatRoute" instance=ExtResource("12_block")]
+position = Vector2(916, 348)
+variant = 2
+rest_top = 348.0
+target_top = 222.0
+
+[node name="Block2" parent="FloatRoute" instance=ExtResource("12_block")]
+position = Vector2(1042, 348)
+variant = 1
+rest_top = 348.0
+target_top = 248.0
+
+[node name="Block3" parent="FloatRoute" instance=ExtResource("12_block")]
+position = Vector2(1152, 348)
+variant = 0
+rest_top = 348.0
+target_top = 218.0
+
+[node name="Block4" parent="FloatRoute" instance=ExtResource("12_block")]
+position = Vector2(1246, 348)
+variant = 2
+rest_top = 348.0
+target_top = 242.0
+
+[node name="Block5" parent="FloatRoute" instance=ExtResource("12_block")]
+position = Vector2(1372, 348)
+variant = 1
+rest_top = 348.0
+target_top = 222.0
+
+[node name="BufferCheckpoint" type="Area2D" parent="."]
+process_mode = 1
+z_index = 1
+position = Vector2(1520, 252)
+script = ExtResource("19_checkpoint")
+trigger_size = Vector2(40, 72)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BufferCheckpoint"]
+position = Vector2(0, -36)
+shape = SubResource("RectangleShape2D_checkpoint")
+
+[node name="Guard" parent="." instance=ExtResource("13_guard")]
+process_mode = 1
+position = Vector2(2050, 320)
+floor_y = 320.0
+patrol_left = 1850.0
+patrol_right = 2150.0
+pursuit_left = 1780.0
+pursuit_right = 2200.0
+start_positive = true
+
+[node name="Gate" parent="." instance=ExtResource("14_gate")]
+process_mode = 1
+position = Vector2(2380, 320)
+
+[node name="Cine" parent="." instance=ExtResource("15_cine")]
+process_mode = 1
+position = Vector2(0, 0)
+
+[node name="Audio" type="Node" parent="."]
+process_mode = 1
+script = ExtResource("16_audio")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+process_mode = 3
+layer = 10
+script = ExtResource("2_hud")

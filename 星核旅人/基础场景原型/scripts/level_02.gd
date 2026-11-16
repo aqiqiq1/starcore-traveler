@@ -47,8 +47,12 @@ var _pause_menu = null
 var _completed: bool = false
 var _resetting: bool = false
 var _completion_count: int = 0
+var _last_polarity_toggles: int = 0
 var _exit_was_inside: bool = false
 var _scene_leaving: bool = false
+## One accepted "进入第三关" press per completion; the button is disabled in the
+## same call so a double click/key cannot request two scene changes.
+var _next_level_started: bool = false
 var _stable_stage: int = STABLE_START
 var _stable_positive: bool = true
 ## Exactly the four approved conductive bodies. Their bodies remain on the
@@ -91,6 +95,8 @@ func _ready() -> void:
 			marker.set_activated(false)
 
 	_link.reset_link()
+	if not _link.field_committed.is_connected(_on_link_field_committed):
+		_link.field_committed.connect(_on_link_field_committed)
 	activate(_player, null)
 	add_player_force_provider(_link)
 	_hud02.set_pause_visible(false)
@@ -98,6 +104,8 @@ func _ready() -> void:
 	_hud02.set_polarity(_player.is_positive())
 	_hud02.replay_requested.connect(_restart_level)
 	_hud02.return_to_menu_requested.connect(_return_to_main_menu)
+	if not _hud02.next_level_requested.is_connected(_on_next_level_requested):
+		_hud02.next_level_requested.connect(_on_next_level_requested)
 	if not _exit.player_reached_exit.is_connected(_on_exit_reached):
 		_exit.player_reached_exit.connect(_on_exit_reached)
 	_exit.set_completed(false)
@@ -108,6 +116,13 @@ func _ready() -> void:
 	_setup_pause_menu()
 	_camera.reset_smoothing()
 	_update_level_hud()
+
+
+## World cues are scene-local: leaving for level 03 (or the title) must not
+## carry a take/seat tail into the next scene. UI clicks finish naturally.
+func _exit_tree() -> void:
+	if is_instance_valid(DemoAudio):
+		DemoAudio.stop_world()
 
 
 func _register_special_force_bodies() -> void:
@@ -367,12 +382,14 @@ func _show_store_unavailable(info: Dictionary) -> void:
 
 
 func _on_core_released() -> void:
+	DemoAudio.play_core_take()
 	if _hud02 != null:
 		_hud02.show_toast("星核已释放 · %s" % ("辉相" if _pending_positive else "澜相"), 1.0)
 	_update_level_hud()
 
 
 func _on_core_stored_in_bay(bay: StarCoreBayInteractable, core_positive: bool) -> void:
+	DemoAudio.play_core_seat()
 	_success = false
 	if _hud02 == null:
 		return
@@ -398,6 +415,12 @@ func _complete_store() -> void:
 	elif bay == _linked_bay:
 		_set_stable(STABLE_LINKED, bay.get_recorded_positive())
 	_update_level_hud()
+
+
+## Real rune-field commit (pulse delivered + stone transition finished). The
+## pulse start is not a second cue: one commit, one sound.
+func _on_link_field_committed(_positive: bool) -> void:
+	DemoAudio.play_link()
 
 
 func _set_stable(stage: int, positive: bool) -> void:
@@ -463,6 +486,7 @@ func _restore_stable(reason: String) -> void:
 	_completed = false
 	_success = false
 	_exit_was_inside = false
+	_next_level_started = false
 	if _exit != null:
 		_exit.set_completed(false)
 		_exit.set_gate_available(false)
@@ -499,6 +523,11 @@ func _restore_stable(reason: String) -> void:
 	_player.clear_external_force()
 	_camera.reset_smoothing()
 	_resetting = false
+	if reason != "debug_setup":
+		# L1/L2 restore in one instant (no fade). Their existing stable-restore
+		# event gets the single "back on the checkpoint" cue; failure has no
+		# separate entry here and is not stacked on top.
+		DemoAudio.play_respawn()
 	if _stele != null:
 		_stele.set_suspended(false)
 		_stele.on_player_reset(reason)
@@ -564,7 +593,7 @@ func _reset_room_state() -> void:
 
 
 func _restart_level() -> void:
-	if _scene_leaving:
+	if _scene_leaving or _next_level_started:
 		return
 	if _pause_menu != null:
 		_pause_menu.force_close()
@@ -572,6 +601,7 @@ func _restart_level() -> void:
 	get_tree().paused = false
 	_completed = false
 	_exit_was_inside = false
+	_next_level_started = false
 	if _exit != null:
 		_exit.set_completed(false)
 		_exit.set_gate_available(false)
@@ -588,13 +618,36 @@ func _restart_level() -> void:
 	if _hud02 != null:
 		_hud02.set_pause_visible(false)
 		_hud02.show_completion(false)
+		# A failed attempt must not leave the page's buttons disabled on the
+		# next completion.
+		_hud02.set_completion_buttons_enabled(true)
 		_hud02.set_polarity(_player.is_positive())
 		_hud02.show_toast("本关已重新开始", 1.2)
 	_update_level_hud()
 
 
+## Completion page: "进入第三关". One accepted request per completion; the
+## buttons are disabled in the same call, so a double click or Enter repeat
+## cannot request a second scene change. The real LevelFlow change unpauses the
+## tree and releases held gameplay actions before loading level_03.tscn.
+func _on_next_level_requested() -> void:
+	if not _completed or _next_level_started or _scene_leaving:
+		return
+	_next_level_started = true
+	if _pause_menu != null:
+		_pause_menu.prepare_scene_change()
+	if _hud02 != null:
+		_hud02.set_completion_buttons_enabled(false)
+		_hud02.release_completion_focus()
+	if _stele != null:
+		_stele.set_suspended(true)
+	_player.clear_input_buffers()
+	_player.clear_external_force()
+	LEVEL_FLOW.start_level_03(get_tree())
+
+
 func _return_to_main_menu() -> void:
-	if _scene_leaving:
+	if _scene_leaving or _next_level_started:
 		return
 	_scene_leaving = true
 	if _pause_menu != null:
@@ -605,6 +658,12 @@ func _return_to_main_menu() -> void:
 
 
 func _on_player_polarity_changed(positive: bool) -> void:
+	# Real Q only: resets put the player counter back at 0 and scripted state
+	# changes do not increment it, so neither plays the phase cue.
+	var toggles: int = _player.get_polarity_toggle_count()
+	if toggles > _last_polarity_toggles:
+		DemoAudio.play_polarity_switch()
+	_last_polarity_toggles = toggles
 	if _hud02 != null:
 		_hud02.set_polarity(positive)
 
@@ -629,6 +688,7 @@ func _try_complete_at_exit() -> void:
 		return
 	_completed = true
 	_completion_count += 1
+	DemoAudio.play_complete()
 	_exit.set_gate_available(false)
 	_exit.set_completed(true)
 	_player.clear_input_buffers()
@@ -842,6 +902,10 @@ func get_completion_count() -> int:
 
 func is_scene_leaving() -> bool:
 	return _scene_leaving
+
+
+func is_next_level_started() -> bool:
+	return _next_level_started
 
 
 func is_target_locked() -> bool:

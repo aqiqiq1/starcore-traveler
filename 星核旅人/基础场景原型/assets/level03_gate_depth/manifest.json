@@ -1,0 +1,20 @@
+{
+  "generated": "2026-11-16",
+  "purpose": "Level-03 lifting gate layers and passage depth, derived from the approved 144x160 gate PNGs.",
+  "source_originals": {
+    "assets/level03_prototype/gate_closed_empty.png": "facade, closed, empty 24px socket (project self-made; core derived from Frakassets CC BY 4.0)",
+    "assets/level03_prototype/gate_closed_filled.png": "facade, closed, embedded 16px core (project self-made; same CC BY 4.0 core derivation)",
+    "assets/level03_prototype/gate_open.png": "facade, open / passable (project self-made)",
+    "licence_note": "See assets/level03_prototype/SOURCE_MANIFEST.json; originals are read-only and unchanged."
+  },
+  "derivation": {
+    "gate_fixed.png": "closed PNG with ONLY the plate pixels cleared; contains both towers, arch, lintel and BOTH inner pillars. Second revision: the LEFT slit (image x32..45, rows 82..156, i.e. the real opening between the left tower edge x31 and the left arch pillar) is filled with the mirrored rear lining - 1 px edge (94,84,88), 1 px ramp (89,74,81), shaded face (78,70,78) with a 16 px course line, 2 px shadow arris (60,52,57) against the pillar. Opaque art pixels are kept. This is a BACK layer (fixed facade z4, behind the player): it never occludes the body and only replaces the sky that used to show through the gap. Nothing is painted above the lintel or below the base. Original assets/level03_prototype PNGs untouched.",
+    "gate_plate_closed.png": "closed PNG cropped to the plate bbox (x=55 y=79 34x73) and masked to the differing pixels only.",
+    "gate_plate_filled.png": "filled PNG cropped and masked the same way (16px core hole visible).",
+    "gate_passage.png": "plate-bbox rows only: transparent span of the open PNG inside the doorway, dark vertical gradient; passage backdrop.",
+    "gate_right_edge.png": "6x68 slice of the real right arch pillar inner lip (fixed layer x88..93, y88..155; the pillar runs x88..99). Drawn again at the same position on z6 so only that stone edge occludes the body after the doorway midline.",
+    "gate_right_foreground.png": "56x142 exact copy of gate_fixed.png x88..143, y18..159 (right arch pillar + slit + right tower) with the slit (image x101..112, rows 82..156) filled by the same rear lining mirrored: 2 px shadow arris (60,52,57) against the pillar, shaded face (78,70,78) with a 16 px course line, 1 px ramp (89,74,81), 1 px edge (94,84,88) at the tower. No sky sliver is left between the pillar shoulder and the tower. This is the only part of the gatehouse put in front of the body (z6); the left tower/pillar/gap are not copied and stay at z4."
+  },
+  "runtime": "scripts/level03/l3_gate.gd: passage z-1 (drawn dark gradient, also the plate's clip stencil) -> plate z-1 child -> fixed facade z4 (BEHIND the player z5; left tower / left pillar / left gap never front-occlude) -> RightForeground z6 (real right pillar + filled jamb + right tower, 2236..2292) -> building return side + corner pilaster z6 -> building front z7. The foreground run is continuous from 2236 to the front's right end, so the body cannot become fully visible again after it passes the right pillar's inner edge. Building = scripts/level03/l3_gate_depth_wall.gd: lower storey up to world y200 (return 12 px, corner 16 px, front), 4 px cornice at 196..200, upper storey set back 16 px with its own dark side face, base line at world 314 from the gate facade, 3 pilasters + recessed bays, 3 tones near the gate base colour. The earlier gate_right_edge.png (6 px lip slice) is kept as history but is no longer used at runtime.",
+  "no_previews": true
+}

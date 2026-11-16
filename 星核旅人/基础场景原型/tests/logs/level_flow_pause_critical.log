@@ -4,8 +4,8 @@ Godot 4.7.2-stable (official)  display=headless
 -- LOAD / INITIAL STATES / CONTROLS MOVE INTO PAUSE --
 [PASS] level 01 no longer draws the permanent bottom strip  ()
 [PASS] level 01 pause page has a grouped controls section  ()
-[PASS] level 01 pause controls list movement/Q/F/Esc  (移动  A / D · ← / → | 奔跑  左Shift | 跳跃  空格 | 切换相性  Q | 阅读石碑  F | 重来本关  R | 暂停菜单  Esc)
-[PASS] level 01 pause controls do not show the level-02 E action  (移动  A / D · ← / → | 奔跑  左Shift | 跳跃  空格 | 切换相性  Q | 阅读石碑  F | 重来本关  R | 暂停菜单  Esc)
+[PASS] level 01 pause controls list movement/Q/F/Esc  (移动  A / D · ← / → | 奔跑  左Shift | 跳跃  空格 | 切换相性  Q | 交谈  F | 重来本关  R | 暂停菜单  Esc)
+[PASS] level 01 pause controls do not show the level-02 E action  (移动  A / D · ← / → | 奔跑  左Shift | 跳跃  空格 | 切换相性  Q | 交谈  F | 重来本关  R | 暂停菜单  Esc)
 [PASS] level 02 starts at the real spawn (36,320)  ((36.0, 320.0))
 [PASS] level 02 starts in 辉相  ()
 [PASS] level 02 start bay starts locked  ()
@@ -13,14 +13,14 @@ Godot 4.7.2-stable (official)  display=headless
 [PASS] level 02 starts with the tree unpaused  ()
 [PASS] level 02 no longer draws the permanent bottom strip  ()
 [PASS] level 02 pause page has a grouped controls section  ()
-[PASS] level 02 pause controls include E release/store  (移动  A / D · ← / → | 奔跑  左Shift | 跳跃  空格 | 切换相性  Q | 释放 / 入仓  E | 阅读石碑  F | 重来本关  R | 暂停菜单  Esc)
+[PASS] level 02 pause controls include E release/store  (移动  A / D · ← / → | 奔跑  左Shift | 跳跃  空格 | 切换相性  Q | 释放 / 入仓  E | 阅读石碑  F | 失败恢复  最近稳定仓 | 整关重来  R | 暂停菜单  Esc)
 
 -- ESC / PAUSE / SETTINGS / RESUME - BOTH LEVELS --
 [PASS] Esc opens the real pause page while paused  ()
 [PASS] HUD pause state flag follows the pause page  ()
-[PASS] pause opens with focus on 继续游戏  (@Control@181)
+[PASS] pause opens with focus on 继续游戏  (@Control@186)
 [PASS] pause freezes level physics while a direction is held  ((105.2361, 299.9253))
-[PASS] Down moves focus from 继续 to 设置  (@Control@182)
+[PASS] Down moves focus from 继续 to 设置  (@Control@187)
 [PASS] Enter opens the shared settings page  ()
 [PASS] settings stays paused  ()
 [PASS] settings host uses the real StartMenu settings code  ()
@@ -29,7 +29,7 @@ Godot 4.7.2-stable (official)  display=headless
 [PASS] R in settings does not restart or complete the level  ()
 [PASS] Esc returns from settings to the pause root  ()
 [PASS] returning from settings keeps the tree paused  ()
-[PASS] settings return focuses the settings button  (@Control@182)
+[PASS] settings return focuses the settings button  (@Control@187)
 [PASS] Esc on the pause root resumes the level  ()
 [PASS] HUD pause flag clears on resume  ()
 [PASS] R on the pause root restarts and closes the page  ()
@@ -37,9 +37,9 @@ Godot 4.7.2-stable (official)  display=headless
 [PASS] level 01 pause page still has no E row  ()
 [PASS] Esc opens the real pause page while paused  ()
 [PASS] HUD pause state flag follows the pause page  ()
-[PASS] pause opens with focus on 继续游戏  (@Control@245)
+[PASS] pause opens with focus on 继续游戏  (@Control@249)
 [PASS] pause freezes level physics while a direction is held  ((36.0, 320.0))
-[PASS] Down moves focus from 继续 to 设置  (@Control@246)
+[PASS] Down moves focus from 继续 to 设置  (@Control@250)
 [PASS] Enter opens the shared settings page  ()
 [PASS] settings stays paused  ()
 [PASS] settings host uses the real StartMenu settings code  ()
@@ -48,7 +48,7 @@ Godot 4.7.2-stable (official)  display=headless
 [PASS] R in settings does not restart or complete the level  ()
 [PASS] Esc returns from settings to the pause root  ()
 [PASS] returning from settings keeps the tree paused  ()
-[PASS] settings return focuses the settings button  (@Control@246)
+[PASS] settings return focuses the settings button  (@Control@250)
 [PASS] Esc on the pause root resumes the level  ()
 [PASS] HUD pause flag clears on resume  ()
 [PASS] R on the pause root restarts and closes the page  ()
@@ -62,10 +62,10 @@ Godot 4.7.2-stable (official)  display=headless
 -- LEVEL 01 COMPLETION -> REAL LEVEL 02 (SETUP COMPLETION STATE) --
 [PASS] completion page is visible after the real exit signal  ()
 [PASS] completion page has the real 进入第二关 button  ()
-[PASS] completion focuses 进入第二关 for keyboard Enter  (@Control@441)
+[PASS] completion focuses 进入第二关 for keyboard Enter  (@Control@452)
 [PASS] Enter accepts the next-level command once  ()
 [PASS] the next-level button disables immediately after the single accepted press  ()
-[PASS] production change_scene_to_file landed on Level02  (Level02:<Node2D#145559128216>)
+[PASS] production change_scene_to_file landed on Level02  (Level02:<Node2D#155038255121>)
 [PASS] the old level instance was freed by the scene change  ()
 [PASS] the new level tree is not paused  ()
 [PASS] level 02 initial spawn is (36,320)  ((36.0, 320.0))
@@ -78,8 +78,8 @@ Godot 4.7.2-stable (official)  display=headless
 
 -- LEVEL 02 PAUSE -> REAL TITLE / MENU --
 [PASS] pause opens for the return-to-title check  ()
-[PASS] Down reaches 返回主界面  (@Control@594)
-[PASS] return goes to the real Level01 scene  (Level01:<Node2D#164030843126>)
+[PASS] Down reaches 返回主界面  (@Control@605)
+[PASS] return goes to the real Level01 scene  (Level01:<Node2D#175573567773>)
 [PASS] the paused level was freed by the scene change  ()
 [PASS] title screen is not left paused  ()
 [PASS] returned Level01 shows the initial title menu  ()
@@ -88,13 +88,12 @@ Godot 4.7.2-stable (official)  display=headless
 
 -- LEVEL 02 COMPLETION -> REAL TITLE (SETUP COMPLETION STATE) --
 [PASS] setup locks the level-02 target bay  ()
-[PASS] level-02 completion page is visible after the real completion path  ()
-[PASS] level-02 completion primary is 返回主界面, not a next level  (返回主界面)
-[PASS] the level-02 return button is wired to the completion primary  ()
-[PASS] level-02 completion focuses 返回主界面  (@Control@723)
-[PASS] level-02 completion returns to the real Level01 title  (Level01:<Node2D#182586443870>)
-[PASS] the completed level-02 instance was freed  ()
-[PASS] level-02 completion reaches the initial title menu  ()
+[FAIL] level-02 completion page is visible after the real completion path  ()
+[FAIL] level-02 completion primary is 返回主界面, not a next level  (进入第三关)
+[FAIL] the level-02 return button is wired to the completion primary  ()
+[FAIL] level-02 completion focuses 返回主界面  (<none>)
+[FAIL] level-02 completion returns to the real Level01 title  (Level02:<Node2D#185908332567>)
+[FAIL] the completed level-02 instance was freed  ()
 
 -- DISPLAY PENDING: ESC CANCELS BEFORE CLOSING SETTINGS --
 [PASS] settings open for the pending-priority check  ()
@@ -108,5 +107,5 @@ Godot 4.7.2-stable (official)  display=headless
 [PASS] closing settings does not unpause  ()
 [PASS] one more Esc resumes from the pause root  ()
 
-TEST_SUMMARY pass=93 fail=0
-RESULT: PASS
+TEST_SUMMARY pass=86 fail=6
+RESULT: FAIL

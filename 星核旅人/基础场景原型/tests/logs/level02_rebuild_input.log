@@ -1,14 +1,4 @@
 PASS L2 StartStele has four short pages
-PASS L2 stele is F-only (no auto page)
-PASS near stele shows the F reading prompt
-PASS approaching does not auto-open a page
-PASS F opens page 1
-PASS page 1 has transport text
-PASS pause suspends the stele
-PASS pause resume unsuspends the stele
-PASS resume returns to the F prompt
-PASS R clears the stele page
-PASS R returns to spawn
 PASS D walks at 100
 PASS walk produces real movement
 PASS A walks at 100

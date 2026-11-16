@@ -1,0 +1,214 @@
+{
+  "generated": "2026-11-17",
+  "tool": "previews/audio_demo_v2_20261116/generate_new3.py (numpy/scipy/soundfile, project Python env)",
+  "status": "three approved CC0-derived demo sounds; not listening-approved",
+  "approval": "docs/AUDIO_DEMO_V2_SOURCE_APPROVAL_20261116.md",
+  "format": "16-bit PCM mono 44100 Hz WAV",
+  "license": "CC0 1.0 Universal (CC0 1.0) Public Domain Dedication. To the extent possible under law, the person who associated CC0 with the work has waived all copyright and related or neighboring rights to the work. https://creativecommons.org/publicdomain/zero/1.0/ . This is the uploader-declared license shown on the OpenGameArt pages; it is not a legal review and does not imply endorsement by the authors.",
+  "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "license_evidence": [
+    {
+      "file": "source_evidence/05_bell_dings_page.jpg",
+      "bytes": 59310,
+      "sha256": "822a3c5a32e693098cccd4b181288406608dacecc7ac6609b551dfce40098915",
+      "copied_from": "previews/audio_sources_v2_20261116/evidence/screenshots/05_bell_dings_page.jpg"
+    },
+    {
+      "file": "source_evidence/04_gem_collect_sfx_page.jpg",
+      "bytes": 95160,
+      "sha256": "148d1be69e416469e9a34c1c7776b355a12c62d9b6e1440ac22d04261337a223",
+      "copied_from": "previews/audio_sources_v2_20261116/evidence/screenshots/04_gem_collect_sfx_page.jpg"
+    },
+    {
+      "file": "source_evidence/01_swishes_sound_pack_page.jpg",
+      "bytes": 72547,
+      "sha256": "7b8499b393d641fde93916c407d7fa4d2fe299db0935f133c829b473e99fecfd",
+      "copied_from": "previews/audio_sources_v2_20261116/evidence/screenshots/01_swishes_sound_pack_page.jpg"
+    },
+    {
+      "file": "source_evidence/06_various_sfx_spring_spring_page.jpg",
+      "bytes": 124204,
+      "sha256": "99e1dde315d76639c14ab99bc5e066a7da9250faace75b2e7b557c1f4e87a8c7",
+      "copied_from": "previews/audio_sources_v2_20261116/evidence/screenshots/06_various_sfx_spring_spring_page.jpg"
+    },
+    {
+      "file": "source_evidence/cc0_1_0_deed.html",
+      "bytes": 30248,
+      "sha256": "abb4d48fc8b85de52b377dd105532c6c549f515d492a8e1712bc99e7316a1f12",
+      "copied_from": "previews/audio_sources_v2_20261116/evidence/cc0_1_0_deed.html"
+    },
+    {
+      "file": "source_evidence/kenney_impact-sounds_LICENSE.txt",
+      "bytes": 608,
+      "sha256": "b49aa9c56b04528b95913de13e506a0f7c5e807b9925db9bfef86af1f91120db",
+      "copied_from": "previews/l3_asset_review_20261114/audio/source/kenney_impact-sounds_LICENSE.txt"
+    }
+  ],
+  "source_details": {
+    "bell_ding1.wav": {
+      "author": "PWL",
+      "title": "Bell dings/chimes - bell_ding1.wav",
+      "page_url": "https://opengameart.org/content/bell-dingschimes",
+      "file_url": "https://opengameart.org/sites/default/files/bell_ding1.wav",
+      "license": "CC0 1.0 Universal",
+      "attribution_required": false,
+      "evidence": "source_evidence/05_bell_dings_page.jpg"
+    },
+    "gem-gather-stereo.wav": {
+      "author": "Bobjt",
+      "title": "Gem collect SFX - gem-gather-stereo.wav",
+      "page_url": "https://opengameart.org/content/gem-collect-sfx",
+      "file_url": "https://opengameart.org/sites/default/files/gem-gather-stereo.wav",
+      "license": "CC0 1.0 Universal",
+      "attribution_required": false,
+      "evidence": "source_evidence/04_gem_collect_sfx_page.jpg"
+    },
+    "swish-9.wav": {
+      "author": "artisticdude",
+      "title": "Swishes Sound Pack - swish-9.wav",
+      "page_url": "https://opengameart.org/content/swishes-sound-pack",
+      "file_url": "https://opengameart.org/sites/default/files/swishes.zip",
+      "license": "CC0 1.0 Universal",
+      "attribution_required": false,
+      "evidence": "source_evidence/01_swishes_sound_pack_page.jpg"
+    },
+    "break_stone.wav": {
+      "author": "Spring Spring (Julie Damsgaard)",
+      "title": "Various Sound Effects - break_stone.wav",
+      "page_url": "https://opengameart.org/content/various-sound-effects-0",
+      "file_url": "https://opengameart.org/sites/default/files/break_stone.wav",
+      "license": "CC0 1.0 Universal",
+      "attribution_required": false,
+      "evidence": "source_evidence/06_various_sfx_spring_spring_page.jpg"
+    },
+    "impactMining_000.ogg": {
+      "author": "Kenney",
+      "title": "Impact Sounds - Audio/impactMining_000.ogg",
+      "page_url": "https://kenney.nl/assets/impact-sounds",
+      "file_url": "kenney_impact-sounds.zip (stored locally)",
+      "license": "CC0 1.0 Universal",
+      "attribution_required": false,
+      "evidence": "source_evidence/kenney_impact-sounds_LICENSE.txt"
+    }
+  },
+  "sources": {
+    "bell": {
+      "path": "previews/audio_sources_v2_20261116/source/bell_ding1.wav",
+      "sha256": "8ce40f49cd211125303df59db0da4fe911e8b2f34d3847011b15137c6b5850de"
+    },
+    "gem": {
+      "path": "previews/audio_sources_v2_20261116/source/gem-gather-stereo.wav",
+      "sha256": "03ff8ccdf94e0439cac45fb52a1037c7fc02048ef10fdb7cbcb285ad41a3ec08"
+    },
+    "swish9": {
+      "path": "previews/audio_sources_v2_20261116/source/swishes/swishes/swish-9.wav",
+      "sha256": "123883f006ce55feecbff11eea5f87c4493df4399989983037144570a23723c1"
+    },
+    "break_stone": {
+      "path": "previews/audio_sources_v2_20261116/source/break_stone.wav",
+      "sha256": "8e3ed312e12791be6d6bbcf02a1889fb3913e420b85c796e4236319e23414df2"
+    },
+    "kenney_zip": {
+      "path": "previews/l3_asset_review_20261114/audio/source/kenney_impact-sounds.zip",
+      "sha256": "029d734af1582474edf3a694d1b0cebc97c1c152f2f39fa34d4c2bafc5de77f8"
+    },
+    "kenney_member": {
+      "path": "Audio/impactMining_000.ogg",
+      "sha256": "36b4ea107222d073c67ca64dde26944975609202d5090b2f2021213c1a7e35cd"
+    }
+  },
+  "outputs": [
+    {
+      "event": "polarity_switch",
+      "file": "polarity_switch_v2.wav",
+      "metrics": {
+        "duration_s": 0.52,
+        "sr": 44100,
+        "channels": 1,
+        "peak_dbfs": -6.0,
+        "rms_dbfs": -31.713,
+        "dc": -2.902e-05,
+        "first_sample": 0.0,
+        "last_sample": 0.0,
+        "sha256": "6f21fcba11d54782fbcf04a062daa6bcce5586989dd39daca5e301d564a24ba2",
+        "bytes": 45908
+      },
+      "params": {
+        "bell_source": "bell_ding1.wav",
+        "bell_onset_s": 0.03454,
+        "segment_start_s": 0.03005,
+        "segment_length_s": 0.52,
+        "fade_in_s": 0.0015,
+        "fade_out_s": 0.055,
+        "gem_source": "gem-gather-stereo.wav",
+        "gem_offset_after_onset_s": 0.04,
+        "gem_relative_db": -12.0,
+        "mono": "mid (L/R correlation 1.000; no cancellation)",
+        "normalize_target_dbfs": -6.0
+      }
+    },
+    {
+      "event": "swing",
+      "file": "swing_v2.wav",
+      "metrics": {
+        "duration_s": 0.1969,
+        "sr": 44100,
+        "channels": 1,
+        "peak_dbfs": -6.0,
+        "rms_dbfs": -20.989,
+        "dc": -6.61e-06,
+        "first_sample": 0.0,
+        "last_sample": 0.0,
+        "sha256": "f0599caaae8407b2917debaeeb838871836ff927edfc3a3d1ef75bff254eca30",
+        "bytes": 17408
+      },
+      "params": {
+        "source": "swishes/swishes/swish-9.wav",
+        "keep": "full original 0.197 s air swing; no trim",
+        "fade_in_s": 0.002,
+        "fade_out_s": 0.008,
+        "mono": "mid",
+        "normalize_target_dbfs": -6.0
+      }
+    },
+    {
+      "event": "shell_shatter",
+      "file": "shell_shatter_heavy_v2.wav",
+      "metrics": {
+        "duration_s": 1.12,
+        "sr": 44100,
+        "channels": 1,
+        "peak_dbfs": -3.0,
+        "rms_dbfs": -20.889,
+        "dc": 4.779e-05,
+        "first_sample": 0.0,
+        "last_sample": 0.0,
+        "sha256": "da77b49b66f7bffcae8dc31951911f542e360ad9b878e9f369e3fd084f0816a2",
+        "bytes": 98828
+      },
+      "params": {
+        "body_source": "break_stone.wav",
+        "body_resample": "96000 -> 44100 (polyphase 147/320)",
+        "body_onset_s_after_resample": 0.00667,
+        "body_start_s": 0.00467,
+        "body_length_s": 1.12,
+        "body_highpass_hz": 24.0,
+        "fade_in_s": 0.001,
+        "fade_out_s": 0.12,
+        "impact_source": "Kenney Impact Sounds / Audio/impactMining_000.ogg (zip member)",
+        "impact_keep_s": 0.22,
+        "impact_lowpass_hz": 1200.0,
+        "impact_relative_peak_db": -9.0,
+        "impact_fade_out_s": 0.05,
+        "mono": "mid (L/R correlation 0.881; mid loses ~0.7 dB, no null)",
+        "normalize_target_dbfs": -3.0,
+        "note": "one clipped source sample is normalized down; no limiter/explosion added"
+      }
+    }
+  ],
+  "not_included": [
+    "no music files in runtime",
+    "no change to the old 12 candidates, old 6 OGGs or the research source folder",
+    "no placeholder sound; Q/J/shatter are real files only after this pass"
+  ]
+}

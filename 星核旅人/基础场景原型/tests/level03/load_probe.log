@@ -1,0 +1,34 @@
+PASS player exists
+PASS player starts on the floor
+PASS player starts at ground y=320
+PASS world right covers the city interior
+PASS guard loads ACTIVE
+PASS guard visual is exactly 2x
+PASS guard uses the existing golem idle/walk sheet
+PASS guard starts with the v2 gold weakpoint sheet
+PASS guard starts with the v3 gold field sheet
+PASS three true-damage marks at start
+PASS full stone shell at start (zero ordinary hits taken)
+PASS guard is alive
+PASS weakpoint hidden while idle
+PASS gate starts closed
+PASS gate socket starts empty
+PASS fixed device starts colourless/inactive
+PASS five floating stones authored
+PASS float route starts idle
+PASS transport core starts in the start bay
+PASS rune bay starts empty
+PASS carrier is hidden until E release
+PASS rune starts dormant
+PASS stable stage starts at START
+PASS cinematic has not played
+PASS HUD exists
+PASS header names the level
+PASS guard key core is the approved 16x16 world size
+PASS fixed device uses the 48x40 two-state asset
+PASS gate facade is the 144x160 v7 copy
+PASS weakpoint v2 is a 64x72 frame strip
+PASS guard field v3 is a 12x384x384 strip
+PASS dropped/carried key core uses the same 16px 12-frame sheet
+PASS guard charge/readout sits above the 2x body
+PASS weakpoint chest rect stays on the torso and above the ground

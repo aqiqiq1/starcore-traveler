@@ -187,3 +187,48 @@ eturn_platform_48x12.png — 2D54F91CD4CAE985C9C6F6C726AAAB6D62938E03ABAF54CC452
 eview_v2.png（美术检查板，非引擎截图）。
 - **两关共用 s40 残响**：ssets/guide_echo_20261113/guide_echo_idle_6f_s40.png，288×64，6×48×64，4 fps，SHA256 6CF0C33B22558D429C415D28CE394B70A6641C224A407F16A16489749574A746，与预览批准文件逐字节一致。它从原批准残响 guide_echo_idle_6f.png（SHA256 2ACAA0E55E8F68DE8881295F82E04B7361187C8E08977C37CFB13C59C80BC233）按已批准 s40 方法派生，alpha/结构/画布/脚底不变；原图保留。原残响来源为 LuizMelo Wizard Pack（CC0）的已记录派生，本 s40 不新增第三方素材或许可义务。
 - **验证边界**：见 docs/L2_REVISION_INTEGRATION_20261114.md 与本轮 tests/logs；未做人工连续试玩，三张正式图是固定 setup/非通关。
+
+
+## 15. 第三关首版运行素材（2026-11-15）
+
+- 运行副本目录 `assets/level03_prototype/`；逐文件源路径、源/目标 SHA256、用途与许可说明见同目录 `SOURCE_MANIFEST.json`。运行时只从 `assets/` 读取，不引用 `previews/`、GIF、离线审图板或参考图。
+- 核心/门：`gate_closed_empty.png`、`gate_closed_filled.png`、`key_core_16.png`、`key_core_12f.png` 来自 `previews/l3_asset_review_20261114/visual/v7/`（16×16 核 / 24×24 孔候选）；`gate_open.png` 来自 `visual/assets/`。核心原形为 Frakassets, *Free Shiny Gem "Round"*, https://frakassets.itch.io/free-shiny-gem-round , CC BY 4.0, https://creativecommons.org/licenses/by/4.0/ 的派生；源核未改，本工程保留署名/许可/派生记录。门、孔、核壳为项目内 AI 辅助 / 离线像素绘制候选，尚不构成对外发行许可证明。
+- 固定装置：`fixed_core_inactive.png` / `fixed_core_active.png` 来自 `visual/v4/assets/fixed_core_v4_{inactive,active}_48x40.png`；外壳为项目自制，内置核沿用上述 Frakassets 派生。
+- 弱点：`weakpoint_gold_64f.png` / `weakpoint_cyan_64f.png` 来自 `visual/weakpoint_corner_motion_v2/assets/`，项目自制。创作者 2026-11-15 已认可该角部慢转/中心十字反转/角外中心缩的 v2 运动；本轮只复制 64 帧表，未复制审图 GIF/对照板。
+- 广域内收场：`guard_field_gold_12f.png` / `guard_field_cyan_12f.png` 来自 `visual/v3/assets/`，项目自制候选（12 帧，非静态外圈）。
+- 浮地：`float_block_64.png`、`80.png`、`96.png` 与 `float_glow_64_8f.png`、`80_8f.png`、`96_8f.png` 来自 `visual/assets/`，项目自制候选。
+- 演出/城内：`emote_question.png`、`emote_exclaim.png`、`echo_projection.png`、`interior_gateway.png` 来自 `visual/assets/`，项目自制候选。城内只是可走入的起始空间语言样板，不是完整城市。
+- 音频（仅工程试装）：
+  - `audio_charge_v2.ogg` 来自 `audio/v2/candidates/l3_charge_field_draft_v2.ogg`；源 Sci-Fi Drone Loop，作者 jdagenet (Jason Dagenet)，OpenGameArt.org，CC BY 3.0，https://creativecommons.org/licenses/by/3.0/ ；已修改（截取、音高/滤波、包络）。**必须保留署名、许可链接与修改说明。**
+  - `audio_slam_v5.ogg` 来自 `audio/v5/candidates/l3_slam_stone_arm_draft_v5.ogg`；CC0 源 qubodup (Iwan 'qubodup' Gabovitch)、rubberduck、Kenney、StarNinjas + 项目自有合成。建议保留署名，非强制。
+  - `audio_reassemble.ogg`、`audio_float_warn.ogg`、`audio_float_settle.ogg`、`audio_core_seat.ogg` 来自 `audio/candidates/`（v1 A/C/D），CC0 源（rubberduck / Kenney / pauliuw）。**仍是候选/临时试装，未听审、未获最终音频认可。**
+  - 本轮实现 Agent 未听审任何音频；以上只是试装记录，不是最终听感验收。
+- 直接复用的正式现文件（只读）：`assets/experiments/polarity_golem/enemy/{orange,blue}/golem_1_*.png`、`assets/guide_echo_20261113/guide_echo_idle_6f_s40.png`、`assets/checkpoint_exit/gate_portal_fx_v2_8f.png`、`assets/bridge_stone_v1/generated/l2_ground_1792x40.png`、现有主角/星核/仓/符石与 DS03。主角与 Golem 的作者/许可仍未核实，只能内部原型使用，不据此宣称可公开发行。
+- 修改/边界：PNG/OGG 只做复制，未重采样、调色、裁边或重导出；OGG 容器 hash 记录在 `SOURCE_MANIFEST.json`；帧数/锚点/尺寸与使用边界见 manifest 与 `docs/L3_PROTOTYPE_REPORT_20261115.md`。未购买、未下载新素材、未上传工程、未调用付费服务。
+
+
+## 16. 音效第二版九条试装（2026-11-17，仅 demo 接线）
+
+- 运行副本目录 `assets/audio_demo_v2_20261116/`；逐文件 SHA256、时长、事件、试装音量见同目录 `SOURCE_MANIFEST.json`。9 条全部从 `previews/audio_review_20261116/candidates/` **逐字节复制**，未重导出、未改源候选，也未覆盖旧 12 条候选或 `assets/level03_prototype/` 的 6 条 OGG。
+- 来源：项目内离线程序合成（`previews/audio_review_20261116/generate_audio_candidates.py`，numpy，固定种子 20261116）。16-bit PCM mono 44.1 kHz WAV，峰值 -3.0 dBFS；无第三方采样、无采样包、无付费/联网生成服务，因此**不新增署名义务**；项目也不替这些自合成音声明 CC0。
+- 事件 → 运行文件（自合成试用，运行时相对音量）：
+  - `ui_click` → `ui_confirm.wav`（-10 dB，UI 确认/返回）
+  - `core_take` → `core_take.wav`（-6 dB，E 成功取核/取关键核）
+  - `core_seat` → `core_seat.wav`（-6 dB，入仓/嵌核）
+  - `link` → `link_pulse.wav`（-7 dB，符石联动提交）
+  - `player_hurt` → `player_hurt.wav`（-5 dB，主角被接受的受击）
+  - `gate` → `gate_rise.wav`（-4 dB，升门 insert_started）
+  - `complete` → `complete.wav`（-4 dB，关卡完成）
+  - `failure` → `failure.wav`（-5 dB，L3 失败过渡入口）
+  - `respawn` → `respawn.wav`（-6 dB，恢复落位/L3 淡入开始）
+- 状态：**候选试装、未听审、未获最终音频认可**。Godot 采用默认 WAV 导入（一次性、不循环）。Q、J、石壳碎裂另见 §16B：已补入新的 CC0 派生试装版；被否决的旧候选未接、也未造占位音。
+
+### 16B. 新三条 CC0 派生音（2026-11-17，Q / J / 大石壳碎裂）
+
+- 不再使用被否决的旧 Q/J/碎裂候选；三条均由协调已核的 CC0 源在本地派生。源页、参数、源/新 SHA256、CC0 说明与来源页截图副本见 `assets/audio_demo_v2_20261116/NEW3_DERIVATION.json` 与同目录 `source_evidence/`（previews 被 Git 忽略，故证据随 runtime 保存）。生成脚本 `previews/audio_demo_v2_20261116/generate_new3.py`。
+- `polarity_switch_v2.wav`（Q）：PWL, *Bell dings/chimes*, https://opengameart.org/content/bell-dingschimes ，CC0 1.0，`bell_ding1.wav` 首个清楚起音裁约 0.52 s、尾淡出；叠 Bobjt, *Gem collect SFX*, https://opengameart.org/content/gem-collect-sfx ，CC0 1.0 的 `gem-gather-stereo.wav`（起音后 40 ms，相对主铃 -12 dB）。派生为单声道 44.1 kHz，峰值 -6 dBFS。
+- `swing_v2.wav`（J）：artisticdude, *Swishes Sound Pack*, https://opengameart.org/content/swishes-sound-pack ，CC0 1.0，`swish-9.wav` 原空挥约 0.197 s，仅单声道/首尾小淡化，峰值 -6 dBFS；无金属撞击层。
+- `shell_shatter_heavy_v2.wav`（大石壳碎裂）：Spring Spring（Julie Damsgaard）, *Various Sound Effects*, https://opengameart.org/content/various-sound-effects-0 ，CC0 1.0，`break_stone.wav` 96 kHz→44.1 kHz、保留约 1.12 s 首段与碎块尾、软收尾；叠已有 Kenney *Impact Sounds*（CC0，包内 `License.txt` 已存）`impactMining_000` 的短低中频首击。派生峰值 -3 dBFS，未加长爆炸/长混响、未改碎裂/扣格状态机。
+- CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/ ) 允许修改、随游戏打包及随公开源码分发；署名为礼貌、非强制。许可以 OpenGameArt 页面上传者声明与截图为准，不宣称法务确定性。**三条均未人耳听审**，仍是试装版。
+
+

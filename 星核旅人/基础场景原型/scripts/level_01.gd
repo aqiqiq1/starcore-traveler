@@ -61,6 +61,7 @@ var _intro_elapsed: float = 0.0
 var _completed: bool = false
 var _resetting: bool = false
 var _completion_count: int = 0
+var _last_polarity_toggles: int = 0
 var _last_force: Vector2 = Vector2.ZERO
 var _intro_start_count: int = 0
 var _next_level_started: bool = false
@@ -117,6 +118,13 @@ func _ready() -> void:
 		_hud.visible = true
 		_begin_intro(true)
 	_refresh_exit_gate_available()
+
+
+## World cues are scene-local: a real scene change must not carry a gate rise or
+## completion tail into the next level. UI clicks are not stopped here.
+func _exit_tree() -> void:
+	if is_instance_valid(DemoAudio):
+		DemoAudio.stop_world()
 
 
 func _process(delta: float) -> void:
@@ -334,6 +342,13 @@ func _return_to_main_menu() -> void:
 
 
 func _on_player_polarity_changed(positive: bool) -> void:
+	# Only a real Q toggle increments the player's toggle counter. Reset/spawn
+	# emits polarity_changed with the counter back at 0, and a scripted
+	# set_polarity_state emits without incrementing, so neither can sound.
+	var toggles: int = _player.get_polarity_toggle_count()
+	if toggles > _last_polarity_toggles:
+		DemoAudio.play_polarity_switch()
+	_last_polarity_toggles = toggles
 	_hud.set_polarity(positive)
 
 
@@ -348,6 +363,7 @@ func _on_player_reset_performed(reason: String, _count: int) -> void:
 	_camera.reset_smoothing()
 	match reason:
 		"fall":
+			DemoAudio.play_respawn()
 			_hud.show_toast("跌入云海 · 回到最近恢复点", 2.0)
 		"manual":
 			_hud.show_toast("已回到本关起点", 1.4)
@@ -371,6 +387,7 @@ func _on_exit_reached() -> void:
 		return
 	_completed = true
 	_completion_count += 1
+	DemoAudio.play_complete()
 	_exit.set_completed(true)
 	_refresh_exit_gate_available()
 	_set_guides_suspended(true)

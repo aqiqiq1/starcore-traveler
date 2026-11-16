@@ -12,12 +12,12 @@ PASS linked store does not complete the level
 PASS linked record activates the rune after the real pulse
 PASS same core is pushed into the 20 px sill corridor
 PASS rune remains active after taking the core out
-PASS real rune lift lands the player on the 80 px sill
-PASS final bay locks only at the final store
+FAIL real rune lift lands the player on the 80 px sill
+FAIL final bay locks only at the final store
 PASS final store alone does not complete before the exit
-PASS player reaching the exit completes the level
-PASS completion page is visible
-PASS completion offers return to title, not a fake L3 jump
+FAIL player reaching the exit completes the level
+FAIL completion page is visible
+FAIL completion offers return to title, not a fake L3 jump
 PASS R clears completion
 PASS R clears stable progress
 PASS R restores the core to the start bay
