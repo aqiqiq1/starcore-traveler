@@ -1,18 +1,21 @@
 extends Node
 
 ## Tiny event-driven sound bank for level 03. Every stream is a real file copied
-## into assets/level03_prototype/; no preview path is read at runtime.
+## into the runtime assets/ folders; no preview path is read at runtime.
 ##
-## Approved-to-try: charge v2, slam v5. The reassemble / float / seat files are
-## still candidates and are marked TEMPORARY in the report and credits.
+## Approved-to-try: charge v2, slam v5. The float / seat files are still
+## candidates and are marked TEMPORARY in the report and credits. The
+## reassembly path now points to the 0.60 s CC0-derived A trial in
+## assets/audio_movement_20261117/; the other file paths and volumes are
+## unchanged. The old audio_reassemble.ogg remains as an audition reference.
 
 ## Streams are loaded lazily and held only by the players (not by script
 ## constants): a preloaded const keeps the Ogg stream and its packet sequence
 ## alive past scene teardown, which shows up as an ObjectDB/resource leak at
-## process exit. The files and volume levels are unchanged.
+## process exit. The files and volume levels are otherwise unchanged.
 const CHARGE_PATH: String = "res://assets/level03_prototype/audio_charge_v2.ogg"
 const SLAM_PATH: String = "res://assets/level03_prototype/audio_slam_v5.ogg"
-const REASSEMBLE_PATH: String = "res://assets/level03_prototype/audio_reassemble.ogg"
+const REASSEMBLE_PATH: String = "res://assets/audio_movement_20261117/reassembly_A_reverse.wav"
 const FLOAT_WARN_PATH: String = "res://assets/level03_prototype/audio_float_warn.ogg"
 const FLOAT_SETTLE_PATH: String = "res://assets/level03_prototype/audio_float_settle.ogg"
 const CORE_SEAT_PATH: String = "res://assets/level03_prototype/audio_core_seat.ogg"
@@ -33,8 +36,8 @@ func _ready() -> void:
 	_charge = _make_player("Charge", CHARGE_PATH, -6.0)
 	_slam = _make_player("Slam", SLAM_PATH, -1.5)
 	_reassemble = _make_player("Reassemble", REASSEMBLE_PATH, -4.0)
-	_float_warn = _make_player("FloatWarn", FLOAT_WARN_PATH, -4.0)
-	_float_settle = _make_player("FloatSettle", FLOAT_SETTLE_PATH, -5.0)
+	_float_warn = _make_player("FloatWarn", FLOAT_WARN_PATH, -10.0)
+	_float_settle = _make_player("FloatSettle", FLOAT_SETTLE_PATH, -11.0)
 	_core_seat = _make_player("CoreSeat", CORE_SEAT_PATH, -5.0)
 	# Short "stone has shifted" attention cue for the near-gate cinematic when
 	# the guard is alive but not currently rebuilding. It deliberately reuses

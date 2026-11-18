@@ -107,10 +107,8 @@ func _build_objective() -> void:
 	# by a <=1.4 s event, then restored. No second event row.
 	_objective = _label("送核入符石仓", Vector2(15.0, 58.0), Vector2(430.0, 18.0), 12, GOLD)
 	_root.add_child(_objective)
-	_control_hint = _label("J 攻击 · Q 换相", Vector2(200.0, 332.0), Vector2(240.0, 16.0), 12, TEXT)
-	_control_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_control_hint.visible = false
-	_root.add_child(_control_hint)
+	# The old bottom "J 攻击 · Q 换相" strip is gone; bindings live only in the
+	# pause page. The compatibility label stays null so old callers are inert.
 
 
 func _build_guide() -> void:
@@ -182,11 +180,7 @@ func _build_completion() -> void:
 	_completion_replay = _menu_button("重玩本关", Vector2(120.0, 126.0), Vector2(160.0, 24.0), PixelMenuButton.Variant.OPTION)
 	_completion_replay.pressed.connect(func() -> void: replay_requested.emit())
 	panel.add_child(_completion_replay)
-	var hint: Label = _label("Enter / 空格 确认 · Tab 切换 · R 重玩 · Esc 暂停",
-		Vector2(0.0, 162.0), Vector2(400.0, 16.0), 12, MUTED)
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	panel.add_child(hint)
-	_completion_hint = hint
+	_completion_hint = null
 	_completion_primary.focus_next = _completion_primary.get_path_to(_completion_replay)
 	_completion_primary.focus_previous = _completion_primary.get_path_to(_completion_replay)
 	_completion_replay.focus_next = _completion_replay.get_path_to(_completion_primary)
@@ -251,10 +245,11 @@ func show_event(text_value: String, duration: float = 1.4) -> void:
 		_guide.show_event(text_value, duration)
 
 
-func show_control_hint(duration: float = 3.0) -> void:
-	_control_left = maxf(duration, 0.5)
+func show_control_hint(_duration: float = 3.0) -> void:
+	# Compatibility no-op: the bottom control strip was removed from gameplay.
+	_control_left = 0.0
 	if _control_hint != null:
-		_control_hint.visible = true
+		_control_hint.visible = false
 
 
 func _process(delta: float) -> void:

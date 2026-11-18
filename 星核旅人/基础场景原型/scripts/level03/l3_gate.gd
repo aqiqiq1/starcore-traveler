@@ -9,6 +9,16 @@ extends Node2D
 ## with the 16 px core), and a dark passage silhouette behind them. Only the
 ## plate rises; the arch and both inner pillars never move.
 ##
+## Doorway interior (2026-11-18): the passage silhouette keeps its alpha and
+## now carries a derived dark-stone interior (gate_passage_interior.png): a
+## lit sill/threshold that meets the facade plinth, a soft left-jamb ambient,
+## low-contrast rear-wall courses and a gradient that deepens into the doorway.
+## A separate doorway-local shadow (gate_passage_shadow.png, z6, only inside
+## the aperture) fades in as the plate rises: it darkens the body that is
+## already inside the opening with a blue-grey tint and fades out again at the
+## lit sill, so the contour and the feet stay readable. It is not a screen
+## layer, never reaches the facade/left approach and never hides the body.
+##
 ## Depth order (player z = 5): passage (z -1, also the plate's clip stencil)
 ## -> plate (z -1 child) -> fixed gatehouse (z 4, BEHIND the player) -> the real
 ## right arch-pillar inner lip (z 6, 6 px) and the building's return side +
@@ -55,6 +65,12 @@ const DOOR_BARRIER_CENTER: Vector2 = Vector2(0.0, -49.0)
 const DOOR_BARRIER_SIZE: Vector2 = Vector2(4.0, 100.0)
 
 const PASSAGE_TEXTURE: Texture2D = preload("res://assets/level03_gate_depth/gate_passage.png")
+## Derived from PASSAGE_TEXTURE (same alpha silhouette). The base passage stays
+## the clip stencil; this copy is what the doorway shows.
+const INTERIOR_TEXTURE: Texture2D = preload("res://assets/level03_gate_depth/gate_passage_interior.png")
+## Doorway-local coloured shadow in front of the player (z6). Its alpha is the
+## aperture shape only; the PNG already holds the inward/sill falloff.
+const PASSAGE_SHADOW_TEXTURE: Texture2D = preload("res://assets/level03_gate_depth/gate_passage_shadow.png")
 const FIXED_TEXTURE: Texture2D = preload("res://assets/level03_gate_depth/gate_fixed.png")
 const PLATE_CLOSED_TEXTURE: Texture2D = preload("res://assets/level03_gate_depth/gate_plate_closed.png")
 const PLATE_FILLED_TEXTURE: Texture2D = preload("res://assets/level03_gate_depth/gate_plate_filled.png")
@@ -88,6 +104,8 @@ const ART_EDGE: Color = Color(0.235, 0.204, 0.224, 1.0)    # 60 52 57
 @export var embed_range: float = EMBED_RANGE
 
 var _passage: Sprite2D = null
+var _passage_interior: Sprite2D = null
+var _passage_shadow: Sprite2D = null
 var _plate_clip: Sprite2D = null
 var _plate: Sprite2D = null
 var _fixed: Sprite2D = null
@@ -124,6 +142,17 @@ func _build_visuals() -> void:
 	_passage = _layer("Passage", PASSAGE_TEXTURE, Vector2(IMAGE_LEFT, IMAGE_TOP), 4)
 	_passage.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
 	_plate_clip = _passage
+	# The derived interior is a child of the passage and is added BEFORE the
+	# plate, so the moving plate still covers it while the door is closed. The
+	# base passage keeps its alpha and remains the clip stencil.
+	_passage_interior = Sprite2D.new()
+	_passage_interior.name = "PassageInterior"
+	_passage_interior.centered = false
+	_passage_interior.offset = Vector2.ZERO
+	_passage_interior.position = Vector2.ZERO
+	_passage_interior.texture = INTERIOR_TEXTURE
+	_passage_interior.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_passage.add_child(_passage_interior)
 	_plate = Sprite2D.new()
 	_plate.name = "DoorPlate"
 	_plate.centered = false
@@ -141,6 +170,13 @@ func _build_visuals() -> void:
 	# the pillar's inner edge (world 2236) and stays covered through the tower.
 	# The seam backing is a child at the same z created first, so the art draws
 	# over it and only the art's own 1 px cut column shows the backing.
+	# Doorway-local player shadow: same aperture alpha with an authored inward
+	# falloff, drawn in front of the body (z6) but added BEFORE the right
+	# foreground, so the real right pillar still draws over it. Its top/side
+	# alpha is zero at the outer edge: nothing is covered before the doorway.
+	_passage_shadow = _layer("PassageShadow", PASSAGE_SHADOW_TEXTURE,
+		Vector2(IMAGE_LEFT, IMAGE_TOP), 6)
+	_passage_shadow.visible = false
 	_build_seam_backing()
 	_right_fg = _layer("RightForeground", RIGHT_FOREGROUND_TEXTURE,
 		Vector2(IMAGE_LEFT + RIGHT_FOREGROUND_RECT.position.x,
@@ -286,8 +322,21 @@ func _process(delta: float) -> void:
 		return
 	_rise_progress = clampf(_rise_progress + delta / RISE_TIME, 0.0, 1.0)
 	_apply_plate()
+	_update_passage_shadow()
 	if not _opened_emitted and _rise_progress >= PASSABLE_PROGRESS:
 		_release_passage()
+
+
+## The doorway shadow follows the real plate travel (never the player's state):
+## hidden while the plate is closed, in over the first part of the rise, full
+## once the passage is really open. Reset writes 0 so no in-between survives.
+func _update_passage_shadow() -> void:
+	if _passage_shadow == null:
+		return
+	var t: float = clampf((_rise_progress - 0.08) / 0.42, 0.0, 1.0)
+	t = t * t * (3.0 - 2.0 * t)
+	_passage_shadow.visible = t > 0.001
+	_passage_shadow.modulate = Color(1.0, 1.0, 1.0, t)
 
 
 func _apply_plate() -> void:
@@ -328,6 +377,9 @@ func reset_state() -> void:
 	if _plate != null:
 		_plate.texture = PLATE_CLOSED_TEXTURE
 	_apply_plate()
+	if _passage_shadow != null:
+		_passage_shadow.visible = false
+		_passage_shadow.modulate = Color.WHITE
 	if _door_body != null:
 		_door_body.collision_layer = 1
 	if _door_shape != null:
@@ -375,6 +427,22 @@ func get_plate_world_rect() -> Rect2:
 	if _plate == null or _plate_clip == null:
 		return Rect2()
 	return Rect2(_plate_clip.position + _plate.position + global_position, PLATE_RECT.size)
+
+
+func get_passage_interior_sprite() -> Sprite2D:
+	return _passage_interior
+
+
+func get_passage_shadow_sprite() -> Sprite2D:
+	return _passage_shadow
+
+
+## 0 = no doorway shadow, 1 = fully open passage. Read by the gate-focused
+## tests; it is presentation only and never gates the collision or completion.
+func get_passage_shadow_amount() -> float:
+	if _passage_shadow == null or not _passage_shadow.visible:
+		return 0.0
+	return clampf(_passage_shadow.modulate.a, 0.0, 1.0)
 
 
 func get_fixed_world_rect() -> Rect2:
@@ -498,6 +566,8 @@ func get_layer_z(node_name: String) -> int:
 func get_texture_paths() -> Dictionary:
 	return {
 		"passage": PASSAGE_TEXTURE.resource_path,
+		"passage_interior": INTERIOR_TEXTURE.resource_path,
+		"passage_shadow": PASSAGE_SHADOW_TEXTURE.resource_path,
 		"fixed": FIXED_TEXTURE.resource_path,
 		"plate_closed": PLATE_CLOSED_TEXTURE.resource_path,
 		"plate_filled": PLATE_FILLED_TEXTURE.resource_path,

@@ -18,22 +18,22 @@ const CYAN: Color = Color("#5fe1e6")
 const TEXT: Color = Color("#e7eceb")
 const MUTED: Color = Color("#a4b3be")
 const DIM: Color = Color("#728889")
-const PANEL_BG: Color = Color(0.012, 0.028, 0.035, 0.82)
-const PANEL_BORDER: Color = Color(0.33, 0.52, 0.51, 0.55)
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
+const INTERACTION_KEY_HINT = preload("res://scripts/ui/interaction_key_hint.gd")
 
 var _root: Control
 var _header: CompactLevelHeader
-var _phase_label: Label
-var _core_label: Label
-var _prompt_panel: Panel
-var _prompt_label: Label
+var _objective: Label
+var _phase_base: String = "任务：释放星核"
+var _core_text: String = "星核：起始仓"
 var _prompt_text: String = ""
-var _toast: Label
-var _toast_panel: Panel
-var _toast_time: float = 0.0
+var _event_text: String = ""
+var _event_left: float = 0.0
+var _object_prompt_visible: bool = false
+var _prompt_world: Vector2 = Vector2.ZERO
+var _world_layer: Control
 ## Compatibility storage only; the old bottom permanent hint is intentionally
-## no longer rendered. Recovery/R feedback uses short event toasts.
+## no longer rendered. Recovery/R feedback uses short events in the one slot.
 var _recovery_text: String = ""
 var _completion_overlay: ColorRect
 var _completion_title: Label
@@ -56,9 +56,8 @@ func _ready() -> void:
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
 	_build_header()
-	_build_status()
-	_build_prompt()
-	_build_toast()
+	_build_objective()
+	_build_world_prompt()
 	_build_completion()
 	set_polarity(true)
 	set_status("任务：释放星核", "星核：起始仓", "")
@@ -67,13 +66,13 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _toast_time <= 0.0:
-		return
-	_toast_time = maxf(_toast_time - delta, 0.0)
-	if _toast_time <= 0.0:
-		_toast_panel.visible = false
-		_toast.visible = false
-		_show_prompt_if_available()
+	if _event_left > 0.0:
+		_event_left = maxf(_event_left - delta, 0.0)
+		if _event_left <= 0.0:
+			_event_text = ""
+			if _objective != null and not _completion_active:
+				_objective.text = _display_phase(_phase_base)
+	_refresh_object_prompt_state()
 
 
 func _load_font() -> Font:
@@ -115,25 +114,6 @@ func _label(
 	return label
 
 
-func _panel(position_value: Vector2, size_value: Vector2, border_color: Color) -> Panel:
-	var panel: Panel = Panel.new()
-	panel.position = position_value
-	panel.size = size_value
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = PANEL_BG
-	style.border_width_left = 2
-	style.border_width_top = 1
-	style.border_width_right = 1
-	style.border_width_bottom = 1
-	style.border_color = border_color
-	style.set_corner_radius_all(2)
-	style.anti_aliasing = false
-	panel.add_theme_stylebox_override("panel", style)
-	_root.add_child(panel)
-	return panel
-
-
 func _build_header() -> void:
 	_header = CompactLevelHeader.new()
 	_header.name = "CompactHeader"
@@ -142,36 +122,27 @@ func _build_header() -> void:
 	_header.set_polarity(true)
 
 
-func _build_status() -> void:
-	# Two lines only: current objective and star-core state. The single action
-	# prompt lives in the one shared panel below; no duplicate E/read/restart
-	# stack on screen.
-	var panel: Panel = _panel(Vector2(8.0, 54.0), Vector2(330.0, 44.0), Color(PANEL_BORDER, 0.7))
-	_phase_label = _label("任务：释放星核", Vector2(15.0, 57.0), Vector2(316.0, 18.0), 12, GOLD)
-	_root.add_child(_phase_label)
-	_core_label = _label("星核：起始仓", Vector2(15.0, 77.0), Vector2(316.0, 16.0), 12, MUTED)
-	_root.add_child(_core_label)
-	panel.size = Vector2(330.0, 44.0)
+func _build_objective() -> void:
+	# Single objective line at the level-03 baseline: 12 px gold, no panel, no
+	# second core row. The phase prefix is kept internally, but the display drops
+	# the "任务：" prefix to match the other two levels' one-line objective.
+	_objective = _label("释放星核", Vector2(15.0, 58.0), Vector2(430.0, 18.0), 12, GOLD)
+	_root.add_child(_objective)
 
 
-func _build_prompt() -> void:
-	# One shared slot for the main action prompt and short toasts. They are never
-	# visible at the same time.
-	_prompt_panel = _panel(Vector2(160.0, 104.0), Vector2(320.0, 26.0), Color(GOLD, 0.5))
-	_prompt_label = _label("", Vector2(166.0, 107.0), Vector2(308.0, 18.0), 12, GOLD)
-	_prompt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_root.add_child(_prompt_label)
-	_prompt_text = ""
-	_prompt_panel.visible = false
-	_prompt_label.visible = false
-
-
-func _build_toast() -> void:
-	_toast_panel = _panel(Vector2(160.0, 104.0), Vector2(320.0, 26.0), Color(GOLD, 0.55))
-	_toast_panel.visible = false
-	_toast = _label("", Vector2(166.0, 107.0), Vector2(308.0, 18.0), 12, GOLD)
-	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_root.add_child(_toast)
+func _build_world_prompt() -> void:
+	# Object-bound action hint near the real bay. Real E actions draw the one
+	# approved 11x13 E cap + action word through InteractionKeyHint; lid motion
+	# ("开罩中…/合罩中…") stays plain state text with no cap. No panel, no
+	# central strip. It reads only public level/player/core/bay interfaces.
+	_world_layer = Control.new()
+	_world_layer.name = "WorldActionPrompt"
+	_world_layer.position = Vector2.ZERO
+	_world_layer.size = VIEW_SIZE
+	_world_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_world_layer.visible = false
+	_world_layer.draw.connect(_draw_object_prompt)
+	_root.add_child(_world_layer)
 
 
 func _build_completion() -> void:
@@ -226,10 +197,6 @@ func _build_completion() -> void:
 	_completion_count_label = _label("", Vector2(0.0, 158.0), Vector2(400.0, 16.0), 12, DIM)
 	_completion_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(_completion_count_label)
-	var hint: Label = _label("Enter 进入第三关 · R 重玩 · Esc 暂停",
-		Vector2(0.0, 178.0), Vector2(400.0, 16.0), 12, MUTED)
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	panel.add_child(hint)
 
 	# Same approved three-button focus loop as level 01: primary first, the two
 	# secondary commands share the second row.
@@ -274,50 +241,169 @@ func get_compact_header() -> CompactLevelHeader:
 
 
 func set_status(phase: String, core_text: String, prompt: String) -> void:
-	if _phase_label != null:
-		_phase_label.text = phase
-	if _core_label != null:
-		_core_label.text = core_text
-	if _prompt_label != null:
-		_prompt_text = prompt
-		_prompt_label.text = prompt
-	# A transient toast owns the shared slot until it expires; replacing the
-	# objective must not stack a second same-meaning line underneath it.
-	if _toast_time <= 0.0:
-		_show_prompt_if_available()
+	_phase_base = phase
+	_core_text = core_text
+	_prompt_text = prompt
+	# A real event owns the one line until it expires. A core-text change alone
+	# never takes the slot (compatibility data only), so the objective cannot
+	# flicker on every transport state.
+	if _objective != null and _event_left <= 0.0 and not _completion_active:
+		_objective.text = _display_phase(phase)
+	_refresh_object_prompt_state()
+
+
+func _display_phase(phase: String) -> String:
+	return phase.trim_prefix("任务：")
 
 
 func show_toast(text_value: String, duration: float = 1.6) -> void:
-	if _toast == null:
+	if _objective == null:
 		return
 	if text_value.is_empty():
-		_toast_time = 0.0
-		_toast_panel.visible = false
-		_toast.visible = false
-		_show_prompt_if_available()
+		_event_left = 0.0
+		_event_text = ""
+		if not _completion_active:
+			_objective.text = _display_phase(_phase_base)
 		return
-	_toast.text = text_value
-	_toast_time = maxf(duration, 0.1)
-	_prompt_panel.visible = false
-	_prompt_label.visible = false
-	_toast_panel.visible = true
-	_toast.visible = true
+	_event_text = text_value
+	_event_left = clampf(duration, 0.2, 1.4)
+	_objective.visible = not _completion_active
+	_objective.text = text_value
 
 
-func _show_prompt_if_available() -> void:
-	if _prompt_panel == null or _prompt_label == null:
-		return
-	var available: bool = (
-		not _prompt_text.is_empty()
-		and _toast_time <= 0.0
+func _refresh_object_prompt_state() -> void:
+	var visible_now: bool = false
+	if (
+		_world_layer != null
+		and not _prompt_text.is_empty()
 		and not _completion_active
+		and not get_tree().paused
+	):
+		var bay: StarCoreBayInteractable = _find_prompt_bay()
+		if bay != null:
+			_prompt_world = bay.get_store_center() + Vector2(0.0, -42.0)
+			visible_now = true
+	_object_prompt_visible = visible_now
+	if _world_layer != null:
+		if _world_layer.visible != visible_now:
+			_world_layer.visible = visible_now
+		if visible_now:
+			_world_layer.queue_redraw()
+
+
+## Read-only binding: the level, player and bay state decide the anchor. The HUD
+## never calls a level mutator or changes bay/core state.
+func _find_prompt_bay() -> StarCoreBayInteractable:
+	var level: Node = get_parent()
+	if level == null:
+		return null
+	if not level.has_method("get_player") or not level.has_method("get_bays"):
+		return null
+	var player: PrototypePlayer = level.call("get_player") as PrototypePlayer
+	if player == null:
+		return null
+	var bays: Array = level.call("get_bays") as Array
+	var core: StarCoreCarrier = null
+	if level.has_method("get_core"):
+		core = level.call("get_core") as StarCoreCarrier
+	var store_action: bool = _prompt_text.begins_with("存入")
+	var best: StarCoreBayInteractable = null
+	var best_distance: float = 1e20
+	var fallback: StarCoreBayInteractable = null
+	var fallback_distance: float = 1e20
+	for item: Variant in bays:
+		var bay: StarCoreBayInteractable = item as StarCoreBayInteractable
+		if bay == null or not bay.is_player_in_range(player.global_position):
+			continue
+		var distance: float = player.global_position.distance_to(bay.global_position)
+		if distance > 64.0:
+			continue
+		if distance < fallback_distance:
+			fallback = bay
+			fallback_distance = distance
+		if store_action:
+			if (
+				core == null or not core.is_active() or not bay.is_open_empty()
+				or not bay.is_core_in_store_zone(core.global_position)
+			):
+				continue
+		elif not bay.has_core():
+			continue
+		if distance < best_distance:
+			best = bay
+			best_distance = distance
+	if best != null:
+		return best
+	# Animation wording ("开罩中…" / "合罩中…") still belongs beside the bay the
+	# player is actually using.
+	return fallback
+
+
+## Short action name for the bay-anchored label. The level keeps its full
+## compatibility prompt strings; the HUD only presents the action word next to
+## the object, matching L3's "启动 / 取核" language.
+func _display_action_name(prompt: String) -> String:
+	var clean: String = prompt.trim_prefix("E ").strip_edges()
+	if clean.begins_with("存入"):
+		return "存入"
+	if clean.begins_with("取出"):
+		return "取核"
+	if clean.begins_with("开罩"):
+		return "开罩中…"
+	if clean.begins_with("合罩"):
+		return "合罩中…"
+	return clean
+
+
+## Lid motion is a state, not a new E action: it must not draw a key cap that
+## would invite a second press.
+func _prompt_is_state() -> bool:
+	return _prompt_text.begins_with("开罩") or _prompt_text.begins_with("合罩")
+
+
+func _draw_object_prompt() -> void:
+	if not _object_prompt_visible or _font == null or _world_layer == null:
+		return
+	var rect: Rect2 = get_prompt_screen_rect()
+	if rect.size == Vector2.ZERO:
+		return
+	var text: String = _display_action_name(_prompt_text)
+	if _prompt_is_state():
+		INTERACTION_KEY_HINT.draw_state(_world_layer, _font, rect.position, text)
+	else:
+		INTERACTION_KEY_HINT.draw_action(_world_layer, _font, rect.position, "E", text)
+
+
+## Screen rect of the visible bay hint, using the same geometry as the drawing.
+func get_prompt_screen_rect() -> Rect2:
+	if not _object_prompt_visible or _font == null:
+		return Rect2()
+	var camera: Camera2D = get_viewport().get_camera_2d()
+	if camera == null:
+		return Rect2()
+	var text: String = _display_action_name(_prompt_text)
+	if text.is_empty():
+		return Rect2()
+	var actionable: bool = not _prompt_is_state()
+	var width: float = (
+		INTERACTION_KEY_HINT.action_width(_font, text)
+		if actionable
+		else INTERACTION_KEY_HINT.state_width(_font, text)
 	)
-	_prompt_panel.visible = available
-	_prompt_label.visible = available
+	var screen: Vector2 = _prompt_world - camera.get_screen_center_position() + VIEW_SIZE * 0.5
+	var pos: Vector2 = Vector2(
+		clampf(screen.x - width * 0.5, 8.0, maxf(8.0, 632.0 - width)),
+		clampf(screen.y, 92.0, 306.0)
+	)
+	return Rect2(Vector2(roundf(pos.x), roundf(pos.y)), Vector2(width, 13.0))
 
 
 func set_pause_visible(value: bool) -> void:
 	_pause_visible = value
+	if value:
+		_object_prompt_visible = false
+		if _world_layer != null:
+			_world_layer.visible = false
 
 
 func set_recovery_hint(text_value: String) -> void:
@@ -335,15 +421,20 @@ func show_completion(value: bool, completion_count: int = 0) -> void:
 	_completion_overlay.visible = value
 	_completion_active = value
 	if value:
-		_toast_time = 0.0
-		_toast_panel.visible = false
-		_toast.visible = false
-		_prompt_panel.visible = false
-		_prompt_label.visible = false
+		_event_left = 0.0
+		_event_text = ""
+		if _objective != null:
+			_objective.visible = false
+		_object_prompt_visible = false
+		if _world_layer != null:
+			_world_layer.visible = false
 		call_deferred("focus_completion_primary")
 	else:
 		release_completion_focus()
-		_show_prompt_if_available()
+		if _objective != null:
+			_objective.visible = true
+			_objective.text = _display_phase(_phase_base)
+		_refresh_object_prompt_state()
 	if _completion_count_label != null:
 		_completion_count_label.text = "本关结算 · Esc 可打开暂停菜单" if value else ""
 
@@ -393,19 +484,37 @@ func get_polarity_text() -> String:
 
 
 func get_phase_text() -> String:
-	return _phase_label.text if _phase_label != null else ""
+	return _phase_base
 
 
 func get_core_text() -> String:
-	return _core_label.text if _core_label != null else ""
+	return _core_text
 
 
 func get_prompt_text() -> String:
-	return _prompt_label.text if _prompt_label != null else ""
+	return _prompt_text
 
 
 func is_prompt_visible() -> bool:
-	return _prompt_panel != null and _prompt_panel.visible
+	return _object_prompt_visible
+
+
+## Visible key cap for the bay hint. Only real E actions get one; "开罩中…" and
+## "合罩中…" are transient states and return an empty key.
+func get_prompt_key() -> String:
+	if not _object_prompt_visible or _prompt_is_state():
+		return ""
+	return "E"
+
+
+func get_prompt_verb() -> String:
+	if not _object_prompt_visible:
+		return ""
+	return _display_action_name(_prompt_text)
+
+
+func is_prompt_keycap_visible() -> bool:
+	return _object_prompt_visible and not _prompt_is_state()
 
 
 func get_label_font_sizes() -> Array[int]:
@@ -418,11 +527,11 @@ func get_label_font_sizes() -> Array[int]:
 
 
 func get_toast_text() -> String:
-	return _toast.text if _toast != null else ""
+	return _event_text
 
 
 func is_toast_visible() -> bool:
-	return _toast_panel != null and _toast_panel.visible
+	return _event_left > 0.0
 
 
 func is_pause_visible() -> bool:

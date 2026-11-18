@@ -19,11 +19,15 @@ const START_REASON: String = "level_start"
 const RESTART_REASON: String = "level_restart"
 const PAUSE_MENU_SCRIPT = preload("res://scripts/ui/pause_menu.gd")
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
+const FOOTSTEP_SCRIPT = preload("res://scripts/audio/player_footstep_audio.gd")
+const OPENING_SCRIPT = preload("res://scripts/narrative/opening_cinematic.gd")
 
-@export_range(0.2, 5.0, 0.05, "suffix:s") var intro_max_duration: float = 1.5
+@export_range(2.0, 15.0, 0.05, "suffix:s") var intro_max_duration: float = 9.0
+## Legacy safety cap for callers that inspect it. The opening itself hands off
+## at the local stop point (echo x - 32 px), never at the old IntroEnd x=100.
 ## Opening auto-run axis, paired with sprint: target speed = ratio * RUN_SPEED.
 ## The default 0.75 is 120 px/s, slower than the normal 160 px/s run, while the
-## run animation, path, IntroEnd handoff and normal gameplay stay unchanged.
+## run animation, path, local hand-off and normal gameplay stay unchanged.
 @export_range(0.5, 1.0, 0.01) var intro_run_speed_ratio: float = 0.75
 
 @export_group("Start Menu")
@@ -66,6 +70,8 @@ var _last_force: Vector2 = Vector2.ZERO
 var _intro_start_count: int = 0
 var _next_level_started: bool = false
 var _scene_leaving: bool = false
+var _footsteps: Node = null
+var _opening: OpeningCinematic = null
 
 
 ## Raw keyboard forwarding for left-Shift and double-tap intent. The movement
@@ -103,6 +109,8 @@ func _ready() -> void:
 	_hud.replay_requested.connect(_restart_level)
 	_hud.return_to_menu_requested.connect(_return_to_main_menu)
 	_setup_pause_menu()
+	_setup_footsteps()
+	_setup_opening()
 
 	_hud.set_polarity(true)
 	_hud.show_completion(false)
@@ -127,21 +135,15 @@ func _exit_tree() -> void:
 		DemoAudio.stop_world()
 
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	_refresh_exit_gate_available()
 	if _menu != null and _menu.is_gameplay_blocked():
 		return
-	# Esc/R are owned by PauseMenu only.  There is no second polling path here,
-	# so one key press cannot toggle pause twice or leak through in the same
-	# frame as a GUI action.
-	if _intro_active:
-		_intro_elapsed += delta
-		var reached_end: bool = _player.global_position.x >= _intro_end.global_position.x
-		if reached_end or _intro_elapsed >= intro_max_duration:
-			_finish_intro()
-		elif not _player.is_input_override_active():
-			# Pause/focus/reset safety: never leave a stale scripted axis.
-			_finish_intro()
+	# The local opening controller owns bar easing, the scripted run, the
+	# echo's pages and the Space hold. This level keeps only compatibility
+	# state and the safe pause/focus/reset hand-offs.
+	if _intro_active and _opening != null:
+		_intro_elapsed = _opening.get_elapsed()
 
 
 func _physics_process(_delta: float) -> void:
@@ -187,7 +189,8 @@ func _setup_pause_menu() -> void:
 		["奔跑", "左Shift"],
 		["跳跃", "空格"],
 		["切换相性", "Q"],
-		["交谈", "F"],
+		["交谈 / 翻页", "F（未显完先补全文）"],
+		["开场对白", "空格：补全文 / 下一页 · 长按 0.6s 跳过"],
 		["重来本关", "R"],
 		["暂停菜单", "Esc"],
 	]
@@ -198,9 +201,52 @@ func _setup_pause_menu() -> void:
 	_pause_menu.resumed.connect(_on_pause_resumed)
 
 
+## Local footstep bank, owned by the player. No DemoAudio change and no shared
+## player/physics change; the level only supplies the gameplay gate.
+func _setup_footsteps() -> void:
+	if _player == null:
+		return
+	_footsteps = FOOTSTEP_SCRIPT.new()
+	_footsteps.name = "PlayerFootstepAudio"
+	if not bool(_footsteps.call("attach_to", _player)):
+		_footsteps.queue_free()
+		_footsteps = null
+		return
+	_footsteps.call("set_enabled_check", Callable(self, "_footstep_allowed"))
+
+
+## Local opening film. It reuses the echo's public page API and the approved
+## L3 letterbox/Space rules; it does not fake a guard cinematic or a new camera.
+func _setup_opening() -> void:
+	_opening = OPENING_SCRIPT.new()
+	_opening.name = "OpeningCinematic"
+	_opening.process_mode = Node.PROCESS_MODE_PAUSABLE
+	add_child(_opening)
+	_opening.setup(self, _player, _narrative_guide, _hud)
+	_opening.finished.connect(_on_opening_finished)
+	_opening.aborted.connect(_on_opening_aborted)
+
+
+func _footstep_allowed() -> bool:
+	if _scene_leaving or _completed or _resetting or _intro_active:
+		return false
+	if get_tree().paused:
+		return false
+	if _menu != null and _menu.is_gameplay_blocked():
+		return false
+	return true
+
+
+func _footstep_stop() -> void:
+	if _footsteps != null and is_instance_valid(_footsteps) and _footsteps.has_method("stop"):
+		_footsteps.call("stop")
+
+
 func _begin_intro(reset_player: bool) -> void:
 	_completed = false
-	_set_guides_suspended(true)
+	_footstep_stop()
+	if _opening != null:
+		_opening.abort()
 	_intro_active = true
 	_refresh_exit_gate_available()
 	_intro_elapsed = 0.0
@@ -214,22 +260,36 @@ func _begin_intro(reset_player: bool) -> void:
 		_player.reset_to_spawn(START_REASON, false)
 		_resetting = false
 	_player.set_spawn_point(_start_position)
-	_player.begin_input_override()
-	# Sprint with a reduced axis so the scripted target is 120 px/s by default.
-	# The player's RUN_SPEED/WALK_SPEED constants, animation and physics step
-	# stay untouched; normal input is unaffected once control is returned.
-	_player.set_input_override_axis(clampf(intro_run_speed_ratio, 0.5, 1.0), true)
+	# The narrative echo stays awake and is owned by the opening film (its
+	# public page API is used, while F is reserved). The high-step echo is far
+	# away and stays suspended until the hand-off, as before.
+	if _mechanism_guide != null and is_instance_valid(_mechanism_guide):
+		_mechanism_guide.set_suspended(true)
+	if _narrative_guide != null and is_instance_valid(_narrative_guide):
+		# The title menu suspends both guides while it owns the screen. The
+		# opening must wake the first echo again before taking page ownership,
+		# otherwise its public open_dialogue() correctly refuses to open.
+		_narrative_guide.set_suspended(false)
+		_narrative_guide.set_cinematic_owned(true)
 	_hud.set_polarity(true)
 	_hud.show_completion(false)
 	_hud.set_pause_visible(false)
+	_hud.set_opening_active(true)
 	if _pause_menu != null:
 		_pause_menu.set_completion_active(false)
 	_hud.show_toast("", 0.0)
 	_camera.reset_smoothing()
+	if _opening == null or not _opening.start():
+		_finish_intro()
 
 
 func _finish_intro() -> void:
 	if not _intro_active:
+		return
+	if _opening != null and _opening.is_active():
+		# Aborting cleans the override, page voice, bars and the hidden slot; the
+		# aborted signal sets _intro_active=false.
+		_opening.abort()
 		return
 	_intro_active = false
 	_player.end_input_override()
@@ -238,8 +298,26 @@ func _finish_intro() -> void:
 		_set_guides_suspended(false)
 
 
-## Called once by StartMenu after the camera has settled on the first frame of
-## the opening run. The real intro auto-run below is unchanged.
+func _on_opening_finished(_skipped: bool) -> void:
+	_intro_active = false
+	if _opening != null:
+		_intro_elapsed = _opening.get_elapsed()
+	_refresh_exit_gate_available()
+	if not _completed and not get_tree().paused:
+		_set_guides_suspended(false)
+
+
+func _on_opening_aborted() -> void:
+	_intro_active = false
+	if _opening != null:
+		_intro_elapsed = _opening.get_elapsed()
+	_refresh_exit_gate_available()
+	if not _completed and not get_tree().paused:
+		_set_guides_suspended(false)
+
+
+## Called once by StartMenu after the camera has settled. Starts the local
+## opening film from the real spawn; normal starting physics is unchanged.
 func begin_from_menu() -> void:
 	if _menu_camera != null:
 		_menu_camera.enabled = false
@@ -262,6 +340,9 @@ func _restart_level() -> void:
 		return
 	if _menu != null and _menu.is_gameplay_blocked():
 		return
+	_footstep_stop()
+	if _opening != null:
+		_opening.abort()
 	if _pause_menu != null:
 		_pause_menu.force_close()
 		_pause_menu.set_completion_active(false)
@@ -292,6 +373,15 @@ func _restart_level() -> void:
 
 
 func _on_pause_opened() -> void:
+	if _intro_active and _opening != null and _opening.is_active():
+		# Freeze in place: do not finish the run or close the page. The tree
+		# pause stops the opening's own timers; re-assert the movement lock and
+		# drop a held Space latch so resume cannot flip a page or jump.
+		_opening.handle_pause_opened()
+		_footstep_stop()
+		_hud.set_pause_visible(true)
+		_hud.release_completion_focus()
+		return
 	if _intro_active:
 		_finish_intro()
 	_set_guides_suspended(true)
@@ -303,6 +393,12 @@ func _on_pause_resumed() -> void:
 	_hud.set_pause_visible(false)
 	_player.clear_input_buffers()
 	_player.clear_external_force()
+	if _intro_active and _opening != null and _opening.is_active():
+		# clear_input_buffers() also cleared the override; re-assert the exact
+		# opening lock (running axis or stationary page lock) before the next
+		# physics tick, and ignore any Space held across the pause.
+		_opening.handle_pause_resumed()
+		return
 	if _completed:
 		_hud.focus_completion_primary()
 	else:
@@ -321,6 +417,9 @@ func _on_next_level_requested() -> void:
 	if not _completed or _next_level_started or _scene_leaving:
 		return
 	_next_level_started = true
+	_footstep_stop()
+	if _opening != null:
+		_opening.abort()
 	_refresh_exit_gate_available()
 	_set_guides_suspended(true)
 	if _pause_menu != null:
@@ -333,6 +432,9 @@ func _return_to_main_menu() -> void:
 	if _scene_leaving:
 		return
 	_scene_leaving = true
+	_footstep_stop()
+	if _opening != null:
+		_opening.abort()
 	_refresh_exit_gate_available()
 	_set_guides_suspended(true)
 	if _pause_menu != null:
@@ -355,6 +457,7 @@ func _on_player_polarity_changed(positive: bool) -> void:
 func _on_player_reset_performed(reason: String, _count: int) -> void:
 	if _resetting:
 		return
+	_footstep_stop()
 	if _intro_active:
 		_finish_intro()
 	_player.clear_external_force()
@@ -379,13 +482,17 @@ func _on_checkpoint_entered(checkpoint: LevelCheckpoint) -> void:
 	_checkpoint_position = checkpoint.global_position
 	_player.set_spawn_point(_checkpoint_position)
 	checkpoint.set_activated(true)
+	DemoAudio.play_record_save()
 	_hud.show_toast("恢复点已激活", 1.4)
 
 
 func _on_exit_reached() -> void:
 	if _completed:
 		return
+	if _opening != null and _opening.is_active():
+		_opening.abort()
 	_completed = true
+	_footstep_stop()
 	_completion_count += 1
 	DemoAudio.play_complete()
 	_exit.set_completed(true)
@@ -413,8 +520,18 @@ func _on_window_focus_exited() -> void:
 		# completion panel when the window regains focus.
 		_set_guides_suspended(true)
 		return
+	if _intro_active and _opening != null and _opening.is_active():
+		# Keep the opening's real stage/page/letterbox: open the actual pause page
+		# instead of aborting the film. The pause page freezes the tree, drops the
+		# Space latch and the controller re-asserts its own movement lock. Focus
+		# return does not auto-resume; Esc/继续 is required.
+		_footstep_stop()
+		if _pause_menu != null:
+			_pause_menu.open_pause()
+		else:
+			_finish_intro()
+		return
 	if _intro_active:
-		# Do not leave an auto-run axis latched while the OS owns the keyboard.
 		_finish_intro()
 	_player.reset_movement_input_state()
 	_player.clear_external_force()
@@ -446,6 +563,10 @@ func get_player() -> PrototypePlayer:
 
 func get_hud() -> Level01HUD:
 	return _hud
+
+
+func get_footstep_audio() -> Node:
+	return _footsteps
 
 
 func get_camera() -> Camera2D:
@@ -507,6 +628,10 @@ func get_checkpoint_position() -> Vector2:
 
 
 func get_intro_end_position() -> Vector2:
+	# The old IntroEnd marker at x=100 is no longer the hand-off point. The real
+	# local stop is about 32 px left of the first narrative echo.
+	if _opening != null and is_instance_valid(_opening):
+		return Vector2(_opening.get_stop_position_x(), _intro_end.global_position.y)
 	return _intro_end.global_position
 
 
@@ -540,6 +665,10 @@ func get_completion_count() -> int:
 
 func get_intro_start_count() -> int:
 	return _intro_start_count
+
+
+func get_opening() -> OpeningCinematic:
+	return _opening
 
 
 func get_menu() -> StartMenu:

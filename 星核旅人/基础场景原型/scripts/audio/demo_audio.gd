@@ -22,6 +22,10 @@ extends Node
 ## trials, not a listening verdict.
 
 const RUNTIME_DIR: String = "res://assets/audio_demo_v2_20261116/"
+const DIALOGUE_AUDIO_DIR: String = "res://assets/dialogue_feedback_20261117/"
+## Trial install (user-approved direction): total +3.5 st from the approved
+## player_hurt_vocal source, same 120 Hz high-pass, no volume increase.
+const HURT_YOUTH_DIR: String = "res://assets/experience_alignment_20261117/hurt_youth/"
 const WORLD_POOL_SIZE: int = 6
 const UI_POOL_SIZE: int = 4
 
@@ -30,6 +34,7 @@ const EVENT_CORE_TAKE: String = "core_take"
 const EVENT_CORE_SEAT: String = "core_seat"
 const EVENT_LINK: String = "link"
 const EVENT_PLAYER_HURT: String = "player_hurt"
+const EVENT_RECORD_SAVE: String = "record_save"
 const EVENT_GATE: String = "gate"
 const EVENT_COMPLETE: String = "complete"
 const EVENT_FAILURE: String = "failure"
@@ -43,8 +48,9 @@ const EVENT_SPECS: Dictionary = {
 	EVENT_CORE_TAKE: {"file": "core_take.wav", "volume_db": -6.0, "ui": false},
 	EVENT_CORE_SEAT: {"file": "core_seat.wav", "volume_db": -6.0, "ui": false},
 	EVENT_LINK: {"file": "link_pulse.wav", "volume_db": -7.0, "ui": false},
-	EVENT_PLAYER_HURT: {"file": "player_hurt.wav", "volume_db": -5.0, "ui": false},
-	EVENT_GATE: {"file": "gate_rise.wav", "volume_db": -4.0, "ui": false},
+	EVENT_PLAYER_HURT: {"dir": HURT_YOUTH_DIR, "file": "player_hurt_plus4st.wav", "volume_db": -3.0, "ui": false},
+	EVENT_RECORD_SAVE: {"dir": DIALOGUE_AUDIO_DIR, "file": "record_confirm.wav", "volume_db": -3.0, "ui": false},
+	EVENT_GATE: {"file": "gate_rise.wav", "volume_db": -10.0, "ui": false},
 	EVENT_COMPLETE: {"file": "complete.wav", "volume_db": -4.0, "ui": false},
 	EVENT_FAILURE: {"file": "failure.wav", "volume_db": -5.0, "ui": false},
 	EVENT_RESPAWN: {"file": "respawn.wav", "volume_db": -6.0, "ui": false},
@@ -103,6 +109,10 @@ func play_player_hurt() -> bool:
 	return _play_event(EVENT_PLAYER_HURT)
 
 
+func play_record_save() -> bool:
+	return _play_event(EVENT_RECORD_SAVE)
+
+
 func play_gate() -> bool:
 	return _play_event(EVENT_GATE)
 
@@ -155,7 +165,7 @@ func _stream_for(event_name: String) -> AudioStream:
 	if _streams.has(event_name):
 		return _streams[event_name] as AudioStream
 	var spec: Dictionary = EVENT_SPECS[event_name]
-	var path: String = RUNTIME_DIR + String(spec.get("file", ""))
+	var path: String = String(spec.get("dir", RUNTIME_DIR)) + String(spec.get("file", ""))
 	if not ResourceLoader.exists(path):
 		push_warning("DemoAudio: missing stream %s" % path)
 		_streams[event_name] = null

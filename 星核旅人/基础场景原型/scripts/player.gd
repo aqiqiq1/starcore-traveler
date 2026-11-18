@@ -69,6 +69,8 @@ const RUN_ANIM_THRESHOLD: float = 12.0
 ## these only apply on a physics tick where the anchor room supplied a force.
 const ANCHOR_MAX_HORIZONTAL_SPEED: float = 320.0
 const ANCHOR_MAX_UP_SPEED: float = 500.0
+## Level-02 opt-in only; not a change to walk/run/anchor caps.
+const ANCHOR_HORIZONTAL_BRAKE_DECEL: float = 900.0
 
 ## Explicit chest centres in source-frame pixel coordinates.
 ## The frame counts must stay in sync with the PNG sheet widths:
@@ -162,6 +164,11 @@ var _input_override_sprint: bool = false
 var _external_force: Vector2 = Vector2.ZERO
 var _external_force_pending: bool = false
 var _last_anchor_assist: bool = false
+## Default-off opt-in used only by level 02. When true, release/reverse can
+## brake the horizontal field-driven drift in air or on ground, without
+## touching vertical attraction/repulsion, jump physics or shared caps.
+var _anchor_horizontal_brake_enabled: bool = false
+var _last_anchor_horizontal_brake: bool = false
 var _ceiling_y: float = -100000.0
 
 
@@ -231,6 +238,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		horizontal_accel = AIR_ACCEL if absf(target_speed) > 0.01 else AIR_DECEL
 
+	_last_anchor_horizontal_brake = false
 	if anchor_assist and absf(carried_vx) > WALK_SPEED + 0.01:
 		# Borrowed momentum is protected while the anchor field is acting. Normal
 		# input may add speed in the same direction, but cannot brake the fling
@@ -250,9 +258,19 @@ func _physics_process(delta: float) -> void:
 		velocity.y = 0.0
 
 	if anchor_assist:
+		var vx_before_force: float = velocity.x
 		velocity += _external_force * delta
 		velocity.x = clampf(velocity.x, -ANCHOR_MAX_HORIZONTAL_SPEED, ANCHOR_MAX_HORIZONTAL_SPEED)
 		velocity.y = clampf(velocity.y, -ANCHOR_MAX_UP_SPEED, MAX_FALL_SPEED)
+		if _anchor_horizontal_brake_enabled and _wants_anchor_horizontal_brake(carried_vx, target_speed):
+			# Level-02 opt-in. Restore the pre-force horizontal velocity (not
+			# "clamped result minus force", which over-brakes when the shared cap
+			# truncated the push), then apply a gradual brake. Vertical force is
+			# already applied and never changed. Same-direction input still
+			# borrows the force.
+			_last_anchor_horizontal_brake = true
+			velocity.x = vx_before_force
+			velocity.x = move_toward(velocity.x, target_speed, ANCHOR_HORIZONTAL_BRAKE_DECEL * delta)
 
 	move_and_slide()
 	_clamp_to_world()
@@ -689,6 +707,48 @@ func get_anchor_force_y() -> float:
 
 func is_anchor_force_pending() -> bool:
 	return _external_force_pending
+
+
+func set_anchor_horizontal_brake_enabled(value: bool) -> void:
+	_anchor_horizontal_brake_enabled = value
+
+
+func is_anchor_horizontal_brake_enabled() -> bool:
+	return _anchor_horizontal_brake_enabled
+
+
+func was_anchor_horizontal_brake_applied() -> bool:
+	return _last_anchor_horizontal_brake
+
+
+## Compatibility names for the first focused probe/log.
+func set_anchor_ground_brake_enabled(value: bool) -> void:
+	set_anchor_horizontal_brake_enabled(value)
+
+
+func is_anchor_ground_brake_enabled() -> bool:
+	return is_anchor_horizontal_brake_enabled()
+
+
+func was_anchor_ground_brake_applied() -> bool:
+	return was_anchor_horizontal_brake_applied()
+
+
+## Level-02-only horizontal gate: neutral release or reverse only. It never
+## touches vertical force and never checks/changes is_on_floor. A neutral target
+## must brake even when the tracked vx is already ~0; otherwise the field
+## re-adds one tick of horizontal push every other tick and the body takes a
+## spontaneous step. Non-zero same-direction input still borrows the force.
+func _wants_anchor_horizontal_brake(carried_vx: float, target_speed: float) -> bool:
+	if _input_override_active:
+		return false
+	if absf(target_speed) <= 0.01:
+		return true
+	if absf(carried_vx) < 0.5:
+		return false
+	if absf(target_speed) > 0.01 and signf(target_speed) == signf(carried_vx):
+		return false
+	return true
 
 
 func get_anchor_horizontal_speed_cap() -> float:

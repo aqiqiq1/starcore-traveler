@@ -232,3 +232,52 @@ eview_v2.png（美术检查板，非引擎截图）。
 - CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/ ) 允许修改、随游戏打包及随公开源码分发；署名为礼貌、非强制。许可以 OpenGameArt 页面上传者声明与截图为准，不宣称法务确定性。**三条均未人耳听审**，仍是试装版。
 
 
+## 17. 石地脚步与守卫重组（2026-11-17）
+
+运行副本 `assets/audio_movement_20261117/`；逐文件源/新 SHA256、裁点/增益/重采样/淡入淡出与证据路径见同目录 `SOURCE_MANIFEST.json` 与 `source_evidence/`。旧 `assets/audio_demo_v2_20261116/`、旧 6 OGG、研究目录与旧候选均未覆盖。
+
+- **脚步 6 条**（`footstep_stone_1..6.wav`）：Fantozzi（qubodup 代为上传 OpenGameArt），*Fantozzi's Footsteps (Grass/Sand & Stone)*，https://opengameart.org/content/fantozzis-footsteps-grasssand-stone ，**CC0 1.0**；取 Stone L1–3 / R1–3 的 FLAC，单声道 44.1 kHz PCM16，首尾 3/5 ms 淡化，峰值按“只减不抬”统一降到 **-9 dBFS**。游戏内 walk -18 dB / pitch 1.0、run -15 dB / pitch 1.05，6 变体顺序轮换不立即重复，局部 2 声部随 player 释放；未新增 surface 系统/landing/音乐。上游 Freesound 包由协调实际打开核查；署名非强制，建议保留 Fantozzi。
+- **重组 A**（`reassembly_A_reverse.wav`，0.60 s，峰值 -6 dBFS，运行时默认）：从本项目已试装的 `shell_shatter_heavy_v2.wav`（Spring Spring `break_stone` + Kenney `impactMining_000`，均 CC0，见 §16B）取 0.14–0.60 s 有效碎块段**倒序**，避开初始下砸与静尾；末端叠短低中频 Kenney `impactMining_000` 落定（相对 -20 dB），0.60 s 软收尾。未整段 1.12 s 倍速、未加长爆炸。`scripts/level03/l3_audio.gd` 只把 `REASSEMBLE_PATH` 指向该 A；旧 `audio_reassemble.ogg` 原文件保留供 A/B，不删除。只由 `reassembly_started` 一次触发。
+- **重组 B**（`reassembly_B_pauliuw.wav`，0.60 s，峰值 -6 dBFS，**仅试听页**）：pauliuw，*Stone, rock or wood moved*，https://opengameart.org/content/stone-rock-or-wood-moved-sound ，CC0 1.0；工程已有 `stone_rock_or_wood_moved.mp3`（本页未重下），解码实测 **0.456 s / 48 kHz mono**（研究页另记录 0.558 s，两个口径均留档），原速重采样 44.1k + 轻落定/淡尾；不接 runtime。
+- 证据/许可：Fantozzi 页面截图与 HTML、pauliuw 页面 HTML、CC0 1.0 deed、Kenney License 文本副本在 `assets/audio_movement_20261117/source_evidence/`（previews 被 Git 忽略）。许可依据 OGA 页面上传者声明与截图，不是法务审查。**6 条脚步与 A/B 均未人耳听审**。
+- Q 本轮**未制作/未替换**（参考音轨未听辨；`polarity_switch_v2.wav` 与 DemoAudio spec 不变）；BGM 不接、无新音乐。旧试听页/旧 12 候选/旧 6 OGG/研究源目录均只读未覆。
+
+
+
+
+
+## 18. 对白拟声、记录声与受击人声（2026-11-17）
+
+运行目录 `assets/dialogue_feedback_20261117/`；源/新 SHA256、许可页 HTML/截图副本、裁点、增益与淡化见同目录 `manifest.json` 与 `evidence/`。研究预览目录只读，不作为运行来源。
+
+- **残响拟声 3 音节**：`echo_mumble_1..3.wav`，48 kHz mono PCM16，各 0.120 s；源 SilentStrikeZ, *Human_Male_Mumble_Short_1*（Freesound 389644，CC0 1.0；实际使用有损 HQ preview MP3，原 WAV 需登录未下载）。按原音高截取 0.440–0.560 / 1.700–1.820 / 2.900–3.020 s，首尾 8 ms 余弦淡化，无变调/合成/叠层/滤波；播放器 -10 dB，每 3 个有效字且至少 0.14 s 一次。
+- **记录声**：`record_confirm.wav`，44.1 kHz stereo PCM16，全长 0.679 s；源 Joth, *7 Assorted Sound Effects (Menu, Level Up)* 的 `Menu Confirm.mp3`（OpenGameArt，CC0 1.0，署名非强制）。解码后 +6.0 dB，首 5 ms / 尾 25 ms 淡化，峰值约 -12.9 dBFS；播放器 -3 dB。只在真实新稳定阶段/首次激活时一次，初始化/恢复/setup/R/同点重复不响。
+- **受击人声**：`player_hurt_vocal.wav`，44.1 kHz stereo PCM16，0.330 s；源 qubodup, *15 vocal male strain/hurt/pain/jump sounds* 的 `slightscream-11.flac`（OpenGameArt，CC0 1.0，2024-08-30 起；署名可选）。源接近满刻度（maxabs≈0.99999988，两声道共 2 个 near-full-scale 样本），**历史硬削波未证实**；固定衰减到峰值 -6.0 dBFS 并做 5/20 ms 淡化，任何既有削波都不会因降响恢复。播放器 -3 dB，只替换原 `player_hurt` 流，不叠第二声、不改伤害/击退/停顿。旧 `assets/audio_demo_v2_20261116/player_hurt.wav` 保留作对比，不再被事件表引用。
+- 以上人声/音节**均未人耳听审**；来源与“人声”分类依据作者页面文字/标签，不是听感结论。creature 包（rubberduck）不用于 NPC/主角人声。
+
+## 19. 回声音节加速包（2026-11-17，仅声音修订）
+
+目录 `assets/experience_alignment_20261117/voice_fast/`：3 个运行时回声音节 `echo_mumble_1..3.wav`（48 kHz mono PCM16，约 0.080 s），由 `assets/dialogue_feedback_20261117/echo_mumble_1..3.wav`（SilentStrikeZ, *Human_Male_Mumble_Short_1*, Freesound 389644, CC0 1.0；原为有损 HQ 预览 MP3 派生）经 ffmpeg 8.0.1 `atempo=1.5` 保音高压缩，再轻收首尾 4 ms。未变调（实测基频 173.3 / 167.2 / 183.2 Hz 前后不变）、未抬响（峰值 −12.5 / −14.7 / −13.0 dBFS，增益 0 dB）、未合成、未叠层。
+
+- 运行接线：`scripts/narrative/dialogue_voice.gd` 指向新目录，音量保持 −10 dB；文本 34 cps 不变，触发由旧“3 字 / 0.14 s”改为“2 字 / 0.09 s”（第 18 节保留旧记录）。
+- 证据：授权页与原资产证据沿用 `assets/dialogue_feedback_20261117/evidence/`（SHA 记录在新目录 `manifest.json`，未复制）；原 120 ms 运行时片段与旧 preview 目录保留。3 个快音节未人耳听审。
+
+## 20. 受击声“高 +3.5 半音”试装（2026-11-17）
+
+`assets/experience_alignment_20261117/hurt_youth/player_hurt_plus3_5st.wav`（44.1 kHz stereo PCM16，0.270 s）由既有运行片段 `assets/dialogue_feedback_20261117/player_hurt_vocal.wav`（qubodup, *15 vocal male strain/hurt/pain/jump sounds*, OpenGameArt, CC0 1.0；源 `slightscream-11.flac`，见旧 manifest）以 790/967 重采样实现总计 +3.5 半音，并叠加与 D 相同的 120 Hz 二阶零相位高通，最后仅把峰值压到 −6.0 dBFS（−0.06 dB）；不抬响、不合成、不叠层。基频估计 180.7 → 220.5 Hz（比值 1.220，目标 1.224）。
+
+- 接线：`scripts/audio/demo_audio.gd` 只把 `EVENT_PLAYER_HURT` 的 dir/file 指向新包，播放器仍 −3 dB，池/触发/保护不变；其余 12 个事件原样。
+- 依据：用户试听 D（+2 st）后认可方向并要求再高，协调提议总 +3.5 st 且不增音量，用户批准接入试装；**这不是“算法已验证少年感”**，本条亦未人耳听审。
+- 原 120 ms 运行时片段、D/C 试听文件与旧 preview 全部保留；同目录 `manifest.json` 记录原/新 SHA、实际时长、变速、滤波与来源链。
+
+## 21. 受击 +4.0 半音试装（2026-11-17）
+
+`assets/experience_alignment_20261117/hurt_youth/player_hurt_plus4st.wav`（0.262 s）由同一 CC0 受击源按 E 的处理链（504/635 重采样 + 120 Hz 二阶零相位高通）得到总 +4.0 半音，峰值仅向下压至 −6.0 dBFS；DemoAudio 只把 `EVENT_PLAYER_HURT` 指向该文件（−3 dB 不变），用户明确授权接入试玩，E 与旧源保留。
+
+## 22. 残响密化包（2026-11-17）
+
+`assets/interaction_projection_20261117/voice_dense/echo_mumble_1..3.wav`（48 kHz mono PCM16，0.060 s）由既有 CC0 回声音节（SilentStrikeZ, *Human_Male_Mumble_Short_1*, Freesound 389644；原为有损 HQ 预览派生）经 ffmpeg 8.0.1 `atempo=2.0` 保音高压缩并轻收首尾 3 ms；基频不变（173.3 / 167.2 / 183.2 Hz），峰值 −12.4 / −14.9 / −13.1 dBFS，无增益。运行仍由 `scripts/narrative/dialogue_voice.gd` 在 −10 dB、单声部播放；34 cps 揭字与文本未改，80 ms 旧包与原 120 ms 源保留。
+
+## 23. 残响中间档（2026-11-18）
+
+`assets/interaction_projection_20261117/voice_mid/echo_mumble_1..3.wav`（48 kHz mono PCM16，0.070 s）由同一 CC0 回声音节（SilentStrikeZ, *Human_Male_Mumble_Short_1*, Freesound 389644；原为有损 HQ 预览派生）经 ffmpeg 8.0.1 `atempo=12/7` 保音高压缩并轻收首尾 3 ms；基频不变（173.3 / 167.2 / 183.2 Hz），峰值 −12.3 / −14.7 / −13.0 dBFS，无增益。运行仍由 `scripts/narrative/dialogue_voice.gd` 在 −10 dB、单声部播放；最短间隔 0.08 s，34 cps 揭字与文本未改，120/80/60 ms 包保留。

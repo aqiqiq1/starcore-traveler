@@ -15,15 +15,17 @@ const CYAN: Color = Color("#5fe1e6")
 const TEXT: Color = Color("#e7eceb")
 const MUTED: Color = Color("#a4b3be")
 const DIM: Color = Color("#728889")
-const PANEL_BG: Color = Color(0.012, 0.028, 0.035, 0.82)
-const PANEL_BORDER: Color = Color(0.33, 0.52, 0.51, 0.55)
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 
 var _root: Control
 var _header: CompactLevelHeader
-var _toast: Label
-var _toast_panel: Panel
-var _toast_time: float = 0.0
+var _objective: Label
+var _objective_base: String = "前往庭院出口"
+var _event_text: String = ""
+var _event_left: float = 0.0
+var _opening_active: bool = false
+var _pending_event_text: String = ""
+var _pending_event_left: float = 0.0
 var _completion_overlay: ColorRect
 var _completion_title: Label
 var _completion_count_label: Label
@@ -45,7 +47,7 @@ func _ready() -> void:
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
 	_build_header()
-	_build_toast()
+	_build_objective()
 	_build_completion()
 	set_polarity(true)
 	set_pause_visible(false)
@@ -53,11 +55,13 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _toast_time > 0.0:
-		_toast_time = maxf(_toast_time - delta, 0.0)
-		if _toast_time <= 0.0:
-			_toast_panel.visible = false
-			_toast.visible = false
+	if _event_left <= 0.0:
+		return
+	_event_left = maxf(_event_left - delta, 0.0)
+	if _event_left <= 0.0:
+		_event_text = ""
+		if _objective != null and not _opening_active and not _completion_active:
+			_objective.text = _objective_base
 
 
 func _load_font() -> Font:
@@ -99,25 +103,6 @@ func _label(
 	return label
 
 
-func _panel(position_value: Vector2, size_value: Vector2, border_color: Color) -> Panel:
-	var panel: Panel = Panel.new()
-	panel.position = position_value
-	panel.size = size_value
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = PANEL_BG
-	style.border_width_left = 2
-	style.border_width_top = 1
-	style.border_width_right = 1
-	style.border_width_bottom = 1
-	style.border_color = border_color
-	style.set_corner_radius_all(2)
-	style.anti_aliasing = false
-	panel.add_theme_stylebox_override("panel", style)
-	_root.add_child(panel)
-	return panel
-
-
 func _build_header() -> void:
 	_header = CompactLevelHeader.new()
 	_header.name = "CompactHeader"
@@ -126,12 +111,11 @@ func _build_header() -> void:
 	_header.set_polarity(true)
 
 
-func _build_toast() -> void:
-	_toast_panel = _panel(Vector2(160.0, 64.0), Vector2(320.0, 26.0), Color(GOLD, 0.55))
-	_toast_panel.visible = false
-	_toast = _label("", Vector2(166.0, 67.0), Vector2(308.0, 18.0), 12, GOLD)
-	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_root.add_child(_toast)
+func _build_objective() -> void:
+	# One single objective/event line, same baseline as level 03: 12 px gold at
+	# (15, 58), no panel, no second row. Short events replace it and restore.
+	_objective = _label(_objective_base, Vector2(15.0, 58.0), Vector2(430.0, 18.0), 12, GOLD)
+	_root.add_child(_objective)
 
 
 func _build_completion() -> void:
@@ -186,10 +170,6 @@ func _build_completion() -> void:
 	_completion_count_label = _label("", Vector2(0.0, 158.0), Vector2(400.0, 16.0), 12, DIM)
 	_completion_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(_completion_count_label)
-	var hint: Label = _label("Enter 进入第二关 · R 重玩 · Esc 暂停",
-		Vector2(0.0, 178.0), Vector2(400.0, 16.0), 12, MUTED)
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	panel.add_child(hint)
 
 	_completion_primary.focus_next = _completion_primary.get_path_to(_completion_replay)
 	_completion_primary.focus_previous = _completion_primary.get_path_to(_completion_return)
@@ -231,18 +211,75 @@ func get_compact_header() -> CompactLevelHeader:
 	return _header
 
 
+func set_objective(text_value: String) -> void:
+	_objective_base = text_value
+	if _objective != null and _event_left <= 0.0 and not _opening_active and not _completion_active:
+		_objective.text = text_value
+
+
+## Opening-film state: the objective/event slot is hidden from the first bar
+## frame until control is actually handed back. A restart event raised during
+## the film is held and shown once the slot returns.
+func set_opening_active(value: bool) -> void:
+	_opening_active = value
+	# The 44 px bar is 0.96-opaque, so the compact header would otherwise show
+	# as a ghost through it. Hide the whole header (title/chapter/affinity) for
+	# the film, and restore it only on the real hand-off/abort.
+	if _header != null:
+		_header.visible = not value
+	if value:
+		if _event_left > 0.0 and not _event_text.is_empty():
+			_pending_event_text = _event_text
+			_pending_event_left = _event_left
+		_event_left = 0.0
+		_event_text = ""
+		if _objective != null:
+			_objective.visible = false
+		return
+	if _objective != null:
+		_objective.visible = not _completion_active
+	if not _completion_active:
+		_restore_objective_after_opening()
+
+
+func _restore_objective_after_opening() -> void:
+	if _objective == null:
+		return
+	if not _pending_event_text.is_empty():
+		var pending_text: String = _pending_event_text
+		var pending_left: float = maxf(_pending_event_left, 0.2)
+		_pending_event_text = ""
+		_pending_event_left = 0.0
+		_start_event(pending_text, pending_left)
+		return
+	_objective.text = _objective_base
+
+
 func show_toast(text_value: String, duration: float = 1.6) -> void:
-	if _toast == null:
+	if _objective == null:
 		return
 	if text_value.is_empty():
-		_toast_time = 0.0
-		_toast_panel.visible = false
-		_toast.visible = false
+		_event_left = 0.0
+		_event_text = ""
+		_pending_event_text = ""
+		_pending_event_left = 0.0
+		if not _opening_active and not _completion_active:
+			_objective.text = _objective_base
 		return
-	_toast.text = text_value
-	_toast_time = maxf(duration, 0.1)
-	_toast_panel.visible = true
-	_toast.visible = true
+	var event_duration: float = clampf(duration, 0.2, 1.4)
+	if _opening_active:
+		_pending_event_text = text_value
+		_pending_event_left = event_duration
+		return
+	_start_event(text_value, event_duration)
+
+
+func _start_event(text_value: String, duration: float) -> void:
+	_event_text = text_value
+	_event_left = maxf(duration, 0.2)
+	if _objective != null:
+		_objective.visible = not _completion_active
+		_objective.text = text_value
 
 
 func set_pause_visible(value: bool) -> void:
@@ -258,12 +295,18 @@ func show_completion(value: bool, completion_count: int = 0) -> void:
 	_completion_overlay.visible = value
 	_completion_active = value
 	if value:
-		_toast_time = 0.0
-		_toast_panel.visible = false
-		_toast.visible = false
+		_event_left = 0.0
+		_event_text = ""
+		_pending_event_text = ""
+		_pending_event_left = 0.0
+		if _objective != null:
+			_objective.visible = false
 		call_deferred("focus_completion_primary")
 	else:
 		release_completion_focus()
+		if _objective != null:
+			_objective.visible = not _opening_active
+			_objective.text = _objective_base
 	if _completion_count_label != null:
 		_completion_count_label.text = "本关结算 · Esc 可打开暂停菜单" if value else ""
 
@@ -313,7 +356,15 @@ func get_polarity_text() -> String:
 
 
 func get_toast_text() -> String:
-	return _toast.text if _toast != null else ""
+	return _event_text
+
+
+func get_objective_text() -> String:
+	return _objective.text if _objective != null else ""
+
+
+func is_objective_visible() -> bool:
+	return _objective != null and _objective.visible
 
 
 func get_label_font_sizes() -> Array[int]:
@@ -326,7 +377,7 @@ func get_label_font_sizes() -> Array[int]:
 
 
 func is_toast_visible() -> bool:
-	return _toast_panel != null and _toast_panel.visible
+	return _event_left > 0.0 and _objective != null and _objective.visible
 
 
 func is_pause_visible() -> bool:

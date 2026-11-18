@@ -212,12 +212,12 @@ limit_bottom = 360
 [node name="GuideEchoMeeting" parent="World" instance=ExtResource("4_guide")]
 position = Vector2(250, 300)
 player_path = NodePath("../Player")
-pages = PackedStringArray("旅人，归路已经断了。\n我曾守望悬庭，如今只余回声。\n前方还有一扇通往外侧的旧门。", "群岛靠埋在石中的星核维系。\n它们并未熄灭，只是回路断了。\n把力量送回石座，道路才会回应。", "胸前的护符，是旧日的通行凭证。\n它能改变你自身的相性。\n金色叫辉相，青色叫澜相。")
+pages = PackedStringArray("后面的桥断了，回不去了。\n沿着这条路往前，旧门还在。", "你胸前那枚护符还能用。\n换一种相性，再看看符石的反应。", "金色是辉相，青色是澜相。\n颜色相同会推开，不同会拉近。")
 
 [node name="GuideEchoHighstep" parent="World" instance=ExtResource("4_guide")]
 position = Vector2(735, 300)
 player_path = NodePath("../Player")
-pages = PackedStringArray("我能指路，不能替你跨过去。\nA/D移动，左Shift奔跑，空格跳跃。\n靠近那枚符石，按Q试着切相。", "与符石异相，便会被它吸引。\n借这股力登上高台。\n再切成同相，让它把你推开。", "看准落脚点，再借力越过断桥。\n路上若见守卫，它们仍听旧令。\n别恋战；你要找的是离开的路。")
+pages = PackedStringArray("这台阶太高，光跳不够。\n靠近上方的符石，换成不同相性。", "先借它的力上台，再换成同相。\n看好落脚点，让它把你推过去。")
 
 [node name="RuneStoneHigh" parent="World" instance=ExtResource("5_rune")]
 position = Vector2(864, 155)

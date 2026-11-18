@@ -465,6 +465,7 @@ func _build_ui() -> void:
 	_panel.add_child(controls_divider)
 
 	var row_y: float = 80.0
+	var row_step: float = 16.0 if controls_rows.size() > 9 else 18.0
 	for row: Variant in controls_rows:
 		if not (row is Array) or (row as Array).size() < 2:
 			continue
@@ -487,11 +488,11 @@ func _build_ui() -> void:
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		_panel.add_child(name_label)
 		_controls_labels.append(name_label)
-		row_y += 18.0
+		row_y += row_step
 
 	var route_hint: Label = _label(
 		"Esc 逐层返回 · 设置与显示确认仍会暂停游戏",
-		Vector2(262.0, 246.0),
+		Vector2(262.0, 260.0 if controls_rows.size() > 9 else 246.0),
 		Vector2(236.0, 32.0),
 		12,
 		DIM

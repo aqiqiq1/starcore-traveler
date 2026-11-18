@@ -9,6 +9,7 @@ extends Control
 
 const SAFE_RECT: Rect2 = Rect2(8.0, 48.0, 624.0, 252.0)
 const GUIDE_TIME: float = 2.4
+const INTERACTION_KEY_HINT = preload("res://scripts/ui/interaction_key_hint.gd")
 const GOLD: Color = Color("#f4cd63")
 const MUTED: Color = Color("#a4b3be")
 const DARK: Color = Color(0.01, 0.02, 0.024, 0.92)
@@ -280,29 +281,41 @@ func _draw_edge_arrow(
 	draw_polyline(closed, Color(DARK, alpha), 1.0)
 
 
-## Object-bound interaction hint: one 11x13 E keycap plus a 2-3 character
-## verb. No sentence, no panel.
+## Object-bound interaction hint: the approved 11x13 keycap plus a 2-4 character
+## verb, drawn through the shared InteractionKeyHint helper. L3 object prompts
+## are real E actions (device / pickup / embed / store / release); a transient
+## "…中" state is drawn without a cap so it cannot invite a repeat press. Range,
+## anchor and viewport clamp are unchanged from the old text-only hint.
 func _draw_prompt() -> void:
-	if player == null:
+	if not is_prompt_drawn():
 		return
-	if prompt_world.distance_to(player.global_position + Vector2(0.0, -15.0)) > 48.0:
-		return
+	var rect: Rect2 = get_prompt_screen_rect()
+	var verb: String = _prompt_verb()
+	var key: String = get_prompt_key()
+	if key.is_empty():
+		INTERACTION_KEY_HINT.draw_state(self, _font, rect.position, verb)
+	else:
+		INTERACTION_KEY_HINT.draw_action(self, _font, rect.position, key, verb)
+
+
+## Screen rect of the visible object hint (cap + gap + verb, 13 px tall), using
+## exactly the same geometry as _draw_prompt(). Empty when nothing is drawn.
+func get_prompt_screen_rect() -> Rect2:
+	if not is_prompt_drawn():
+		return Rect2()
+	var verb: String = _prompt_verb()
+	var key: String = get_prompt_key()
+	var width: float = (
+		INTERACTION_KEY_HINT.action_width(_font, verb)
+		if not key.is_empty()
+		else INTERACTION_KEY_HINT.state_width(_font, verb)
+	)
 	var screen: Vector2 = _screen_of(prompt_world) + Vector2(0.0, -8.0)
-	var verb: String = prompt_text.trim_prefix("E ").strip_edges()
-	var verb_width: float = _text_width(verb)
-	var width: float = 11.0 + 4.0 + verb_width
 	var pos: Vector2 = Vector2(
 		clampf(screen.x - width * 0.5, 8.0, 632.0 - width),
 		clampf(screen.y, 92.0, 306.0)
 	)
-	var key_rect: Rect2 = Rect2(pos + Vector2(0.0, -1.0), Vector2(11.0, 13.0))
-	draw_rect(key_rect, Color(DARK, 0.92))
-	draw_rect(key_rect, Color(GOLD, 0.9), false, 1.0)
-	draw_string(_font, key_rect.position + Vector2(2.0, 10.0), "E",
-		HORIZONTAL_ALIGNMENT_LEFT, -1.0, 9, GOLD)
-	draw_string(_font, pos + Vector2(15.0, 9.0) + Vector2(1.0, 1.0), verb,
-		HORIZONTAL_ALIGNMENT_LEFT, -1.0, 12, DARK)
-	draw_string(_font, pos + Vector2(15.0, 9.0), verb, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 12, GOLD)
+	return Rect2(Vector2(roundf(pos.x), roundf(pos.y)), Vector2(width, 13.0))
 
 
 func _draw_event() -> void:
@@ -399,6 +412,38 @@ func get_prompt_text() -> String:
 
 func get_prompt_visible() -> bool:
 	return prompt_visible
+
+
+func _prompt_verb() -> String:
+	return prompt_text.trim_prefix("E ").trim_prefix("F ").strip_edges()
+
+
+## True only when _draw() would actually paint the object hint (same combat,
+## camera and 48 px player-distance guard as the drawing path).
+func is_prompt_drawn() -> bool:
+	if not prompt_visible or combat or player == null or not is_instance_valid(player):
+		return false
+	if get_viewport().get_camera_2d() == null:
+		return false
+	if prompt_world.distance_to(player.global_position + Vector2(0.0, -15.0)) > 48.0:
+		return false
+	return not _prompt_verb().is_empty()
+
+
+## Key cap actually shown: L3 object actions are E; a "…中" state gets no cap.
+func get_prompt_key() -> String:
+	if not is_prompt_drawn():
+		return ""
+	var verb: String = _prompt_verb()
+	if verb.ends_with("中") or verb.ends_with("…") or verb.ends_with("..."):
+		return ""
+	if prompt_text.begins_with("F "):
+		return "F"
+	return "E"
+
+
+func get_prompt_verb() -> String:
+	return _prompt_verb()
 
 
 func get_event_text() -> String:

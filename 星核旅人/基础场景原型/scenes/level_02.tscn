@@ -174,7 +174,7 @@ process_mode = 1
 position = Vector2(80, 320)
 player_path = NodePath("../Player")
 near_range = 56.0
-pages = PackedStringArray("E 释放星核：核会取你的反相。\nQ 只切玩家，不切核。", "同相推开、异相吸引。\n先把星核送入中继仓。", "特殊石构是完整实体：人、核都被挡住，\n只有玩家—核护符力能穿过。\n核仍走下方 20px 通道。", "E 存入联动仓会记录核的相性，\n脉冲后点亮符石；取核记录保持。\n失败回最近稳定仓，R 整关重来。")
+pages = PackedStringArray("先把核从起始仓里取出来。\n它会变成和你相反的颜色。", "把核送进前面的中继仓。\n接通后，就能隔着这段石墙借力。", "核从矮廊下面过，你走上面。\n隔着石墙，也别把它落得太远。", "联动仓会记住星核的颜色。\n把核取出来，符石也不会熄灭。")
 
 [node name="Player" parent="." instance=ExtResource("3_player")]
 process_mode = 1

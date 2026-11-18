@@ -3,66 +3,64 @@ extends Node2D
 
 ## Fixed manifestation of the ancient watcher's echo ("守望者残响").
 ##
-## The component owns only presentation and a small paged conversation:
-## - a grey carrier stele (pure Sprite2D, no TutorialStele script/group/input) at the
-##   authored foot point, always visible from any distance;
-## - the approved 6-frame echo sheet, projected from the upper part of the stele, which
-##   fades in when the player is close and fades out when they leave (runtime alpha only);
-## - a short in-range "F 交谈" prompt; approaching never opens the first page;
-## - F opens/advances/closes, key-repeat echo is ignored;
-## - leaving range closes the page, re-entering allows listening again;
-## - no collision, no force field, no platform, no ray obstruction, no follow AI;
-## - no pause or player lock; nothing gates level completion on reading.
+## Presentation phase (2026-11-17): the in-world echo keeps its carrier stele and
+## 6-frame sheet, but the page now uses the same compact 246 px bubble language
+## as the level-03 cinematic: 12 px font, cyan speaker, light body, grey page
+## number, 34 cps reveal. The page is positioned from the actual Sprite2D
+## screen rect, never from a feet offset, so the bubble cannot cover the echo's
+## head. F first completes the current line, then advances/closes; the page
+## height is measured from the full text once so it cannot grow while typing.
+## The ordinary talk hint is one approved 11x13 F keycap plus 交谈, drawn through
+## the shared InteractionKeyHint helper. It is hidden while the opening film
+## owns the echo (_cinematic_owned), while paused, out of range, or blocked.
 ##
-## UI follows the existing dark pixel panel / Fusion Pixel 12 px language. The
-## component lives under the pausable World, so tree pause freezes the idle frame
-## and all input. The level also suspends it during menu/opening/completion/
-## scene changes and clears the page on focus loss.
+## The echo itself is still pure presentation: no collision, no force, no AI,
+## no level gating, no player lock.
 
 const GROUP_NAME: StringName = &"guide_echo"
 const DISPLAY_NAME: String = "守望者残响"
-## Formal shared echo sheet: approved preview s40 derivative (original sheet
-## remains on disk for provenance).
 const SHEET_PATH: String = "res://assets/guide_echo_20261113/guide_echo_idle_6f_s40.png"
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
+const DIALOGUE_VOICE_SCRIPT = preload("res://scripts/narrative/dialogue_voice.gd")
+const INTERACTION_KEY_HINT = preload("res://scripts/ui/interaction_key_hint.gd")
 const FRAME_SIZE: Vector2i = Vector2i(48, 64)
 const FRAME_COUNT: int = 6
 const FOOT_ANCHOR: Vector2 = Vector2(24.0, 60.0)
 const SPRITE_OFFSET: Vector2 = Vector2(-24.0, -60.0)
 const IDLE_FPS: float = 4.0
-## Carrier stele: reuse only the grey stele PNG as a plain Sprite2D. The TutorialStele
-## component (script, group, collision, read-page input) is never instantiated here.
 const CARRIER_TEXTURE_PATH: String = "res://assets/tutorial_stele/tutorial_stele_grey.png"
 const CARRIER_SIZE: Vector2i = Vector2i(26, 52)
 const CARRIER_OFFSET: Vector2 = Vector2(-13.0, -52.0)
-## The echo is drawn from the upper part of the stele, not on the stele's base.
 const PROJECTION_LIFT: float = 18.0
+
 const BODY_FONT_SIZE: int = 12
-const PROMPT_FONT_SIZE: int = 12
 const META_FONT_SIZE: int = 12
-const DIALOG_WIDTH: float = 300.0
-const PROMPT_WIDTH: float = 82.0
-const PROMPT_HEIGHT: float = 22.0
-const PADDING: float = 10.0
+const DIALOG_WIDTH: float = 246.0
+const PADDING: float = 6.0
 const SPEAKER_HEIGHT: float = 16.0
-const FOOTER_HEIGHT: float = 16.0
 const BODY_GAP: float = 2.0
-const FOOTER_GAP: float = 4.0
-const PROMPT_GAP: float = 6.0
-const DIALOG_GAP: float = 10.0
+const BUBBLE_GAP: float = 8.0
+const SAFE_RECT: Rect2 = Rect2(8.0, 48.0, 624.0, 264.0)
+const TYPE_CPS: float = 34.0
+const PROMPT_TEXT: String = "交谈"
+const PROMPT_KEY: String = "F"
+const PROMPT_HEIGHT: float = 13.0
+const KEY_MIN_WIDTH: float = 44.0
+const PROMPT_GAP: float = 8.0
 const SCREEN_MARGIN: float = 4.0
 const DEFAULT_SAFE_TOP: float = 56.0
 
+const CYAN: Color = Color("#5fe1e6")
+const GOLD: Color = Color("#f4cd63")
 const TEXT_COLOR: Color = Color("#e7eceb")
 const MUTED_COLOR: Color = Color("#a4b3be")
-const GOLD_COLOR: Color = Color("#f4cd63")
-const PANEL_BG: Color = Color(0.078, 0.122, 0.169, 0.95)
-const PANEL_BORDER: Color = Color("#607380")
+const PANEL_BG: Color = Color(0.020, 0.048, 0.058, 0.93)
+const PANEL_BORDER: Color = Color(0.37, 0.72, 0.74, 0.85)
 
 @export var pages: PackedStringArray = PackedStringArray([
-	"旅人，归路已经断了。\n我曾守望悬庭，如今只余回声。\n前方还有一扇通往外侧的旧门。",
-	"群岛靠埋在石中的星核维系。\n它们并未熄灭，只是回路断了。\n把力量送回石座，道路才会回应。",
-	"胸前的护符，是旧日的通行凭证。\n它能改变你自身的相性。\n金色叫辉相，青色叫澜相。",
+	"后面的桥断了，回不去了。\n沿着这条路往前，旧门还在。",
+	"你胸前那枚护符还能用。\n换一种相性，再看看符石的反应。",
+	"金色是辉相，青色是澜相。\n颜色相同会推开，不同会拉近。",
 ]):
 	set(value):
 		pages = value
@@ -70,8 +68,6 @@ const PANEL_BORDER: Color = Color("#607380")
 			_page_index = -1
 		_refresh_ui()
 
-## Distance from the player's feet to this echo's foot point that shows the
-## short prompt. Approaching never opens the conversation by itself.
 @export_range(16.0, 160.0, 1.0, "suffix:px") var near_range: float = 56.0:
 	set(value):
 		near_range = maxf(value, 1.0)
@@ -86,12 +82,6 @@ const PANEL_BORDER: Color = Color("#607380")
 
 @export_range(0.0, 120.0, 1.0, "suffix:px") var prompt_hud_safe_top: float = DEFAULT_SAFE_TOP
 
-## Manifestation: the echo only exists inside this ring. Start appearing at
-## manifest_range, start fading out beyond hide_range (hysteresis keeps it from
-## flickering at the boundary). Both are >= near_range so the figure is visible
-## before the F prompt appears.
-## Defaults are already valid: near_range 56 < manifest_range 96 < hide_range 112.
-## Exported values are taken as authored (no clamp/repair framework for illegal ones).
 @export_range(48.0, 200.0, 1.0, "suffix:px") var manifest_range: float = 96.0
 @export_range(48.0, 240.0, 1.0, "suffix:px") var hide_range: float = 112.0
 @export_range(0.05, 1.5, 0.01, "suffix:s") var fade_in_duration: float = 0.25
@@ -115,16 +105,25 @@ var _animation_frame: int = 0
 var _animation_accumulator: float = 0.0
 var _ui_layer: CanvasLayer = null
 var _prompt_root: Control = null
-var _prompt_panel: Panel = null
+var _prompt_canvas: Control = null
+## Compatibility data carrier for the old prompt label; the visible F cap and
+## 交谈 word are drawn by the shared InteractionKeyHint helper.
 var _prompt_label: Label = null
 var _dialog_root: Control = null
 var _dialog_panel: Panel = null
 var _speaker_label: Label = null
 var _body_label: Label = null
 var _page_label: Label = null
-var _action_label: Label = null
 var _screen_anchor_x: float = 0.0
+var _reveal: float = 0.0
+var _dialog_size: Vector2 = Vector2(246.0, 60.0)
+var _last_echo_rect: Rect2 = Rect2()
+var _voice = null
 var _font_missing_warned: bool = false
+## Set by the level-01 opening film. While owned, the echo still exposes its
+## public page API to that controller, but F is not accepted and the small
+## "交谈" prompt cannot compete with the opening's Space pages.
+var _cinematic_owned: bool = false
 
 
 func _enter_tree() -> void:
@@ -148,6 +147,7 @@ func _ready() -> void:
 		set_process_unhandled_input(false)
 		return
 	_ensure_ui()
+	_ensure_voice()
 	_resolve_player()
 	set_process(true)
 	set_process_unhandled_input(true)
@@ -173,22 +173,22 @@ func _process(delta: float) -> void:
 	if not _in_range:
 		return
 	if _page_index >= 0:
+		_advance_reveal(delta)
 		_layout_dialog()
 	else:
 		_layout_prompt()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if Engine.is_editor_hint() or _suspended or not _in_range:
+	if Engine.is_editor_hint() or _suspended or _cinematic_owned or not _in_range:
 		return
 	if _manifest <= 0.0:
-		return                      # still fully transparent: do not eat the first F
+		return
 	if get_tree() == null or get_tree().paused:
 		return
 	if not (event is InputEventKey):
 		return
 	var key_event: InputEventKey = event as InputEventKey
-	# OS key-repeat must not page the dialogue while F is held.
 	if key_event.echo or not key_event.pressed:
 		return
 	if not key_event.is_action_pressed(&"tutorial_next"):
@@ -196,39 +196,57 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _page_index < 0:
 		if open_dialogue():
 			get_viewport().set_input_as_handled()
-	elif advance_page():
+	elif _press_page():
 		get_viewport().set_input_as_handled()
 
 
-## Opens page 1 only when the player is already in range and the echo is awake.
 func open_dialogue() -> bool:
 	if _suspended or not _in_range or pages.is_empty():
 		return false
+	if _manifest <= 0.0:
+		return false
 	_page_index = 0
+	_begin_page()
 	_refresh_ui()
 	return true
 
 
-## F advances one page; on the last page it closes the conversation instead.
+## F semantics: while the line is still revealing, the first press completes
+## it; only a press on the completed line advances. The last page closes.
+func _press_page() -> bool:
+	if _page_index < 0 or pages.is_empty():
+		return false
+	var full: String = get_current_page_text()
+	if _reveal < float(full.length()):
+		_reveal = float(full.length())
+		_body_label.text = full
+		if _voice != null:
+			_voice.complete_reveal()
+		return true
+	if _page_index + 1 >= pages.size():
+		close_dialogue()
+		return true
+	_page_index += 1
+	_begin_page()
+	_refresh_ui()
+	return true
+
+
+## Compatibility: tests may call advance_page() directly. It follows the same
+## complete-first rule as F.
 func advance_page() -> bool:
 	if _page_index < 0 or pages.is_empty():
 		return false
-	if _page_index + 1 >= pages.size():
-		_page_index = -1
-	else:
-		_page_index += 1
-	_refresh_ui()
-	return true
+	return _press_page()
 
 
 func close_dialogue() -> void:
 	_page_index = -1
+	if _voice != null:
+		_voice.stop()
 	_refresh_ui()
 
 
-## The level owns menu/opening/pause/completion gates. Suspending clears both
-## the page and the prompt; unsuspending lets the next process tick re-evaluate
-## proximity, so a player already standing nearby can talk again.
 func set_suspended(value: bool) -> void:
 	if _suspended == value:
 		return
@@ -236,6 +254,8 @@ func set_suspended(value: bool) -> void:
 	if _suspended:
 		_in_range = false
 		_page_index = -1
+		if _voice != null:
+			_voice.stop()
 	_refresh_ui()
 
 
@@ -243,21 +263,37 @@ func is_suspended() -> bool:
 	return _suspended
 
 
-## R / fall / reset clears the old page. The prompt may remain if still nearby;
-## reading is never part of any completion condition.
-func on_player_reset(_reason: String = "") -> void:
-	_page_index = -1
+## Explicit ownership hand-off for the level-01 opening. It does not suspend
+## the echo or close its page; it only reserves page input for the opening.
+func set_cinematic_owned(value: bool) -> void:
+	if _cinematic_owned == value:
+		return
+	_cinematic_owned = value
 	_refresh_ui()
 
 
-## OS focus loss clears a half-read page. Input is not replayed automatically.
+func is_cinematic_owned() -> bool:
+	return _cinematic_owned
+
+
+func on_player_reset(_reason: String = "") -> void:
+	_page_index = -1
+	if _voice != null:
+		_voice.stop()
+	_refresh_ui()
+
+
 func on_focus_lost() -> void:
 	_page_index = -1
+	if _voice != null:
+		_voice.stop()
 	_refresh_ui()
 
 
 func force_close() -> void:
 	_page_index = -1
+	if _voice != null:
+		_voice.stop()
 	_refresh_ui()
 
 
@@ -291,6 +327,19 @@ func get_current_page_text() -> String:
 	return pages[_page_index]
 
 
+## Text currently drawn (after the 34 cps reveal).
+func get_page_text() -> String:
+	return _body_label.text if _body_label != null else ""
+
+
+func get_full_page_text() -> String:
+	return get_current_page_text()
+
+
+func get_revealed_count() -> int:
+	return int(_reveal)
+
+
 func get_display_name() -> String:
 	return DISPLAY_NAME
 
@@ -299,16 +348,48 @@ func get_prompt_text() -> String:
 	return _prompt_label.text if _prompt_label != null else ""
 
 
+## The key drawn on the visible hint. Ordinary echo talk is F and only while
+## the prompt is actually shown (not during the opening film, pause, out of
+## range, or after a level block).
+func get_prompt_key() -> String:
+	return PROMPT_KEY if is_prompt_visible() else ""
+
+
+func get_prompt_verb() -> String:
+	return PROMPT_TEXT
+
+
+func get_prompt_hint_width() -> float:
+	if _prompt_root == null or not _prompt_root.visible:
+		return 0.0
+	return _prompt_root.size.x
+
+
+func is_prompt_keycap_visible() -> bool:
+	return _prompt_canvas != null and _prompt_root != null and _prompt_root.visible
+
+
+## Frameless action-hint audit: no Panel child is created under the prompt root.
+func has_prompt_panel() -> bool:
+	if _prompt_root == null:
+		return false
+	return not _prompt_root.find_children("*", "Panel", true, false).is_empty()
+
+
+func get_prompt_font_size() -> int:
+	return _prompt_label.get_theme_font_size("font_size") if _prompt_label != null else 0
+
+
+func get_prompt_color() -> Color:
+	return _prompt_label.get_theme_color("font_color") if _prompt_label != null else Color.WHITE
+
+
 func get_speaker_text() -> String:
 	return _speaker_label.text if _speaker_label != null else ""
 
 
 func get_action_text() -> String:
-	return _action_label.text if _action_label != null else ""
-
-
-func get_page_text() -> String:
-	return _page_label.text if _page_label != null else ""
+	return ""
 
 
 func get_prompt_rect() -> Rect2:
@@ -347,7 +428,6 @@ func get_sheet_texture() -> Texture2D:
 	return _texture
 
 
-## Manifestation state, for the focused checks and for any later gate that needs it.
 func get_manifestation() -> float:
 	return _manifest
 
@@ -388,6 +468,26 @@ func has_collision_body() -> bool:
 	return not find_children("*", "CollisionObject2D", true, false).is_empty()
 
 
+func get_voice():
+	return _voice
+
+
+## Actual visible sprite rectangle in viewport coordinates. Uses the real
+## Sprite2D transform + get_rect(), including the projection offset.
+func get_echo_screen_rect() -> Rect2:
+	if _sprite == null or not is_inside_tree():
+		return Rect2()
+	var xf: Transform2D = _sprite.get_global_transform_with_canvas()
+	return xf * _sprite.get_rect()
+
+
+func get_player_screen_rect() -> Rect2:
+	if _player == null or not is_inside_tree():
+		return Rect2()
+	var feet: Vector2 = get_viewport().get_canvas_transform() * _player.global_position
+	return Rect2(feet + Vector2(-8.0, -34.0), Vector2(16.0, 34.0))
+
+
 func _resolve_player() -> void:
 	if player_path != NodePath():
 		var node: Node = get_node_or_null(player_path)
@@ -409,7 +509,32 @@ func _set_in_range(value: bool) -> void:
 	_in_range = value
 	if not _in_range:
 		_page_index = -1
+		if _voice != null:
+			_voice.stop()
 	_refresh_ui()
+
+
+func _begin_page() -> void:
+	_reveal = 0.0
+	_last_echo_rect = Rect2()
+	if _body_label != null:
+		_body_label.text = ""
+	if _voice != null:
+		_voice.begin_page()
+	_layout_dialog()
+
+
+func _advance_reveal(delta: float) -> void:
+	if _page_index < 0 or _page_index >= pages.size():
+		return
+	var full: String = pages[_page_index]
+	if _reveal >= float(full.length()):
+		return
+	_reveal = minf(_reveal + delta * TYPE_CPS, float(full.length()))
+	if _body_label != null:
+		_body_label.text = full.substr(0, int(_reveal))
+	if _voice != null:
+		_voice.update_text(full, int(_reveal), delta)
 
 
 func _ensure_carrier() -> void:
@@ -488,15 +613,12 @@ func _advance_idle(delta: float) -> void:
 	_apply_frame()
 
 
-## Runtime alpha only: the approved sheet is never redrawn, tinted or rescaled.
 func _apply_manifestation() -> void:
 	if _sprite == null:
 		return
 	_sprite.modulate.a = clampf(_manifest, 0.0, 1.0)
 
 
-## Appear inside manifest_range, disappear beyond hide_range; between the two the
-## current target is kept (hysteresis). Walking back in mid-fade reverses smoothly.
 func _update_manifestation(delta: float, distance: float) -> void:
 	if distance <= manifest_range:
 		_manifest_target = 1.0
@@ -512,6 +634,8 @@ func _update_manifestation(delta: float, distance: float) -> void:
 	if visible_now != _manifest_was_visible:
 		_manifest_was_visible = visible_now
 		_refresh_ui()
+	if _manifest <= 0.0 and _voice != null:
+		_voice.stop()
 
 
 func _ensure_ui() -> void:
@@ -533,19 +657,24 @@ func _ensure_ui() -> void:
 	_prompt_root.name = "TalkPrompt"
 	_prompt_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_prompt_root.visible = false
-	_prompt_root.draw.connect(_draw_prompt_frame)
 	_ui_layer.add_child(_prompt_root)
 
-	_prompt_panel = Panel.new()
-	_prompt_panel.position = Vector2.ZERO
-	_prompt_panel.size = Vector2(PROMPT_WIDTH, PROMPT_HEIGHT)
-	_prompt_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_prompt_panel.add_theme_stylebox_override("panel", _make_style())
-	_prompt_root.add_child(_prompt_panel)
-	_prompt_label = _make_label(font, PROMPT_FONT_SIZE, GOLD_COLOR, HORIZONTAL_ALIGNMENT_CENTER)
-	_prompt_label.text = "F 交谈"
+	# Ordinary talk hint: one approved 11x13 F cap plus 交谈, drawn by the one
+	# shared keycap helper. Only the dialogue bubble keeps its cyan speaker and
+	# bordered panel.
+	_prompt_canvas = Control.new()
+	_prompt_canvas.name = "TalkKeyHint"
+	_prompt_canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_prompt_canvas.draw.connect(_draw_prompt_hint)
+	_prompt_root.add_child(_prompt_canvas)
+
+	_prompt_label = _make_label(font, META_FONT_SIZE, GOLD, HORIZONTAL_ALIGNMENT_CENTER)
+	_prompt_label.text = PROMPT_TEXT
 	_prompt_label.position = Vector2(0.0, 3.0)
-	_prompt_label.size = Vector2(PROMPT_WIDTH, 16.0)
+	_prompt_label.size = Vector2(16.0, 16.0)
+	# Kept only so existing prompt text/size/colour accessors stay valid; it is
+	# never the visible prompt any more.
+	_prompt_label.visible = false
 	_prompt_root.add_child(_prompt_label)
 
 	_dialog_root = Control.new()
@@ -561,7 +690,7 @@ func _ensure_ui() -> void:
 	_dialog_panel.add_theme_stylebox_override("panel", _make_style())
 	_dialog_root.add_child(_dialog_panel)
 
-	_speaker_label = _make_label(font, META_FONT_SIZE, GOLD_COLOR, HORIZONTAL_ALIGNMENT_LEFT)
+	_speaker_label = _make_label(font, META_FONT_SIZE, CYAN, HORIZONTAL_ALIGNMENT_LEFT)
 	_speaker_label.text = DISPLAY_NAME
 	_dialog_root.add_child(_speaker_label)
 
@@ -570,11 +699,16 @@ func _ensure_ui() -> void:
 	_body_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	_dialog_root.add_child(_body_label)
 
-	_page_label = _make_label(font, META_FONT_SIZE, MUTED_COLOR, HORIZONTAL_ALIGNMENT_LEFT)
+	_page_label = _make_label(font, META_FONT_SIZE, MUTED_COLOR, HORIZONTAL_ALIGNMENT_RIGHT)
 	_dialog_root.add_child(_page_label)
 
-	_action_label = _make_label(font, META_FONT_SIZE, GOLD_COLOR, HORIZONTAL_ALIGNMENT_RIGHT)
-	_dialog_root.add_child(_action_label)
+
+func _ensure_voice() -> void:
+	if _voice != null:
+		return
+	_voice = DIALOGUE_VOICE_SCRIPT.new()
+	_voice.name = "EchoVoice"
+	add_child(_voice)
 
 
 func _make_style() -> StyleBoxFlat:
@@ -596,6 +730,8 @@ func _make_label(font: Font, font_size: int, color: Color, alignment: Horizontal
 		label.add_theme_font_override("font", font)
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
+	label.add_theme_constant_override("outline_size", 2)
 	label.add_theme_constant_override("line_spacing", 0)
 	return label
 
@@ -607,7 +743,9 @@ func _refresh_ui() -> void:
 	var awake: bool = not _suspended and not paused
 	var visible_echo: bool = _manifest > 0.0
 	var show_dialog: bool = awake and _in_range and _page_index >= 0
-	var show_prompt: bool = awake and _in_range and _page_index < 0 and visible_echo
+	var show_prompt: bool = (
+		awake and not _cinematic_owned and _in_range and _page_index < 0 and visible_echo
+	)
 	_dialog_root.visible = show_dialog
 	_prompt_root.visible = show_prompt
 	if show_dialog:
@@ -617,104 +755,122 @@ func _refresh_ui() -> void:
 
 
 func _layout_prompt() -> void:
-	if _prompt_root == null:
+	if _prompt_root == null or _prompt_canvas == null:
 		return
 	var viewport_size: Vector2 = get_viewport_rect().size
-	var width: float = minf(PROMPT_WIDTH, maxf(60.0, viewport_size.x - SCREEN_MARGIN * 2.0))
-	var anchor: Vector2 = get_viewport().get_canvas_transform() * global_position
+	var echo_rect: Rect2 = get_echo_screen_rect()
+	var font: Font = _prompt_label.get_theme_font("font") if _prompt_label != null else null
+	var width: float = INTERACTION_KEY_HINT.action_width(font, PROMPT_TEXT)
+	width = minf(width, maxf(KEY_MIN_WIDTH, viewport_size.x - SCREEN_MARGIN * 2.0))
 	var target_x: float = clampf(
-		anchor.x - width * 0.5,
+		echo_rect.get_center().x - width * 0.5,
 		SCREEN_MARGIN,
 		maxf(SCREEN_MARGIN, viewport_size.x - width - SCREEN_MARGIN)
 	)
 	var target_y: float = clampf(
-		anchor.y - FRAME_SIZE.y - PROJECTION_LIFT - PROMPT_GAP - PROMPT_HEIGHT,
+		echo_rect.position.y - PROMPT_GAP - PROMPT_HEIGHT,
 		prompt_hud_safe_top,
 		maxf(prompt_hud_safe_top, viewport_size.y - SCREEN_MARGIN - PROMPT_HEIGHT)
 	)
 	_prompt_root.size = Vector2(roundf(width), PROMPT_HEIGHT)
 	_prompt_root.global_position = Vector2(roundf(target_x), roundf(target_y))
-	_screen_anchor_x = anchor.x
-	_prompt_panel.size = _prompt_root.size
-	_prompt_label.position = Vector2(0.0, 3.0)
-	_prompt_label.size = Vector2(width, 16.0)
-	_prompt_root.queue_redraw()
+	_screen_anchor_x = echo_rect.get_center().x
+	_prompt_canvas.position = Vector2.ZERO
+	_prompt_canvas.size = _prompt_root.size
+	_prompt_canvas.queue_redraw()
+
+
+## One approved 11x13 F cap + 4 px gap + 12 px 交谈 (dark shadow). The range,
+## anchor and cinematic/pause/in-range gating all stay in the existing prompt
+## state; this only changes how the visible hint is drawn.
+func _draw_prompt_hint() -> void:
+	if _prompt_canvas == null or _prompt_label == null:
+		return
+	var font: Font = _prompt_label.get_theme_font("font")
+	INTERACTION_KEY_HINT.draw_action(
+		_prompt_canvas, font, Vector2.ZERO, PROMPT_KEY, PROMPT_TEXT
+	)
 
 
 func _layout_dialog() -> void:
-	if _dialog_root == null or _body_label == null:
+	if _dialog_root == null or _body_label == null or _page_index < 0:
 		return
 	var font: Font = _body_label.get_theme_font("font")
 	if font == null:
 		return
 	var viewport_size: Vector2 = get_viewport_rect().size
-	var width: float = minf(prompt_width, maxf(240.0, viewport_size.x - SCREEN_MARGIN * 2.0))
+	var width: float = minf(DIALOG_WIDTH, maxf(240.0, viewport_size.x - SCREEN_MARGIN * 2.0))
 	var body_width: float = maxf(width - PADDING * 2.0, 120.0)
-	var text: String = get_current_page_text()
+	var full: String = get_current_page_text()
 	var measured: Vector2 = font.get_multiline_string_size(
-		text, HORIZONTAL_ALIGNMENT_LEFT, body_width, BODY_FONT_SIZE
+		full, HORIZONTAL_ALIGNMENT_LEFT, body_width, BODY_FONT_SIZE
 	)
 	var body_height: float = maxf(ceilf(measured.y), float(BODY_FONT_SIZE))
-	var panel_height: float = (
-		PADDING * 2.0 + SPEAKER_HEIGHT + BODY_GAP + body_height + FOOTER_GAP + FOOTER_HEIGHT
-	)
-	var anchor: Vector2 = get_viewport().get_canvas_transform() * global_position
-	var target_x: float = clampf(
-		anchor.x - width * 0.5,
-		SCREEN_MARGIN,
-		maxf(SCREEN_MARGIN, viewport_size.x - width - SCREEN_MARGIN)
-	)
-	var target_y: float = clampf(
-		anchor.y - FRAME_SIZE.y - PROJECTION_LIFT - DIALOG_GAP - panel_height,
-		prompt_hud_safe_top,
-		maxf(prompt_hud_safe_top, viewport_size.y - SCREEN_MARGIN - panel_height)
-	)
+	var panel_height: float = PADDING * 2.0 + SPEAKER_HEIGHT + BODY_GAP + body_height
+
+	var echo_rect: Rect2 = get_echo_screen_rect()
+	var player_rect: Rect2 = get_player_screen_rect()
+	var pos: Vector2 = _bubble_position(echo_rect, player_rect, width, panel_height)
 	_dialog_root.size = Vector2(roundf(width), roundf(panel_height))
-	_dialog_root.global_position = Vector2(roundf(target_x), roundf(target_y))
+	_dialog_root.global_position = Vector2(roundf(pos.x), roundf(pos.y))
 	_dialog_panel.size = _dialog_root.size
-	_screen_anchor_x = anchor.x
+	_screen_anchor_x = echo_rect.get_center().x
+	_last_echo_rect = echo_rect
 
 	_speaker_label.text = DISPLAY_NAME
 	_speaker_label.position = Vector2(PADDING, PADDING)
-	_speaker_label.size = Vector2(body_width, SPEAKER_HEIGHT)
-
-	_body_label.text = text
+	_speaker_label.size = Vector2(body_width - 56.0, SPEAKER_HEIGHT)
+	_page_label.text = "%d / %d" % [_page_index + 1, pages.size()]
+	_page_label.position = Vector2(width - PADDING - 52.0, PADDING)
+	_page_label.size = Vector2(52.0, SPEAKER_HEIGHT)
 	_body_label.position = Vector2(PADDING, PADDING + SPEAKER_HEIGHT + BODY_GAP)
 	_body_label.size = Vector2(body_width, body_height + 3.0)
-
-	var footer_y: float = PADDING + SPEAKER_HEIGHT + BODY_GAP + body_height + FOOTER_GAP
-	_page_label.text = "%d / %d" % [_page_index + 1, pages.size()]
-	_page_label.position = Vector2(PADDING, footer_y)
-	_page_label.size = Vector2(70.0, FOOTER_HEIGHT)
-	var last_page: bool = _page_index + 1 >= pages.size()
-	_action_label.text = "F 收起" if last_page else "F 继续"
-	_action_label.position = Vector2(width - PADDING - 90.0, footer_y)
-	_action_label.size = Vector2(90.0, FOOTER_HEIGHT)
 	_dialog_root.queue_redraw()
 
 
-func _draw_prompt_frame() -> void:
-	if _prompt_root == null:
-		return
-	var size: Vector2 = _prompt_root.size
-	var notch_center: float = clampf(_screen_anchor_x - _prompt_root.global_position.x, 12.0, size.x - 12.0)
-	var bottom: float = size.y - 1.0
-	_prompt_root.draw_colored_polygon(
-		PackedVector2Array([
-			Vector2(notch_center - 5.0, bottom),
-			Vector2(notch_center + 5.0, bottom),
-			Vector2(notch_center, bottom + 6.0),
-		]),
-		PANEL_BORDER
+## Prefer above the actual sprite rect; keep 8 px clear. If the top is blocked
+## by the HUD safe area or the player body, try above the player, then the
+## right/left side. The chosen side is deterministic for the same geometry, so
+## typing cannot flip it.
+func _bubble_position(echo_rect: Rect2, player_rect: Rect2, width: float, height: float) -> Vector2:
+	var safe: Rect2 = SAFE_RECT
+	var above: Vector2 = Vector2(
+		echo_rect.get_center().x - width * 0.5,
+		echo_rect.position.y - height - BUBBLE_GAP
 	)
+	above.x = clampf(above.x, safe.position.x, safe.end.x - width)
+	var rect: Rect2 = Rect2(above, Vector2(width, height))
+	if above.y >= safe.position.y and not rect.intersects(player_rect):
+		return above
+	var above_player: Vector2 = Vector2(
+		player_rect.get_center().x - width * 0.5,
+		player_rect.position.y - height - BUBBLE_GAP
+	)
+	above_player.x = clampf(above_player.x, safe.position.x, safe.end.x - width)
+	var prect: Rect2 = Rect2(above_player, Vector2(width, height))
+	if above_player.y >= safe.position.y and not prect.intersects(echo_rect):
+		return above_player
+	var right: Vector2 = Vector2(echo_rect.end.x + BUBBLE_GAP, echo_rect.position.y - 4.0)
+	right.x = clampf(right.x, safe.position.x, safe.end.x - width)
+	right.y = clampf(right.y, safe.position.y, safe.end.y - height)
+	var right_rect: Rect2 = Rect2(right, Vector2(width, height))
+	if right_rect.end.x <= safe.end.x and not right_rect.intersects(player_rect):
+		return right
+	var left: Vector2 = Vector2(echo_rect.position.x - width - BUBBLE_GAP, echo_rect.position.y - 4.0)
+	left.x = clampf(left.x, safe.position.x, safe.end.x - width)
+	left.y = clampf(left.y, safe.position.y, safe.end.y - height)
+	var left_rect: Rect2 = Rect2(left, Vector2(width, height))
+	if left_rect.position.x >= safe.position.x and not left_rect.intersects(player_rect):
+		return left
+	above.x = clampf(above.x, safe.position.x, safe.end.x - width)
+	above.y = clampf(above.y, safe.position.y, safe.end.y - height)
+	return above
 
 
 func _draw_dialog_frame() -> void:
 	if _dialog_root == null:
 		return
 	var size: Vector2 = _dialog_root.size
-	# A thin stone-coloured divider under the speaker keeps the existing panel
-	# language without introducing a new ornament system.
 	_dialog_root.draw_rect(
 		Rect2(Vector2(PADDING, PADDING + SPEAKER_HEIGHT - 1.0), Vector2(size.x - PADDING * 2.0, 1.0)),
 		Color(PANEL_BORDER, 0.55),

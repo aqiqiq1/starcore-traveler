@@ -19,6 +19,18 @@ extends Node2D
 ## that skip press, the cinematic remains a control-occupied state
 ## (is_active()/is_awaiting_release()); E/J, the pause page, focus loss and R
 ## all see it as active and clean it up explicitly.
+##
+## Framing (2026-11-18): only this film's own Camera2D moves. With the full
+## 44 px letterbox it looks from Y194 (limit_bottom 374) instead of the normal
+## Y180, so the player's and the guard's feet stay 10 px above the bottom bar.
+## The Y offset follows the bar height itself in and out, so the push-in and the
+## OUTRO hand-off back to the normal player camera are continuous (no jump, no
+## hidden feet, no shortened bars). The normal Camera2D, body coordinates and
+## collisions are untouched.
+##
+## The echo is projected from the real `VisualRoot/Talisman` chest sprite (see
+## echo_amulet_projection.gd). The old foot-origin EchoProjection texture is
+## kept as a source but is never shown again.
 
 signal finished(skipped: bool)
 signal stone_cue_requested
@@ -27,11 +39,20 @@ const VIEW_SIZE: Vector2 = Vector2(640.0, 360.0)
 ## Head bubble (play-test revision): no bottom 608x68 dialogue bar; the 44 px
 ## top/bottom letterbox is kept.
 const BAR_HEIGHT: float = 44.0
+## Normal gameplay camera centre; the film returns to exactly this on OUTRO.
+const NORMAL_FOCUS_Y: float = 180.0
+## Full-letterbox film centring: feet at world 320 map to screen 306, the
+## bottom bar starts at 316 -> 10 px clear (>= 8 px).
+const CINE_FOCUS_Y: float = 194.0
+## limit_bottom must allow the centre to reach 194 (194 + 360/2 = 374).
+const CINE_LIMIT_BOTTOM: float = 374.0
+## The chest projection beat length before the original page 1 opens.
+const ECHO_DURATION: float = 0.90
 const BUBBLE_WIDTH: float = 246.0
-const BUBBLE_HEIGHT: float = 54.0
+const BUBBLE_HEIGHT: float = 60.0
 const BUBBLE_PAD: float = 6.0
 const BUBBLE_SAFE: Rect2 = Rect2(8.0, 48.0, 624.0, 264.0)
-const TAIL_GAP: float = 6.0
+const TAIL_GAP: float = 8.0
 const SKIP_HOLD: float = 0.6
 const TEXT_CPS: float = 34.0
 const GOLD: Color = Color("#f4cd63")
@@ -41,6 +62,7 @@ const MUTED: Color = Color("#a4b3be")
 const PANEL_BG: Color = Color(0.012, 0.028, 0.035, 0.95)
 const PANEL_BORDER: Color = Color(0.45, 0.66, 0.63, 0.85)
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
+const DIALOGUE_VOICE_SCRIPT = preload("res://scripts/narrative/dialogue_voice.gd")
 
 const ECHO_SHEET: Texture2D = preload("res://assets/guide_echo_20261113/guide_echo_idle_6f_s40.png")
 const PROJECTION: Texture2D = preload("res://assets/level03_prototype/echo_projection.png")
@@ -48,15 +70,15 @@ const QUESTION: Texture2D = preload("res://assets/level03_prototype/emote_questi
 const EXCLAIM: Texture2D = preload("res://assets/level03_prototype/emote_exclaim.png")
 
 const PAGES: Array[String] = [
-	"碎了还会再聚。\n支撑它的，是壳里的星核。",
-	"它聚起引力时，\n胸前的星核便会露出来。",
-	"让护符与它亮起不同的光，\n再向露出的星核出剑。",
+	"光打碎石壳没用。\n胸口的星核还在，它就会重新站起来。",
+	"等它开始把你往身边拉。\n那时候，胸口的星核会露出来。",
+	"换成和它不同的相性，\n趁星核露出来，朝胸口挥剑。",
 ]
 
 ## The post-fight branch points at the actual next action instead of describing
 ## a charge the player can no longer see. No guard state is reset or revived.
 const DEFEATED_PAGES: Array[String] = [
-	"将它留下的星核嵌入城门，\n那是通往城内的路。",
+	"它留下的星核能打开城门。\n把核带到门边，嵌进去。",
 ]
 
 enum Phase { IDLE, INTRO, WALK, DOOR, GUARD, ECHO, DIALOGUE, OUTRO }
@@ -82,6 +104,8 @@ var _question: Sprite2D = null
 var _exclaim: Sprite2D = null
 var _echo: Sprite2D = null
 var _projection: Sprite2D = null
+var _projection_fx: EchoAmuletProjection = null
+var _voice = null
 var _font: Font = null
 
 var _active: bool = false
@@ -147,7 +171,9 @@ func _build_camera() -> void:
 	_cine_camera.limit_left = 0
 	_cine_camera.limit_top = 0
 	_cine_camera.limit_right = 2520
-	_cine_camera.limit_bottom = 360
+	# Film-only overscan: the extra 14 px below the normal view is always under
+	# the 44 px letterbox. The normal player camera keeps limit_bottom 360.
+	_cine_camera.limit_bottom = CINE_LIMIT_BOTTOM
 	add_child(_cine_camera)
 
 
@@ -210,11 +236,11 @@ func _build_ui() -> void:
 	_bubble.add_child(_body)
 	_bubble.visible = false
 
-	_hint = _label("", Vector2(16.0, 332.0), Vector2(608.0, 14.0), 12, MUTED)
-	_hint.text = "空格 继续 · 长按 0.6s 跳过"
-	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_hint.modulate = Color(1.0, 1.0, 1.0, 0.72)
-	_root.add_child(_hint)
+	# No bottom key hint: bindings live only on the pause page. The reveal voice
+	# is a minimal helper shared with GuideEcho.
+	_voice = DIALOGUE_VOICE_SCRIPT.new()
+	_voice.name = "EchoVoice"
+	add_child(_voice)
 
 
 func _label(
@@ -274,8 +300,18 @@ func _build_world_sprites() -> void:
 	_projection.centered = true
 	_projection.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_projection.z_index = 18
+	# Source kept, usage retired: the echo no longer originates at the feet.
 	_projection.visible = false
 	add_child(_projection)
+
+	_projection_fx = EchoAmuletProjection.new()
+	_projection_fx.name = "AmuletEchoProjection"
+	# Above the echo (19) so the 1 px scan band and rim really cover the imaged
+	# sprite instead of hiding behind it; below the HUD bubble/letterbox (>=12
+	# CanvasLayer) and level with the emote marks.
+	_projection_fx.z_index = 20
+	_projection_fx.visible = false
+	add_child(_projection_fx)
 
 
 func play() -> void:
@@ -299,6 +335,9 @@ func play() -> void:
 	if _player != null:
 		_player.lock_for_cinematic()
 		_cam_focus = _focus_on_player()
+	if _projection_fx != null:
+		_projection_fx.setup(_player, _echo)
+		_projection_fx.start()
 	if _guard != null:
 		_guard.set_cinematic_mode(true)
 		_guard_beat_shown_rebuild = _guard.is_scattered()
@@ -308,6 +347,8 @@ func play() -> void:
 		_cine_camera.make_current()
 	_set_visible_all(true)
 	_set_bubble_visible(false)
+	_echo.visible = false
+	_projection.visible = false
 	_bar_target = BAR_HEIGHT
 	_bar_height = 0.0
 	_apply_bar_height()
@@ -398,20 +439,24 @@ func _process(delta: float) -> void:
 				_exclaim.visible = false
 		Phase.ECHO:
 			_cam_focus = _focus_on_player()
-			_echo.visible = true
-			_projection.visible = true
-			var alpha: float = clampf(_t / 0.4, 0.0, 0.86)
-			_echo.modulate = Color(1.0, 1.0, 1.0, alpha)
-			_projection.modulate = Color(0.6, 0.95, 1.0, alpha)
 			_update_echo_positions()
-			if _t >= 0.55:
+			if _projection_fx != null:
+				_projection_fx.set_time(_t)
+				_echo.visible = _projection_fx.is_echo_visible()
+				_echo.modulate = Color(1.0, 1.0, 1.0, _projection_fx.get_echo_alpha())
+			_projection.visible = false
+			if _t >= ECHO_DURATION:
 				_phase = Phase.DIALOGUE
 				_t = 0.0
 				_play_page(0)
 		Phase.DIALOGUE:
 			_reveal = minf(_reveal + delta * TEXT_CPS, float(_pages[_page_index].length()))
 			_body.text = _pages[_page_index].substr(0, int(_reveal))
+			if _voice != null:
+				_voice.update_text(_pages[_page_index], int(_reveal), delta)
 			_update_echo_positions()
+			if _projection_fx != null:
+				_projection_fx.set_link_time(_echo_time)
 			_update_bubble()
 		Phase.OUTRO:
 			if _t >= 0.30:
@@ -442,36 +487,70 @@ func get_bar_height() -> float:
 func _update_bubble() -> void:
 	if _bubble == null or not _bubble.visible:
 		return
-	var anchor: Vector2 = _bubble_anchor_screen()
 	var width: float = BUBBLE_WIDTH
 	var height: float = _bubble_height()
-	_bubble.size = Vector2(width, height)
-	var pos: Vector2 = Vector2(
-		anchor.x - width * 0.5,
-		anchor.y - height - TAIL_GAP
-	)
-	# Keep it on screen and off the player's body: if the bubble would cover
-	# the player's head, lift it above the player instead.
-	pos.x = clampf(pos.x, BUBBLE_SAFE.position.x, BUBBLE_SAFE.end.x - width)
-	pos.y = clampf(pos.y, BUBBLE_SAFE.position.y, BUBBLE_SAFE.end.y - height)
+	var echo_rect: Rect2 = get_echo_screen_rect()
 	var player_rect: Rect2 = _player_screen_rect()
-	if player_rect.size != Vector2.ZERO and Rect2(pos, Vector2(width, height)).intersects(player_rect):
-		pos.y = clampf(player_rect.position.y - height - TAIL_GAP,
-			BUBBLE_SAFE.position.y, BUBBLE_SAFE.end.y - height)
+	var pos: Vector2 = _bubble_position(echo_rect, player_rect, width, height)
+	_bubble.size = Vector2(width, height)
 	_bubble.position = pos
 	if _body != null:
 		_body.size = Vector2(width - BUBBLE_PAD * 2.0, height - 20.0)
 
 
 func _bubble_height() -> float:
-	return BUBBLE_HEIGHT + (2.0 if _pages.size() > 1 else 0.0)
+	if _font == null or _page_index < 0 or _page_index >= _pages.size():
+		return BUBBLE_HEIGHT
+	var body_width: float = BUBBLE_WIDTH - BUBBLE_PAD * 2.0
+	var measured: Vector2 = _font.get_multiline_string_size(
+		_pages[_page_index], HORIZONTAL_ALIGNMENT_LEFT, body_width, 12
+	)
+	var body_height: float = maxf(ceilf(measured.y), 12.0)
+	return 19.0 + body_height + 6.0
+
+
+## Prefer above the real echo pixels, 8 px clear. If the HUD safe area blocks
+## the top, try above the player, then the side. Deterministic for the same
+## geometry, so the reveal cannot flip it.
+func _bubble_position(echo_rect: Rect2, player_rect: Rect2, width: float, height: float) -> Vector2:
+	var above: Vector2 = Vector2(
+		echo_rect.get_center().x - width * 0.5,
+		echo_rect.position.y - height - TAIL_GAP
+	)
+	above.x = clampf(above.x, BUBBLE_SAFE.position.x, BUBBLE_SAFE.end.x - width)
+	var rect: Rect2 = Rect2(above, Vector2(width, height))
+	if above.y >= BUBBLE_SAFE.position.y and not rect.intersects(player_rect):
+		return above
+	var above_player: Vector2 = Vector2(
+		player_rect.get_center().x - width * 0.5,
+		player_rect.position.y - height - TAIL_GAP
+	)
+	above_player.x = clampf(above_player.x, BUBBLE_SAFE.position.x, BUBBLE_SAFE.end.x - width)
+	var prect: Rect2 = Rect2(above_player, Vector2(width, height))
+	if above_player.y >= BUBBLE_SAFE.position.y and not prect.intersects(echo_rect):
+		return above_player
+	var right: Vector2 = Vector2(echo_rect.end.x + TAIL_GAP, echo_rect.position.y - 4.0)
+	right.x = clampf(right.x, BUBBLE_SAFE.position.x, BUBBLE_SAFE.end.x - width)
+	right.y = clampf(right.y, BUBBLE_SAFE.position.y, BUBBLE_SAFE.end.y - height)
+	var right_rect: Rect2 = Rect2(right, Vector2(width, height))
+	if right_rect.end.x <= BUBBLE_SAFE.end.x and not right_rect.intersects(player_rect):
+		return right
+	var left: Vector2 = Vector2(echo_rect.position.x - width - TAIL_GAP, echo_rect.position.y - 4.0)
+	left.x = clampf(left.x, BUBBLE_SAFE.position.x, BUBBLE_SAFE.end.x - width)
+	left.y = clampf(left.y, BUBBLE_SAFE.position.y, BUBBLE_SAFE.end.y - height)
+	var left_rect: Rect2 = Rect2(left, Vector2(width, height))
+	if left_rect.position.x >= BUBBLE_SAFE.position.x and not left_rect.intersects(player_rect):
+		return left
+	above.x = clampf(above.x, BUBBLE_SAFE.position.x, BUBBLE_SAFE.end.x - width)
+	above.y = clampf(above.y, BUBBLE_SAFE.position.y, BUBBLE_SAFE.end.y - height)
+	return above
 
 
 func _bubble_anchor_screen() -> Vector2:
-	if _echo == null:
+	var echo_rect: Rect2 = get_echo_screen_rect()
+	if echo_rect.size == Vector2.ZERO:
 		return Vector2(320.0, 180.0)
-	var head: Vector2 = _echo.global_position + Vector2(0.0, -26.0)
-	return _world_to_screen(head)
+	return Vector2(echo_rect.get_center().x, echo_rect.position.y)
 
 
 func _world_to_screen(world: Vector2) -> Vector2:
@@ -483,17 +562,37 @@ func _world_to_screen(world: Vector2) -> Vector2:
 func _player_screen_rect() -> Rect2:
 	if _player == null:
 		return Rect2()
-	var feet: Vector2 = _world_to_screen(_player.global_position)
+	var canvas: Transform2D = get_viewport().get_canvas_transform()
+	var feet: Vector2 = canvas * _player.global_position
 	return Rect2(feet + Vector2(-8.0, -34.0), Vector2(16.0, 34.0))
+
+
+## Actual visible sprite rectangle in viewport coordinates. The projection
+## module resolves the echo sheet's real alpha bounding box (frame 48x64 has
+## transparent margins) so the bubble avoids the drawn pixels; the full frame
+## rect is used only before the module has measured it.
+func get_echo_screen_rect() -> Rect2:
+	if _echo == null or not is_inside_tree():
+		return Rect2()
+	if _projection_fx != null:
+		if not _projection_fx.has_origin():
+			# Aborted chest projection: there is no placed echo, so the bubble
+			# must not treat the untouched sprite origin as a real anchor.
+			return Rect2()
+		if _projection_fx.has_art():
+			return _projection_fx.get_echo_art_screen_rect()
+	var xf: Transform2D = _echo.get_global_transform_with_canvas()
+	return xf * _echo.get_rect()
 
 
 func _set_bubble_visible(value: bool) -> void:
 	if _bubble != null:
 		_bubble.visible = value
-	if _hint != null:
-		_hint.visible = value
 	if value:
 		_update_bubble()
+	else:
+		if _voice != null:
+			_voice.stop()
 
 
 func _update_world_visuals(delta: float) -> void:
@@ -507,13 +606,15 @@ func _update_world_visuals(delta: float) -> void:
 func _update_echo_positions() -> void:
 	if _player == null:
 		return
-	var feet: Vector2 = _player.global_position
-	if _echo != null:
-		_echo.global_position = feet + Vector2(-26.0, -74.0)
+	# The imaging area is placed forward/above the real chest talisman. When the
+	# chest node is missing the projection module aborts, so the echo stays
+	# hidden instead of falling back to a foot position.
+	if _projection_fx != null and _projection_fx.has_origin():
+		_projection_fx.place_echo()
+	else:
+		_echo.visible = false
 	if _projection != null:
-		_projection.global_position = feet + Vector2(8.0, -1.0)
-		if _phase == Phase.DIALOGUE:
-			_projection.modulate.a = 0.42 + 0.16 * (0.5 + 0.5 * sin(_echo_time * 3.4))
+		_projection.visible = false
 
 
 func _update_symbols() -> void:
@@ -530,20 +631,43 @@ func _update_symbols() -> void:
 func _update_camera(delta: float) -> void:
 	if _cine_camera == null:
 		return
-	var follow: float = clampf(delta * 7.0, 0.0, 1.0)
-	_cine_camera.global_position = _cine_camera.global_position.lerp(_cam_focus, follow)
+	if _phase == Phase.OUTRO:
+		# The vertical offset rides the closing letterbox, so the picture slides
+		# back to the normal Y180 exactly as the bars reveal it. No snap.
+		_cam_focus.y = _focus_y()
+	var follow: float = clampf(delta * _follow_speed(), 0.0, 1.0)
+	var pos: Vector2 = _cine_camera.global_position
+	pos.x = lerpf(pos.x, _cam_focus.x, follow)
+	pos.y = _cam_focus.y
+	_cine_camera.global_position = pos
+
+
+## The film's vertical centre is tied to the real bar height (also during the
+## 0.2 s bar entrance and the OUTRO exit), which keeps the foot clearance at
+## >= 10 px on every frame instead of lagging behind the screen edge.
+func _focus_y() -> float:
+	var k: float = clampf(_bar_height / BAR_HEIGHT, 0.0, 1.0)
+	return lerpf(NORMAL_FOCUS_Y, CINE_FOCUS_Y, k)
+
+
+func _follow_speed() -> float:
+	# The chest beat starts right after the guard close-up; a slightly quicker
+	# pan lands the camera on the player before the beam/imaging starts.
+	if _phase == Phase.ECHO or _phase == Phase.DIALOGUE:
+		return 16.0
+	return 7.0
 
 
 func _focus_on_player() -> Vector2:
 	if _player == null:
-		return Vector2(320.0, 180.0)
-	return Vector2(clampf(_player.global_position.x, 320.0, 2200.0), 180.0)
+		return Vector2(320.0, _focus_y())
+	return Vector2(clampf(_player.global_position.x, 320.0, 2200.0), _focus_y())
 
 
 func _guard_focus() -> Vector2:
 	if _guard == null:
 		return _focus_on_player()
-	return Vector2(clampf(_guard.global_position.x, 320.0, 2200.0), 180.0)
+	return Vector2(clampf(_guard.global_position.x, 320.0, 2200.0), _focus_y())
 
 
 func _play_page(index: int) -> void:
@@ -552,13 +676,16 @@ func _play_page(index: int) -> void:
 	_page_index = index
 	_reveal = 0.0
 	_body.text = ""
+	if _voice != null:
+		_voice.begin_page()
 	_page_label.text = "%d / %d" % [index + 1, _pages.size()]
 	_set_bubble_visible(true)
-	_echo.visible = true
-	_projection.visible = true
-	_echo.modulate = Color(1.0, 1.0, 1.0, 0.86)
-	_projection.modulate = Color(0.6, 0.95, 1.0, 0.62)
 	_update_echo_positions()
+	if _projection_fx != null:
+		_projection_fx.enter_link()
+		_echo.visible = _projection_fx.is_echo_visible()
+	_echo.modulate = Color(1.0, 1.0, 1.0, 0.86)
+	_projection.visible = false
 	_update_bubble()
 
 
@@ -569,6 +696,8 @@ func _short_press() -> void:
 	if _reveal < float(full.length()):
 		_reveal = float(full.length())
 		_body.text = full
+		if _voice != null:
+			_voice.complete_reveal()
 		return
 	if _page_index + 1 >= _pages.size():
 		_skipped = false
@@ -583,11 +712,25 @@ func _begin_outro() -> void:
 	_phase = Phase.OUTRO
 	_t = 0.0
 	_bar_target = 0.0
+	if _voice != null:
+		_voice.stop()
 	_set_bubble_visible(false)
 	_question.visible = false
 	_exclaim.visible = false
-	_echo.visible = false
-	_projection.visible = false
+	_clear_projection_fx()
+
+
+## Beam, rim, scan and the echo itself are presentation only: skip, abort,
+## completion, pause/focus and R clear them immediately, and the echo returns to
+## its neutral modulate so no tint or material state survives.
+func _clear_projection_fx() -> void:
+	if _projection_fx != null:
+		_projection_fx.stop()
+	if _echo != null:
+		_echo.visible = false
+		_echo.modulate = Color.WHITE
+	if _projection != null:
+		_projection.visible = false
 
 
 func _complete_finish() -> void:
@@ -602,8 +745,7 @@ func _complete_finish() -> void:
 	_set_bubble_visible(false)
 	_question.visible = false
 	_exclaim.visible = false
-	_echo.visible = false
-	_projection.visible = false
+	_clear_projection_fx()
 	if _player != null:
 		_player.end_cinematic_walk()
 	_await_release = _space_held or Input.is_physical_key_pressed(KEY_SPACE)
@@ -639,6 +781,8 @@ func abort() -> void:
 	_await_release = false
 	_space_held = false
 	_skipped = true
+	if _voice != null:
+		_voice.stop()
 	set_process(false)
 	_bar_height = 0.0
 	_bar_target = 0.0
@@ -647,8 +791,7 @@ func abort() -> void:
 	_set_bubble_visible(false)
 	_question.visible = false
 	_exclaim.visible = false
-	_echo.visible = false
-	_projection.visible = false
+	_clear_projection_fx()
 	if _cine_camera != null:
 		_cine_camera.enabled = false
 	if _player_camera != null:
@@ -700,8 +843,7 @@ func _set_visible_all(value: bool) -> void:
 	if not value:
 		_question.visible = false
 		_exclaim.visible = false
-		_echo.visible = false
-		_projection.visible = false
+		_clear_projection_fx()
 
 
 func has_played() -> bool:
@@ -724,6 +866,9 @@ func reset_for_new_run() -> void:
 	_door_turned = false
 	_pages = PAGES
 	set_process(false)
+	_bar_height = 0.0
+	_bar_target = 0.0
+	_apply_bar_height()
 	_set_visible_all(false)
 	if _player_camera != null:
 		_player_camera.make_current()
@@ -770,6 +915,12 @@ func get_phase_name() -> String:
 			return "UNKNOWN"
 
 
+## Seconds inside the current phase (the same pausable clock that drives the
+## chest projection). Read-only evidence helper.
+func get_phase_time() -> float:
+	return _t
+
+
 func get_page_index() -> int:
 	return _page_index
 
@@ -804,8 +955,7 @@ func debug_force_await_release() -> void:
 	_set_bubble_visible(false)
 	_question.visible = false
 	_exclaim.visible = false
-	_echo.visible = false
-	_projection.visible = false
+	_clear_projection_fx()
 	set_process(true)
 
 
@@ -835,31 +985,20 @@ func get_bubble_anchor_screen() -> Vector2:
 	return _bubble_anchor_screen()
 
 
-func get_echo_screen_rect() -> Rect2:
-	if _echo == null:
-		return Rect2()
-	var p: Vector2 = _world_to_screen(_echo.global_position) + Vector2(-20.0, -40.0)
-	return Rect2(p, Vector2(40.0, 40.0))
-
-
 func get_hint_visible() -> bool:
-	return _hint != null and _hint.visible
+	return false
 
 
 func get_hint_rect() -> Rect2:
-	if _hint == null:
-		return Rect2()
-	return Rect2(_hint.position, _hint.size)
+	return Rect2()
 
 
 func get_hint_text() -> String:
-	return _hint.text if _hint != null else ""
+	return ""
 
 
 func get_hint_text_width() -> float:
-	if _hint == null or _font == null:
-		return 0.0
-	return _font.get_string_size(_hint.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 12).x
+	return 0.0
 
 
 func get_guard_beat_showed_rebuild() -> bool:
@@ -868,3 +1007,52 @@ func get_guard_beat_showed_rebuild() -> bool:
 
 func is_ui_visible() -> bool:
 	return _ui != null and _ui.visible
+
+
+# --- read-only evidence helpers (used by the 2026-11-18 cinematic probe) ------
+
+func get_projection_fx() -> EchoAmuletProjection:
+	return _projection_fx
+
+
+func get_projection_state() -> Dictionary:
+	if _projection_fx == null:
+		return {"beat": "MISSING", "failed": true}
+	return _projection_fx.get_debug_state()
+
+
+func get_cine_camera() -> Camera2D:
+	return _cine_camera
+
+
+func get_cine_limit_bottom() -> float:
+	return float(_cine_camera.limit_bottom) if _cine_camera != null else 0.0
+
+
+## Actual rendered screen centre (limits applied), not the requested target.
+func get_cine_screen_center() -> Vector2:
+	if _cine_camera == null:
+		return Vector2.ZERO
+	return _cine_camera.get_screen_center_position()
+
+
+func get_focus_target() -> Vector2:
+	return _cam_focus
+
+
+func get_bottom_bar_top() -> float:
+	return VIEW_SIZE.y - _bar_height
+
+
+func get_player_feet_screen() -> Vector2:
+	if _player == null:
+		return Vector2.ZERO
+	return get_viewport().get_canvas_transform() * _player.global_position
+
+
+## Guard feet: the guard sprite's own foot row, which is its global position for
+## the 2x golem sheet. Read-only.
+func get_guard_feet_screen() -> Vector2:
+	if _guard == null:
+		return Vector2.ZERO
+	return get_viewport().get_canvas_transform() * _guard.global_position

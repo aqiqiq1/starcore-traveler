@@ -10,6 +10,7 @@ signal level_completed
 
 const PAUSE_MENU_SCRIPT = preload("res://scripts/level03/l3_pause_menu.gd")
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
+const FOOTSTEP_SCRIPT = preload("res://scripts/audio/player_footstep_audio.gd")
 
 const STAGE_START: int = 0
 const STAGE_RUNE: int = 1
@@ -62,9 +63,13 @@ var _pause_menu = null
 var _completed: bool = false
 var _resetting: bool = false
 var _scene_leaving: bool = false
+var _footsteps: Node = null
 var _completion_count: int = 0
 var _last_polarity_toggles: int = 0
 var _stable_stage: int = STAGE_START
+## Pending record chime token (a new stable stage may complete while the core
+## seat is still ringing; restart cancels the delayed confirmation).
+var _record_save_token: int = 0
 var _stable_core_positive: bool = true
 var _stable_player_positive: bool = true
 var _stable_spawn: Vector2 = START_SPAWN
@@ -104,6 +109,10 @@ var _recovery_finished_count: int = 0
 var _recovery_pre_reset_position: Vector2 = Vector2.ZERO
 var _recovery_reset_position: Vector2 = Vector2.ZERO
 var _window_has_focus: bool = true
+## Charge-cue lifecycle guard. Set when the real charge starts; cleared when the
+## guard leaves GRAVITY_CHARGE for any reason. A paused tree or an active
+## cinematic deliberately leaves it untouched (the charge is frozen, not cut).
+var _charge_watch: bool = false
 
 
 func _ready() -> void:
@@ -174,6 +183,34 @@ func _ready() -> void:
 	_player.begin_input_override()
 	_replay_guard_ticks = 3
 	_update_level_hud()
+	_setup_footsteps()
+
+
+func _setup_footsteps() -> void:
+	if _l3_player == null:
+		return
+	_footsteps = FOOTSTEP_SCRIPT.new()
+	_footsteps.name = "PlayerFootstepAudio"
+	if not bool(_footsteps.call("attach_to", _l3_player)):
+		_footsteps.queue_free()
+		_footsteps = null
+		return
+	_footsteps.call("set_enabled_check", Callable(self, "_footstep_allowed"))
+
+
+func _footstep_allowed() -> bool:
+	if _completed or _resetting or _scene_leaving or _recovery_active:
+		return false
+	if _retry_pending or _cine.is_active():
+		return false
+	if get_tree().paused:
+		return false
+	return true
+
+
+func _footstep_stop() -> void:
+	if _footsteps != null and is_instance_valid(_footsteps) and _footsteps.has_method("stop"):
+		_footsteps.call("stop")
 
 
 func _setup_process_modes() -> void:
@@ -256,6 +293,8 @@ func _setup_pause_menu() -> void:
 		["切换相性", "Q"],
 		["挥击", "J（异相有效）"],
 		["操作 / 取核 / 嵌核", "E"],
+		["演出继续 / 翻页", "Space"],
+		["补全文 / 长按跳过", "Space · 0.6s"],
 		["失败恢复", "最近稳定点"],
 		["整关重来", "R"],
 		["暂停菜单", "Esc"],
@@ -268,6 +307,7 @@ func _setup_pause_menu() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_tick_charge_watch()
 	if get_tree().paused or _completed or _resetting or _scene_leaving or _recovery_active:
 		return
 	if _retry_pending:
@@ -382,10 +422,13 @@ func _try_interact() -> void:
 func _activate_device() -> void:
 	_device.activate()
 	_audio.play_core_seat()
+	var stage_before: int = _stable_stage
 	_stable_stage = maxi(_stable_stage, STAGE_DEVICE)
 	_stable_player_positive = _player.is_positive()
 	_stable_spawn = DEVICE_SPAWN
 	_player.set_spawn_point(_stable_spawn)
+	if _stable_stage > stage_before:
+		_queue_record_save()
 	_start_float_route()
 	_update_level_hud()
 
@@ -427,12 +470,15 @@ func _on_gate_opened() -> void:
 func _on_core_stored_in_bay(bay: StarCoreBayInteractable, core_positive: bool) -> void:
 	DemoAudio.play_core_seat()
 	if bay == _target_bay:
+		var stage_before: int = _stable_stage
 		_stable_stage = maxi(_stable_stage, STAGE_RUNE)
 		_stable_core_positive = core_positive
 		_stable_player_positive = _player.is_positive()
 		_stable_spawn = RUNE_SPAWN
 		_player.set_spawn_point(_stable_spawn)
 		var label: String = "辉相" if core_positive else "澜相"
+		if _stable_stage > stage_before:
+			_queue_record_save()
 	_update_level_hud()
 
 
@@ -460,15 +506,37 @@ func _on_link_field_committed(positive: bool) -> void:
 
 func _on_guard_charge_started(_positive: bool) -> void:
 	if not _completed:
+		_charge_watch = true
 		_audio.play_charge()
 
 
+## One cue per real charge. A shatter, a guard reset or any other exit from
+## GRAVITY_CHARGE soft-stops it on the next physics tick (0.04 s fade); the
+## normal slam/release/defeat paths keep their existing explicit stops.
+func _tick_charge_watch() -> void:
+	if not _charge_watch or _audio == null or _guard == null:
+		return
+	if get_tree() == null or get_tree().paused:
+		return
+	if _scene_leaving or _completed:
+		return
+	if not _audio.is_charge_playing():
+		_charge_watch = false
+		return
+	if _guard.get_state_name() == "GRAVITY_CHARGE":
+		return
+	_charge_watch = false
+	_audio.stop_charge(0.04)
+
+
 func _on_guard_slam_contact(_facing: int) -> void:
+	_charge_watch = false
 	_audio.stop_charge(0.08)
 	_audio.play_slam()
 
 
 func _on_guard_gravity_release(_positive: bool) -> void:
+	_charge_watch = false
 	_audio.stop_charge(0.05)
 	_audio.play_slam()
 
@@ -513,6 +581,7 @@ func _clear_retry_pending() -> void:
 func _begin_recovery(kind: String) -> void:
 	if _recovery_active or _completed or _resetting or _scene_leaving:
 		return
+	_footstep_stop()
 	_clear_retry_pending()
 	_recovery_active = true
 	_recovery_kind = kind
@@ -646,6 +715,8 @@ func _on_guard_true_damage(taken: int, remaining: int) -> void:
 
 
 func _on_guard_shattered() -> void:
+	_charge_watch = false
+	_audio.stop_charge(0.04)
 	DemoAudio.play_shell_shatter()
 	_update_level_hud()
 
@@ -669,6 +740,7 @@ func _on_guard_defeated() -> void:
 	_key_time = 0.0
 	_player_hits = 0
 	_hud03.set_hits(0)
+	_charge_watch = false
 	_audio.stop_charge(0.05)
 	_update_level_hud()
 
@@ -708,7 +780,21 @@ func _on_checkpoint_entered(checkpoint: LevelCheckpoint) -> void:
 		_checkpoint_mark.visible = true
 		_checkpoint_mark_time = 0.0
 	_float_route.finish_crossing()
+	DemoAudio.play_record_save()
 	_update_level_hud()
+
+
+## Delayed confirmation for a new stable stage while the core seat is ringing.
+## Restart cancels it via token; init/restore/setup never call it.
+func _queue_record_save(delay: float = 0.40) -> void:
+	_record_save_token += 1
+	var token: int = _record_save_token
+	await get_tree().create_timer(delay, false).timeout
+	if token != _record_save_token or not is_inside_tree():
+		return
+	if _scene_leaving or _resetting or _completed:
+		return
+	DemoAudio.play_record_save()
 
 
 # --- float events ----------------------------------------------------------
@@ -757,6 +843,7 @@ func _check_cinematic_trigger() -> void:
 
 func _start_cinematic() -> void:
 	_clear_retry_pending()
+	_footstep_stop()
 	_hud03.set_gameplay_visible(false)
 	_player.lock_for_cinematic()
 	_cine.play()
@@ -877,6 +964,7 @@ func _complete_city() -> void:
 	if _completed:
 		return
 	_cancel_recovery()
+	_footstep_stop()
 	_completed = true
 	_completion_count += 1
 	_clear_retry_pending()
@@ -973,6 +1061,7 @@ func _restore_stable(reason: String) -> void:
 	_clear_retry_pending()
 	if _resetting or _player == null:
 		return
+	_record_save_token += 1
 	_resetting = true
 	if _cine.is_active():
 		_cine.abort()
@@ -1107,6 +1196,7 @@ func _reset_room_state() -> void:
 	_gate.reset_state()
 	_checkpoint.set_activated(false)
 	_stable_stage = STAGE_START
+	_record_save_token += 1
 	_stable_core_positive = true
 	_stable_player_positive = true
 	_stable_spawn = START_SPAWN
@@ -1124,6 +1214,7 @@ func _restart_level() -> void:
 	if _scene_leaving:
 		return
 	_cancel_recovery()
+	_footstep_stop()
 	_clear_retry_pending()
 	_replay_pending = false
 	if _pause_menu != null:
@@ -1200,6 +1291,7 @@ func _return_to_main_menu() -> void:
 	# Freeze the body and clear the cover without re-enabling physics: if the
 	# scene change fails, _verify_title_transition restores control safely.
 	_cancel_recovery(false)
+	_footstep_stop()
 	_clear_retry_pending()
 	_player.clear_hit_feedback()
 	if not ResourceLoader.exists(LEVEL_FLOW.LEVEL_01_PATH):
@@ -1351,6 +1443,10 @@ func get_player() -> L3Player:
 
 func get_hud() -> L3HUD:
 	return _hud03
+
+
+func get_footstep_audio() -> Node:
+	return _footsteps
 
 
 func get_camera() -> Camera2D:

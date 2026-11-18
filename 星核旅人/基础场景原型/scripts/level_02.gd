@@ -19,6 +19,8 @@ signal level_completed
 
 const PAUSE_MENU_SCRIPT = preload("res://scripts/ui/pause_menu.gd")
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
+const FOOTSTEP_SCRIPT = preload("res://scripts/audio/player_footstep_audio.gd")
+const CONDUCTIVE_ACTIVATION = preload("res://scripts/narrative/conductive_activation.gd")
 
 const STABLE_START: int = 0
 const STABLE_RELAY: int = 1
@@ -50,6 +52,7 @@ var _completion_count: int = 0
 var _last_polarity_toggles: int = 0
 var _exit_was_inside: bool = false
 var _scene_leaving: bool = false
+var _footsteps: Node = null
 ## One accepted "进入第三关" press per completion; the button is disabled in the
 ## same call so a double click/key cannot request two scene changes.
 var _next_level_started: bool = false
@@ -58,6 +61,19 @@ var _stable_positive: bool = true
 ## Exactly the four approved conductive bodies. Their bodies remain on the
 ## normal terrain layer; only the player-core force ray excludes their RIDs.
 var _special_force_rids: Array[RID] = []
+## Presentation-only layer for the first relay unlock. It is created here so
+## the scene file and all geometry/collision stay untouched; it reads the real
+## bay/stone sprite bounds and never drives gameplay.
+var _conductive_activation: ConductiveActivation = null
+## Level-local progress: a completed store in RelayBay unlocks the player-core
+## force ray through the four special bodies. It is never granted by StartBay,
+## by merely approaching a bay, or by an unfinished store. It survives stable
+## restores (fall / core out of bounds) and is cleared by R / restart / replay.
+var _special_wall_unlocked: bool = false
+## Pending record chime token: a new stage can complete while the core-seat cue
+## is still ringing, so the record confirmation is played 0.40 s later and is
+## cancelled by restart.
+var _record_save_token: int = 0
 
 
 func _ready() -> void:
@@ -72,6 +88,7 @@ func _ready() -> void:
 	_hud02.process_mode = Node.PROCESS_MODE_ALWAYS
 
 	_register_special_force_bodies()
+	_setup_conductive_activation()
 	_all_bays = [
 		$Bays/StartBay as StarCoreBayInteractable,
 		_relay_bay,
@@ -81,6 +98,7 @@ func _ready() -> void:
 
 	_player = $Player
 	_player.allow_self_reset = false
+	_player.set_anchor_horizontal_brake_enabled(true)
 	_player.set_spawn_point(_spawn_marker.global_position)
 	_player.reset_to_spawn("level_start", false)
 	_player.polarity_changed.connect(_on_player_polarity_changed)
@@ -116,6 +134,7 @@ func _ready() -> void:
 	_setup_pause_menu()
 	_camera.reset_smoothing()
 	_update_level_hud()
+	_setup_footsteps()
 
 
 ## World cues are scene-local: leaving for level 03 (or the title) must not
@@ -123,6 +142,31 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if is_instance_valid(DemoAudio):
 		DemoAudio.stop_world()
+
+
+func _setup_footsteps() -> void:
+	if _player == null:
+		return
+	_footsteps = FOOTSTEP_SCRIPT.new()
+	_footsteps.name = "PlayerFootstepAudio"
+	if not bool(_footsteps.call("attach_to", _player)):
+		_footsteps.queue_free()
+		_footsteps = null
+		return
+	_footsteps.call("set_enabled_check", Callable(self, "_footstep_allowed"))
+
+
+func _footstep_allowed() -> bool:
+	if _completed or _resetting or _scene_leaving or _next_level_started:
+		return false
+	if get_tree().paused:
+		return false
+	return true
+
+
+func _footstep_stop() -> void:
+	if _footsteps != null and is_instance_valid(_footsteps) and _footsteps.has_method("stop"):
+		_footsteps.call("stop")
 
 
 func _register_special_force_bodies() -> void:
@@ -144,13 +188,42 @@ func get_special_force_body_count() -> int:
 	return _special_force_rids.size()
 
 
+## The activation layer is visual only. It is inserted in code so level_02.tscn
+## keeps the approved geometry/collision; no signal controls the unlock.
+func _setup_conductive_activation() -> void:
+	if _conductive_activation != null:
+		return
+	_conductive_activation = CONDUCTIVE_ACTIVATION.new()
+	_conductive_activation.name = "ConductiveActivation"
+	add_child(_conductive_activation)
+	_conductive_activation.setup_from_level(self)
+	_conductive_activation.set_unlocked(_special_wall_unlocked, false)
+
+
+func _sync_conductive_activation(animate_first_unlock: bool = false, snap_held: bool = false) -> void:
+	if _conductive_activation == null:
+		return
+	_conductive_activation.set_unlocked(_special_wall_unlocked, animate_first_unlock, snap_held)
+
+
+func get_conductive_activation() -> ConductiveActivation:
+	return _conductive_activation
+
+
+func get_layered_core_material() -> LayeredCoreMaterial:
+	if _conductive_activation == null:
+		return null
+	return _conductive_activation.get_layered_core()
+
+
 func is_special_force_body(body: CollisionObject2D) -> bool:
 	return body != null and _special_force_rids.has(body.get_rid())
 
 
-## Only the player-core force line skips the four registered conductive bodies.
-## Every ordinary layer-1 ray (including RuneStoneField occlusion) still hits
-## them because the bodies remain on layer 1.
+## Only the player-core force line can skip the four registered conductive
+## bodies, and only after the relay store has completed this run. While locked
+## they are queried like any normal wall. Every ordinary layer-1 ray (including
+## RuneStoneField occlusion) still hits them because the bodies stay on layer 1.
 func _is_line_blocked(player_center: Vector2, core_center: Vector2) -> bool:
 	if _player == null:
 		return false
@@ -165,20 +238,56 @@ func _is_line_blocked(player_center: Vector2, core_center: Vector2) -> bool:
 	var exclude: Array[RID] = [_player.get_rid()]
 	if _core != null:
 		exclude.append(_core.get_rid())
-	for rid: RID in _special_force_rids:
-		exclude.append(rid)
+	if _special_wall_unlocked:
+		for rid: RID in _special_force_rids:
+			exclude.append(rid)
 	query.exclude = exclude
 	var hit: Dictionary = space.intersect_ray(query)
 	return not hit.is_empty()
 
 
+func is_special_wall_unlocked() -> bool:
+	return _special_wall_unlocked
+
+
 func _physics_process(delta: float) -> void:
-	if get_tree().paused or _completed:
+	if get_tree().paused:
+		return
+	if _completed:
+		# Completed run: no target tint. The material fades on its own pausable
+		# clock; gameplay state is not modified here.
+		if _conductive_activation != null:
+			_conductive_activation.clear_force_target()
 		return
 	super._physics_process(delta)
 	if not is_active() or _player == null:
 		return
 	_check_exit_state()
+	if _completed:
+		if _conductive_activation != null:
+			_conductive_activation.clear_force_target()
+	else:
+		_notify_force_visual()
+
+
+## Presentation only: hand this tick's real shared-field result to the layered
+## material. The helper re-checks core activity, status, non-zero pair force,
+## unlock and whether the finite segment really crosses the exposed core mask.
+## It is never given a synthetic line or a distance glow.
+func _notify_force_visual() -> void:
+	if _conductive_activation == null or _player == null or _core == null:
+		return
+	var player_center: Vector2 = _player.global_position + BODY_CENTER_OFFSET
+	_conductive_activation.update_force_state(
+		_core.is_active(),
+		_last_status,
+		_last_blocked,
+		_last_force,
+		_last_core_player_force,
+		player_center,
+		_core.global_position,
+		_player.is_positive()
+	)
 
 
 ## Raw keyboard forwarding for left-Shift location and same-direction double-tap.
@@ -209,7 +318,7 @@ func _setup_pause_menu() -> void:
 		["跳跃", "空格"],
 		["切换相性", "Q"],
 		["释放 / 入仓", "E"],
-		["阅读石碑", "F"],
+		["阅读 / 翻页", "F（未显完先补全文）"],
 		["失败恢复", "最近稳定仓"],
 		["整关重来", "R"],
 		["暂停菜单", "Esc"],
@@ -376,9 +485,9 @@ func _show_store_unavailable(info: Dictionary) -> void:
 		return
 	var bay: StarCoreBayInteractable = info.get("bay", null) as StarCoreBayInteractable
 	if bay == null:
-		_hud02.show_toast("E 不可用：把核带到空仓座位", 1.4)
+		_hud02.show_toast("无法存入：把核带到空仓座位", 1.4)
 		return
-	_hud02.show_toast("E 不可用：%s（%s）" % [bay.bay_name, String(info.get("reason", ""))], 1.6)
+	_hud02.show_toast("无法存入：%s（%s）" % [bay.bay_name, String(info.get("reason", ""))], 1.6)
 
 
 func _on_core_released() -> void:
@@ -407,14 +516,38 @@ func _on_core_stored_in_bay(bay: StarCoreBayInteractable, core_positive: bool) -
 
 func _complete_store() -> void:
 	var bay: StarCoreBayInteractable = _store_bay
+	var stage_before: int = _stable_stage
 	super._complete_store()
 	if bay == null:
 		return
 	if bay == _relay_bay:
+		# The first completed relay store of this run is the unlock. An unfinished
+		# store, approaching the bay, or any StartBay record never reaches here.
+		# The presentation layer is notified only after this gameplay boolean
+		# really changes; it never sets the boolean back.
+		var was_unlocked: bool = _special_wall_unlocked
+		_special_wall_unlocked = true
+		_sync_conductive_activation(not was_unlocked)
 		_set_stable(STABLE_RELAY, bay.get_recorded_positive())
 	elif bay == _linked_bay:
 		_set_stable(STABLE_LINKED, bay.get_recorded_positive())
+	if _stable_stage > stage_before:
+		_queue_record_save()
 	_update_level_hud()
+
+
+## One confirmation for a real new stable stage, after the 0.25 s lid close and
+## the 0.65 s core-seat cue have mostly cleared. Init/restore/setup/R never call
+## this; a same-point repeat does not raise the stage.
+func _queue_record_save(delay: float = 0.40) -> void:
+	_record_save_token += 1
+	var token: int = _record_save_token
+	await get_tree().create_timer(delay, false).timeout
+	if token != _record_save_token or not is_inside_tree():
+		return
+	if _scene_leaving or _resetting or _completed:
+		return
+	DemoAudio.play_record_save()
 
 
 ## Real rune-field commit (pulse delivered + stone transition finished). The
@@ -482,7 +615,9 @@ func _reset_runtime_without_progress() -> void:
 func _restore_stable(reason: String) -> void:
 	if _player == null:
 		return
+	_record_save_token += 1
 	_resetting = true
+	_footstep_stop()
 	_completed = false
 	_success = false
 	_exit_was_inside = false
@@ -539,6 +674,10 @@ func _restore_stable(reason: String) -> void:
 			_hud02.show_toast("跌落 · 回到最近稳定仓", 1.8)
 		else:
 			_hud02.show_toast("已回到最近稳定仓", 1.2)
+	# A restore (fall / core out / debug late state) presents the current state
+	# directly: unlocked stays lit, locked stays dark, and nothing replays. A
+	# restore during the 0.9 s one-shot snaps to the held seam, not replay.
+	_sync_conductive_activation(false, true)
 
 
 func _place_record_in_bay(bay: StarCoreBayInteractable, positive: bool) -> void:
@@ -583,18 +722,22 @@ func _reset_room_state() -> void:
 		_link.reset_link()
 	_stable_stage = STABLE_START
 	_stable_positive = true
+	_special_wall_unlocked = false
+	_record_save_token += 1
 	if _relay_checkpoint != null:
 		_relay_checkpoint.set_activated(false)
 	if _linked_checkpoint != null:
 		_linked_checkpoint.set_activated(false)
 	_core.global_position = $Bays/StartBay.get_store_center()
 	_core.deactivate()
+	_sync_conductive_activation(false)
 	_update_level_hud()
 
 
 func _restart_level() -> void:
 	if _scene_leaving or _next_level_started:
 		return
+	_footstep_stop()
 	if _pause_menu != null:
 		_pause_menu.force_close()
 		_pause_menu.set_completion_active(false)
@@ -634,6 +777,7 @@ func _on_next_level_requested() -> void:
 	if not _completed or _next_level_started or _scene_leaving:
 		return
 	_next_level_started = true
+	_footstep_stop()
 	if _pause_menu != null:
 		_pause_menu.prepare_scene_change()
 	if _hud02 != null:
@@ -650,6 +794,7 @@ func _return_to_main_menu() -> void:
 	if _scene_leaving or _next_level_started:
 		return
 	_scene_leaving = true
+	_footstep_stop()
 	if _pause_menu != null:
 		_pause_menu.prepare_scene_change()
 	if _hud02 != null:
@@ -687,6 +832,7 @@ func _try_complete_at_exit() -> void:
 	if not is_exit_gate_ready():
 		return
 	_completed = true
+	_footstep_stop()
 	_completion_count += 1
 	DemoAudio.play_complete()
 	_exit.set_gate_available(false)
@@ -782,7 +928,7 @@ func _update_level_hud() -> void:
 		if bool(store_info.get("ok", false)):
 			var store_target: StarCoreBayInteractable = store_info.get("bay", null) as StarCoreBayInteractable
 			if store_target != null:
-				prompt = "E 存入%s" % store_target.bay_name
+				prompt = "存入%s" % store_target.bay_name
 	elif _pending_release:
 		prompt = "开罩中…"
 	elif _store_bay != null:
@@ -790,7 +936,7 @@ func _update_level_hud() -> void:
 	else:
 		var loaded: StarCoreBayInteractable = _nearest_loaded_bay()
 		if loaded != null:
-			prompt = "E 释放%s的星核" % loaded.bay_name
+			prompt = "取出%s的星核" % loaded.bay_name
 
 	_hud02.set_status(phase, core_text, prompt)
 
@@ -835,6 +981,10 @@ func get_exit() -> LevelExit:
 
 func get_hud() -> Level02HUD:
 	return _hud02
+
+
+func get_footstep_audio() -> Node:
+	return _footsteps
 
 
 func get_bays() -> Array[StarCoreBayInteractable]:
@@ -935,4 +1085,8 @@ func can_exit_now() -> bool:
 func debug_restore_stage(stage: int, positive: bool = true) -> void:
 	_stable_stage = clampi(stage, STABLE_START, STABLE_LINKED)
 	_stable_positive = positive
+	# A debug state that explicitly represents post-relay progress must also
+	# represent the unlock; STABLE_START stays locked. The real first-delivery
+	# flow is still verified separately with real E input in the focused test.
+	_special_wall_unlocked = _stable_stage >= STABLE_RELAY
 	_restore_stable("debug_setup")
