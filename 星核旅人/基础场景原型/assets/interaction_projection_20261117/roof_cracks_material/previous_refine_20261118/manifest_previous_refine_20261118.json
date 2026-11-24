@@ -1,0 +1,128 @@
+{
+  "title": "L2 ConductiveRoof refined internal-crack material",
+  "created": "2026-11-18",
+  "status": "refined after coordinator review of the first material (kept in previous_20261118/ as superseded)",
+  "placement": "Aligned 1:1 with assets/level02_conductive_stone/conductive_roof_256x32.png; overlay only, source PNG untouched.",
+  "license": "Original pixel art authored in this project; no third-party pixels.",
+  "reference_exemption": "Only this L2 activation presentation uses the user's note-7e10 direct-trial exemption; no mechanism reference was checked or claimed.",
+  "layers": {
+    "dark": {
+      "file": "roof_cracks_dark_256x32.png",
+      "role": "2 px main opening (1 px at pins/tips) + 1 px shadow edge + interrupted chipped stone lip; always drawn while locked",
+      "sha256": "90cf9610ef851740ac8faa9296db803fce5a766584dfaef76988e5ea6156e473",
+      "alpha_bounds": {
+        "pixels": 258,
+        "alpha_min": 148,
+        "alpha_max": 228,
+        "x_min": 42,
+        "x_max": 215,
+        "y_min": 2,
+        "y_max": 28
+      },
+      "palette": {
+        "core": [
+          34,
+          25,
+          38,
+          228
+        ],
+        "rim": [
+          58,
+          46,
+          62,
+          148
+        ],
+        "lip": [
+          203,
+          190,
+          177,
+          200
+        ],
+        "lip_bright": [
+          209,
+          196,
+          183,
+          215
+        ]
+      }
+    },
+    "glow": {
+      "file": "roof_cracks_glow_256x32.png",
+      "role": "purple interior light, revealed left-to-right during 0.52-0.80 s; deep base, mid-bright main segments, weak branches, 1 px spill",
+      "sha256": "3c79bbc67b30884b28ed3ceb365942e2df7fbbb5b65df87744e0de4b2f2ac386",
+      "alpha_bounds": {
+        "pixels": 158,
+        "alpha_min": 55,
+        "alpha_max": 246,
+        "x_min": 42,
+        "x_max": 214,
+        "y_min": 2,
+        "y_max": 28
+      },
+      "palette": {
+        "deep": [
+          110,
+          63,
+          168,
+          232
+        ],
+        "wall": [
+          80,
+          44,
+          120,
+          190
+        ],
+        "mid": [
+          167,
+          93,
+          229,
+          242
+        ],
+        "mid2": [
+          185,
+          122,
+          237,
+          244
+        ],
+        "pale": [
+          205,
+          158,
+          245,
+          246
+        ],
+        "spill_1px": [
+          140,
+          82,
+          190,
+          55
+        ]
+      }
+    }
+  },
+  "source_roof": {
+    "file": "assets/level02_conductive_stone/conductive_roof_256x32.png",
+    "sha256": "a0908de7f920f36b65930e0462c1a0c494c946e24033292a92010b9ca0db0e2c"
+  },
+  "counts": {
+    "mains": 3,
+    "attached_branches": 3,
+    "secondary_cracks": 4,
+    "fissure_pixels": 157,
+    "rim_pixels": 79,
+    "lip_pixels": 22,
+    "glow_core_pixels": 139,
+    "glow_total_pixels": 158,
+    "mid_glow_pixels": 22,
+    "pale_glow_pixels": 6,
+    "halo_pixels": 19
+  },
+  "design_notes": [
+    "Three mains: A is an S, B is a skew with a 4 px horizontal run at y12, C is short with a 3 px jog at y13 and stops before the x216 seam.",
+    "Three attached 1 px branches (A1, A2, C1) and four short secondary cracks in different stone blocks (top-left, top-right, brick band, base).",
+    "Main bodies are 2 px with 1 px pins/tips; the 3 px junction pockets are formed where a branch meets the main. All material is inside y2..29 (>=2 px from the roof top/bottom outline).",
+    "No regular grid, rectangle loop, repeated parallel slash or symmetric tree motif; secondaries are 5-6 px, unequal and non-parallel.",
+    "Main glow uses mid-bright #a75de5/#b97aed on about a third of the effective length, deep violet elsewhere; branches use the weaker wall tone.",
+    "Spill is one stone pixel within 1 px of the fissure and only around bright main pixels."
+  ],
+  "regenerate": "D:/minic/envs/2024212971/python.exe make_roof_cracks_material.py"
+}

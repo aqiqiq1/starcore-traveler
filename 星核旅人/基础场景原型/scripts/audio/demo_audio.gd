@@ -54,9 +54,9 @@ const EVENT_SPECS: Dictionary = {
 	EVENT_COMPLETE: {"file": "complete.wav", "volume_db": -4.0, "ui": false},
 	EVENT_FAILURE: {"file": "failure.wav", "volume_db": -5.0, "ui": false},
 	EVENT_RESPAWN: {"file": "respawn.wav", "volume_db": -6.0, "ui": false},
-	EVENT_POLARITY_SWITCH: {"file": "polarity_switch_v2.wav", "volume_db": -6.0, "ui": false},
-	EVENT_SWING: {"file": "swing_v2.wav", "volume_db": -6.0, "ui": false},
-	EVENT_SHELL_SHATTER: {"file": "shell_shatter_heavy_v2.wav", "volume_db": -3.0, "ui": false},
+	EVENT_POLARITY_SWITCH: {"file": "polarity_switch.wav", "volume_db": -6.0, "ui": false},
+	EVENT_SWING: {"file": "swing.wav", "volume_db": -6.0, "ui": false},
+	EVENT_SHELL_SHATTER: {"file": "shell_shatter_heavy.wav", "volume_db": -3.0, "ui": false},
 }
 
 var _world_players: Array[AudioStreamPlayer] = []

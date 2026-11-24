@@ -41,6 +41,7 @@ process_mode = 1
 layer = -10
 
 [node name="CloudRuinsDS03" parent="Background" instance=ExtResource("6_ds03")]
+depth_grade = "l3_depth"
 
 [node name="TerrainTop" type="Node2D" parent="."]
 visible = false

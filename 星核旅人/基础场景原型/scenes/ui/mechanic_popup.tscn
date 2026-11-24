@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/mechanic_popup.gd" id="1_popup"]
+
+[node name="MechanicPopup" type="CanvasLayer"]
+layer = 14
+process_mode = 3
+script = ExtResource("1_popup")

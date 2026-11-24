@@ -73,7 +73,7 @@ FIXED = [
     "scripts/star_core_visual.gd",
     "scripts/ui/level_flow.gd",
     "scripts/ui/pause_menu.gd",
-    "assets/characters/male_hero-idle.png",
+    "assets/characters/male_hero_idle.png",
     "assets/guide_echo_20261113/guide_echo_idle_6f.png",
     "assets/doric_columns/doric_column_tall.png",
     "assets/doric_columns/doric_column_broken.png",

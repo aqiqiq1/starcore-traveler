@@ -1,0 +1,97 @@
+{
+ "screenshots/bridge_ground_sample_20261113/capture_manifest.json": [
+  "assets/characters/male_hero-idle.png"
+ ],
+ "screenshots/l2_revision_20261114/v2/manifest.json": [
+  "gate_portal_fx_v2_8f.png"
+ ],
+ "tests/audio_demo_v2_20261116/probe_leaks.gd": [
+  "assets/audio_demo_v2_20261116/swing_v2.wav",
+  "swing_v2.wav"
+ ],
+ "tests/audio_demo_v2_20261116/test_audio_demo_v2_20261116.gd": [
+  "polarity_switch_v2.wav",
+  "shell_shatter_heavy_v2.wav",
+  "swing_v2.wav"
+ ],
+ "tests/capture_gate_text_cleanup_20261114.gd": [
+  "assets/checkpoint_exit/gate_portal_fx_v2_8f.png",
+  "gate_portal_fx_v2_8f.png"
+ ],
+ "tests/capture_l2_integration_20261114.gd": [
+  "assets/checkpoint_exit/gate_portal_fx_v2_8f.png",
+  "gate_portal_fx_v2_8f.png"
+ ],
+ "tests/experience_alignment_20261117/hurt_e_plus_half/test_hurt_e_plus_half_20261117.gd": [
+  "polarity_switch_v2.wav",
+  "shell_shatter_heavy_v2.wav",
+  "swing_v2.wav"
+ ],
+ "tests/experience_alignment_20261117/physics_audio/test_hurt_youth_hookup_20261117.gd": [
+  "polarity_switch_v2.wav",
+  "shell_shatter_heavy_v2.wav",
+  "swing_v2.wav"
+ ],
+ "tests/interaction_projection_20261117/l2_second_platform_candidate_20261118/preview_l2_second_platform_candidate_20261118.gd": [
+  "layered_linked_candidate_active_200x60.png",
+  "layered_linked_candidate_arrival_200x60.png",
+  "layered_linked_candidate_base_200x60.png",
+  "layered_linked_candidate_facetid_200x60.png",
+  "layered_linked_candidate_mask_200x60.png"
+ ],
+ "tests/interaction_projection_20261117/l2_second_platform_face_integration_20261119/check_l2_face_integration_20261119.gd": [
+  "assets/interaction_projection_20261117/layered_core/layered_linked_candidate_active_200x60.png",
+  "assets/interaction_projection_20261117/layered_core/layered_linked_candidate_arrival_200x60.png",
+  "assets/interaction_projection_20261117/layered_core/layered_linked_candidate_base_200x60.png",
+  "assets/interaction_projection_20261117/layered_core/layered_linked_candidate_facetid_200x60.png",
+  "assets/interaction_projection_20261117/layered_core/layered_linked_candidate_mask_200x60.png",
+  "layered_linked_candidate_active_200x60.png",
+  "layered_linked_candidate_arrival_200x60.png",
+  "layered_linked_candidate_base_200x60.png",
+  "layered_linked_candidate_facetid_200x60.png",
+  "layered_linked_candidate_mask_200x60.png"
+ ],
+ "tests/logs/bridge_ground_before.json": [
+  "assets/characters/male_hero-idle.png"
+ ],
+ "tests/logs/bridge_ground_protection.json": [
+  "assets/characters/male_hero-idle.png"
+ ],
+ "tests/logs/compact_header_before.json": [
+  "assets/characters/male_hero-fall.png",
+  "assets/characters/male_hero-fall_loop.png",
+  "assets/characters/male_hero-idle.png",
+  "assets/characters/male_hero-jump.png",
+  "assets/characters/male_hero-run.png",
+  "assets/characters/male_hero-walk.png",
+  "assets/experiments/polarity_golem/hero/male_hero-combo_1.png",
+  "assets/experiments/polarity_golem/hero/male_hero-combo_1_end.png"
+ ],
+ "tests/logs/compact_header_protection.json": [
+  "assets/characters/male_hero-fall.png",
+  "assets/characters/male_hero-fall_loop.png",
+  "assets/characters/male_hero-idle.png",
+  "assets/characters/male_hero-jump.png",
+  "assets/characters/male_hero-run.png",
+  "assets/characters/male_hero-walk.png",
+  "assets/experiments/polarity_golem/hero/male_hero-combo_1.png",
+  "assets/experiments/polarity_golem/hero/male_hero-combo_1_end.png"
+ ],
+ "tests/logs/gate_text_cleanup_protection_20261114.json": [
+  "assets/checkpoint_exit/gate_portal_fx_v2_8f.png",
+  "gate_portal_fx_v2_8f.png"
+ ],
+ "tests/logs/l2_integration_protection_20261114.json": [
+  "assets/checkpoint_exit/gate_portal_fx_v2_8f.png",
+  "gate_portal_fx_v2_8f.png"
+ ],
+ "tools/preview_rune_stone.gd": [
+  "assets/characters/male_hero-idle.png"
+ ],
+ "tools/preview_rune_stone_art_revision.gd": [
+  "assets/characters/male_hero-idle.png"
+ ],
+ "tools/preview_star_core_bay.gd": [
+  "assets/characters/male_hero-idle.png"
+ ]
+}

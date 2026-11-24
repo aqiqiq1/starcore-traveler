@@ -1,0 +1,29 @@
+{
+  "independent_recomposite_differing_pixels": 0,
+  "fully_opaque_base": true,
+  "source_equals_reassembled_bytes": true,
+  "gif_stored_frames": 58,
+  "gif_duration_ms": 6480,
+  "sky_cloud_left_border_opaque_rows": [
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    94,
+    95
+  ],
+  "moving_sky_layer_canvas": [
+    664,
+    360
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "changed_logical_pixels": 818,
+  "upper_sky_unchanged": true,
+  "cloud_palette_pixels_changed": 0,
+  "pier_lower_area_y238_onward_unchanged": true,
+  "island_pillar_gap_9x5_is_sky": true,
+  "nearest_2x_exact": true,
+  "source_v7_sha256": "2d65a27d432ce60d8562c71cf754049d49a106d08e63348d78cb08f4c8387aae",
+  "ds02_assets_unchanged_vs_embedded_copy": 19
+}

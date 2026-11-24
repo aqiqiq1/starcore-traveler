@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scripts/debug_overlay.gd" id="2_debug"]
 [ext_resource type="Script" path="res://scripts/polarity_badge.gd" id="3_badge"]
-[ext_resource type="Texture2D" path="res://assets/characters/male_hero-idle.png" id="4_idle"]
+[ext_resource type="Texture2D" path="res://assets/characters/male_hero_idle.png" id="4_idle"]
 [ext_resource type="Texture2D" path="res://assets/talisman/talisman_gold.png" id="5_talisman"]
 [ext_resource type="Texture2D" path="res://assets/talisman/glow_gold_4f.png" id="6_glow"]
 

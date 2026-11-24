@@ -1,0 +1,34 @@
+{
+  "base_static": {
+    "visible_colours": 253,
+    "new_colours": 0
+  },
+  "sky_clouds": {
+    "visible_colours": 18,
+    "new_colours": 0
+  },
+  "cloud_sea_far": {
+    "visible_colours": 2,
+    "new_colours": 0
+  },
+  "cloud_sea_near": {
+    "visible_colours": 6,
+    "new_colours": 0
+  },
+  "debris_central": {
+    "visible_colours": 3,
+    "new_colours": 0
+  },
+  "debris_cluster": {
+    "visible_colours": 4,
+    "new_colours": 0
+  },
+  "debris_tiny": {
+    "visible_colours": 1,
+    "new_colours": 0
+  },
+  "debris_low": {
+    "visible_colours": 57,
+    "new_colours": 0
+  }
+}

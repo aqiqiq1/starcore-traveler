@@ -1,0 +1,89 @@
+L3 right-wall art pass — evidence manifest (2026-11-19)
+=======================================================
+
+Scope: presentation only, scripts/level03/l3_gate_depth_wall.gd.
+Not touched: l3_gate.gd, collision, door plate motion, z order, clipping,
+get_draw_rect(), game flow, approved PNGs, L1/L2, popup/audio/input.
+
+Reference record (coordinator, read this round):
+../项目归档/收尾_20261119/REF_ART_20261119.md
+Local reference crops actually opened again:
+非运行资料/预览参考/previews/l3_wall_detail_20261116/refs/
+  sotn_outerwall_stone_crop.png (light vertical pilasters, darker bays, light
+  plinth with dark contact/rough stone)
+  sotn_entrance_60s.jpg (320x240 entrance frame; low detail, structure only)
+Borrowed: light vertical pilaster against darker bays, base/plinth contact,
+1 px chips. Not borrowed: SotN gothic palette/patterns/pixels, moon.
+
+Run commands (real renderer, 640x360 logical viewport):
+  D:\Godot\Godot_v4.7.2-stable_win64_console.exe --path . ^
+    res://tests/l3_wall_art_20261119/capture_l3_wall_art.tscn
+  (capture_run.log / capture_log.txt, L3_WALL_ART_OK, exit 0)
+
+Machine positions (same as screenshots/l3_gate_shadow_20261118/after/):
+  00_closed_facade.png        SETUP player x=2330, gate closed (progress 0)
+  01_open_empty.png           real E from x=2340 -> gate open; player x=2320
+  02_outer_threshold.png      real D walk, live x=2366.9
+  03_inside_doorway.png       real D walk, live x=2381.9
+  04_right_pillar.png         real D walk, live x=2401.9
+  05_before_completion.png    real D walk stopped at live x=2455.9,
+                              completed=false, gate_open=true
+  06_wall_face_cleanhud.png   player x=2330, gate open, HUD hidden only here
+                              (the five comparison shots keep the HUD like the
+                              2026-11-18 set)
+
+Derived (nearest-neighbour, no resampling):
+  derived/00_before_after_2x.png          old 00 | new 00, full frame
+  derived/right_wall_before_4x.png        old 00 crop x412..639, y0..339
+  derived/right_wall_after_4x.png         new 00 same crop
+  derived/right_wall_cleanhud_4x.png      new 06 same crop, no HUD
+
+Actual pixel audit (audit_wall_pixels.py -> pixel_audit.txt, RESULT OK):
+  pilaster edge x580..581 = (143,128,126), shaft = (122,108,111),
+    dark edge x597 = (60,52,57), cast shadow x598 = (82,73,77)
+  bay A x550 = (79,69,73), bay B x610 = (94,84,88), field x470 = (94,84,88)
+  base y314 line = (198,187,174), stone y315..317 = (94,84,88),
+    contact y318..319 = (65,57,62)/(53,46,50),
+    footer y320..321 = (79,69,73), last row y322 = (60,52,57)
+  1 px moss at (600,317)/(600,318) = (85,92,84)/(76,84,75); the gate plinth keeps
+    its own approved moss at x469..473
+  pure black pixels in the wall area (06, player excluded): 0
+  return/corner strip x412..429, y196..321 vs old: 0 changed pixels
+    (the left silhouette and tones are untouched; above 196 is sky)
+  gatehouse top/slot pixels showing the new wall tone: 1547 — the wall is behind
+    transparent gatehouse gaps; the gate PNGs themselves were not edited.
+
+Occlusion measured by L3Gate.get_occlusion_coverage (same code, unmodified):
+  X       body rect                 coverage   covered px
+  2247    (2229,284,31,36)          0.000      0.00
+  2330    (2312,284,31,36)          0.000      0.00
+  2407    (2389,284,31,36)          0.774      24.00
+  2453    (2435,284,31,36)          1.000      31.00
+  2490    (2472,284,31,36)          1.000      31.00
+  Values are identical before/after by construction: the pass only changes
+  colours inside _r/_hline. The task's 2247/2330 numbers belong to the pre
+  2026-11-16 gate layout (gate x=2220); the current gate is at 2380 (+160),
+  so those two world x are open approach there. Current equivalents:
+  x≈2407 = right-pillar partial cover, x≈2490 = fully behind the wall front.
+
+Wall pieces and z (from get_wall_pieces(), unchanged):
+  WallReturnSide      z=3  (2292,-80) 12x400
+  WallCornerColumn    z=3  (2304,-80) 16x400
+  WallFront           z=3  (2320,-80) 292x400
+  WallRightForeground z=7  (2452,-80) 160x403   (base_drop 3)
+  fixed_z=4, barrier=1, clip_world_x untouched.
+
+Engine checks:
+  level_01/02/03.tscn  --headless --quit-after 90: exit 0, no ERROR/WARNING
+    (level_0*_quit90.log, 2 lines each)
+  --headless --import: exit 0, no ERROR/WARNING (import.log)
+
+Not verified / open:
+  - The base band keeps its existing geometry (world 314..320, plus the 3 px
+    foreground drop), not a measured 12 px; the "12 px base" in the brief does
+    not match the code or the 2026-11-18 shot. Only the contact/moss was added.
+  - 2247/2330 occlusion wording is stale (see above); it cannot be made literal
+    at the current gate x without moving the gate or changing occlusion.
+  - The 06 shot is the only HUD-free wall view; the other five keep the HUD so
+    they match the old after/ set.
+  - No new art/PNG asset was added; all new marks are code-drawn 1 px rects.

@@ -1,0 +1,48 @@
+{
+  "nearest_2x_exact": true,
+  "overlay_rebuild_exact": true,
+  "five_gap_checks": [
+    {
+      "x": [
+        256,
+        264
+      ],
+      "terrain_alpha_max": 0,
+      "composite_diff_pixels": 0
+    },
+    {
+      "x": [
+        280,
+        288
+      ],
+      "terrain_alpha_max": 0,
+      "composite_diff_pixels": 0
+    },
+    {
+      "x": [
+        320,
+        328
+      ],
+      "terrain_alpha_max": 0,
+      "composite_diff_pixels": 0
+    },
+    {
+      "x": [
+        344,
+        352
+      ],
+      "terrain_alpha_max": 0,
+      "composite_diff_pixels": 0
+    },
+    {
+      "x": [
+        368,
+        376
+      ],
+      "terrain_alpha_max": 0,
+      "composite_diff_pixels": 0
+    }
+  ],
+  "terrain_pixels_outside_geometry": 0,
+  "scope": "Independent static preview pixel/geometry check; not a Godot implementation or aesthetic approval."
+}

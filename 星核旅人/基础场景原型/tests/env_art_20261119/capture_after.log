@@ -1,0 +1,26 @@
+tag=after viewport=(1280, 720) window=(1280, 720)
+background frozen t=4.00
+station l1_start saved full+clean
+background frozen t=4.00
+station l1_high saved full+clean
+background frozen t=4.00
+EdgeDecor roof=[P: (464.0, 268.0), S: (256.0, 32.0)] drawn=433 corridor_overlaps=0
+L2 collision ground=(1792.0, 40.0) roof=(256.0, 32.0) wall=(160.0, 60.0) lip=(40.0, 12.0) return=(48.0, 12.0)
+station l2_start saved full+clean
+background frozen t=4.00
+EdgeDecor roof=[P: (464.0, 268.0), S: (256.0, 32.0)] drawn=433 corridor_overlaps=0
+L2 collision ground=(1792.0, 40.0) roof=(256.0, 32.0) wall=(160.0, 60.0) lip=(40.0, 12.0) return=(48.0, 12.0)
+station l2_edge_clearance saved
+background frozen t=4.00
+EdgeDecor roof=[P: (464.0, 268.0), S: (256.0, 32.0)] drawn=433 corridor_overlaps=0
+L2 collision ground=(1792.0, 40.0) roof=(256.0, 32.0) wall=(160.0, 60.0) lip=(40.0, 12.0) return=(48.0, 12.0)
+station l2_lowcorridor saved full+clean
+background frozen t=4.00
+EdgeDecor roof=[P: (464.0, 268.0), S: (256.0, 32.0)] drawn=433 corridor_overlaps=0
+L2 collision ground=(1792.0, 40.0) roof=(256.0, 32.0) wall=(160.0, 60.0) lip=(40.0, 12.0) return=(48.0, 12.0)
+station l2_linked saved full+clean
+background frozen t=4.00
+station l3_start saved full+clean
+background frozen t=4.00
+station l3_gate saved full+clean
+station ds03_default saved

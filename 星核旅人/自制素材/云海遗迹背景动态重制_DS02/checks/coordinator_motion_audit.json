@@ -1,0 +1,19 @@
+{
+  "sky_rendered_frame_8s_right_50px_mae": 0.0,
+  "sky_rendered_frame_8s_wrong_left_50px_mae": 18.797229437229436,
+  "sea_rendered_frame_8s_right_34px_compared_pixels": 1584,
+  "sea_rendered_frame_8s_right_34px_matching_pixels": 1584,
+  "sea_boundary_checks": {
+    "sea_main": {
+      "width": 1278,
+      "period_boundary_columns_equal": true
+    },
+    "sea_near": {
+      "width": 1278,
+      "period_boundary_columns_equal": true
+    }
+  },
+  "protected_count": 35,
+  "changed_protected_files": [],
+  "limits": "Image-frame motion probes and original-file integrity only; browser continuous playback and subjective quality are separate checks."
+}

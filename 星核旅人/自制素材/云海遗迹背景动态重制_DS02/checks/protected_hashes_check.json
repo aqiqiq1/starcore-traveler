@@ -1,0 +1,253 @@
+{
+  "baseline": "C:\\Users\\aqiqiqi\\AppData\\Local\\Temp\\opencode\\background-ds02-baseline-6fa26b4f59f6467cb2710157ac337880\\hashes.json",
+  "baseline_sha256": "cbb4dde0bd628b10f734680054e2e1f2582dab15f4001fa290b10347a19a54b9",
+  "total": 35,
+  "unchanged": 35,
+  "entries": [
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\background_only.png",
+      "baseline_sha256": "b140f3985c3945a8e62a93e473ba89ff961cd87ed8d4044391398eb7b75a2192",
+      "exists": true,
+      "sha256": "b140f3985c3945a8e62a93e473ba89ff961cd87ed8d4044391398eb7b75a2192",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\background_only_v2.png",
+      "baseline_sha256": "3bc5d8f3fe42e69df592a11f502ef8386af6442db155851bda3a1381899e73f8",
+      "exists": true,
+      "sha256": "3bc5d8f3fe42e69df592a11f502ef8386af6442db155851bda3a1381899e73f8",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\background_only_v3.png",
+      "baseline_sha256": "444258deffd61e95bf27af4689c60974a48cfa9e1814e1b0e51a07831d39fdb1",
+      "exists": true,
+      "sha256": "444258deffd61e95bf27af4689c60974a48cfa9e1814e1b0e51a07831d39fdb1",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\background_only_v4.png",
+      "baseline_sha256": "f7139f1cb195de230dc55e7a9feb205d84667830b14b4e17b90c65a3a65dd2eb",
+      "exists": true,
+      "sha256": "f7139f1cb195de230dc55e7a9feb205d84667830b14b4e17b90c65a3a65dd2eb",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\background_only_v5.png",
+      "baseline_sha256": "c08de18d994ca67678cd84c84aebf27635777a6357a835338bd30dfb389fc036",
+      "exists": true,
+      "sha256": "c08de18d994ca67678cd84c84aebf27635777a6357a835338bd30dfb389fc036",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\background_only_v6.png",
+      "baseline_sha256": "6628cf2ec083b49219e208c5ad0db0fdd4239025651d7760cd1ecfb2ff08a220",
+      "exists": true,
+      "sha256": "6628cf2ec083b49219e208c5ad0db0fdd4239025651d7760cd1ecfb2ff08a220",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\background_only_v7.png",
+      "baseline_sha256": "2d65a27d432ce60d8562c71cf754049d49a106d08e63348d78cb08f4c8387aae",
+      "exists": true,
+      "sha256": "2d65a27d432ce60d8562c71cf754049d49a106d08e63348d78cb08f4c8387aae",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\concept.png",
+      "baseline_sha256": "3cb908cb41608abe6469c18fb742956772a95b18bb9f41f06796e21ba01ec7c3",
+      "exists": true,
+      "sha256": "3cb908cb41608abe6469c18fb742956772a95b18bb9f41f06796e21ba01ec7c3",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\concept_v2.png",
+      "baseline_sha256": "511d86ae91344de41e37f333dbd1de6ad67d355b78664e5650b0194eb86f4e70",
+      "exists": true,
+      "sha256": "511d86ae91344de41e37f333dbd1de6ad67d355b78664e5650b0194eb86f4e70",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\concept_v3.png",
+      "baseline_sha256": "21c0b9a831560fc11c3a9802303bf4ce37df38f0a4e5f15ad259bf56ad498eb9",
+      "exists": true,
+      "sha256": "21c0b9a831560fc11c3a9802303bf4ce37df38f0a4e5f15ad259bf56ad498eb9",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\concept_v4.png",
+      "baseline_sha256": "2569013908eecd7d84ee71105ec725099cb2c09252be96e4f31cebb37fe9945c",
+      "exists": true,
+      "sha256": "2569013908eecd7d84ee71105ec725099cb2c09252be96e4f31cebb37fe9945c",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\concept_v5.png",
+      "baseline_sha256": "066acef0c0a6e4122aa784fcfaddb831734e6892e79126e4130b41c717ddf0bd",
+      "exists": true,
+      "sha256": "066acef0c0a6e4122aa784fcfaddb831734e6892e79126e4130b41c717ddf0bd",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\generate_background_v6.py",
+      "baseline_sha256": "01f849a02aecebc509e7972787796b67f25058ca146413c7bbd14f830bce7d0c",
+      "exists": true,
+      "sha256": "01f849a02aecebc509e7972787796b67f25058ca146413c7bbd14f830bce7d0c",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\generate_background_v7.py",
+      "baseline_sha256": "15d881eb078ee1d0a2e46bcdb87806926f990cec7d51286c53c855b6e2c177e8",
+      "exists": true,
+      "sha256": "15d881eb078ee1d0a2e46bcdb87806926f990cec7d51286c53c855b6e2c177e8",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\generate_concept.py",
+      "baseline_sha256": "9747e0f52aa4bc29d3438451c74bbe07fa56f552a9afd858e1842daf7bd8c6c0",
+      "exists": true,
+      "sha256": "9747e0f52aa4bc29d3438451c74bbe07fa56f552a9afd858e1842daf7bd8c6c0",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\generate_concept_v2.py",
+      "baseline_sha256": "910a76ffd47089ec18f5bdadcdc50c60d7b8a8fe8d77039bd1365b73a1580685",
+      "exists": true,
+      "sha256": "910a76ffd47089ec18f5bdadcdc50c60d7b8a8fe8d77039bd1365b73a1580685",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\generate_concept_v3.py",
+      "baseline_sha256": "ea578f884970ff376b7cf42b9e60bc03665cd7627f24ab3a56c493c54e37f405",
+      "exists": true,
+      "sha256": "ea578f884970ff376b7cf42b9e60bc03665cd7627f24ab3a56c493c54e37f405",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\generate_concept_v4.py",
+      "baseline_sha256": "6b917d95ba83792de389b1308d245a1974689e54176b50d984744262fe9b8153",
+      "exists": true,
+      "sha256": "6b917d95ba83792de389b1308d245a1974689e54176b50d984744262fe9b8153",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\generate_concept_v5.py",
+      "baseline_sha256": "27a4ea1789972c6e033dd2e79d5c87f05cf500827de652493592acc22be2a5a1",
+      "exists": true,
+      "sha256": "27a4ea1789972c6e033dd2e79d5c87f05cf500827de652493592acc22be2a5a1",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\midground_mask_v5.png",
+      "baseline_sha256": "7edab90e4f59e527dd81ac8e05c86a5403710c55fbac2ab0ddb1e0c19033c0c8",
+      "exists": true,
+      "sha256": "7edab90e4f59e527dd81ac8e05c86a5403710c55fbac2ab0ddb1e0c19033c0c8",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\source.md",
+      "baseline_sha256": "5c985e734bab23e2d3a3923a1150068724b5acde599033acf05e1d9c3e218606",
+      "exists": true,
+      "sha256": "5c985e734bab23e2d3a3923a1150068724b5acde599033acf05e1d9c3e218606",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\source_v2.md",
+      "baseline_sha256": "6af5bb4140184f25a8ef7ee642a3e69ca1b290e0a6c6f59a7a33f439bdd0cc0a",
+      "exists": true,
+      "sha256": "6af5bb4140184f25a8ef7ee642a3e69ca1b290e0a6c6f59a7a33f439bdd0cc0a",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\source_v3.md",
+      "baseline_sha256": "eca3bb3e10b155088140f0b2d5e34118371542b7ecc314e46cae0bd78ca8aec6",
+      "exists": true,
+      "sha256": "eca3bb3e10b155088140f0b2d5e34118371542b7ecc314e46cae0bd78ca8aec6",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\source_v4.md",
+      "baseline_sha256": "23a70dcdac30c06414206f3539b0ffdc0944748dc9c45bc8496d9e962a336d38",
+      "exists": true,
+      "sha256": "23a70dcdac30c06414206f3539b0ffdc0944748dc9c45bc8496d9e962a336d38",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\source_v5.md",
+      "baseline_sha256": "26fde033ed7ee8407ea317042ff73590a1604b2e2d204c3728343bc8ab9b73c2",
+      "exists": true,
+      "sha256": "26fde033ed7ee8407ea317042ff73590a1604b2e2d204c3728343bc8ab9b73c2",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\source_v6.md",
+      "baseline_sha256": "dc54ccb0f01891792e2d5a79c3c0ee018d6ead45b042271948f7bf602a00010c",
+      "exists": true,
+      "sha256": "dc54ccb0f01891792e2d5a79c3c0ee018d6ead45b042271948f7bf602a00010c",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\source_v7.md",
+      "baseline_sha256": "83322442d7d04931b26266ce09253622051c86f2de07e66c17c98a3b92ecde5d",
+      "exists": true,
+      "sha256": "83322442d7d04931b26266ce09253622051c86f2de07e66c17c98a3b92ecde5d",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\基础场景原型\\assets\\doric_columns\\doric_column_base.png",
+      "baseline_sha256": "f25ade68e3f78d1ba448a9d3aef7de51e70980e5fe92e9735104d4fc733328f5",
+      "exists": true,
+      "sha256": "f25ade68e3f78d1ba448a9d3aef7de51e70980e5fe92e9735104d4fc733328f5",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\基础场景原型\\assets\\doric_columns\\doric_column_broken.png",
+      "baseline_sha256": "6603feea5494f5e9377153ed44edc44d3dd0880dd2f1a08ad33cbcfe81d1b420",
+      "exists": true,
+      "sha256": "6603feea5494f5e9377153ed44edc44d3dd0880dd2f1a08ad33cbcfe81d1b420",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\基础场景原型\\assets\\doric_columns\\doric_column_fallen.png",
+      "baseline_sha256": "185d0300a44dcd6ba4501254da4fbba0f66b487da908f5ada7d7b3f96a8b5b61",
+      "exists": true,
+      "sha256": "185d0300a44dcd6ba4501254da4fbba0f66b487da908f5ada7d7b3f96a8b5b61",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\基础场景原型\\assets\\doric_columns\\doric_column_tall.png",
+      "baseline_sha256": "3d919ef5167470b3e36929d6ccacf4bfd6714c4ea628cf062f3ba4e589c8e475",
+      "exists": true,
+      "sha256": "3d919ef5167470b3e36929d6ccacf4bfd6714c4ea628cf062f3ba4e589c8e475",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\level_01.tscn",
+      "baseline_sha256": "95130739cff5ac67aae09302747c261ef4b9cf8687e1e1e82158a9cee4d083df",
+      "exists": true,
+      "sha256": "95130739cff5ac67aae09302747c261ef4b9cf8687e1e1e82158a9cee4d083df",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\level_01.gd",
+      "baseline_sha256": "dbc24205827bbad97ac820c2ce228d96de94d8a8dd47f3a748e0379bb4269d07",
+      "exists": true,
+      "sha256": "dbc24205827bbad97ac820c2ce228d96de94d8a8dd47f3a748e0379bb4269d07",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\基础场景原型\\project.godot",
+      "baseline_sha256": "fcfc61e314f61b21dd2878238ba15f973a41324c8547b48277cb3b8cb71caac1",
+      "exists": true,
+      "sha256": "fcfc61e314f61b21dd2878238ba15f973a41324c8547b48277cb3b8cb71caac1",
+      "unchanged": true
+    },
+    {
+      "path": "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_v7.png",
+      "baseline_sha256": "0c81488d74eb87b0219ea3ead2aa31f074c1a371ab9a7aba0984b67a4a0f9092",
+      "exists": true,
+      "sha256": "0c81488d74eb87b0219ea3ead2aa31f074c1a371ab9a7aba0984b67a4a0f9092",
+      "unchanged": true
+    }
+  ]
+}

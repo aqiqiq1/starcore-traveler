@@ -1,0 +1,27 @@
+{
+  "method": "actual browser canvas pixels, 1280x720 device (desktop viewport, stage 1:1); grayscale band cross-correlation with horizontal high-pass; positive shift = content moved right",
+  "captures": [
+    "checks/browser_2x_t0.jpg",
+    "checks/browser_2x_t8.jpg",
+    "checks/browser_2x_t12.jpg",
+    "checks/browser_seam_before.jpg",
+    "checks/browser_seam_after.jpg"
+  ],
+  "browser_vs_python_same_t": {
+    "0s": {"best_shift_device_px": 0, "mean_abs_diff_0_255": 0.436},
+    "8s": {"best_shift_device_px": 0, "mean_abs_diff_0_255": 0.408},
+    "12s": {"best_shift_device_px": 0, "mean_abs_diff_0_255": 0.336},
+    "note": "the Python composite and the page agree at zero device-pixel offset for all three times; residual is JPEG + 0.5 logical-px edge quantisation"
+  },
+  "rendered_shift": {
+    "main_8s": {"device_px": 67, "logical_px": 33.5, "target_px": 33.6, "difference_px": -0.1},
+    "main_12s": {"device_px": 101, "logical_px": 50.5, "target_px": 50.4, "difference_px": 0.1},
+    "near_8s": {"device_px": 115, "logical_px": 57.5, "target_px": 57.6, "difference_px": -0.1},
+    "near_12s": {"device_px": 173, "logical_px": 86.5, "target_px": 86.4, "difference_px": 0.1},
+    "sky_bank_left_8s": {"device_px": 99, "logical_px": 49.5, "target_px": 49.6, "difference_px": -0.1},
+    "sky_bank_left_12s": {"device_px": 149, "logical_px": 74.5, "target_px": 74.4, "difference_px": 0.1}
+  },
+  "pause_resume": "pause held t=5.50 s for 0.9 s; resume advanced to t=66.22 s with phases 278.0 / 477.0",
+  "seam_buttons": "before t=58.92 s: main phase 247.5, near 424.0; after t=60.52 s: main 254.0, near 436.0; both markers visible, no visible jump",
+  "conclusion": "all rendered shifts are positive (+x, right); the old x0=-phase drawing measured negative before the fix"
+}

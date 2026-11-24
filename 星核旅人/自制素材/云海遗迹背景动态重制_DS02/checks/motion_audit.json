@@ -1,0 +1,225 @@
+{
+  "summary": "rendered-pixel probes show +x motion for sea and sky; speed*t monotonicity is kept only as a supplementary config check, not as proof of direction",
+  "direction_probe": {
+    "main": {
+      "target_8s_px": 33.6,
+      "target_12s_px": 50.4,
+      "measured": {
+        "8s": {
+          "shift_px": 34,
+          "target_px": 33.6,
+          "difference_from_target_px": 0.4,
+          "profile_mae_px": 0.075,
+          "overlap_px": 186
+        },
+        "12s": {
+          "shift_px": 50,
+          "target_px": 50.4,
+          "difference_from_target_px": -0.4,
+          "profile_mae_px": 0.376,
+          "overlap_px": 170
+        }
+      },
+      "feature_x0": 94,
+      "crop_y": [
+        258,
+        296
+      ]
+    },
+    "near": {
+      "target_8s_px": 57.6,
+      "target_12s_px": 86.4,
+      "measured": {
+        "8s": {
+          "shift_px": 58,
+          "target_px": 57.6,
+          "difference_from_target_px": 0.4,
+          "profile_mae_px": 0.0,
+          "overlap_px": 162
+        },
+        "12s": {
+          "shift_px": 86,
+          "target_px": 86.4,
+          "difference_from_target_px": -0.4,
+          "profile_mae_px": 0.0,
+          "overlap_px": 134
+        }
+      },
+      "feature_x0": 90,
+      "crop_y": [
+        314,
+        360
+      ]
+    },
+    "sky_bank_left": {
+      "target_8s_px": 49.6,
+      "target_12s_px": 74.4,
+      "measured": {
+        "8s": {
+          "shift_px": 50,
+          "target_px": 49.6,
+          "difference_from_target_px": 0.4,
+          "profile_mae_px": 0.0,
+          "overlap_px": 170
+        },
+        "12s": {
+          "shift_px": 74,
+          "target_px": 74.4,
+          "difference_from_target_px": -0.4,
+          "profile_mae_px": 0.0,
+          "overlap_px": 146
+        }
+      },
+      "feature_x0": 81,
+      "crop_y": [
+        48,
+        112
+      ]
+    }
+  },
+  "browser_evidence": {
+    "file": "checks/browser_direction_check.json",
+    "captures": [
+      "checks/browser_2x_t0.jpg",
+      "checks/browser_2x_t8.jpg",
+      "checks/browser_2x_t12.jpg",
+      "checks/browser_seam_before.jpg",
+      "checks/browser_seam_after.jpg"
+    ],
+    "main_8s_device_px": 67,
+    "main_12s_device_px": 101,
+    "near_8s_device_px": 115,
+    "near_12s_device_px": 173,
+    "sky_bank_8s_device_px": 99,
+    "sky_bank_12s_device_px": 149,
+    "same_time_browser_vs_python_device_shift": 0,
+    "note": "1280x720 page capture; logical = device/2; all shifts positive"
+  },
+  "sea": {
+    "phase_convention": "screen x = texture(x - phase) mod P; phase=(speed*t)%P",
+    "main_unwrapped_monotonic_config_only": true,
+    "near_unwrapped_monotonic_config_only": true,
+    "displacement_8s_px": {
+      "main": 33.6,
+      "near": 57.6
+    },
+    "displacement_12s_px": {
+      "main": 50.4,
+      "near": 86.4
+    },
+    "seam_texture": {
+      "sea_main": {
+        "width": 1278,
+        "internal_transparent_columns": 0,
+        "mirror_seam_max_channel_diff": 0,
+        "wrap_seam_max_channel_diff": 0,
+        "top_cusp_639_640": 0,
+        "top_cusp_0_last": 0,
+        "period": 1278
+      },
+      "sea_near": {
+        "width": 1278,
+        "internal_transparent_columns": 0,
+        "mirror_seam_max_channel_diff": 0,
+        "wrap_seam_max_channel_diff": 0,
+        "top_cusp_639_640": 0,
+        "top_cusp_0_last": 0,
+        "period": 1278
+      }
+    },
+    "seam_render": {
+      "main": {
+        "t": 59.7222,
+        "phase": 251,
+        "visible": true,
+        "column_pair": [
+          250,
+          251
+        ],
+        "max_channel_diff": 0,
+        "mean_abs_diff": 0.0
+      },
+      "near": {
+        "t": 59.7222,
+        "phase": 430,
+        "visible": true,
+        "column_pair": [
+          429,
+          430
+        ],
+        "max_channel_diff": 0,
+        "mean_abs_diff": 0.0
+      },
+      "phase_wrap": {
+        "sea_main": {
+          "period_s": 304.2857,
+          "half_step_s": 0.25,
+          "expected_shift_px": 2.1,
+          "measured_profile_shift_px": 2,
+          "profile_mae_px": 0.0,
+          "overlap_px": 218,
+          "raw_mean_abs_diff_at_boundary_0_02s": 0.0
+        },
+        "sea_near": {
+          "period_s": 177.5,
+          "half_step_s": 0.25,
+          "expected_shift_px": 3.6,
+          "measured_profile_shift_px": 4,
+          "profile_mae_px": 0.0,
+          "overlap_px": 216,
+          "raw_mean_abs_diff_at_boundary_0_02s": 0.0
+        }
+      }
+    }
+  },
+  "sky": {
+    "unwrapped_monotonic_config_only": true,
+    "bank_speed": 6.2,
+    "wisp_speed": 3.6,
+    "reset_rule": "reset only after the whole sprite is past x=648; re-entry starts fully off-canvas left",
+    "right_bank_exit_s": 43.87,
+    "right_bank_reentry_s": 111.47
+  },
+  "rocks": {
+    "vertical_only": true,
+    "amplitudes_px": {
+      "debris_central": 4.0,
+      "debris_cluster": 2.0,
+      "debris_tiny": 1.0,
+      "debris_low": 3.5
+    },
+    "periods_s": {
+      "debris_central": 7.5,
+      "debris_cluster": 6.2,
+      "debris_tiny": 5.4,
+      "debris_low": 8.5
+    },
+    "shadow_surfaces": {
+      "shadow_central": "sea_main",
+      "shadow_cluster": "sea_main",
+      "shadow_low": "sea_near"
+    },
+    "shadow_rule": "contact footprint from the largest rock component, anisotropic horizontal smear, 5 alpha steps, upper-left dense to lower-right faint; high = 0.70 alpha + 2x1 grow for main shadows, low = darker/tighter contact; height offset is down-right, never follows the rock upward",
+    "shadow_x_depends_on_sea_phase": false,
+    "shadow_x_drift_over_bob_px": {
+      "shadow_central": 1.6,
+      "shadow_cluster": 0.8,
+      "shadow_low": 0.7
+    },
+    "tiny_shadow_omitted": "projected contrast below one palette step"
+  },
+  "static": {
+    "static_architecture_pixels_different_t0_above_y250": 0,
+    "protected_files": {
+      "total": 35,
+      "unchanged": 35
+    }
+  },
+  "known_limits": [
+    "sea is a 1278px periodic texture made from the 640px V7 mother plus a 638px same-value mirror; long viewing reveals mirror symmetry",
+    "the near shelf top is a smoothed depth model, not a pixel-exact copy of every V7 near-band edge",
+    "right island base and central arches are static overlays drawn in front of the main sea; the near cloud still covers their feet",
+    "static checks are integer-pixel; HTML uses 0.5 logical-px quantisation, so a measured integer can differ from speed*t by <=0.5 px",
+    "no engine integration, camera, menu, gameplay or full playtest was performed"
+  ]
+}

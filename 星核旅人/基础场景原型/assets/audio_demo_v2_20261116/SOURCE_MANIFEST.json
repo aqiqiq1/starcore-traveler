@@ -110,9 +110,9 @@
     "manifest": "NEW3_DERIVATION.json",
     "status": "three CC0-derived demo trials wired 2026-11-17; not listening-approved",
     "files": [
-      "polarity_switch_v2.wav",
-      "swing_v2.wav",
-      "shell_shatter_heavy_v2.wav"
+      "polarity_switch.wav",
+      "swing.wav",
+      "shell_shatter_heavy.wav"
     ],
     "evidence": "source_evidence/ (page screenshots, CC0 deed, Kenney license)",
     "note": "the old rejected polarity_switch/swing/shell_shatter candidates remain only in previews/audio_review_20261116/ for A/B; they are not runtime files"

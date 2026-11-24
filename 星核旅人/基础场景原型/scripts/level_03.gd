@@ -11,6 +11,7 @@ signal level_completed
 const PAUSE_MENU_SCRIPT = preload("res://scripts/level03/l3_pause_menu.gd")
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const FOOTSTEP_SCRIPT = preload("res://scripts/audio/player_footstep_audio.gd")
+const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popup.tscn")
 
 const STAGE_START: int = 0
 const STAGE_RUNE: int = 1
@@ -113,6 +114,11 @@ var _window_has_focus: bool = true
 ## guard leaves GRAVITY_CHARGE for any reason. A paused tree or an active
 ## cinematic deliberately leaves it untouched (the charge is frozen, not cut).
 var _charge_watch: bool = false
+var _mechanic_popup: MechanicPopup = null
+## Set only when the near-gate echo film hands control back (finished) or is
+## explicitly aborted by pause/focus. Reset by R. The guard popup must never
+## open before this film, including while it is playing.
+var _guard_tip_ready: bool = false
 
 
 func _ready() -> void:
@@ -157,6 +163,7 @@ func _ready() -> void:
 	_cine.finished.connect(_on_cinematic_finished)
 	_cine.stone_cue_requested.connect(_on_cine_stone_cue)
 	_setup_pause_menu()
+	_setup_mechanic_popup()
 	_setup_process_modes()
 	_checkpoint.checkpoint_entered.connect(_on_checkpoint_entered)
 
@@ -293,8 +300,7 @@ func _setup_pause_menu() -> void:
 		["切换相性", "Q"],
 		["挥击", "J（异相有效）"],
 		["操作 / 取核 / 嵌核", "E"],
-		["演出继续 / 翻页", "Space"],
-		["补全文 / 长按跳过", "Space · 0.6s"],
+		["对白 / 跳过", "F继续 · 长按空格跳过整段"],
 		["失败恢复", "最近稳定点"],
 		["整关重来", "R"],
 		["暂停菜单", "Esc"],
@@ -304,6 +310,53 @@ func _setup_pause_menu() -> void:
 	_pause_menu.return_to_menu_requested.connect(_return_to_main_menu)
 	_pause_menu.opened.connect(_on_pause_opened)
 	_pause_menu.resumed.connect(_on_pause_resumed)
+
+
+## Teaching layer only. The device entry fires just before E becomes available
+## on the upper platform. The guard entry waits for the near-gate echo film to
+## hand control back, so it never opens during that dialogue or before it.
+func _setup_mechanic_popup() -> void:
+	_mechanic_popup = MECHANIC_POPUP_SCENE.instantiate() as MechanicPopup
+	_mechanic_popup.name = "MechanicPopup"
+	_mechanic_popup.level_node = self
+	add_child(_mechanic_popup)
+
+
+func _tick_mechanic_popup() -> void:
+	if _mechanic_popup == null or _mechanic_popup.is_open():
+		return
+	if _player == null or not is_instance_valid(_player):
+		return
+	var pos: Vector2 = _player.global_position
+	if not _device.is_active() and pos.y <= 220.0 and pos.x >= 180.0 and pos.x <= 380.0:
+		if pos.distance_to(_device.global_position) <= 110.0:
+			_mechanic_popup.request("float_platform")
+	if not _guard_tip_ready:
+		return
+	if _stable_stage >= STAGE_ARENA and pos.x >= 1680.0 and not _guard.is_defeated():
+		_mechanic_popup.request("guard_field")
+
+
+func is_mechanic_popup_blocked() -> bool:
+	if get_tree().paused:
+		return true
+	if _completed or _resetting or _scene_leaving:
+		return true
+	if _recovery_active or _retry_pending:
+		return true
+	if _cine.is_active():
+		return true
+	if _pause_menu != null and _pause_menu.has_method("is_open") and bool(_pause_menu.call("is_open")):
+		return true
+	return false
+
+
+func get_mechanic_popup() -> MechanicPopup:
+	return _mechanic_popup
+
+
+func is_guard_tip_ready() -> bool:
+	return _guard_tip_ready
 
 
 func _physics_process(delta: float) -> void:
@@ -332,6 +385,7 @@ func _physics_process(delta: float) -> void:
 	_check_cinematic_trigger()
 	_check_city_entry()
 	_update_level_hud()
+	_tick_mechanic_popup()
 
 
 func _process(delta: float) -> void:
@@ -850,6 +904,9 @@ func _start_cinematic() -> void:
 
 
 func _on_cinematic_finished(_skipped: bool) -> void:
+	# Control has just been handed back from the near-gate echo film. This is
+	# the first moment the guard teaching popup may open.
+	_guard_tip_ready = true
 	_hud03.set_gameplay_visible(true)
 	_player.clear_input_buffers()
 	_player.clear_external_force()
@@ -865,6 +922,9 @@ func _on_cine_stone_cue() -> void:
 func before_pause_opened() -> void:
 	if _cine.is_active():
 		_cine.abort()
+		# abort() deliberately does not emit finished; the pause path still
+		# hands control back, so the guard tip must not be lost forever.
+		_guard_tip_ready = true
 		_hud03.set_gameplay_visible(true)
 		_player.clear_input_buffers()
 		_update_level_hud()
@@ -919,7 +979,7 @@ func _on_pause_resumed() -> void:
 
 
 func is_pause_menu_blocked() -> bool:
-	return false
+	return _mechanic_popup != null and _mechanic_popup.is_open()
 
 
 func _on_window_focus_exited() -> void:
@@ -928,6 +988,9 @@ func _on_window_focus_exited() -> void:
 		return
 	if _cine.is_active():
 		_cine.abort()
+		# Same as pause: abort restores control without finished, so allow the
+		# guard tip to become available once focus returns.
+		_guard_tip_ready = true
 		_hud03.set_gameplay_visible(true)
 	_player.reset_movement_input_state()
 	_player.clear_input_buffers()
@@ -1227,6 +1290,7 @@ func _restart_level() -> void:
 	_resetting = true
 	_float_rule_shown = false
 	_cine.reset_for_new_run()
+	_guard_tip_ready = false
 	_hud03.set_gameplay_visible(true)
 	_hud03.show_completion(false)
 	# The page may have been disabled by a failed return attempt, and the replay

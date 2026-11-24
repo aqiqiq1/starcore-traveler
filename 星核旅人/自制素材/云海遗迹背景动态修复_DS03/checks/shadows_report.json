@@ -1,0 +1,62 @@
+{
+  "ok": true,
+  "note": "actual DS03.state().shadows at the sampled rock heights; source rules unchanged from DS02",
+  "central_high": {
+    "name": "shadow_central",
+    "surface": "sea_main",
+    "sx": 318.6,
+    "sy": 272,
+    "alpha": 0.7,
+    "width": 42,
+    "height": 13,
+    "cloudTopAtPlacement": 266,
+    "bob": -4,
+    "high": true,
+    "grow": 1
+  },
+  "central_low": {
+    "name": "shadow_central",
+    "surface": "sea_main",
+    "sx": 315.4,
+    "sy": 266,
+    "alpha": 1,
+    "width": 40,
+    "height": 12,
+    "cloudTopAtPlacement": 264,
+    "bob": 4,
+    "high": false,
+    "grow": 0
+  },
+  "low_high": {
+    "name": "shadow_low",
+    "surface": "sea_near",
+    "sx": 244.6999999723232,
+    "sy": 318.0499999584848,
+    "alpha": 0.8800000047445907,
+    "width": 28,
+    "height": 9,
+    "cloudTopAtPlacement": 307,
+    "bob": -3.4999998616161028,
+    "high": true,
+    "grow": 0
+  },
+  "low_low": {
+    "name": "shadow_low",
+    "surface": "sea_near",
+    "sx": 243.3000000276768,
+    "sy": 316.9500000415152,
+    "alpha": 1,
+    "width": 28,
+    "height": 9,
+    "cloudTopAtPlacement": 308,
+    "bob": 3.4999998616161028,
+    "high": false,
+    "grow": 0
+  },
+  "times": {
+    "shadow_central_high": 5.625,
+    "shadow_central_low": 1.875,
+    "shadow_low_high": 4.752,
+    "shadow_low_low": 0.502
+  }
+}

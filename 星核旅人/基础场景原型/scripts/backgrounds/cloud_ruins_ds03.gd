@@ -31,7 +31,56 @@ const SEA_PERIOD: int = 1278
 const SKY_WRAP_MARGIN: float = 8.0
 const GROUP_NEGATIVE_THRESHOLD: float = -0.25
 
+## Per-level aerial-perspective grading. "default" is the byte-for-byte L1
+## presentation: no modulate is touched and no haze node is drawn.
+## The component stays shared by all three levels; the level-side instance opts
+## in through `depth_grade` (see level_02/03.tscn).
+const DEPTH_GRADES: Dictionary = {
+	"l2_depth": {
+		"Base": Color(0.94, 1.0, 1.05, 1.0),
+		"Sky": Color(0.92, 0.99, 1.05, 1.0),
+		"Groups/G3": Color(0.93, 1.0, 1.07, 0.58),
+		"Groups/G4": Color(0.93, 1.0, 1.07, 0.58),
+		"Groups/G5": Color(0.93, 1.0, 1.07, 0.58),
+		"Groups/G1": Color(0.94, 0.99, 1.03, 0.88),
+		"Groups/G2": Color(0.94, 0.99, 1.03, 0.88),
+		"SeaMain": Color(0.93, 0.97, 1.02, 0.97),
+		"Arch": Color(0.92, 0.98, 1.06, 0.62),
+		"SeaNear": Color(0.80, 0.86, 0.93, 1.0),
+		"Rocks": Color(0.78, 0.84, 0.96, 1.0),
+		"Debris": Color(0.86, 0.92, 1.0, 0.95),
+	},
+	"l3_depth": {
+		"Base": Color(0.93, 0.99, 1.05, 1.0),
+		"Sky": Color(0.91, 0.98, 1.05, 1.0),
+		"Groups/G3": Color(0.92, 0.99, 1.07, 0.50),
+		"Groups/G4": Color(0.92, 0.99, 1.07, 0.50),
+		"Groups/G5": Color(0.92, 0.99, 1.07, 0.50),
+		"Groups/G1": Color(0.93, 0.98, 1.03, 0.85),
+		"Groups/G2": Color(0.93, 0.98, 1.03, 0.85),
+		"SeaMain": Color(0.92, 0.96, 1.02, 0.97),
+		"Arch": Color(0.91, 0.97, 1.06, 0.55),
+		"SeaNear": Color(0.78, 0.84, 0.92, 1.0),
+		"Rocks": Color(0.74, 0.80, 0.95, 1.0),
+		"Debris": Color(0.84, 0.90, 0.99, 0.95),
+	},
+}
+## Stepped 1 px rows, not a gradient image. Drawn between SeaMain and Arch so
+## distant masonry keeps its outline while the sea meets the sky with a clear
+## 1x band.
+const HAZE_ROWS: Array = [
+	[270, Color(0.80, 0.92, 0.98, 0.04)],
+	[271, Color(0.81, 0.92, 0.98, 0.09)],
+	[272, Color(0.82, 0.93, 0.98, 0.15)],
+	[273, Color(0.82, 0.93, 0.98, 0.14)],
+	[274, Color(0.80, 0.92, 0.98, 0.06)],
+]
+
 signal clock_reset
+
+## "default" reproduces the approved L1 background exactly. L2/L3 instances set
+## this in their own scene files; the shared scene default never changes.
+@export_enum("default", "l2_depth", "l3_depth") var depth_grade: String = "default"
 
 const LAYER_ORDER: Array[String] = [
 	"Base", "Sky", "Groups", "SeaMain", "Arch", "SeaNear", "Rocks", "Debris",
@@ -55,6 +104,7 @@ var _groups_by_id: Dictionary = {}
 var _sea_by_name: Dictionary = {}
 var _debris_by_name: Dictionary = {}
 var _static_by_id: Dictionary = {}
+var _graded_nodes: Array[CanvasItem] = []
 
 
 func _ready() -> void:
@@ -186,6 +236,7 @@ func _setup_nodes() -> void:
 	_connect(sea_near_node, _draw_sea_near.bind(sea_near_node))
 	_connect(rocks_node, _draw_rocks.bind(rocks_node))
 	_connect(debris_node, _draw_debris.bind(debris_node))
+	_apply_depth_grade()
 
 	var sea_main: Node2D = _layer_node("SeaMain")
 	var sea_near: Node2D = _layer_node("SeaNear")
@@ -231,6 +282,53 @@ func _connect(node: CanvasItem, callback: Callable) -> void:
 
 func _layer_node(layer_name: String) -> Node2D:
 	return _layer_nodes.get(layer_name) as Node2D
+
+
+func _apply_depth_grade() -> void:
+	# Do not write modulate on instanced child nodes in the editor: saving the
+	# level scene would turn them into per-instance overrides of the shared
+	# background. The runtime look is what the levels and captures use.
+	if Engine.is_editor_hint():
+		return
+	var haze: CanvasItem = get_node_or_null("HorizonHaze") as CanvasItem
+	if depth_grade == "default":
+		if haze != null:
+			haze.visible = false
+		return
+	var preset: Dictionary = DEPTH_GRADES.get(depth_grade, {})
+	if preset.is_empty():
+		push_warning("CloudRuinsDS03: unknown depth_grade '%s'" % depth_grade)
+		return
+	for path: String in preset:
+		var node: CanvasItem = get_node_or_null(path) as CanvasItem
+		if node == null:
+			push_error("CloudRuinsDS03: depth grade missing node " + path)
+			continue
+		node.modulate = preset[path]
+		_graded_nodes.append(node)
+	if haze != null:
+		haze.visible = true
+		haze.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		_connect(haze, _draw_horizon_haze.bind(haze))
+		if not _draw_nodes.has(haze):
+			_draw_nodes.append(haze)
+
+
+## Switch the grade after _ready (captures and editor experiments). Passing
+## "default" restores exactly the ungraded L1 presentation.
+func set_depth_grade(grade: String) -> void:
+	for node: CanvasItem in _graded_nodes:
+		if is_instance_valid(node):
+			node.modulate = Color.WHITE
+	_graded_nodes.clear()
+	depth_grade = grade
+	_apply_depth_grade()
+	_refresh()
+
+
+func _draw_horizon_haze(canvas: CanvasItem) -> void:
+	for row: Array in HAZE_ROWS:
+		canvas.draw_rect(Rect2(0, int(row[0]), CANVAS_WIDTH, 1), row[1])
 
 
 func _refresh() -> void:

@@ -1,0 +1,30 @@
+viewport_size=(1280, 720)
+window_size=(1280, 720)
+frame=256x144 frames=24 fps=8.00
+capture polarity start
+capture polarity OK png=res://assets/mechanic_demos/polarity.png crop=[P: (140, 110), S: (256, 144)]
+capture core_carry start
+capture core_carry OK png=res://assets/mechanic_demos/core_carry.png crop=[P: (90, 200), S: (256, 144)]
+capture relay_link start
+capture relay_link OK png=res://assets/mechanic_demos/relay_link.png crop=[P: (230, 180), S: (256, 144)]
+capture float_platform start
+capture float_platform OK png=res://assets/mechanic_demos/float_platform.png crop=[P: (190, 130), S: (256, 144)]
+capture guard_invalid start
+guard_invalid frame 2 gap=53.9 state=GRAVITY_CHARGE player_x=1967.3 guard_x=2021.2 left=true right=false
+guard_invalid frame 3 gap=64.8 state=GRAVITY_CHARGE player_x=1956.4 guard_x=2021.2 left=true right=false
+guard_invalid frame 4 gap=83.3 state=GRAVITY_RELEASE player_x=1937.9 guard_x=2021.2 left=true right=false
+guard_invalid frame 5 gap=99.5 state=GRAVITY_RELEASE player_x=1921.7 guard_x=2021.2 left=false right=false
+guard_invalid frame 6 gap=102.7 state=GRAVITY_RELEASE player_x=1918.5 guard_x=2021.2 left=false right=true
+guard_invalid frame 7 gap=92.4 state=RECOVER player_x=1928.8 guard_x=2021.2 left=false right=true
+guard_invalid frame 8 gap=79.1 state=RECOVER player_x=1942.1 guard_x=2021.2 left=false right=true
+guard_invalid frame 9 gap=65.7 state=ACTIVE player_x=1955.5 guard_x=2021.2 left=false right=true
+guard_invalid frame 10 gap=52.4 state=ACTIVE player_x=1968.8 guard_x=2021.2 left=false right=true
+guard_invalid frame 11 gap=39.1 state=NORMAL_WINDUP player_x=1982.1 guard_x=2021.2 left=false right=false
+guard_invalid attack at frame 12 gap=35.9 state=NORMAL_WINDUP
+capture guard_invalid OK png=res://assets/mechanic_demos/guard_invalid.png crop=[P: (210, 190), S: (256, 144)]
+capture guard_valid start
+guard_valid frame 1 gap=53.9 state=GRAVITY_CHARGE player_x=1966.1 guard_x=2020.0
+guard_valid frame 2 gap=32.6 state=GRAVITY_CHARGE player_x=1987.4 guard_x=2020.0
+guard_valid attack at frame 3 gap=29.4 facing=1
+guard_valid landed TRUE_HIT; remaining=2
+capture guard_valid OK png=res://assets/mechanic_demos/guard_valid.png crop=[P: (190, 190), S: (256, 144)]

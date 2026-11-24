@@ -97,7 +97,7 @@ const FIELD_RANGE: float = 118.0
 const FIELD_INNER: float = 16.0
 const FIELD_FULL: float = 42.0
 const FIELD_OUTER_FADE: float = 24.0
-const FIELD_ACCELERATION: float = 750.0
+const FIELD_ACCELERATION: float = 520.0
 
 const WEAKPOINT_FRAMES: int = 64
 const WEAKPOINT_FPS: float = 12.5

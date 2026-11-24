@@ -1,0 +1,638 @@
+{
+  "name": "云海遗迹背景动态修复_DS03",
+  "status": "art layers + clean plate; motion/render/test to be implemented by engineering",
+  "revision": "DS03.1（2026-11-03）：G1/G2 按 V6 原 solid 几何把隐藏石面保留到 y=299（end 300），y283–299 作为浮动 reserve；新增 13 联合极值检查。",
+  "date": "2026-11-03",
+  "canvas": [
+    640,
+    360
+  ],
+  "render_scale": 2,
+  "coordinate_space": "logical 640x360; offsets are top-left in this space; PNGs are tight crops",
+  "approved_source": {
+    "file": "D:\\godot game\\星核旅人\\自制素材\\后景遗迹细化预览_V2\\background_detail_v2_640x360.png",
+    "sha256": "ee9e39305f8a697ffce318328b365d02c6e66d07f61a43c8f2ffb1e250a5f94a",
+    "note": "用户已暂认可 V2（“先这样吧”），本轮以其为建筑外观真值"
+  },
+  "groups": {
+    "G1": {
+      "name": "左断桥整体",
+      "members": [
+        "桥面",
+        "横梁",
+        "柱",
+        "拱",
+        "桥墩",
+        "基础"
+      ],
+      "rigid": true,
+      "float_allowed": true,
+      "amp_max_px": 1.5,
+      "period_s_suggested": 9.5,
+      "phase_suggested": 0.0
+    },
+    "G2": {
+      "name": "右断桥整体",
+      "members": [
+        "桥面",
+        "横梁",
+        "残柱",
+        "拱",
+        "桥墩",
+        "基础"
+      ],
+      "rigid": true,
+      "float_allowed": true,
+      "amp_max_px": 1.0,
+      "period_s_suggested": 10.5,
+      "phase_suggested": 0.35
+    },
+    "G3": {
+      "name": "左端残厅浮岛",
+      "members": [
+        "残厅",
+        "柱",
+        "岛台",
+        "岩底"
+      ],
+      "rigid": true,
+      "float_allowed": true,
+      "amp_max_px": 0.8,
+      "period_s_suggested": 11.0,
+      "phase_suggested": 1.2
+    },
+    "G4": {
+      "name": "左后远院落",
+      "members": [
+        "塔身",
+        "拱门",
+        "残墙",
+        "足部补面"
+      ],
+      "rigid": true,
+      "float_allowed": true,
+      "amp_max_px": 0.6,
+      "period_s_suggested": 12.0,
+      "phase_suggested": 2.0
+    },
+    "G5": {
+      "name": "右侧小祠浮岛",
+      "members": [
+        "小祠",
+        "平台",
+        "岩底",
+        "V2 柱头覆盖片段"
+      ],
+      "rigid": true,
+      "float_allowed": true,
+      "amp_max_px": 1.5,
+      "period_s_suggested": 8.5,
+      "phase_suggested": 0.0
+    }
+  },
+  "layers": [
+    {
+      "id": "base_sky",
+      "group": "BG_STATIC",
+      "file": "art_assets/base_sky_640x360.png",
+      "abs_path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态修复_DS03\\art_assets\\base_sky_640x360.png",
+      "sha256": "f2860676c097e512fac79792b23581b6437bb2a2555612a27d55ad06780cc12b",
+      "size": [
+        640,
+        360
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "depth": 0,
+      "order": 0,
+      "float_allowed": false,
+      "float_amp_max_px": 0.0,
+      "rigid": true,
+      "alpha": {
+        "mode": "不透明底图",
+        "unique_values": [
+          255
+        ],
+        "note": "天空梯度 + 右后方极远静态塔状残迹（x560-594,y210-248）；无云、无桥、无浮石"
+      },
+      "pixels": {
+        "v2_visible": 559,
+        "rebuilt_hidden": 0,
+        "rebuilt_visible_contact": 0
+      }
+    },
+    {
+      "id": "G1_left_bridge",
+      "group": "G1",
+      "file": "art_assets/g1_left_bridge.png",
+      "abs_path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态修复_DS03\\art_assets\\g1_left_bridge.png",
+      "sha256": "371011a39a6fbc1867cba8239a6588fd9f83dd911b0098361e1a15c4f524b207",
+      "size": [
+        260,
+        156
+      ],
+      "offset": [
+        25,
+        144
+      ],
+      "depth": 30,
+      "order": 0,
+      "float_allowed": true,
+      "float_amp_max_px": 1.5,
+      "rigid": true,
+      "alpha": {
+        "mode": "binary 0/255（无半透明、无羽化）",
+        "unique_values": [
+          0,
+          255
+        ],
+        "note": "左断桥整体：桥面/横梁/柱/拱/墩，刚性同动；y283–299 为浮动 reserve"
+      },
+      "pixels": {
+        "v2_visible": 12816,
+        "rebuilt_hidden": 2530,
+        "rebuilt_visible_contact": 0
+      }
+    },
+    {
+      "id": "G2_right_bridge",
+      "group": "G2",
+      "file": "art_assets/g2_right_bridge.png",
+      "abs_path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态修复_DS03\\art_assets\\g2_right_bridge.png",
+      "sha256": "7f587eb24f6b8f6118a4dcfe8cf94ea6ce887d55b3d04d5f07f98c08113f8242",
+      "size": [
+        137,
+        156
+      ],
+      "offset": [
+        434,
+        144
+      ],
+      "depth": 30,
+      "order": 1,
+      "float_allowed": true,
+      "float_amp_max_px": 1.0,
+      "rigid": true,
+      "alpha": {
+        "mode": "binary 0/255（无半透明、无羽化）",
+        "unique_values": [
+          0,
+          255
+        ],
+        "note": "右断桥整体：与左桥同深度、同时绘制；柱头 y189 保留；y283–299 为浮动 reserve"
+      },
+      "pixels": {
+        "v2_visible": 5690,
+        "rebuilt_hidden": 752,
+        "rebuilt_visible_contact": 0
+      }
+    },
+    {
+      "id": "G3_left_hall_island",
+      "group": "G3",
+      "file": "art_assets/g3_left_hall_island.png",
+      "abs_path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态修复_DS03\\art_assets\\g3_left_hall_island.png",
+      "sha256": "307d5f0ac6838c064f2ab3545ea1a9031133f0c17925109681c234be5aabda89",
+      "size": [
+        70,
+        32
+      ],
+      "offset": [
+        31,
+        168
+      ],
+      "depth": 20,
+      "order": 0,
+      "float_allowed": true,
+      "float_amp_max_px": 0.8,
+      "rigid": true,
+      "alpha": {
+        "mode": "binary 0/255（无半透明、无羽化）",
+        "unique_values": [
+          0,
+          255
+        ],
+        "note": "左端残厅浮岛整体"
+      },
+      "pixels": {
+        "v2_visible": 967,
+        "rebuilt_hidden": 0,
+        "rebuilt_visible_contact": 0
+      }
+    },
+    {
+      "id": "G4_far_courtyard",
+      "group": "G4",
+      "file": "art_assets/g4_far_courtyard.png",
+      "abs_path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态修复_DS03\\art_assets\\g4_far_courtyard.png",
+      "sha256": "f854433be3d07f938464cfd7ccf095c469ee70d88237eed7225d509ad7c9e824",
+      "size": [
+        66,
+        44
+      ],
+      "offset": [
+        244,
+        174
+      ],
+      "depth": 20,
+      "order": 1,
+      "float_allowed": true,
+      "float_amp_max_px": 0.6,
+      "rigid": true,
+      "alpha": {
+        "mode": "binary 0/255（无半透明、无羽化）",
+        "unique_values": [
+          0,
+          255
+        ],
+        "note": "左后远院落整体；足部在桥面后有 4px 隐藏补面"
+      },
+      "pixels": {
+        "v2_visible": 1471,
+        "rebuilt_hidden": 107,
+        "rebuilt_visible_contact": 14
+      }
+    },
+    {
+      "id": "G5_right_temple_island",
+      "group": "G5",
+      "file": "art_assets/g5_right_temple_island.png",
+      "abs_path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态修复_DS03\\art_assets\\g5_right_temple_island.png",
+      "sha256": "23a0e64d4569f894237195b2ca43d06784cc77839fd6f9d5a7c1032ebd8574f8",
+      "size": [
+        91,
+        53
+      ],
+      "offset": [
+        444,
+        138
+      ],
+      "depth": 20,
+      "order": 2,
+      "float_allowed": true,
+      "float_amp_max_px": 1.5,
+      "rigid": true,
+      "alpha": {
+        "mode": "binary 0/255（无半透明、无羽化）",
+        "unique_values": [
+          0,
+          255
+        ],
+        "note": "右侧小祠浮岛整体（含岩底与 V2 柱头覆盖片段）；与 G2 的相对极值受限"
+      },
+      "pixels": {
+        "v2_visible": 1996,
+        "rebuilt_hidden": 0,
+        "rebuilt_visible_contact": 0
+      }
+    },
+    {
+      "id": "arch_stone",
+      "group": "STATIC",
+      "file": "art_assets/arch_stone.png",
+      "abs_path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态修复_DS03\\art_assets\\arch_stone.png",
+      "sha256": "2254d1d4971f291be06149dbd237138fb4c4d65b3df3a09cd5d68b629700ec9e",
+      "size": [
+        159,
+        41
+      ],
+      "offset": [
+        279,
+        273
+      ],
+      "depth": 45,
+      "order": 0,
+      "float_allowed": false,
+      "float_amp_max_px": 0.0,
+      "rigid": true,
+      "alpha": {
+        "mode": "binary 0/255（无半透明、无羽化）",
+        "unique_values": [
+          0,
+          255
+        ],
+        "note": "中部/下部残拱纯石质层；主云海之后、近云海之前"
+      },
+      "pixels": {
+        "v2_visible": 1359,
+        "rebuilt_hidden": 0,
+        "rebuilt_visible_contact": 0
+      }
+    },
+    {
+      "id": "rock_remnants_static",
+      "group": "STATIC",
+      "file": "art_assets/rock_remnants_static.png",
+      "abs_path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态修复_DS03\\art_assets\\rock_remnants_static.png",
+      "sha256": "6f75d933681605170eaadb27dcfee578a4c99b5c493a957202ccac306cd676c4",
+      "size": [
+        222,
+        157
+      ],
+      "offset": [
+        204,
+        175
+      ],
+      "depth": 60,
+      "order": 0,
+      "float_allowed": false,
+      "float_amp_max_px": 0.0,
+      "rigid": true,
+      "alpha": {
+        "mode": "binary 0/255（无半透明、无羽化）",
+        "unique_values": [
+          0,
+          255
+        ],
+        "note": "不属于四组动体的静态石屑（上断块/远岩/云中小石）；可选"
+      },
+      "pixels": {
+        "v2_visible": 602,
+        "rebuilt_hidden": 0,
+        "rebuilt_visible_contact": 0
+      }
+    }
+  ],
+  "stack": {
+    "rule": "G1/G2 必须在 sea_main 之前绘制，两桥同深度；不允许把右桥下部/柱脚单独提到云海之后重盖",
+    "order": [
+      {
+        "depth": 0,
+        "content": [
+          "base_sky"
+        ]
+      },
+      {
+        "depth": 10,
+        "content": [
+          "DS02 sky_bank_* / sky_*_wisp"
+        ]
+      },
+      {
+        "depth": 20,
+        "content": [
+          "G3",
+          "G4",
+          "G5"
+        ]
+      },
+      {
+        "depth": 30,
+        "content": [
+          "G1",
+          "G2"
+        ]
+      },
+      {
+        "depth": 40,
+        "content": [
+          "DS02 sea_main + its shadows (clipped)"
+        ]
+      },
+      {
+        "depth": 45,
+        "content": [
+          "arch_stone"
+        ]
+      },
+      {
+        "depth": 50,
+        "content": [
+          "DS02 sea_near + shadow_low"
+        ]
+      },
+      {
+        "depth": 60,
+        "content": [
+          "rock_remnants_static"
+        ]
+      },
+      {
+        "depth": 70,
+        "content": [
+          "DS02 debris_central/cluster/tiny/low"
+        ]
+      }
+    ]
+  },
+  "reuse_from_ds02": {
+    "sky": [
+      "sky_bank_left",
+      "sky_bank_right",
+      "sky_mid_wisp",
+      "sky_low_wisp_r",
+      "sky_left_wisp",
+      "sky_low_wisp_l",
+      "sky_high_chip"
+    ],
+    "sea": [
+      "sea_main",
+      "sea_near"
+    ],
+    "debris": [
+      "debris_central",
+      "debris_cluster",
+      "debris_tiny",
+      "debris_low"
+    ],
+    "shadows": [
+      "shadow_central",
+      "shadow_cluster",
+      "shadow_low"
+    ],
+    "note": "只读复制；本轮不改云形/速度/阴影规则。右桥脚不再使用 DS02 island_overlay。"
+  },
+  "masks_and_rebuild": {
+    "G1_G2_geometry": "V6 纯几何定义（layer/solid/left/right）逐像素还原；完整墩体到 y=299，交付层保留到 y=299（end 300）；y≤282 为可见/潜在可见面，y283–299 为浮动 reserve（sea_main 顶边 260–282，全部相位不可见）；桥面 y205，拱洞保留",
+    "G1_G2_visible": "V2 可见石质像素逐像素照搬（含 V2 的 818px 局部断口/接触影）；不使用 V1 砌缝",
+    "G1_G2_hidden": "云色覆盖处按 V7 同一套石质调色还原；每列云顶以下到 y=299 用低对比石质空气色补齐，alpha 仍为 255；y283–299 是给桥体上浮用的实体 reserve，不是新增可见面，也不加不透明矩形",
+    "G1": {
+      "visible_px": 12816,
+      "rebuilt_px": 2530,
+      "float_reserve_px": 1581,
+      "reserve_mask_px": 1581,
+      "extent": "y≤299（end 300），仅墩/拱/桥面实体列；可见到 y≤282，y283–299 为 reserve"
+    },
+    "G2": {
+      "visible_px": 5690,
+      "rebuilt_px": 752,
+      "float_reserve_px": 561,
+      "reserve_mask_px": 561,
+      "gap_cut_px": 45,
+      "gap_cut_over_column_px": 45,
+      "nub_to_G5_px": 42,
+      "note": "x474-482,y184-188 切空，柱顶 y189；被旧柱头盖住的岛底片段归 G5"
+    },
+    "G4_hidden": {
+      "visible_px": 1471,
+      "rebuilt_px": 121,
+      "visible_contact_px": 14,
+      "hidden_px": 107,
+      "rule": "主桥面 y205 直接压住的列：y204 的 1px 天空线改成接触影（14px 可见，已解释），y205-209 在桥面后；G4 台基右端被 debris_central 遮住的 6px 用同行台基色补（静止时在岩石后）；断口凹槽里已可见的足部不补",
+      "reclassified_base_px": 333
+    },
+    "G3_G5": "全部为 V2 可见像素，不补绘；G5 含被柱头覆盖的岛底片段（避免隔离时出现矩形缺口）",
+    "alpha": "所有建筑层二值 alpha（0/255）；不使用半透明羽化。桥脚雾化靠石质空气色 + 前置云遮挡，避免云下沉时出现透空鬼影",
+    "cloud_palette_in_groups": {
+      "G1_left_bridge": {
+        "colors": 0,
+        "pixels": 0
+      },
+      "G2_right_bridge": {
+        "colors": 0,
+        "pixels": 0
+      },
+      "G3_left_hall_island": {
+        "colors": 0,
+        "pixels": 0
+      },
+      "G4_far_courtyard": {
+        "colors": 0,
+        "pixels": 0
+      },
+      "G5_right_temple_island": {
+        "colors": 0,
+        "pixels": 0
+      }
+    },
+    "arch_cloud_palette_px": 0
+  },
+  "safe_float": {
+    "bridge_amp_max_px": 1.5,
+    "far_ruins_amp_max_px": 0.8,
+    "bridge_float_reserve": {
+      "cut_end_y": 300,
+      "previous_cut_end_y": 283,
+      "reserve_px": 17,
+      "worst_sea_main_top_y": 282,
+      "G1": {
+        "foot_x": 49,
+        "sea_main_phase": 1105,
+        "cloud_top_at_foot": 282,
+        "bridge_up_int_px": 2,
+        "bridge_bottom_end_y": 298,
+        "previous_cut_end_y": 283,
+        "previous_bottom_end_y": 281,
+        "previous_exposure_px_at_foot": 1,
+        "pier_columns": 93,
+        "min_bridge_to_cloud_overlap_px": 16,
+        "missing_mask_px": 0,
+        "composite_sky_px": 0
+      },
+      "G2": {
+        "foot_x": 476,
+        "sea_main_phase": 254,
+        "cloud_top_at_foot": 282,
+        "bridge_up_int_px": 1,
+        "bridge_bottom_end_y": 299,
+        "previous_cut_end_y": 283,
+        "previous_bottom_end_y": 282,
+        "previous_exposure_px_at_foot": 0,
+        "pier_columns": 33,
+        "min_bridge_to_cloud_overlap_px": 17,
+        "missing_mask_px": 0,
+        "composite_sky_px": 0
+      },
+      "rule": "sea_main 顶边最低 282；G1 上浮 1.5px（整数取整 -2）时桥体底边 298，G2 上浮 1.0px（整数 -1）时底边 299，均比最低云顶低 16–17px。交付 PNG 的 alpha 与 sea_main 实际 mask 联合检查：桥墩区从可见石面到前云无 sky 像素、无可见硬矩形底边。旧版裁到 end 283 会在 G1 上浮时露出 0.5–1px 天空缝，故不能靠减小上浮或云位移规避。"
+    },
+    "G5_G2": {
+      "static_air_px": 5,
+      "worst_integer_air_px": 2,
+      "min_2d_distance_px_worst": 2,
+      "rule": "G2≤1.0px、G5≤1.5px 时任意相位相对位移≤2.5px，5px 空气至少剩 2.5px；整数取整极端 G5+2/G2-1 仍剩 2px。更稳的做法是 G5 与 G2 同周期同相（相对≤0.5px）。若工程把 G2 提到 1.5px，必须同相或把 |dyG5-dyG2| 限制在 ≤3px。"
+    },
+    "G3_G1": "G3 岛底 y199 与左桥面 y205 静止 5px；G3 0.8 + G1 1.5 的相对极值 2.3px，最小 2.7px，无接触",
+    "G4_G1": "G4 足部补面到 y209；G4 0.6 + G1 1.5 的相对极值 2.1px，补面仍有余量",
+    "canvas": "所有组 bbox 加 1.5px 浮动均在 640x360 内；最上 G5 y138、最下 G1/G2 y299（end 300，其中 y283–299 为不可见浮动 reserve）"
+  },
+  "checks": {
+    "reference_is_not_delivery": "03_reference_overlay 使用 DS02 t=0 静态云海，只作叠回检查，不是动态完成声明",
+    "v2_visible_pixel_diff": 0,
+    "v2_visible_pixels": 22940,
+    "intentional_visible_rebuilt_px": 14,
+    "right_foot_static_px_diff": 0,
+    "v2_visible_diff_note": "G4 左端 14px 的 y204 天空线改为接触影（补院落足部）；其余 V2 可见建筑像素 0 差异；红=未解释差异，琥珀=已解释接触影",
+    "joint_pier_float_extreme": {
+      "check": "13_pier_float_reserve_joint_extreme_10x.png",
+      "method": "读交付 G1/G2 PNG 的 alpha，按 G1 整数 -2 / G2 整数 -1（最大上浮取整）放置；读 sea_main 同相位实际 mask 的每列首个不透明 y；对 V6 实体桥墩列做 mask 连续性与合成 sky 像素检查。G1 的 -1.5 浮点底边为 298.5，比整数 -2 的 298 多 0.5px 余量。",
+      "reserve_pixels_uncovered_by_sea_main_at_t0": 0,
+      "G1": {
+        "foot_x": 49,
+        "sea_main_phase": 1105,
+        "cloud_top_at_foot": 282,
+        "bridge_up_int_px": 2,
+        "bridge_bottom_end_y": 298,
+        "previous_cut_end_y": 283,
+        "previous_bottom_end_y": 281,
+        "previous_exposure_px_at_foot": 1,
+        "pier_columns": 93,
+        "min_bridge_to_cloud_overlap_px": 16,
+        "missing_mask_px": 0,
+        "composite_sky_px": 0
+      },
+      "G2": {
+        "foot_x": 476,
+        "sea_main_phase": 254,
+        "cloud_top_at_foot": 282,
+        "bridge_up_int_px": 1,
+        "bridge_bottom_end_y": 299,
+        "previous_cut_end_y": 283,
+        "previous_bottom_end_y": 282,
+        "previous_exposure_px_at_foot": 0,
+        "pier_columns": 33,
+        "min_bridge_to_cloud_overlap_px": 17,
+        "missing_mask_px": 0,
+        "composite_sky_px": 0
+      },
+      "result": "两桥墩区从可见石面到前云 mask 连续，合成图中 sky 像素 0；底边 298/299 比最低云顶 282 低 16–17px，硬矩形底边不可见。旧版 end 283 在 G1 x49、dy=-2 时实测露 1px sky（y281），本版为 0。"
+    },
+    "reference_vs_v2": {
+      "differing_px": 5140,
+      "fraction": 0.0223,
+      "above_y250_px": 117,
+      "diff_bbox": [
+        0,
+        204,
+        640,
+        341
+      ],
+      "cause": "DS02 的 sea_main/sea_near 是重建的连续云海纹理；205–250 的差主要是 DS02 浮石在 t=0 的相位位移（cluster/central），右桥脚改由前置云海遮挡；不是建筑层改动"
+    },
+    "files": [
+      "00_base_clean_2x.png",
+      "01_buildings_on_magenta_2x.png",
+      "02_G1_left_bridge_3x.png",
+      "02_G2_right_bridge_3x.png",
+      "02_G3_left_hall_island_3x.png",
+      "02_G4_far_courtyard_3x.png",
+      "02_G5_right_temple_island_3x.png",
+      "03_reference_overlay_2x.png",
+      "03_reference_overlay_640.png",
+      "04_reference_vs_v2_diff.png",
+      "05_occlusion_both_bridges_same_layer_3x.png",
+      "06_right_foot_before_after_4x.png",
+      "07_right_island_column_extremes_10x.png",
+      "08_far_courtyard_bridge_extreme_12x.png",
+      "09_alpha_masks.png",
+      "10_v2_visible_pixel_diff_2x.png",
+      "11_right_foot_cloud_motion_3phase_4x.png",
+      "12_pier_cloud_lowest_phase_10x.png",
+      "13_pier_float_reserve_joint_extreme_10x.png"
+    ]
+  },
+  "inspected": [
+    "已打开 V2 640 原图、DS02 island_overlay、左右桥/远院落/右岛岩底 5–12× 局部",
+    "已打开本目录 640 参考叠图、洋红隔离图、左右桥同层遮挡、右桥脚 before/after、G5/G2 极值 10×、G4/G1 极值 10×",
+    "已打开 13 联合极值 10×：G1 dy=-2 / G2 dy=-1 与 sea_main 云顶 282 同帧，桥墩到前云 mask 连续"
+  ],
+  "unverified": [
+    "未实现最终动画/相位/时间系统/离线 HTML；由 1 号工程完成",
+    "未接 Godot、无引擎截图或连续试玩",
+    "参考叠图用的是 DS02 t=0 云海，云顶与 V2 原图有 1–3px 平滑差；未做逐帧运动可读性验收",
+    "未合成前景人物/UI；未验证 640 以下小尺寸的 5px 空气读法",
+    "G5 岛底在 x474-482 的 1px 灯色片段沿用 V2 柱头像素，静止时可读为岩面；未重绘为暗色岩底以免改变已认可轮廓",
+    "13 联合极值用交付 PNG alpha + sea_main 同相位 mask 做数值/合成验证；未在引擎内验证 1.5px 亚像素采样，整数取整 -2 已按更严方向覆盖"
+  ]
+}

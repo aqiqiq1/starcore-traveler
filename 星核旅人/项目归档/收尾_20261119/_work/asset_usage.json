@@ -1,0 +1,789 @@
+{
+ "reachable_files": [
+  "assets/audio_movement_20261117/",
+  "assets/audio_movement_20261117/README.md",
+  "assets/audio_movement_20261117/SOURCE_MANIFEST.json",
+  "assets/audio_movement_20261117/footstep_stone_1.wav",
+  "assets/audio_movement_20261117/footstep_stone_1.wav.import",
+  "assets/audio_movement_20261117/footstep_stone_2.wav",
+  "assets/audio_movement_20261117/footstep_stone_2.wav.import",
+  "assets/audio_movement_20261117/footstep_stone_3.wav",
+  "assets/audio_movement_20261117/footstep_stone_3.wav.import",
+  "assets/audio_movement_20261117/footstep_stone_4.wav",
+  "assets/audio_movement_20261117/footstep_stone_4.wav.import",
+  "assets/audio_movement_20261117/footstep_stone_5.wav",
+  "assets/audio_movement_20261117/footstep_stone_5.wav.import",
+  "assets/audio_movement_20261117/footstep_stone_6.wav",
+  "assets/audio_movement_20261117/footstep_stone_6.wav.import",
+  "assets/audio_movement_20261117/reassembly_A_reverse.wav",
+  "assets/audio_movement_20261117/reassembly_A_reverse.wav.import",
+  "assets/audio_movement_20261117/reassembly_B_pauliuw.wav",
+  "assets/audio_movement_20261117/reassembly_B_pauliuw.wav.import",
+  "assets/audio_movement_20261117/source_evidence/cc0_1_0_deed.html",
+  "assets/audio_movement_20261117/source_evidence/kenney_impact-sounds_LICENSE.txt",
+  "assets/audio_movement_20261117/source_evidence/oga_fantozzi_footsteps.html",
+  "assets/audio_movement_20261117/source_evidence/oga_fantozzi_footsteps_page.jpg",
+  "assets/audio_movement_20261117/source_evidence/oga_fantozzi_footsteps_page.jpg.import",
+  "assets/audio_movement_20261117/source_evidence/oga_pauliuw_stone_moved.html",
+  "assets/backgrounds/cloud_ruins_ds03/art_assets/arch_stone.png",
+  "assets/backgrounds/cloud_ruins_ds03/art_assets/base_sky_640x360.png",
+  "assets/backgrounds/cloud_ruins_ds03/art_assets/g1_left_bridge.png",
+  "assets/backgrounds/cloud_ruins_ds03/art_assets/g2_right_bridge.png",
+  "assets/backgrounds/cloud_ruins_ds03/art_assets/g3_left_hall_island.png",
+  "assets/backgrounds/cloud_ruins_ds03/art_assets/g4_far_courtyard.png",
+  "assets/backgrounds/cloud_ruins_ds03/art_assets/g5_right_temple_island.png",
+  "assets/backgrounds/cloud_ruins_ds03/art_assets/rock_remnants_static.png",
+  "assets/backgrounds/cloud_ruins_ds03/common/debris_central.png",
+  "assets/backgrounds/cloud_ruins_ds03/common/debris_cluster.png",
+  "assets/backgrounds/cloud_ruins_ds03/common/debris_low.png",
+  "assets/backgrounds/cloud_ruins_ds03/common/debris_tiny.png",
+  "assets/backgrounds/cloud_ruins_ds03/common/sea_main.png",
+  "assets/backgrounds/cloud_ruins_ds03/common/sea_near.png",
+  "assets/backgrounds/cloud_ruins_ds03/common/shadow_central.png",
+  "assets/backgrounds/cloud_ruins_ds03/common/shadow_cluster.png",
+  "assets/backgrounds/cloud_ruins_ds03/common/shadow_low.png",
+  "assets/backgrounds/cloud_ruins_ds03/common/sky_bank_left.png",
+  "assets/backgrounds/cloud_ruins_ds03/common/sky_bank_right.png",
+  "assets/backgrounds/cloud_ruins_ds03/common/sky_high_chip.png",
+  "assets/backgrounds/cloud_ruins_ds03/common/sky_left_wisp.png",
+  "assets/backgrounds/cloud_ruins_ds03/common/sky_low_wisp_l.png",
+  "assets/backgrounds/cloud_ruins_ds03/common/sky_low_wisp_r.png",
+  "assets/backgrounds/cloud_ruins_ds03/common/sky_mid_wisp.png",
+  "assets/backgrounds/cloud_ruins_v7.png",
+  "assets/bridge_stone_v1/columns/doric_column_base_basesquare.png",
+  "assets/bridge_stone_v1/columns/doric_column_broken_basesquare.png",
+  "assets/bridge_stone_v1/columns/doric_column_tall_basesquare.png",
+  "assets/bridge_stone_v1/generated/l1_far_496x64.png",
+  "assets/bridge_stone_v1/generated/l1_high_336x144.png",
+  "assets/bridge_stone_v1/generated/l1_start_1024x64.png",
+  "assets/bridge_stone_v1/generated/l2_ground_1792x40.png",
+  "assets/characters/male_hero-fall.png",
+  "assets/characters/male_hero-fall_loop.png",
+  "assets/characters/male_hero-idle.png",
+  "assets/characters/male_hero-jump.png",
+  "assets/characters/male_hero-run.png",
+  "assets/characters/male_hero-walk.png",
+  "assets/checkpoint_exit/checkpoint_active.png",
+  "assets/checkpoint_exit/checkpoint_inactive.png",
+  "assets/checkpoint_exit/exit_completed.png",
+  "assets/checkpoint_exit/exit_open.png",
+  "assets/checkpoint_exit/gate_portal_fx_v2_8f.png",
+  "assets/doric_columns/doric_column_fallen.png",
+  "assets/experiments/polarity_golem/enemy/blue/golem_1_attack.png",
+  "assets/experiments/polarity_golem/enemy/blue/golem_1_die.png",
+  "assets/experiments/polarity_golem/enemy/blue/golem_1_hurt.png",
+  "assets/experiments/polarity_golem/enemy/blue/golem_1_idle.png",
+  "assets/experiments/polarity_golem/enemy/blue/golem_1_walk.png",
+  "assets/experiments/polarity_golem/enemy/orange/golem_1_attack.png",
+  "assets/experiments/polarity_golem/enemy/orange/golem_1_die.png",
+  "assets/experiments/polarity_golem/enemy/orange/golem_1_hurt.png",
+  "assets/experiments/polarity_golem/enemy/orange/golem_1_idle.png",
+  "assets/experiments/polarity_golem/enemy/orange/golem_1_walk.png",
+  "assets/experiments/polarity_golem/hero/male_hero-combo_1.png",
+  "assets/experiments/polarity_golem/hero/male_hero-combo_1_end.png",
+  "assets/fonts/tutorial_zh.ttf",
+  "assets/guide_echo_20261113/guide_echo_idle_6f_s40.png",
+  "assets/interaction_projection_20261117/layered_core/layered_core_approved_active_256x32.png",
+  "assets/interaction_projection_20261117/layered_core/layered_core_approved_inactive_256x32.png",
+  "assets/interaction_projection_20261117/layered_core/layered_core_approved_mask_256x32.png",
+  "assets/interaction_projection_20261117/layered_core/layered_core_facetflow_arrival_256x32.png",
+  "assets/interaction_projection_20261117/layered_core/layered_core_first_facetids_256x32.png",
+  "assets/interaction_projection_20261117/layered_core/layered_linked_candidate_active_200x60.png",
+  "assets/interaction_projection_20261117/layered_core/layered_linked_candidate_arrival_200x60.png",
+  "assets/interaction_projection_20261117/layered_core/layered_linked_candidate_base_200x60.png",
+  "assets/interaction_projection_20261117/layered_core/layered_linked_candidate_facetid_200x60.png",
+  "assets/interaction_projection_20261117/layered_core/layered_linked_candidate_mask_200x60.png",
+  "assets/interaction_projection_20261117/voice_mid/",
+  "assets/interaction_projection_20261117/voice_mid/echo_mumble_1.wav",
+  "assets/interaction_projection_20261117/voice_mid/echo_mumble_1.wav.import",
+  "assets/interaction_projection_20261117/voice_mid/echo_mumble_2.wav",
+  "assets/interaction_projection_20261117/voice_mid/echo_mumble_2.wav.import",
+  "assets/interaction_projection_20261117/voice_mid/echo_mumble_3.wav",
+  "assets/interaction_projection_20261117/voice_mid/echo_mumble_3.wav.import",
+  "assets/interaction_projection_20261117/voice_mid/manifest.json",
+  "assets/level02_conductive_stone/conductive_lip_40x12.png",
+  "assets/level02_conductive_stone/conductive_roof_256x32.png",
+  "assets/level02_conductive_stone/conductive_sill_160x60.png",
+  "assets/level02_conductive_stone/return_platform_48x12.png",
+  "assets/level03_gate_depth/gate_aperture_mask.png",
+  "assets/level03_gate_depth/gate_fixed.png",
+  "assets/level03_gate_depth/gate_passage.png",
+  "assets/level03_gate_depth/gate_passage_interior.png",
+  "assets/level03_gate_depth/gate_passage_shadow.png",
+  "assets/level03_gate_depth/gate_plate_closed.png",
+  "assets/level03_gate_depth/gate_plate_filled.png",
+  "assets/level03_gate_depth/gate_right_foreground.png",
+  "assets/level03_prototype/audio_charge_v2.ogg",
+  "assets/level03_prototype/audio_core_seat.ogg",
+  "assets/level03_prototype/audio_float_settle.ogg",
+  "assets/level03_prototype/audio_float_warn.ogg",
+  "assets/level03_prototype/audio_slam_v5.ogg",
+  "assets/level03_prototype/echo_projection.png",
+  "assets/level03_prototype/emote_exclaim.png",
+  "assets/level03_prototype/emote_question.png",
+  "assets/level03_prototype/fixed_core_active.png",
+  "assets/level03_prototype/fixed_core_inactive.png",
+  "assets/level03_prototype/float_block_64.png",
+  "assets/level03_prototype/float_block_80.png",
+  "assets/level03_prototype/float_block_96.png",
+  "assets/level03_prototype/float_glow_64_8f.png",
+  "assets/level03_prototype/float_glow_80_8f.png",
+  "assets/level03_prototype/float_glow_96_8f.png",
+  "assets/level03_prototype/gate_closed_empty.png",
+  "assets/level03_prototype/guard_field_cyan_12f.png",
+  "assets/level03_prototype/guard_field_gold_12f.png",
+  "assets/level03_prototype/key_core_12f.png",
+  "assets/level03_prototype/weakpoint_cyan_64f.png",
+  "assets/level03_prototype/weakpoint_gold_64f.png",
+  "assets/map/background2.png",
+  "assets/map/background4.png",
+  "assets/map/ruin_platform_tiles.png",
+  "assets/menu/main_menu_focus_quit_640.png",
+  "assets/menu/main_menu_focus_settings_640.png",
+  "assets/menu/main_menu_focus_start_640.png",
+  "assets/menu/main_menu_quit_640.png",
+  "assets/menu/main_menu_ui_640.png",
+  "assets/menu/settings_panel_640.png",
+  "assets/menu/settings_return_focus_640.png",
+  "assets/rune_stone/rune_stone_cyan.png",
+  "assets/rune_stone/rune_stone_gold.png",
+  "assets/rune_stone/rune_stone_sleep.png",
+  "assets/star_core/star_core_locked.png",
+  "assets/star_core/star_core_locked_12f.png",
+  "assets/star_core/star_core_negative.png",
+  "assets/star_core/star_core_negative_12f.png",
+  "assets/star_core/star_core_positive.png",
+  "assets/star_core/star_core_positive_12f.png",
+  "assets/star_core_bay/star_core_bay_base.png",
+  "assets/star_core_bay/star_core_bay_glass.png",
+  "assets/talisman/glow_cyan_4f.png",
+  "assets/talisman/glow_gold_4f.png",
+  "assets/talisman/switch_ring_cyan_4f.png",
+  "assets/talisman/switch_ring_gold_4f.png",
+  "assets/talisman/talisman_cyan.png",
+  "assets/talisman/talisman_gold.png",
+  "assets/tutorial_stele/tutorial_stele_grey.png",
+  "scenes/backgrounds/cloud_ruins_ds03.tscn",
+  "scenes/decorations/doric_column_base.tscn",
+  "scenes/decorations/doric_column_broken.tscn",
+  "scenes/decorations/doric_column_fallen.tscn",
+  "scenes/decorations/doric_column_tall.tscn",
+  "scenes/level02_bay.tscn",
+  "scenes/level03/cinematic.tscn",
+  "scenes/level03/float_block.tscn",
+  "scenes/level03/gate.tscn",
+  "scenes/level03/guard.tscn",
+  "scenes/level03/l3_player.tscn",
+  "scenes/level_01.tscn",
+  "scenes/level_02.tscn",
+  "scenes/level_03.tscn",
+  "scenes/narrative/guide_echo.tscn",
+  "scenes/player.tscn",
+  "scenes/polarity_link_visual.tscn",
+  "scenes/rune_stone_field.tscn",
+  "scenes/rune_stone_visual.tscn",
+  "scenes/star_core_bay_visual.tscn",
+  "scenes/star_core_carrier.tscn",
+  "scenes/star_core_visual.tscn",
+  "scenes/start_menu.tscn",
+  "scripts/audio/player_footstep_audio.gd",
+  "scripts/backgrounds/cloud_ruins_ds03.gd",
+  "scripts/backgrounds/cloud_ruins_ds03_data.gd",
+  "scripts/bay_rune_link.gd",
+  "scripts/debug_overlay.gd",
+  "scripts/experiments/polarity_golem_player.gd",
+  "scripts/level02_bay.gd",
+  "scripts/level02_block.gd",
+  "scripts/level03/l3_audio.gd",
+  "scripts/level03/l3_cinematic.gd",
+  "scripts/level03/l3_fixed_device.gd",
+  "scripts/level03/l3_float_block.gd",
+  "scripts/level03/l3_float_route.gd",
+  "scripts/level03/l3_gate.gd",
+  "scripts/level03/l3_guard.gd",
+  "scripts/level03/l3_hud.gd",
+  "scripts/level03/l3_pause_menu.gd",
+  "scripts/level03/l3_player.gd",
+  "scripts/level03/l3_player_hurt.gdshader",
+  "scripts/level03/l3_terrain.gd",
+  "scripts/level_01.gd",
+  "scripts/level_02.gd",
+  "scripts/level_02_hud.gd",
+  "scripts/level_03.gd",
+  "scripts/level_checkpoint.gd",
+  "scripts/level_exit.gd",
+  "scripts/level_guide.gd",
+  "scripts/level_hud.gd",
+  "scripts/level_terrain_block.gd",
+  "scripts/narrative/conductive_activation.gd",
+  "scripts/narrative/dialogue_voice.gd",
+  "scripts/narrative/guide_echo.gd",
+  "scripts/narrative/layered_core.gdshader",
+  "scripts/narrative/layered_core_faces.gdshader",
+  "scripts/narrative/layered_core_material.gd",
+  "scripts/narrative/opening_cinematic.gd",
+  "scripts/player.gd",
+  "scripts/polarity_badge.gd",
+  "scripts/polarity_link_visual.gd",
+  "scripts/rune_stone_field.gd",
+  "scripts/rune_stone_visual.gd",
+  "scripts/star_core_bay_lock_mark.gd",
+  "scripts/star_core_bay_visual.gd",
+  "scripts/star_core_carrier.gd",
+  "scripts/star_core_visual.gd",
+  "scripts/start_menu.gd",
+  "scripts/terrain_strip.gd",
+  "scripts/ui/interaction_key_hint.gd",
+  "scripts/ui/level_flow.gd",
+  "scripts/ui/pause_menu.gd"
+ ],
+ "reachable_asset_count": 163,
+ "assets": {
+  "assets/audio_movement_20261117/": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/README.md": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/SOURCE_MANIFEST.json": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/footstep_stone_1.wav": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/footstep_stone_1.wav.import": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/footstep_stone_2.wav": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/footstep_stone_2.wav.import": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/footstep_stone_3.wav": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/footstep_stone_3.wav.import": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/footstep_stone_4.wav": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/footstep_stone_4.wav.import": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/footstep_stone_5.wav": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/footstep_stone_5.wav.import": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/footstep_stone_6.wav": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/footstep_stone_6.wav.import": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/reassembly_A_reverse.wav": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/level03/l3_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/reassembly_A_reverse.wav.import": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/reassembly_B_pauliuw.wav": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/reassembly_B_pauliuw.wav.import": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/source_evidence/cc0_1_0_deed.html": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/source_evidence/kenney_impact-sounds_LICENSE.txt": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/source_evidence/oga_fantozzi_footsteps.html": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/source_evidence/oga_fantozzi_footsteps_page.jpg": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/source_evidence/oga_fantozzi_footsteps_page.jpg.import": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/audio_movement_20261117/source_evidence/oga_pauliuw_stone_moved.html": [
+   "scripts/audio/player_footstep_audio.gd",
+   "scripts/narrative/opening_cinematic.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/art_assets/arch_stone.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/art_assets/base_sky_640x360.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/art_assets/g1_left_bridge.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/art_assets/g2_right_bridge.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/art_assets/g3_left_hall_island.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/art_assets/g4_far_courtyard.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/art_assets/g5_right_temple_island.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/art_assets/rock_remnants_static.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/common/debris_central.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/common/debris_cluster.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/common/debris_low.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/common/debris_tiny.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/common/sea_main.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/common/sea_near.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/common/shadow_central.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/common/shadow_cluster.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/common/shadow_low.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/common/sky_bank_left.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/common/sky_bank_right.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/common/sky_high_chip.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/common/sky_left_wisp.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/common/sky_low_wisp_l.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/common/sky_low_wisp_r.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_ds03/common/sky_mid_wisp.png": [
+   "scripts/backgrounds/cloud_ruins_ds03_data.gd"
+  ],
+  "assets/backgrounds/cloud_ruins_v7.png": [
+   "scenes/level_01.tscn"
+  ],
+  "assets/bridge_stone_v1/columns/doric_column_base_basesquare.png": [
+   "scenes/decorations/doric_column_base.tscn"
+  ],
+  "assets/bridge_stone_v1/columns/doric_column_broken_basesquare.png": [
+   "scenes/decorations/doric_column_broken.tscn"
+  ],
+  "assets/bridge_stone_v1/columns/doric_column_tall_basesquare.png": [
+   "scenes/decorations/doric_column_tall.tscn"
+  ],
+  "assets/bridge_stone_v1/generated/l1_far_496x64.png": [
+   "scenes/level_01.tscn"
+  ],
+  "assets/bridge_stone_v1/generated/l1_high_336x144.png": [
+   "scenes/level_01.tscn"
+  ],
+  "assets/bridge_stone_v1/generated/l1_start_1024x64.png": [
+   "scenes/level_01.tscn"
+  ],
+  "assets/bridge_stone_v1/generated/l2_ground_1792x40.png": [
+   "scenes/level_02.tscn",
+   "scripts/level03/l3_terrain.gd"
+  ],
+  "assets/characters/male_hero-fall.png": [
+   "scripts/player.gd"
+  ],
+  "assets/characters/male_hero-fall_loop.png": [
+   "scripts/player.gd"
+  ],
+  "assets/characters/male_hero-idle.png": [
+   "scenes/player.tscn",
+   "scripts/player.gd"
+  ],
+  "assets/characters/male_hero-jump.png": [
+   "scripts/player.gd"
+  ],
+  "assets/characters/male_hero-run.png": [
+   "scripts/player.gd"
+  ],
+  "assets/characters/male_hero-walk.png": [
+   "scripts/player.gd"
+  ],
+  "assets/checkpoint_exit/checkpoint_active.png": [
+   "scripts/level_checkpoint.gd"
+  ],
+  "assets/checkpoint_exit/checkpoint_inactive.png": [
+   "scripts/level_checkpoint.gd"
+  ],
+  "assets/checkpoint_exit/exit_completed.png": [
+   "scripts/level_exit.gd"
+  ],
+  "assets/checkpoint_exit/exit_open.png": [
+   "scripts/level_exit.gd"
+  ],
+  "assets/checkpoint_exit/gate_portal_fx_v2_8f.png": [
+   "scripts/level_exit.gd"
+  ],
+  "assets/doric_columns/doric_column_fallen.png": [
+   "scenes/decorations/doric_column_fallen.tscn"
+  ],
+  "assets/experiments/polarity_golem/enemy/blue/golem_1_attack.png": [
+   "scripts/level03/l3_guard.gd"
+  ],
+  "assets/experiments/polarity_golem/enemy/blue/golem_1_die.png": [
+   "scripts/level03/l3_guard.gd"
+  ],
+  "assets/experiments/polarity_golem/enemy/blue/golem_1_hurt.png": [
+   "scripts/level03/l3_guard.gd"
+  ],
+  "assets/experiments/polarity_golem/enemy/blue/golem_1_idle.png": [
+   "scripts/level03/l3_guard.gd"
+  ],
+  "assets/experiments/polarity_golem/enemy/blue/golem_1_walk.png": [
+   "scripts/level03/l3_guard.gd"
+  ],
+  "assets/experiments/polarity_golem/enemy/orange/golem_1_attack.png": [
+   "scripts/level03/l3_guard.gd"
+  ],
+  "assets/experiments/polarity_golem/enemy/orange/golem_1_die.png": [
+   "scripts/level03/l3_guard.gd"
+  ],
+  "assets/experiments/polarity_golem/enemy/orange/golem_1_hurt.png": [
+   "scripts/level03/l3_guard.gd"
+  ],
+  "assets/experiments/polarity_golem/enemy/orange/golem_1_idle.png": [
+   "scripts/level03/l3_guard.gd"
+  ],
+  "assets/experiments/polarity_golem/enemy/orange/golem_1_walk.png": [
+   "scripts/level03/l3_guard.gd"
+  ],
+  "assets/experiments/polarity_golem/hero/male_hero-combo_1.png": [
+   "scripts/experiments/polarity_golem_player.gd"
+  ],
+  "assets/experiments/polarity_golem/hero/male_hero-combo_1_end.png": [
+   "scripts/experiments/polarity_golem_player.gd"
+  ],
+  "assets/fonts/tutorial_zh.ttf": [
+   "scripts/level03/l3_cinematic.gd",
+   "scripts/level03/l3_guard.gd",
+   "scripts/level03/l3_hud.gd",
+   "scripts/level_02_hud.gd",
+   "scripts/level_checkpoint.gd",
+   "scripts/level_exit.gd",
+   "scripts/level_guide.gd",
+   "scripts/level_hud.gd",
+   "scripts/narrative/guide_echo.gd",
+   "scripts/start_menu.gd",
+   "scripts/ui/pause_menu.gd"
+  ],
+  "assets/guide_echo_20261113/guide_echo_idle_6f_s40.png": [
+   "scenes/narrative/guide_echo.tscn",
+   "scripts/level03/l3_cinematic.gd",
+   "scripts/narrative/guide_echo.gd"
+  ],
+  "assets/interaction_projection_20261117/layered_core/layered_core_approved_active_256x32.png": [
+   "scripts/narrative/conductive_activation.gd",
+   "scripts/narrative/layered_core_material.gd"
+  ],
+  "assets/interaction_projection_20261117/layered_core/layered_core_approved_inactive_256x32.png": [
+   "scripts/narrative/conductive_activation.gd",
+   "scripts/narrative/layered_core_material.gd"
+  ],
+  "assets/interaction_projection_20261117/layered_core/layered_core_approved_mask_256x32.png": [
+   "scripts/narrative/conductive_activation.gd",
+   "scripts/narrative/layered_core_material.gd"
+  ],
+  "assets/interaction_projection_20261117/layered_core/layered_core_facetflow_arrival_256x32.png": [
+   "scripts/narrative/conductive_activation.gd",
+   "scripts/narrative/layered_core_material.gd"
+  ],
+  "assets/interaction_projection_20261117/layered_core/layered_core_first_facetids_256x32.png": [
+   "scripts/narrative/conductive_activation.gd"
+  ],
+  "assets/interaction_projection_20261117/layered_core/layered_linked_candidate_active_200x60.png": [
+   "scripts/narrative/conductive_activation.gd"
+  ],
+  "assets/interaction_projection_20261117/layered_core/layered_linked_candidate_arrival_200x60.png": [
+   "scripts/narrative/conductive_activation.gd"
+  ],
+  "assets/interaction_projection_20261117/layered_core/layered_linked_candidate_base_200x60.png": [
+   "scripts/narrative/conductive_activation.gd"
+  ],
+  "assets/interaction_projection_20261117/layered_core/layered_linked_candidate_facetid_200x60.png": [
+   "scripts/narrative/conductive_activation.gd"
+  ],
+  "assets/interaction_projection_20261117/layered_core/layered_linked_candidate_mask_200x60.png": [
+   "scripts/narrative/conductive_activation.gd"
+  ],
+  "assets/interaction_projection_20261117/voice_mid/": [
+   "scripts/narrative/dialogue_voice.gd"
+  ],
+  "assets/interaction_projection_20261117/voice_mid/echo_mumble_1.wav": [
+   "scripts/narrative/dialogue_voice.gd"
+  ],
+  "assets/interaction_projection_20261117/voice_mid/echo_mumble_1.wav.import": [
+   "scripts/narrative/dialogue_voice.gd"
+  ],
+  "assets/interaction_projection_20261117/voice_mid/echo_mumble_2.wav": [
+   "scripts/narrative/dialogue_voice.gd"
+  ],
+  "assets/interaction_projection_20261117/voice_mid/echo_mumble_2.wav.import": [
+   "scripts/narrative/dialogue_voice.gd"
+  ],
+  "assets/interaction_projection_20261117/voice_mid/echo_mumble_3.wav": [
+   "scripts/narrative/dialogue_voice.gd"
+  ],
+  "assets/interaction_projection_20261117/voice_mid/echo_mumble_3.wav.import": [
+   "scripts/narrative/dialogue_voice.gd"
+  ],
+  "assets/interaction_projection_20261117/voice_mid/manifest.json": [
+   "scripts/narrative/dialogue_voice.gd"
+  ],
+  "assets/level02_conductive_stone/conductive_lip_40x12.png": [
+   "scenes/level_02.tscn"
+  ],
+  "assets/level02_conductive_stone/conductive_roof_256x32.png": [
+   "scenes/level_02.tscn"
+  ],
+  "assets/level02_conductive_stone/conductive_sill_160x60.png": [
+   "scenes/level_02.tscn"
+  ],
+  "assets/level02_conductive_stone/return_platform_48x12.png": [
+   "scenes/level_02.tscn"
+  ],
+  "assets/level03_gate_depth/gate_aperture_mask.png": [
+   "scripts/level03/l3_gate.gd"
+  ],
+  "assets/level03_gate_depth/gate_fixed.png": [
+   "scripts/level03/l3_gate.gd"
+  ],
+  "assets/level03_gate_depth/gate_passage.png": [
+   "scripts/level03/l3_gate.gd"
+  ],
+  "assets/level03_gate_depth/gate_passage_interior.png": [
+   "scripts/level03/l3_gate.gd"
+  ],
+  "assets/level03_gate_depth/gate_passage_shadow.png": [
+   "scripts/level03/l3_gate.gd"
+  ],
+  "assets/level03_gate_depth/gate_plate_closed.png": [
+   "scripts/level03/l3_gate.gd"
+  ],
+  "assets/level03_gate_depth/gate_plate_filled.png": [
+   "scripts/level03/l3_gate.gd"
+  ],
+  "assets/level03_gate_depth/gate_right_foreground.png": [
+   "scripts/level03/l3_gate.gd"
+  ],
+  "assets/level03_prototype/audio_charge_v2.ogg": [
+   "scripts/level03/l3_audio.gd"
+  ],
+  "assets/level03_prototype/audio_core_seat.ogg": [
+   "scripts/level03/l3_audio.gd"
+  ],
+  "assets/level03_prototype/audio_float_settle.ogg": [
+   "scripts/level03/l3_audio.gd"
+  ],
+  "assets/level03_prototype/audio_float_warn.ogg": [
+   "scripts/level03/l3_audio.gd"
+  ],
+  "assets/level03_prototype/audio_slam_v5.ogg": [
+   "scripts/level03/l3_audio.gd"
+  ],
+  "assets/level03_prototype/echo_projection.png": [
+   "scripts/level03/l3_cinematic.gd"
+  ],
+  "assets/level03_prototype/emote_exclaim.png": [
+   "scripts/level03/l3_cinematic.gd"
+  ],
+  "assets/level03_prototype/emote_question.png": [
+   "scripts/level03/l3_cinematic.gd"
+  ],
+  "assets/level03_prototype/fixed_core_active.png": [
+   "scripts/level03/l3_fixed_device.gd"
+  ],
+  "assets/level03_prototype/fixed_core_inactive.png": [
+   "scripts/level03/l3_fixed_device.gd"
+  ],
+  "assets/level03_prototype/float_block_64.png": [
+   "scripts/level03/l3_float_block.gd"
+  ],
+  "assets/level03_prototype/float_block_80.png": [
+   "scripts/level03/l3_float_block.gd"
+  ],
+  "assets/level03_prototype/float_block_96.png": [
+   "scripts/level03/l3_float_block.gd"
+  ],
+  "assets/level03_prototype/float_glow_64_8f.png": [
+   "scripts/level03/l3_float_block.gd",
+   "scripts/level_03.gd"
+  ],
+  "assets/level03_prototype/float_glow_80_8f.png": [
+   "scripts/level03/l3_float_block.gd"
+  ],
+  "assets/level03_prototype/float_glow_96_8f.png": [
+   "scripts/level03/l3_float_block.gd"
+  ],
+  "assets/level03_prototype/gate_closed_empty.png": [
+   "scenes/level_03.tscn"
+  ],
+  "assets/level03_prototype/guard_field_cyan_12f.png": [
+   "scripts/level03/l3_guard.gd"
+  ],
+  "assets/level03_prototype/guard_field_gold_12f.png": [
+   "scripts/level03/l3_guard.gd"
+  ],
+  "assets/level03_prototype/key_core_12f.png": [
+   "scripts/level03/l3_guard.gd",
+   "scripts/level_03.gd"
+  ],
+  "assets/level03_prototype/weakpoint_cyan_64f.png": [
+   "scripts/level03/l3_guard.gd"
+  ],
+  "assets/level03_prototype/weakpoint_gold_64f.png": [
+   "scripts/level03/l3_guard.gd"
+  ],
+  "assets/map/background2.png": [
+   "scenes/level_01.tscn"
+  ],
+  "assets/map/background4.png": [
+   "scenes/level_01.tscn"
+  ],
+  "assets/map/ruin_platform_tiles.png": [
+   "scripts/level02_block.gd",
+   "scripts/level_terrain_block.gd"
+  ],
+  "assets/menu/main_menu_focus_quit_640.png": [
+   "scripts/start_menu.gd"
+  ],
+  "assets/menu/main_menu_focus_settings_640.png": [
+   "scripts/start_menu.gd"
+  ],
+  "assets/menu/main_menu_focus_start_640.png": [
+   "scripts/start_menu.gd"
+  ],
+  "assets/menu/main_menu_quit_640.png": [
+   "scripts/start_menu.gd"
+  ],
+  "assets/menu/main_menu_ui_640.png": [
+   "scripts/start_menu.gd"
+  ],
+  "assets/menu/settings_panel_640.png": [
+   "scripts/start_menu.gd"
+  ],
+  "assets/menu/settings_return_focus_640.png": [
+   "scripts/start_menu.gd"
+  ],
+  "assets/rune_stone/rune_stone_cyan.png": [
+   "scenes/rune_stone_visual.tscn",
+   "scripts/rune_stone_visual.gd"
+  ],
+  "assets/rune_stone/rune_stone_gold.png": [
+   "scenes/rune_stone_visual.tscn",
+   "scripts/rune_stone_visual.gd"
+  ],
+  "assets/rune_stone/rune_stone_sleep.png": [
+   "scenes/rune_stone_visual.tscn",
+   "scripts/rune_stone_visual.gd"
+  ],
+  "assets/star_core/star_core_locked.png": [
+   "scripts/star_core_visual.gd"
+  ],
+  "assets/star_core/star_core_locked_12f.png": [
+   "scripts/star_core_visual.gd"
+  ],
+  "assets/star_core/star_core_negative.png": [
+   "scripts/star_core_visual.gd"
+  ],
+  "assets/star_core/star_core_negative_12f.png": [
+   "scripts/star_core_visual.gd"
+  ],
+  "assets/star_core/star_core_positive.png": [
+   "scripts/star_core_visual.gd"
+  ],
+  "assets/star_core/star_core_positive_12f.png": [
+   "scripts/star_core_visual.gd"
+  ],
+  "assets/star_core_bay/star_core_bay_base.png": [
+   "scenes/star_core_bay_visual.tscn",
+   "scripts/star_core_bay_visual.gd"
+  ],
+  "assets/star_core_bay/star_core_bay_glass.png": [
+   "scenes/star_core_bay_visual.tscn",
+   "scripts/star_core_bay_visual.gd"
+  ],
+  "assets/talisman/glow_cyan_4f.png": [
+   "scripts/player.gd"
+  ],
+  "assets/talisman/glow_gold_4f.png": [
+   "scenes/player.tscn",
+   "scripts/player.gd"
+  ],
+  "assets/talisman/switch_ring_cyan_4f.png": [
+   "scripts/player.gd"
+  ],
+  "assets/talisman/switch_ring_gold_4f.png": [
+   "scripts/player.gd"
+  ],
+  "assets/talisman/talisman_cyan.png": [
+   "scripts/player.gd"
+  ],
+  "assets/talisman/talisman_gold.png": [
+   "scenes/player.tscn",
+   "scripts/player.gd"
+  ],
+  "assets/tutorial_stele/tutorial_stele_grey.png": [
+   "scenes/narrative/guide_echo.tscn",
+   "scripts/narrative/guide_echo.gd"
+  ]
+ },
+ "reachable_previews": {},
+ "other_refs": {}
+}

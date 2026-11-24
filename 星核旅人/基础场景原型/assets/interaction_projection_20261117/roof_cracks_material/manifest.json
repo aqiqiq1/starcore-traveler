@@ -1,0 +1,111 @@
+{
+  "title": "L2 ConductiveRoof fine multi-block crack network",
+  "created": "2026-11-18",
+  "status": "complete redesign after the refine version was rejected; 18 hand-placed hairline fragments, no three main trunks",
+  "previous_refine": "previous_refine_20261118/ (kept unchanged, marked superseded)",
+  "previous_first_material": "previous_20261118/ (kept unchanged)",
+  "placement": "Aligned 1:1 with assets/level02_conductive_stone/conductive_roof_256x32.png; overlay only, source PNG untouched.",
+  "license": "Original pixel art authored in this project; no third-party pixels.",
+  "reference_exemption": "Only this L2 activation presentation uses the user's note-7e10 direct-trial exemption; no mechanism reference was checked or claimed.",
+  "layers": {
+    "dark": {
+      "file": "roof_cracks_dark_256x32.png",
+      "role": "1 px crack cores + one direction-aware soft shadow pixel + sparse chipped stone lip; always drawn while locked",
+      "sha256": "60f7bfe4108020cd0e6238f7b3f7ffd5bf998538b0c54881fc4cec6bfa09b54e",
+      "alpha_bounds": {
+        "pixels": 210,
+        "alpha_min": 150,
+        "alpha_max": 242,
+        "x_min": 9,
+        "x_max": 235,
+        "y_min": 4,
+        "y_max": 29
+      },
+      "palette": {
+        "core": [
+          28,
+          20,
+          32,
+          242
+        ],
+        "shadow": [
+          58,
+          46,
+          54,
+          150
+        ],
+        "lip": [
+          207,
+          194,
+          181,
+          200
+        ],
+        "lip_bright": [
+          212,
+          199,
+          186,
+          215
+        ]
+      }
+    },
+    "glow": {
+      "file": "roof_cracks_glow_256x32.png",
+      "role": "purple hairline network, mid main / some deep / few pale; revealed 0.52-0.80 s and held",
+      "sha256": "ec89401a63e486054112f373beaef523277c6e6595273550721b0af11451af96",
+      "alpha_bounds": {
+        "pixels": 103,
+        "alpha_min": 235,
+        "alpha_max": 246,
+        "x_min": 10,
+        "x_max": 234,
+        "y_min": 4,
+        "y_max": 29
+      },
+      "palette": {
+        "mid": [
+          167,
+          93,
+          229,
+          242
+        ],
+        "deep": [
+          122,
+          70,
+          176,
+          235
+        ],
+        "pale": [
+          205,
+          158,
+          245,
+          246
+        ]
+      }
+    }
+  },
+  "source_roof": {
+    "file": "assets/level02_conductive_stone/conductive_roof_256x32.png",
+    "sha256": "a0908de7f920f36b65930e0462c1a0c494c946e24033292a92010b9ca0db0e2c"
+  },
+  "counts": {
+    "fragments": 18,
+    "core_pixels": 106,
+    "shadow_pixels": 92,
+    "lip_pixels": 12,
+    "glow_pixels": 103,
+    "mid_pixels": 71,
+    "deep_pixels": 26,
+    "pale_pixels": 6,
+    "dark_break_pixels": 3
+  },
+  "design_notes": [
+    "18 hand-placed fragments, 4-10 px, inside individual top/brick/lip/base blocks; no crack crosses a joint or spans the platform.",
+    "No three vertical main trunks, no equidistant crack centers, no equal-length anchor per group. A1 (10 px), C1/I1 (7-9 px), and short 4-6 px fragments differ in orientation and length.",
+    "Mixed orientations: up-right, down-right, horizontal, vertical; no translated or mirrored duplicate.",
+    "Local pairs/branches exist (A1+A3, E1+E2, I1+I2, B1/B2/B3) and other areas are left blank. No tree/lightning/circuit/text motif.",
+    "Most cracks are 1 px with a 1 px semi-transparent shadow; no 2-3 px black main body and no full-length lip outline. 12 sparse lip pixels only.",
+    "Glow: mid main, some deep, few pale, with a few deliberate dark breaks; the purple network is the first visual impression, not 2-3 bright spots.",
+    "All material is inside y4..29 (>=2 px from the roof top/bottom outline)."
+  ],
+  "regenerate": "D:/minic/envs/2024212971/python.exe make_roof_cracks_material.py"
+}

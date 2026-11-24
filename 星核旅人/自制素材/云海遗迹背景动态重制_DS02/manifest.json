@@ -1,0 +1,110 @@
+{
+  "name": "云海遗迹背景动态重制_DS02",
+  "status": "review build, not integrated",
+  "canvas": [
+    640,
+    360
+  ],
+  "preview_scale": 2,
+  "sources": {
+    "v7": {
+      "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\background_only_v7.png",
+      "sha256": "2d65a27d432ce60d8562c71cf754049d49a106d08e63348d78cb08f4c8387aae"
+    },
+    "ds01_layers": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景拆层试作_DS01\\layers",
+    "v6_geometry": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\generate_background_v6.py",
+    "protected_baseline": "C:\\Users\\aqiqiqi\\AppData\\Local\\Temp\\opencode\\background-ds02-baseline-6fa26b4f59f6467cb2710157ac337880\\hashes.json"
+  },
+  "stack_order": [
+    "layers/base_static.png",
+    "sky_bank_*.png / sky_*_wisp*.png",
+    "layers/sea_main.png + shadow_central/cluster (clipped)",
+    "layers/arch_overlay.png",
+    "layers/island_overlay.png",
+    "layers/sea_near.png + shadow_low (clipped)",
+    "layers/debris_central/cluster/tiny/low.png"
+  ],
+  "sea": {
+    "period_px": 1278,
+    "main_speed_px_s": 4.2,
+    "near_speed_px_s": 7.2,
+    "mirror_half_px": 638,
+    "seam_method": "640px V7 mother + 638px same-value mirror; tile repeats at x=1278",
+    "seam_x_rule": "visible seam is at screen x=phase (phase=speed*t mod P); +phase moves content right",
+    "main_top_y_range": [
+      260,
+      282
+    ],
+    "near_top_y_range": [
+      289,
+      312
+    ]
+  },
+  "preview": {
+    "html": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\preview.html",
+    "serve": "python -m http.server 8765 --bind 127.0.0.1",
+    "query": "?t=8&pause=1&seams=1&ui=0"
+  },
+  "shadows": {
+    "direction": "upper-left light, shadow lower-right",
+    "rule": "flattened contact footprint (largest component + horizontal smear + 5 alpha steps), clipped source-atop to sea; height changes offset/opacity/1-2px size",
+    "sprites": [
+      {
+        "name": "shadow_central",
+        "size": [
+          40,
+          12
+        ],
+        "alpha_peak": 0.19,
+        "surface": "sea_main"
+      },
+      {
+        "name": "shadow_cluster",
+        "size": [
+          30,
+          9
+        ],
+        "alpha_peak": 0.16,
+        "surface": "sea_main"
+      },
+      {
+        "name": "shadow_low",
+        "size": [
+          28,
+          9
+        ],
+        "alpha_peak": 0.3,
+        "surface": "sea_near"
+      }
+    ]
+  },
+  "checks": [
+    "reference.png",
+    "diff_vs_v7_stats.json",
+    "seam_texture_check.json",
+    "checks/flow_0_8_12.png",
+    "checks/flow_direction_probe.png",
+    "checks/flow_direction_report.json",
+    "checks/seam_render_check.json",
+    "checks/seam_main_before/after_closeup.png",
+    "checks/seam_near_before/after_closeup.png",
+    "checks/time_trajectory.json",
+    "checks/motion_audit.json",
+    "checks/protected_hashes_check.json",
+    "checks/shadow_central_3heights.png",
+    "checks/shadow_low_3heights.png",
+    "checks/shadow_context_8s.png",
+    "checks/sky_wrap_3panel.png",
+    "checks/browser_direction_check.json",
+    "checks/browser_2x_t0.jpg",
+    "checks/browser_2x_t8.jpg",
+    "checks/browser_2x_t12.jpg",
+    "checks/browser_seam_before.jpg",
+    "checks/browser_seam_after.jpg",
+    "diff_vs_v7_report.md"
+  ],
+  "protected": {
+    "total": 35,
+    "unchanged": 35
+  }
+}

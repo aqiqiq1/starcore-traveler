@@ -1,0 +1,25 @@
+size after 00                                  got=(640, 360)         want=(640, 360)         OK
+size clean 06                                  got=(640, 360)         want=(640, 360)         OK
+pilaster 2px lit edge x=580                    got=(143, 128, 126)    want=(143, 128, 126)    OK
+pilaster 2px lit edge x=581                    got=(143, 128, 126)    want=(143, 128, 126)    OK
+pilaster shaft x=585                           got=(122, 108, 111)    want=(122, 108, 111)    OK
+pilaster 1px dark edge x=597                   got=(60, 52, 57)       want=(60, 52, 57)       OK
+pilaster cast shadow x=598                     got=(82, 73, 77)       want=(82, 73, 77)       OK
+pilaster x=585 above belt                      got=(122, 108, 111)    want=(122, 108, 111)    OK
+pilaster x=585 below belt                      got=(122, 108, 111)    want=(122, 108, 111)    OK
+deep bay TONE_A x=550 y=150                    got=(79, 69, 73)       want=(79, 69, 73)       OK
+middle bay TONE_B x=610 y=150                  got=(94, 84, 88)       want=(94, 84, 88)       OK
+field TONE_B x=470 y=150                       got=(94, 84, 88)       want=(94, 84, 88)       OK
+base line y=314                                got=(198, 187, 174)    want=(198, 187, 174)    OK
+base stone y=315                               got=(94, 84, 88)       want=(94, 84, 88)       OK
+base stone y=317                               got=(94, 84, 88)       want=(94, 84, 88)       OK
+base contact y=319                             got=(53, 46, 50)       want=(53, 46, 50)       OK
+base footer y=320                              got=(79, 69, 73)       want=(79, 69, 73)       OK
+base footer y=321                              got=(79, 69, 73)       want=(79, 69, 73)       OK
+base last row y=322                            got=(60, 52, 57)       want=(60, 52, 57)       OK
+base moss/stain pixels (1x, green-tinted): 6 [(473, 314, (138, 154, 121)), (469, 315, (105, 126, 107)), (470, 315, (105, 126, 107)), (471, 315, (105, 126, 107)), (600, 317, (85, 92, 84)), (600, 318, (76, 84, 75))]
+pure black pixels in the wall area (06): 0
+changed pixels in return/corner strip 412..429: 0
+gatehouse pixels showing the new wall tones: 1547
+
+RESULT OK (fail=0)

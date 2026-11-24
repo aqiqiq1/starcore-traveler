@@ -1,0 +1,244 @@
+{
+  "name": "云海遗迹背景拆层试作_DS01",
+  "status": "trial, not integrated",
+  "canvas": [
+    640,
+    360
+  ],
+  "source": {
+    "concept_png": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\background_only_v7.png",
+    "concept_size": [
+      1280,
+      720
+    ],
+    "project_png": "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_v7.png",
+    "project_size": [
+      640,
+      360
+    ],
+    "project_equals_concept_640_nearest": true,
+    "concept_sha256": "2d65a27d432ce60d8562c71cf754049d49a106d08e63348d78cb08f4c8387aae",
+    "project_sha256": "0c81488d74eb87b0219ea3ead2aa31f074c1a371ab9a7aba0984b67a4a0f9092"
+  },
+  "stack_order": [
+    {
+      "order": 0,
+      "name": "base_static",
+      "file": "layers/base_static.png",
+      "size": [
+        640,
+        360
+      ],
+      "initial_offset": [
+        0,
+        0
+      ],
+      "kind": "static base"
+    },
+    {
+      "order": 1,
+      "name": "sky_clouds",
+      "file": "layers/sky_clouds.png",
+      "size": [
+        664,
+        360
+      ],
+      "initial_offset": [
+        -12,
+        0
+      ],
+      "kind": "sky cloud alpha",
+      "safe_range": {
+        "dx": 6,
+        "dy": 0
+      },
+      "padding": {
+        "left": 12,
+        "right": 12,
+        "method": "horizontal continuation of the edge column (alpha + RGB); original 640 columns unchanged"
+      }
+    },
+    {
+      "order": 2,
+      "name": "cloud_sea_far",
+      "file": "layers/cloud_sea_far.png",
+      "size": [
+        656,
+        360
+      ],
+      "initial_offset": [
+        -8,
+        0
+      ],
+      "kind": "upper dark cloud-sea band",
+      "safe_range": {
+        "dx": 2,
+        "dy": 1
+      }
+    },
+    {
+      "order": 3,
+      "name": "cloud_sea_near",
+      "file": "layers/cloud_sea_near.png",
+      "size": [
+        656,
+        360
+      ],
+      "initial_offset": [
+        -8,
+        0
+      ],
+      "kind": "near light cloud-sea band",
+      "safe_range": {
+        "dx": 4,
+        "dy": 0
+      }
+    },
+    {
+      "order": 4,
+      "name": "debris_central",
+      "file": "layers/debris_central.png",
+      "size": [
+        39,
+        39
+      ],
+      "initial_offset": [
+        303,
+        207
+      ],
+      "kind": "floating shard",
+      "safe_range": {
+        "dx": 1,
+        "dy": 2
+      }
+    },
+    {
+      "order": 5,
+      "name": "debris_cluster",
+      "file": "layers/debris_cluster.png",
+      "size": [
+        31,
+        22
+      ],
+      "initial_offset": [
+        264,
+        243
+      ],
+      "kind": "two small floating shards",
+      "safe_range": {
+        "dx": 1,
+        "dy": 1
+      }
+    },
+    {
+      "order": 6,
+      "name": "debris_tiny",
+      "file": "layers/debris_tiny.png",
+      "size": [
+        9,
+        11
+      ],
+      "initial_offset": [
+        379,
+        235
+      ],
+      "kind": "tiny floating chip",
+      "safe_range": {
+        "dx": 0,
+        "dy": 1
+      }
+    },
+    {
+      "order": 7,
+      "name": "debris_low",
+      "file": "layers/debris_low.png",
+      "size": [
+        31,
+        33
+      ],
+      "initial_offset": [
+        231,
+        289
+      ],
+      "kind": "low floating rock in front of sea",
+      "safe_range": {
+        "dx": 1,
+        "dy": 1
+      }
+    }
+  ],
+  "masks": {
+    "sky_clouds": {
+      "pixels": 14136,
+      "bbox": [
+        0,
+        43,
+        640,
+        125
+      ]
+    },
+    "cloud_sea_far": {
+      "pixels": 18071,
+      "bbox": [
+        0,
+        260,
+        640,
+        316
+      ]
+    },
+    "cloud_sea_near": {
+      "pixels": 36218,
+      "bbox": [
+        0,
+        290,
+        640,
+        360
+      ]
+    },
+    "debris_central": {
+      "pixels": 768,
+      "bbox": [
+        303,
+        207,
+        342,
+        246
+      ]
+    },
+    "debris_cluster": {
+      "pixels": 260,
+      "bbox": [
+        264,
+        243,
+        295,
+        265
+      ]
+    },
+    "debris_tiny": {
+      "pixels": 57,
+      "bbox": [
+        379,
+        235,
+        388,
+        246
+      ]
+    },
+    "debris_low": {
+      "pixels": 522,
+      "bbox": [
+        231,
+        289,
+        262,
+        322
+      ]
+    }
+  },
+  "hidden_cloud_under_low_rock_pixels": 522,
+  "bridge_reconstructed_pixels": 3282,
+  "notes": {
+    "sea_split": "two sublayers only: upper dark band and near light band; they occlude at their shared contour and need different speeds",
+    "sky_edge_padding": "12px horizontal continuation on the sky-cloud layer; initial offset -12 keeps V7 alignment. At dx=6 the margin|original boundary sits at screen x=6, but both sides repeat the same edge column, so no cut edge or sky strip is visible; 6px of margin stays on each side",
+    "edge_padding": "8px horizontal edge-clamp margin on sea layers; initial offset -8 keeps V7 alignment",
+    "static_kept": "bridges, columns, left island/courtyard, right floating temple island, cloud arches, pale far slab, shard touching broken column",
+    "inpaint": "base under extracted masks + cloud tones rebuilt under the low rock; only originally occluded pixels"
+  }
+}

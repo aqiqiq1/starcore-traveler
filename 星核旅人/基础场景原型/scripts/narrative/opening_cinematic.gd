@@ -9,9 +9,11 @@ extends Node
 ## public page API opens the three existing pages (246x60 bubble, 34 cps).
 ##
 ## Presentation is the already-approved level-03 language: 44 px letterbox,
-## Space short-press completes/advances, holding Space for 0.6 s skips, and
-## control returns only after Space is released. The node is PAUSABLE, so the
-## tree pause freezes its bar easing, hold timer and page reveal together.
+## F completes/advances (the same "tutorial_next" action as GuideEcho), and
+## holding Space for 0.6 s skips the whole segment. A short Space tap never
+## advances a line. Control returns only after Space is released. The node is
+## PAUSABLE, so the tree pause freezes its bar easing, hold timer and page
+## reveal together.
 ##
 ## Footsteps: the shared footstep helper intentionally rejects scripted input
 ## overrides, so this controller reuses the same six existing CC0 stone-step
@@ -60,6 +62,7 @@ var _root: Control = null
 var _top_bar: ColorRect = null
 var _bottom_bar: ColorRect = null
 var _bar_height: float = 0.0
+var _skip_bar: SkipHoldBar = null
 
 var _phase: Phase = Phase.IDLE
 var _active: bool = false
@@ -135,6 +138,13 @@ func _build_ui() -> void:
 	_bottom_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_bottom_bar)
 
+	# Hold-to-skip feedback only (bottom-right, shown only while Space charges).
+	# It lives in this film's own UI layer and never touches the hold timer,
+	# await-release boundary or input handling.
+	_skip_bar = SkipHoldBar.new()
+	_skip_bar.name = "SkipHoldBar"
+	_root.add_child(_skip_bar)
+
 	_ui.visible = false
 
 
@@ -164,6 +174,8 @@ func start() -> bool:
 	_dialogue_attempting = false
 	_bar_height = 0.0
 	_apply_bar_height()
+	if _skip_bar != null:
+		_skip_bar.hide_progress()
 	_opening_start_x = _player.global_position.x
 	_stop_x = _echo.global_position.x - STOP_GAP
 
@@ -191,6 +203,8 @@ func _process(delta: float) -> void:
 		return
 
 	if _await_release:
+		if _skip_bar != null:
+			_skip_bar.hide_progress()
 		if not _space_held and not Input.is_physical_key_pressed(KEY_SPACE):
 			_complete_handoff()
 		return
@@ -204,6 +218,7 @@ func _process(delta: float) -> void:
 		if _space_time >= SKIP_HOLD:
 			_space_action_done = true
 			_request_skip()
+	_update_skip_bar()
 
 	match _phase:
 		Phase.BARS_IN:
@@ -300,6 +315,8 @@ func _begin_outro(skipped: bool) -> void:
 	_phase = Phase.OUTRO
 	_phase_time = 0.0
 	_skipped = skipped
+	if _skip_bar != null:
+		_skip_bar.hide_progress()
 	_stop_local_footsteps()
 	if _echo != null:
 		_echo.force_close()
@@ -328,6 +345,18 @@ func _apply_bar_height() -> void:
 		_bottom_bar.size.y = _bar_height
 
 
+## Presentation only: mirrors the real hold timer into the bottom-right bar.
+## Never changes _space_time, the skip request or the await-release boundary.
+func _update_skip_bar() -> void:
+	if _skip_bar == null:
+		return
+	if not _active or _space_action_done or _phase == Phase.OUTRO \
+			or _phase == Phase.AWAIT_RELEASE:
+		_skip_bar.hide_progress()
+		return
+	_skip_bar.update_hold(_space_held, _space_time, SKIP_HOLD)
+
+
 func _complete_finish() -> void:
 	if not _active:
 		return
@@ -337,6 +366,8 @@ func _complete_finish() -> void:
 	_ui.visible = false
 	_bar_height = 0.0
 	_apply_bar_height()
+	if _skip_bar != null:
+		_skip_bar.hide_progress()
 	_await_release = _space_held or Input.is_physical_key_pressed(KEY_SPACE)
 	if _await_release:
 		# Keep the movement override and the hidden objective until the same
@@ -356,6 +387,8 @@ func _complete_handoff() -> void:
 	_ui.visible = false
 	_bar_height = 0.0
 	_apply_bar_height()
+	if _skip_bar != null:
+		_skip_bar.hide_progress()
 	_stop_local_footsteps()
 	if _player != null:
 		_player.end_input_override()
@@ -382,6 +415,8 @@ func abort() -> void:
 	_ui.visible = false
 	_bar_height = 0.0
 	_apply_bar_height()
+	if _skip_bar != null:
+		_skip_bar.hide_progress()
 	_stop_local_footsteps()
 	if _player != null:
 		_player.end_input_override()
@@ -402,6 +437,8 @@ func handle_pause_opened() -> void:
 	_space_held = false
 	_space_time = 0.0
 	_space_action_done = false
+	if _skip_bar != null:
+		_skip_bar.hide_progress()
 	_stop_local_footsteps()
 	if not (_active or _await_release) or _player == null:
 		return
@@ -420,6 +457,8 @@ func handle_pause_resumed() -> void:
 	_space_held = false
 	_space_time = 0.0
 	_space_action_done = false
+	if _skip_bar != null:
+		_skip_bar.hide_progress()
 	if not (_active or _await_release) or _player == null:
 		return
 	_player.begin_input_override()
@@ -445,35 +484,46 @@ func _unhandled_input(event: InputEvent) -> void:
 	var key_event: InputEventKey = event as InputEventKey
 	if key_event.echo:
 		return
+	# F is the one dialogue key, shared with GuideEcho through tutorial_next.
+	# It completes the revealing line first, then advances; on the last page the
+	# echo closes and this film hands off without marking itself skipped.
+	if key_event.is_action_pressed(&"tutorial_next"):
+		if key_event.pressed and not _await_release:
+			_advance_page()
+		get_viewport().set_input_as_handled()
+		return
 	if int(key_event.physical_keycode) != int(KEY_SPACE) \
 			and int(key_event.keycode) != int(KEY_SPACE):
 		return
+	if _await_release:
+		if not key_event.pressed:
+			_space_held = false
+			if not Input.is_physical_key_pressed(KEY_SPACE):
+				_complete_handoff()
+		get_viewport().set_input_as_handled()
+		return
 	if key_event.pressed:
-		if _await_release:
-			get_viewport().set_input_as_handled()
-			return
 		_space_held = true
 		_space_time = 0.0
 		_space_action_done = false
 		get_viewport().set_input_as_handled()
 	else:
-		if _await_release:
-			_space_held = false
-			if not Input.is_physical_key_pressed(KEY_SPACE):
-				_complete_handoff()
-			get_viewport().set_input_as_handled()
-			return
-		if (
-			_space_held
-			and not _space_action_done
-			and _space_time < SKIP_HOLD
-			and _phase == Phase.DIALOGUE
-		):
-			_echo.advance_page()
-			if not _echo.is_dialogue_open():
-				_begin_outro(false)
+		# A short Space tap is deliberately inert; only the SKIP_HOLD timer
+		# (_process) can skip, and it skips the whole segment.
 		_space_held = false
+		if _skip_bar != null:
+			_skip_bar.hide_progress()
 		get_viewport().set_input_as_handled()
+
+
+func _advance_page() -> void:
+	if _phase != Phase.DIALOGUE or _echo == null:
+		return
+	if not _echo.is_dialogue_open():
+		return
+	_echo.advance_page()
+	if not _echo.is_dialogue_open():
+		_begin_outro(false)
 
 
 # --- Existing stone-step bank, scripted run only ---------------------------
@@ -660,3 +710,37 @@ func is_ui_visible() -> bool:
 
 func get_dialogue_echo() -> GuideEcho:
 	return _echo
+
+
+# --- Hold-to-skip bar read-only helpers (tests / captures) ------------------
+
+func is_skip_bar_visible() -> bool:
+	return _skip_bar != null and _skip_bar.visible
+
+
+func get_skip_bar_progress() -> float:
+	return _skip_bar.get_progress() if _skip_bar != null else 0.0
+
+
+func get_skip_bar_fill_width() -> float:
+	return _skip_bar.get_fill_width() if _skip_bar != null else 0.0
+
+
+func get_skip_bar_rect() -> Rect2:
+	return _skip_bar.get_bar_rect() if _skip_bar != null else Rect2()
+
+
+func get_skip_bar_label_text() -> String:
+	return _skip_bar.get_label_text() if _skip_bar != null else ""
+
+
+func get_skip_bar_label_rect() -> Rect2:
+	return _skip_bar.get_label_rect() if _skip_bar != null else Rect2()
+
+
+func get_skip_bar_label_font_size() -> int:
+	return _skip_bar.get_label_font_size() if _skip_bar != null else 0
+
+
+func get_skip_bar_style() -> StyleBoxFlat:
+	return _skip_bar.get_style() if _skip_bar != null else null

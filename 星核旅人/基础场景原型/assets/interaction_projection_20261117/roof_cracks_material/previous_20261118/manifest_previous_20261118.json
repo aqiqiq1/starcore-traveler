@@ -1,0 +1,117 @@
+{
+  "title": "L2 ConductiveRoof internal-crack material",
+  "created": "2026-11-18",
+  "placement": "Aligned 1:1 with assets/level02_conductive_stone/conductive_roof_256x32.png; overlay only, source PNG untouched.",
+  "license": "Original pixel art authored in this project; no third-party pixels.",
+  "reference_exemption": "Only the L2 activation presentation uses the user's note-7e10 direct-trial exemption; no mechanism reference was checked or claimed.",
+  "layers": {
+    "dark": {
+      "file": "roof_cracks_dark_256x32.png",
+      "role": "fissure opening + recess rim + interrupted chipped stone lip; always drawn while locked",
+      "sha256": "7b6c1c4253fcf73a3fd1940f430dca51b24af2da3ae7a10e3a6db64b9fa6b86e",
+      "alpha_bounds": {
+        "pixels": 260,
+        "alpha_min": 148,
+        "alpha_max": 228,
+        "x_min": 42,
+        "x_max": 215,
+        "y_min": 0,
+        "y_max": 27
+      },
+      "palette": {
+        "core": [
+          34,
+          25,
+          38,
+          228
+        ],
+        "rim": [
+          58,
+          46,
+          62,
+          148
+        ],
+        "lip": [
+          207,
+          194,
+          181,
+          205
+        ],
+        "lip_bright": [
+          211,
+          198,
+          185,
+          215
+        ]
+      }
+    },
+    "glow": {
+      "file": "roof_cracks_glow_256x32.png",
+      "role": "purple interior light; revealed left-to-right during 0.52-0.80 s, held after the 0.9 s one-shot",
+      "sha256": "c2783b3054fe3d26e18fa1056ba76683058ddca4103d39d56a9804423f5d932b",
+      "alpha_bounds": {
+        "pixels": 180,
+        "alpha_min": 48,
+        "alpha_max": 245,
+        "x_min": 43,
+        "x_max": 211,
+        "y_min": 2,
+        "y_max": 26
+      },
+      "palette": {
+        "deep": [
+          76,
+          46,
+          104,
+          232
+        ],
+        "wall": [
+          58,
+          32,
+          78,
+          175
+        ],
+        "mid": [
+          128,
+          76,
+          164,
+          242
+        ],
+        "pale": [
+          172,
+          120,
+          206,
+          245
+        ],
+        "spill_1px": [
+          104,
+          62,
+          134,
+          48
+        ]
+      }
+    }
+  },
+  "source_roof": {
+    "file": "assets/level02_conductive_stone/conductive_roof_256x32.png",
+    "sha256": "a0908de7f920f36b65930e0462c1a0c494c946e24033292a92010b9ca0db0e2c"
+  },
+  "counts": {
+    "fissure_pixels": 209,
+    "rim_pixels": 30,
+    "lip_pixels": 21,
+    "glow_core_pixels": 167,
+    "glow_total_pixels": 180,
+    "halo_pixels": 13,
+    "core_pixels_alpha_ge_220": 209
+  },
+  "design_notes": [
+    "Three unequal clusters; largest opens at the top edge, medium starts below it, smallest ends on the lip.",
+    "Trunk bodies are 2 px, locally 3 px at course-joint pockets; thin branches are 1 px and taper to a 1 px tip.",
+    "Each horizontal course joint (y11-13, y21-22) causes an offset/jog; the medium and small side branches stop before the x=152 and x=216 brick seams.",
+    "No regular grid, rectangular loop, repeated parallel slash or symmetric tree motif.",
+    "Glow is inset in the dark opening, not an edge stroke: the deep/wall tones carry the base, mid purple only at junction pockets (9 px), pale only at seven pixels.",
+    "Spill is a single stone pixel within 1 px of the fissure and only on a sparse subset."
+  ],
+  "regenerate": "D:/minic/envs/2024212971/python.exe make_roof_cracks_material.py"
+}

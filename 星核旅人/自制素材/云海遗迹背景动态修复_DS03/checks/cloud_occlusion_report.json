@@ -1,0 +1,294 @@
+{
+  "ok": true,
+  "checks": [
+    {
+      "times": 0.0,
+      "roi": "left_foot",
+      "roi_box": [
+        30,
+        250,
+        120,
+        283
+      ],
+      "phase_main": 0.0,
+      "compared_device_pixels": 4600,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 0.0,
+      "roi": "right_foot",
+      "roi_box": [
+        455,
+        250,
+        560,
+        283
+      ],
+      "phase_main": 0.0,
+      "compared_device_pixels": 2036,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 4.0,
+      "roi": "left_foot",
+      "roi_box": [
+        30,
+        250,
+        120,
+        283
+      ],
+      "phase_main": 17.0,
+      "compared_device_pixels": 3760,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 4.0,
+      "roi": "right_foot",
+      "roi_box": [
+        455,
+        250,
+        560,
+        283
+      ],
+      "phase_main": 17.0,
+      "compared_device_pixels": 2236,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 8.0,
+      "roi": "left_foot",
+      "roi_box": [
+        30,
+        250,
+        120,
+        283
+      ],
+      "phase_main": 33.5,
+      "compared_device_pixels": 2800,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 8.0,
+      "roi": "right_foot",
+      "roi_box": [
+        455,
+        250,
+        560,
+        283
+      ],
+      "phase_main": 33.5,
+      "compared_device_pixels": 3000,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 12.0,
+      "roi": "left_foot",
+      "roi_box": [
+        30,
+        250,
+        120,
+        283
+      ],
+      "phase_main": 50.5,
+      "compared_device_pixels": 2372,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 12.0,
+      "roi": "right_foot",
+      "roi_box": [
+        455,
+        250,
+        560,
+        283
+      ],
+      "phase_main": 50.5,
+      "compared_device_pixels": 3980,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 30.0,
+      "roi": "left_foot",
+      "roi_box": [
+        30,
+        250,
+        120,
+        283
+      ],
+      "phase_main": 126.0,
+      "compared_device_pixels": 3384,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 30.0,
+      "roi": "right_foot",
+      "roi_box": [
+        455,
+        250,
+        560,
+        283
+      ],
+      "phase_main": 126.0,
+      "compared_device_pixels": 8284,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 60.0,
+      "roi": "left_foot",
+      "roi_box": [
+        30,
+        250,
+        120,
+        283
+      ],
+      "phase_main": 252.0,
+      "compared_device_pixels": 3376,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 60.0,
+      "roi": "right_foot",
+      "roi_box": [
+        455,
+        250,
+        560,
+        283
+      ],
+      "phase_main": 252.0,
+      "compared_device_pixels": 2180,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 58.922222222222224,
+      "roi": "left_foot",
+      "roi_box": [
+        30,
+        250,
+        120,
+        283
+      ],
+      "phase_main": 247.5,
+      "compared_device_pixels": 3672,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 58.922222222222224,
+      "roi": "right_foot",
+      "roi_box": [
+        455,
+        250,
+        560,
+        283
+      ],
+      "phase_main": 247.5,
+      "compared_device_pixels": 2388,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 59.72222222222222,
+      "roi": "left_foot",
+      "roi_box": [
+        30,
+        250,
+        120,
+        283
+      ],
+      "phase_main": 251.0,
+      "compared_device_pixels": 3448,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 59.72222222222222,
+      "roi": "right_foot",
+      "roi_box": [
+        455,
+        250,
+        560,
+        283
+      ],
+      "phase_main": 251.0,
+      "compared_device_pixels": 2220,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 60.52222222222222,
+      "roi": "left_foot",
+      "roi_box": [
+        30,
+        250,
+        120,
+        283
+      ],
+      "phase_main": 254.0,
+      "compared_device_pixels": 3232,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    },
+    {
+      "times": 60.52222222222222,
+      "roi": "right_foot",
+      "roi_box": [
+        455,
+        250,
+        560,
+        283
+      ],
+      "phase_main": 254.0,
+      "compared_device_pixels": 2100,
+      "mismatch_final_vs_current_cloud": 0,
+      "mismatch_final_vs_seaonly": 0,
+      "examples": [],
+      "ok": true
+    }
+  ],
+  "note": "ROI restricted to current sea_main alpha with no later layer; expected pixel is the actual sea_main texture at that phase."
+}

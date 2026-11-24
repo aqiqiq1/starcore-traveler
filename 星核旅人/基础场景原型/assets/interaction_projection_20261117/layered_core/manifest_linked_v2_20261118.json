@@ -1,0 +1,57 @@
+{
+  "title": "LinkedWall + LinkedLip crystal component v2 (stone shell + recessed crystal)",
+  "created": "2026-11-18",
+  "status": "second high platform visual polish; original wall/lip untouched",
+  "geometry": "200x60 combined L: original 40x12 lip at x0..39,y0..11; original 160x60 wall at x40..199,y0..59; transparent x0..39,y12..59",
+  "states": "inactive = approved dark purple; active = approved internal-lit purple",
+  "activation": "shared first Relay, 0.7 s face-following arrival, 0.16 s window; no independent trigger",
+  "files": {
+    "base": {
+      "file": "layered_linked_v2_base_200x60.png",
+      "sha256": "eecf5c51728e1807855b98ff425ad494403974e6f21b6c9efc189b772bc6684a"
+    },
+    "active": {
+      "file": "layered_linked_v2_active_200x60.png",
+      "sha256": "4e97706f4ffe7c864b1e408116ec3bd1986b27ceb0eb6bc0dc27f1814e18edc7"
+    },
+    "mask": {
+      "file": "layered_linked_v2_mask_200x60.png",
+      "sha256": "02c678a9f39e7f4b89ca4f8f203bfbbc1ecb0234e1bed240d2dcd1ee72030df6"
+    },
+    "arrival": {
+      "file": "layered_linked_v2_arrival_200x60.png",
+      "sha256": "80246bb1eb99e9f0f2461e091193841f2d869cc55f2cdea87b5f09ecf5917d66"
+    }
+  },
+  "source": {
+    "wall": {
+      "file": "assets/level02_conductive_stone/conductive_sill_160x60.png",
+      "sha256": "24866145e2c8029fcf2771b931190ffbeb2a5773fbbe17b634d4b24841ac1ee0"
+    },
+    "lip": {
+      "file": "assets/level02_conductive_stone/conductive_lip_40x12.png",
+      "sha256": "2e56228a026a2cb4bb169e01348098cca34e0f613cabba332d45793d5cfb8664"
+    }
+  },
+  "info": {
+    "visible_triangles": 98,
+    "source_faces": 35,
+    "crystal_pixels": 3962,
+    "mask_pixels": 3962,
+    "arrival_min_norm": 0.0,
+    "arrival_max_norm": 0.7714285714285714,
+    "arrival_window_norm": 0.2285714285714286,
+    "arrival_window_s": 0.16,
+    "duration_s": 0.7,
+    "top_y": 27,
+    "bottom_y": 54
+  },
+  "design_notes": [
+    "Wall crystal is inset 6 px from the left and 4 px from the right; thick upper stone shell (27..31 px) with a short irregular stone contact shadow, and a thin inset dark bottom edge.",
+    "The lip is entirely original stone; no lip crystal patch or L-shaped purple jump at the wall seam.",
+    "Wall top/shell/side frames and lip stone remain source pixels except the authored contact/bottom stone shading rows.",
+    "No first-platform texture is stretched or reused; this is a separate 200x60 original-size component.",
+    "No route/gold corners or independent unlock are present."
+  ],
+  "regenerate": "D:/minic/envs/2024212971/python.exe make_linked_crystal_assets_v2.py"
+}

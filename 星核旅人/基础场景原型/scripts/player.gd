@@ -101,12 +101,12 @@ const FALL_LOOP_ANCHORS: Array[Vector2i] = [
 	Vector2i(63, 58), Vector2i(63, 58), Vector2i(63, 58),
 ]
 
-const IDLE_TEXTURE: Texture2D = preload("res://assets/characters/male_hero-idle.png")
-const WALK_TEXTURE: Texture2D = preload("res://assets/characters/male_hero-walk.png")
-const RUN_TEXTURE: Texture2D = preload("res://assets/characters/male_hero-run.png")
-const JUMP_TEXTURE: Texture2D = preload("res://assets/characters/male_hero-jump.png")
-const FALL_TEXTURE: Texture2D = preload("res://assets/characters/male_hero-fall.png")
-const FALL_LOOP_TEXTURE: Texture2D = preload("res://assets/characters/male_hero-fall_loop.png")
+const IDLE_TEXTURE: Texture2D = preload("res://assets/characters/male_hero_idle.png")
+const WALK_TEXTURE: Texture2D = preload("res://assets/characters/male_hero_walk.png")
+const RUN_TEXTURE: Texture2D = preload("res://assets/characters/male_hero_run.png")
+const JUMP_TEXTURE: Texture2D = preload("res://assets/characters/male_hero_jump.png")
+const FALL_TEXTURE: Texture2D = preload("res://assets/characters/male_hero_fall.png")
+const FALL_LOOP_TEXTURE: Texture2D = preload("res://assets/characters/male_hero_fall_loop.png")
 
 const TALISMAN_GOLD: Texture2D = preload("res://assets/talisman/talisman_gold.png")
 const TALISMAN_CYAN: Texture2D = preload("res://assets/talisman/talisman_cyan.png")

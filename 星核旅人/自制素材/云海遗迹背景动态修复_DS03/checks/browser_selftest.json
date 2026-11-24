@@ -1,0 +1,277 @@
+{
+  "protocol": "file:",
+  "href": "file:///D:/godot%20game/%E6%98%9F%E6%A0%B8%E6%97%85%E4%BA%BA/%E8%87%AA%E5%88%B6%E7%B4%A0%E6%9D%90/%E4%BA%91%E6%B5%B7%E9%81%97%E8%BF%B9%E8%83%8C%E6%99%AF%E5%8A%A8%E6%80%81%E4%BF%AE%E5%A4%8D_DS03/%E5%8F%8C%E5%87%BB%E9%A2%84%E8%A7%88_DS03.html?t=0.000000&pause=1&ui=0&selftest=1",
+  "embedded": true,
+  "embeddedAssetCount": 24,
+  "assetKeyCount": 24,
+  "failed": [],
+  "errors": [],
+  "canvas": {
+    "width": 1280,
+    "height": 720
+  },
+  "pauseResume": {
+    "before": 5,
+    "paused": 5,
+    "afterResume": 5.32260000000149,
+    "pausedStable": true,
+    "advanced": true
+  },
+  "resetButton": {
+    "clicked": true,
+    "t": 0.08920000000298023,
+    "playing": true,
+    "ok": true
+  },
+  "scrub": {
+    "ok": true,
+    "t": 12
+  },
+  "playButton": {
+    "advanced": true,
+    "playing": true,
+    "pausedStable": true,
+    "ok": true
+  },
+  "inspectionButtons": {
+    "up": {
+      "t": 7.125,
+      "G1": 0,
+      "G2": 0
+    },
+    "down": {
+      "t": 2.375,
+      "G1": 0,
+      "G2": 0
+    },
+    "island": {
+      "t": 26.683
+    },
+    "forceUp": {
+      "G1": 0,
+      "G2": 0
+    },
+    "forceDown": {
+      "G1": 0,
+      "G2": 0
+    },
+    "worstBridge": {
+      "G1": 0,
+      "G2": 0
+    },
+    "worstIsland": {
+      "G1": 0,
+      "G2": 0,
+      "G5": 0.5
+    },
+    "cloudOffSkip": [
+      "seaMain",
+      "seaNear"
+    ],
+    "cloudOnSkip": [],
+    "ok": true
+  },
+  "seamBefore": {
+    "clicked": true,
+    "t": 58.922222222222224,
+    "markerOn": true,
+    "nearSeamX": 424,
+    "mainSeamX": 247.5
+  },
+  "seamAfter": {
+    "clicked": true,
+    "t": 60.52222222222222,
+    "markerOn": true
+  },
+  "skyWrap": {
+    "clicked": true,
+    "t": 44.07096774193548
+  },
+  "hideUI": {
+    "clicked": true,
+    "hidden": true
+  },
+  "resources": [],
+  "externalRequests": [],
+  "scripts": [],
+  "links": [],
+  "finalState": {
+    "t": 44.07096774193548,
+    "playing": false,
+    "phaseMain": 185,
+    "phaseNear": 317.5,
+    "mainUnwrapped": 185.09806451612903,
+    "nearUnwrapped": 317.3109677419355,
+    "mainSeamX": 185,
+    "nearSeamX": 317.5,
+    "sky": [
+      {
+        "name": "sky_bank_left",
+        "renderedX": 217,
+        "unwrapped": 217.24
+      },
+      {
+        "name": "sky_bank_right",
+        "renderedX": -407,
+        "unwrapped": 649.24
+      },
+      {
+        "name": "sky_mid_wisp",
+        "renderedX": 401.5,
+        "unwrapped": 401.6554838709677
+      },
+      {
+        "name": "sky_low_wisp_r",
+        "renderedX": 624.5,
+        "unwrapped": 624.6554838709677
+      },
+      {
+        "name": "sky_left_wisp",
+        "renderedX": 249.5,
+        "unwrapped": 249.65548387096774
+      },
+      {
+        "name": "sky_low_wisp_l",
+        "renderedX": 356.5,
+        "unwrapped": 356.6554838709677
+      },
+      {
+        "name": "sky_high_chip",
+        "renderedX": 479.5,
+        "unwrapped": 479.6554838709677
+      }
+    ],
+    "groups": [
+      {
+        "id": "G1",
+        "dyFormula": 0,
+        "dyRendered": 0,
+        "worldY": 144,
+        "bottomY": 300,
+        "amp": 1.5,
+        "period": 9.5,
+        "phase": 0,
+        "enabled": false,
+        "static": true
+      },
+      {
+        "id": "G2",
+        "dyFormula": 0,
+        "dyRendered": 0,
+        "worldY": 144,
+        "bottomY": 300,
+        "amp": 1,
+        "period": 9.5,
+        "phase": 0.2,
+        "enabled": false,
+        "static": true
+      },
+      {
+        "id": "G3",
+        "dyFormula": 0.015758934671586528,
+        "dyRendered": 0,
+        "worldY": 168,
+        "bottomY": 200,
+        "amp": 0.35,
+        "period": 18,
+        "phase": 0.8,
+        "enabled": true,
+        "static": false
+      },
+      {
+        "id": "G4",
+        "dyFormula": 0.09846856210865602,
+        "dyRendered": 0,
+        "worldY": 174,
+        "bottomY": 218,
+        "amp": 0.3,
+        "period": 22,
+        "phase": 1.1,
+        "enabled": true,
+        "static": false
+      },
+      {
+        "id": "G5",
+        "dyFormula": 0.43659013855872203,
+        "dyRendered": 0.5,
+        "worldY": 138.5,
+        "bottomY": 191.5,
+        "amp": 0.45,
+        "period": 20,
+        "phase": 0.15,
+        "enabled": true,
+        "static": false
+      }
+    ],
+    "debris": [
+      {
+        "name": "debris_central",
+        "y": 204.19170850773025,
+        "bob": -2.808291492269743
+      },
+      {
+        "name": "debris_cluster",
+        "y": 243.70758461191332,
+        "bob": 0.707584611913331
+      },
+      {
+        "name": "debris_tiny",
+        "y": 234.0449678117625,
+        "bob": -0.9550321882375163
+      },
+      {
+        "name": "debris_low",
+        "y": 291.4623138980662,
+        "bob": 2.4623138980662325
+      }
+    ],
+    "shadows": [
+      {
+        "name": "shadow_central",
+        "surface": "sea_main",
+        "sx": 318.1233165969079,
+        "sy": 273.4041457461349,
+        "alpha": 0.7893781380797693,
+        "width": 42,
+        "height": 13,
+        "cloudTopAtPlacement": 268,
+        "bob": -2.808291492269743,
+        "high": true,
+        "grow": 1
+      },
+      {
+        "name": "shadow_cluster",
+        "surface": "sea_main",
+        "sx": 272.7169661552347,
+        "sy": 267.6462076940433,
+        "alpha": 1,
+        "width": 30,
+        "height": 9,
+        "cloudTopAtPlacement": 264,
+        "bob": 0.707584611913331,
+        "high": false,
+        "grow": 0
+      },
+      {
+        "name": "shadow_low",
+        "surface": "sea_near",
+        "sx": 243.50753722038675,
+        "sy": 312.2613058305801,
+        "alpha": 1,
+        "width": 28,
+        "height": 9,
+        "cloudTopAtPlacement": 303,
+        "bob": 2.4623138980662325,
+        "high": false,
+        "grow": 0
+      }
+    ],
+    "skip": [],
+    "mode": "",
+    "worst": "",
+    "forceFloat": "",
+    "renderCount": 109,
+    "failed": []
+  },
+  "done": true
+}

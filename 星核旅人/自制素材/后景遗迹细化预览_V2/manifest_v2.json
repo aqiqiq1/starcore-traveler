@@ -1,0 +1,56 @@
+{
+  "version": "V2",
+  "date": "2026-11-02",
+  "canvas": {
+    "logical": [
+      640,
+      360
+    ],
+    "preview": [
+      1280,
+      720
+    ],
+    "scale": "NEAREST 2x"
+  },
+  "inputs": {
+    "background_only_v7.png": "2d65a27d432ce60d8562c71cf754049d49a106d08e63348d78cb08f4c8387aae",
+    "generate_background_v6.py": "01f849a02aecebc509e7972787796b67f25058ca146413c7bbd14f830bce7d0c",
+    "source_v7.md": "83322442d7d04931b26266ce09253622051c86f2de07e66c17c98a3b92ecde5d",
+    "background_detail_v1.png": "6c49158bc4b67478361a9c4e36eff31f1f2330df3f5570a843689ed2972cc78a"
+  },
+  "outputs": {
+    "background_detail_v2.png": "d0e4a333c1e3c4439023d2442eebf230273bad0eaf6b2fc2abaec313e8610adc",
+    "background_detail_v2_640x360.png": "ee9e39305f8a697ffce318328b365d02c6e66d07f61a43c8f2ffb1e250a5f94a",
+    "generate_background_detail_v2.py": "e3f6139a682d39ef86477c423905b84dd8c4afb01b05df54f0991167eae3481a"
+  },
+  "changed_pixels_logical": 818,
+  "gap_pixels_logical": 45,
+  "changed_bbox_logical": [
+    31,
+    138,
+    571,
+    221
+  ],
+  "structure_changes": [
+    "右浮岛底与断柱顶之间切开 5px 天空（x474-482, y184-188），断柱顶下移并重做受光断口",
+    "桥墩细节在 y220 接触影后不再向下描边，保留 V7 原有随云渐隐",
+    "左桥断头按朝右背光处理，右桥断头按朝左受光处理；右横梁端面压暗",
+    "远遗迹只用顶面受光与左右大面微差，不铺砖缝/不描外圈"
+  ],
+  "protection": {
+    "outside_masks": 0,
+    "sky_above_y130_exact": true,
+    "cloud_palette_pixels_changed": 0,
+    "sky_gradient_pixels_changed": 0,
+    "v7_unchanged": true,
+    "v1_unchanged": true
+  },
+  "unverified": [
+    "未接 Godot、无引擎截图或连续试玩",
+    "未制作浮动动画；右浮岛与断柱的空气间隙只是静态遮挡修正，动态分组/隐藏补面未验证",
+    "未修 DS02 的左右断桥遮挡与右桥下静止白云",
+    "桥后/云后不可见建筑面未补绘",
+    "云中残拱、游离浮石、天空云、云海未改",
+    "用户是否认可 V2 尚未确定"
+  ]
+}

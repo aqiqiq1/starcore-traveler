@@ -1,0 +1,81 @@
+{
+  "gif": "preview_background.gif",
+  "size": [
+    640,
+    360
+  ],
+  "time_steps": 72,
+  "time_step_ms": 90,
+  "total_duration_ms": 6480,
+  "gif_stored_frames": 58,
+  "gif_stored_total_ms": 6480,
+  "loop": "infinite",
+  "motion": {
+    "sky_clouds": {
+      "dx": 6,
+      "dy": 0,
+      "period": 72,
+      "phase": 0.0
+    },
+    "cloud_sea_far": {
+      "dx": 2,
+      "dy": 1,
+      "period": 72,
+      "phase": 1.0
+    },
+    "cloud_sea_near": {
+      "dx": 4,
+      "dy": 0,
+      "period": 36,
+      "phase": 0.0
+    },
+    "debris_central": {
+      "dx": 1,
+      "dy": 2,
+      "period": 72,
+      "phase": 0.6
+    },
+    "debris_cluster": {
+      "dx": 1,
+      "dy": 1,
+      "period": 72,
+      "phase": 2.4
+    },
+    "debris_tiny": {
+      "dx": 0,
+      "dy": 1,
+      "period": 72,
+      "phase": 3.3
+    },
+    "debris_low": {
+      "dx": 1,
+      "dy": 1,
+      "period": 72,
+      "phase": 4.2
+    }
+  },
+  "safe_ranges_note": "sine amplitudes; integer rounding per frame; not an infinite scrolling system",
+  "sky_layer": {
+    "file": "layers/sky_clouds.png",
+    "size": [
+      664,
+      360
+    ],
+    "initial_offset": [
+      -12,
+      0
+    ],
+    "side_margin": [
+      12,
+      12
+    ],
+    "safe_range_dx": 6,
+    "edge_continuation_clean": true,
+    "crop_line_note": "the margin repeats the edge column, so at dx=+6 the margin|original boundary at screen x=6 (right: x=633 at dx=-6) is pixel-identical across it; no visible crop edge or sky strip; not an infinite cloud texture"
+  },
+  "sky_edge_check": "checks/sky_edge_fixed_check.png",
+  "stress": "checks/extreme_displacement_check.png panel 3 uses 2x amplitudes to expose fill; not an approved range",
+  "animation_status": "frames inspected; continuous playback not asserted by the generator",
+  "gif_palette": "one global 256-colour palette, dithering off; still layers are full RGB PNG",
+  "merge_note": "GIF writer merges identical consecutive integer-pixel states and doubles their duration; total time is preserved"
+}

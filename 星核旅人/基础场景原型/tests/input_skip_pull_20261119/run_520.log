@@ -1,0 +1,91 @@
+﻿Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+== A. L1 opening cinematic ==
+  PASS L1 opening/player/echo exist
+  PASS L1 opening auto-started
+  PASS L1 pause controls show F advance + long-Space skip
+  PASS L1 opening reached DIALOGUE
+  PASS L1 first echo page opened
+  PASS L1 starts on page 1/1
+  PASS L1 line is still revealing before input
+  PASS L1 short Space did not advance the page
+  PASS L1 short Space did not complete the line
+  PASS L1 short Space stayed under SKIP_HOLD
+  PASS L1 short Space did not skip
+  PASS L1 F completed the revealing line
+  PASS L1 F completion stayed on the same page
+  PASS L1 second F advanced to page 2
+  PASS L1 long Space skipped the whole segment
+  PASS L1 skip reached the hand-off boundary while Space held
+  PASS L1 held Space keeps control until release
+  PASS L1 control returned after Space release
+  PASS L1 echo page closed by the skip
+  PASS L1 level intro state cleared
+  PASS L1 opening recorded skipped=true
+  PASS L1 no jump from the skip Space after hand-off
+== B. L3 cinematic ==
+  PASS L3 cinematic/player exist
+  PASS L3 cinematic started
+  PASS L3 pause controls show F advance + long-Space skip
+  PASS L3 cinematic reached DIALOGUE
+  PASS L3 first page bubble opened
+  PASS L3 line is still revealing before input
+  PASS L3 short Space did not advance the page
+  PASS L3 short Space did not complete the line
+  PASS L3 short Space did not skip
+  PASS L3 F completed the revealing line
+  PASS L3 F completion stayed on the same page
+  PASS L3 second F advanced to page 2
+  PASS L3 long Space recorded skipped=true
+  PASS L3 skip reached the hand-off boundary while Space held
+  PASS L3 held Space keeps control until release
+  PASS L3 control returned after Space release
+  PASS L3 dialogue bubble closed by the skip
+  PASS L3 no jump from the skip Space after hand-off
+== C. L3 guard GRAVITY_CHARGE pull ==
+  PASS L3 guard/player available
+PULL_TUNING acceleration=520.0 range=118.0 inner=16.0 full=42.0 fade=24.0
+  PASS FIELD_ACCELERATION is 520.0
+  PASS field range/inner/full/fade unchanged
+  PASS player set to the opposite polarity (attract)
+PULL_PASS acceleration=520.0
+PULL_PASS run_start_x=1983.08
+PULL_PASS chest_x=2124.68
+PULL_PASS entry_speed=160.0
+PULL_PASS peak_speed=320.0
+PULL_PASS max_accel=509.39
+PULL_PASS impulse_pre_cross_dv=165.06
+PULL_PASS time_above_run_s=0.85
+PULL_PASS frames_in_charge=76
+PULL_PASS end_x_minus_chest=138.45
+PULL_PASS crossed_weakpoint=true
+PULL_PASS crossed_guard=true
+PULL_PASS velocity_cap_reached=true
+PULL_STOP acceleration=520.0
+PULL_STOP release_x_minus_chest=-19.74
+PULL_STOP release_speed=320.0
+PULL_STOP rest_x_minus_chest=127.62
+PULL_STOP coast_past_release=147.36
+PULL_STOP passed_weakpoint=true
+PULL_STOP charge_still_active_at_rest=false
+PULL_STOP rest_on_floor=true
+PULL_STOP rest_y=319.93
+PULL_STOP stop_frames=42
+PULL_STOP approach_frames=34
+PULL_STOP player_hits=0
+PULL_STOP trace=["f0 vx=320.0 x=-19.7 floor=false force=151.5 y=319.9", "f4 vx=320.0 x=1.6 floor=false force=-1.6 y=319.9", "f8 vx=317.1 x=22.9 floor=false force=-215.5 y=319.9", "f12 vx=293.2 x=43.1 floor=false force=-476.2 y=319.9", "f16 vx=260.8 x=61.3 floor=false force=-497.0 y=319.9", "f20 vx=227.4 x=77.3 floor=false force=-505.1 y=319.9", "f24 vx=193.6 x=91.0 floor=false force=-509.2 y=319.9", "f28 vx=162.8 x=102.6 floor=false force=-308.4 y=319.9", "f32 vx=150.0 x=112.8 floor=false force=-31.1 y=319.9", "f36 vx=125.6 x=122.3 floor=true force=0.0 y=319.9", "f40 vx=42.3 x=127.2 floor=true force=0.0 y=319.9"]
+PULL_EARLY acceleration=520.0
+PULL_EARLY release_x_minus_chest=-58.3
+PULL_EARLY release_speed=264.39
+PULL_EARLY rest_x_minus_chest=126.2
+PULL_EARLY coast_past_release=184.5
+PULL_EARLY overshoot_past_weakpoint=126.2
+PULL_EARLY charge_still_active_at_rest=false
+PULL_EARLY player_hits=0
+PULL_EARLY stop_frames=50
+PULL_OLD750_THEORY impulse_ratio=1.4423 pass_pre_cross_extra=238.07
+PULL_OLD750_THEORY max_accel=734.7 (measured 520.0 x 1.4423)
+  PASS 160 px/s pass still crosses the guard weakpoint (not hard-locked)
+  PASS sampled pull acceleration never exceeds FIELD_ACCELERATION
+INPUT_SKIP_PULL_RESULT pass=46 fail=0
+INPUT_SKIP_PULL_OK

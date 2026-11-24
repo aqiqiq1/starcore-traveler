@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3]
-
-[ext_resource type="Script" path="res://tests/follow_near_distance.gd" id="1_test"]
-
-[node name="FollowNearDistance" type="Node"]
-script = ExtResource("1_test")

@@ -13,9 +13,9 @@ extends Node
 ## constants): a preloaded const keeps the Ogg stream and its packet sequence
 ## alive past scene teardown, which shows up as an ObjectDB/resource leak at
 ## process exit. The files and volume levels are otherwise unchanged.
-const CHARGE_PATH: String = "res://assets/level03_prototype/audio_charge_v2.ogg"
-const SLAM_PATH: String = "res://assets/level03_prototype/audio_slam_v5.ogg"
-const REASSEMBLE_PATH: String = "res://assets/audio_movement_20261117/reassembly_A_reverse.wav"
+const CHARGE_PATH: String = "res://assets/level03_prototype/audio_charge.ogg"
+const SLAM_PATH: String = "res://assets/level03_prototype/audio_slam.ogg"
+const REASSEMBLE_PATH: String = "res://assets/audio_movement_20261117/reassembly_a_reverse.wav"
 const FLOAT_WARN_PATH: String = "res://assets/level03_prototype/audio_float_warn.ogg"
 const FLOAT_SETTLE_PATH: String = "res://assets/level03_prototype/audio_float_settle.ogg"
 const CORE_SEAT_PATH: String = "res://assets/level03_prototype/audio_core_seat.ogg"

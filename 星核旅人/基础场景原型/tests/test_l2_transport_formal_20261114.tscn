@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3]
-
-[ext_resource type="Script" path="res://tests/test_l2_transport_formal_20261114.gd" id="1_transport"]
-
-[node name="L2TransportFormal20261114" type="Node"]
-script = ExtResource("1_transport")

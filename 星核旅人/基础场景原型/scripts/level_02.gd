@@ -21,6 +21,7 @@ const PAUSE_MENU_SCRIPT = preload("res://scripts/ui/pause_menu.gd")
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const FOOTSTEP_SCRIPT = preload("res://scripts/audio/player_footstep_audio.gd")
 const CONDUCTIVE_ACTIVATION = preload("res://scripts/narrative/conductive_activation.gd")
+const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popup.tscn")
 
 const STABLE_START: int = 0
 const STABLE_RELAY: int = 1
@@ -74,6 +75,7 @@ var _special_wall_unlocked: bool = false
 ## is still ringing, so the record confirmation is played 0.40 s later and is
 ## cancelled by restart.
 var _record_save_token: int = 0
+var _mechanic_popup: MechanicPopup = null
 
 
 func _ready() -> void:
@@ -132,6 +134,7 @@ func _ready() -> void:
 		get_window().focus_exited.connect(_on_window_focus_exited)
 		get_window().focus_entered.connect(_on_window_focus_entered)
 	_setup_pause_menu()
+	_setup_mechanic_popup()
 	_camera.reset_smoothing()
 	_update_level_hud()
 	_setup_footsteps()
@@ -268,6 +271,7 @@ func _physics_process(delta: float) -> void:
 			_conductive_activation.clear_force_target()
 	else:
 		_notify_force_visual()
+		_tick_mechanic_popup()
 
 
 ## Presentation only: hand this tick's real shared-field result to the layered
@@ -330,6 +334,53 @@ func _setup_pause_menu() -> void:
 	_pause_menu.resumed.connect(_on_pause_resumed)
 
 
+## Teaching layer only. Two entries: carrying the first core, then the real
+## relay unlock. No level rule, bay timing or force is touched.
+func _setup_mechanic_popup() -> void:
+	_mechanic_popup = MECHANIC_POPUP_SCENE.instantiate() as MechanicPopup
+	_mechanic_popup.name = "MechanicPopup"
+	_mechanic_popup.level_node = self
+	add_child(_mechanic_popup)
+
+
+func _tick_mechanic_popup() -> void:
+	if _mechanic_popup == null or _mechanic_popup.is_open():
+		return
+	if _player == null or not is_instance_valid(_player):
+		return
+	var player_x: float = _player.global_position.x
+	# Start bay is at x=128 with a 46 px E radius (first E at x=82), so 78 is
+	# just before the first core action, not on spawn.
+	if _stable_stage == STABLE_START and player_x >= 78.0:
+		_mechanic_popup.request("core_carry")
+	# The relay unlock happens at the real relay store (player x<=398). The
+	# special ConductiveRoof starts at x=464; trigger at 420 so the tip opens
+	# before the player can step onto it. No upper bound: if paused/dialogue
+	# blocks it, later ticks keep requesting until it has been seen.
+	if _special_wall_unlocked and _stable_stage >= STABLE_RELAY and player_x >= 420.0:
+		_mechanic_popup.request("relay_link")
+
+
+func is_mechanic_popup_blocked() -> bool:
+	if get_tree().paused:
+		return true
+	if _completed or _resetting or _scene_leaving or _next_level_started:
+		return true
+	if _pause_menu != null and _pause_menu.has_method("is_open") and bool(_pause_menu.call("is_open")):
+		return true
+	if _stele != null and _stele.is_dialogue_open():
+		return true
+	# A lid animation or a store-in-progress is a one-shot the player is already
+	# reading; do not freeze halfway through it.
+	if _pending_release or _store_bay != null:
+		return true
+	return false
+
+
+func get_mechanic_popup() -> MechanicPopup:
+	return _mechanic_popup
+
+
 func _on_pause_opened() -> void:
 	if _player != null:
 		_player.reset_movement_input_state()
@@ -352,6 +403,8 @@ func _on_pause_resumed() -> void:
 
 
 func is_pause_menu_blocked() -> bool:
+	if _mechanic_popup != null and _mechanic_popup.is_open():
+		return true
 	return false
 
 

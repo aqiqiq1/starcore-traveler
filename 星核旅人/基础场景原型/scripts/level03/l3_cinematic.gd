@@ -13,8 +13,9 @@ extends Node2D
 ##   - a defeated guard is never revived. If it is already dead the guard beat is
 ##     skipped and the echo still explains the core / gate step.
 ##
-## Input: short Space completes the current line or advances; holding Space for
-## 0.6 s skips the whole segment. Control returns only after Space is released,
+## Input: F completes the current line or advances (the same tutorial_next
+## action as GuideEcho); holding Space for 0.6 s skips the whole segment. A
+## short Space tap never advances. Control returns only after Space is released,
 ## so the same press cannot jump the player. While the player is still holding
 ## that skip press, the cinematic remains a control-occupied state
 ## (is_active()/is_awaiting_release()); E/J, the pause page, focus loss and R
@@ -96,6 +97,7 @@ var _top_bar: ColorRect = null
 var _bottom_bar: ColorRect = null
 var _bar_height: float = 0.0
 var _bar_target: float = 0.0
+var _skip_bar: SkipHoldBar = null
 var _speaker: Label = null
 var _body: Label = null
 var _page_label: Label = null
@@ -206,6 +208,13 @@ func _build_ui() -> void:
 	_bottom_bar.color = Color(0.008, 0.014, 0.018, 0.96)
 	_bottom_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_bottom_bar)
+
+	# Hold-to-skip feedback only (bottom-right, same 96x6 geometry as the L1
+	# opening). It is part of this film's CanvasLayer and never changes the
+	# skip timer, await-release boundary or input handling.
+	_skip_bar = SkipHoldBar.new()
+	_skip_bar.name = "SkipHoldBar"
+	_root.add_child(_skip_bar)
 
 	_bubble = Panel.new()
 	_bubble.name = "EchoBubble"
@@ -331,6 +340,8 @@ func play() -> void:
 	_guard_beat_shown_rebuild = false
 	_door_cue_fired = false
 	_door_turned = false
+	if _skip_bar != null:
+		_skip_bar.hide_progress()
 	_pages = DEFEATED_PAGES if (_guard != null and _guard.is_defeated()) else PAGES
 	if _player != null:
 		_player.lock_for_cinematic()
@@ -358,21 +369,32 @@ func play() -> void:
 
 func _process(delta: float) -> void:
 	if _await_release:
+		if _skip_bar != null:
+			_skip_bar.hide_progress()
 		if not _space_held and not Input.is_physical_key_pressed(KEY_SPACE):
 			_restore_control()
 		return
 	if not _active:
+		if _skip_bar != null:
+			_skip_bar.hide_progress()
 		return
 	if _space_held and not _space_action_done:
 		_space_time += delta
 		if _space_time >= SKIP_HOLD:
 			_space_action_done = true
 			_skipped = true
+			if _skip_bar != null:
+				_skip_bar.hide_progress()
 			if _phase == Phase.OUTRO:
 				_complete_finish()
 			else:
 				_begin_outro()
 			return
+		if _skip_bar != null:
+			_skip_bar.update_hold(true, _space_time, SKIP_HOLD)
+	else:
+		if _skip_bar != null:
+			_skip_bar.hide_progress()
 	_t += delta
 	_update_bars(delta)
 	_update_world_visuals(delta)
@@ -715,6 +737,8 @@ func _begin_outro() -> void:
 	if _voice != null:
 		_voice.stop()
 	_set_bubble_visible(false)
+	if _skip_bar != null:
+		_skip_bar.hide_progress()
 	_question.visible = false
 	_exclaim.visible = false
 	_clear_projection_fx()
@@ -742,6 +766,8 @@ func _complete_finish() -> void:
 	_bar_height = 0.0
 	_bar_target = 0.0
 	_apply_bar_height()
+	if _skip_bar != null:
+		_skip_bar.hide_progress()
 	_set_bubble_visible(false)
 	_question.visible = false
 	_exclaim.visible = false
@@ -762,6 +788,8 @@ func _complete_finish() -> void:
 func _restore_control() -> void:
 	_await_release = false
 	_space_held = false
+	if _skip_bar != null:
+		_skip_bar.hide_progress()
 	if _cine_camera != null:
 		_cine_camera.enabled = false
 	if _player_camera != null:
@@ -809,16 +837,24 @@ func _unhandled_input(event: InputEvent) -> void:
 	var key_event: InputEventKey = event as InputEventKey
 	if key_event.echo:
 		return
+	if not _active and not _await_release:
+		return
+	# F is the one dialogue key, shared with GuideEcho. It only does something
+	# while a page is open, but it is consumed so an ended film cannot leak it.
+	if key_event.is_action_pressed(&"tutorial_next"):
+		if key_event.pressed and not _await_release:
+			_short_press()
+		get_viewport().set_input_as_handled()
+		return
 	if int(key_event.physical_keycode) != int(KEY_SPACE):
 		return
 	if not _active:
 		# The await-release boundary has no animation, but it still owns input.
-		if _await_release:
-			if not key_event.pressed:
-				_space_held = false
-				if not Input.is_physical_key_pressed(KEY_SPACE):
-					_restore_control()
-			get_viewport().set_input_as_handled()
+		if not key_event.pressed:
+			_space_held = false
+			if not Input.is_physical_key_pressed(KEY_SPACE):
+				_restore_control()
+		get_viewport().set_input_as_handled()
 		return
 	if key_event.pressed:
 		_space_held = true
@@ -826,14 +862,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		_space_action_done = false
 		get_viewport().set_input_as_handled()
 	else:
-		if (
-			_space_held
-			and not _space_action_done
-			and _space_time < SKIP_HOLD
-			and not _await_release
-		):
-			_short_press()
+		# A short Space tap is deliberately inert; only the SKIP_HOLD timer in
+		# _process skips, and it skips the whole segment.
 		_space_held = false
+		if _skip_bar != null:
+			_skip_bar.hide_progress()
 		get_viewport().set_input_as_handled()
 
 
@@ -841,6 +874,8 @@ func _set_visible_all(value: bool) -> void:
 	if _ui != null:
 		_ui.visible = value
 	if not value:
+		if _skip_bar != null:
+			_skip_bar.hide_progress()
 		_question.visible = false
 		_exclaim.visible = false
 		_clear_projection_fx()
@@ -952,6 +987,8 @@ func debug_force_await_release() -> void:
 	_await_release = true
 	_space_held = true
 	_ui.visible = false
+	if _skip_bar != null:
+		_skip_bar.hide_progress()
 	_set_bubble_visible(false)
 	_question.visible = false
 	_exclaim.visible = false
@@ -1056,3 +1093,37 @@ func get_guard_feet_screen() -> Vector2:
 	if _guard == null:
 		return Vector2.ZERO
 	return get_viewport().get_canvas_transform() * _guard.global_position
+
+
+# --- Hold-to-skip bar read-only helpers (tests / captures) ------------------
+
+func is_skip_bar_visible() -> bool:
+	return _skip_bar != null and _skip_bar.visible
+
+
+func get_skip_bar_progress() -> float:
+	return _skip_bar.get_progress() if _skip_bar != null else 0.0
+
+
+func get_skip_bar_fill_width() -> float:
+	return _skip_bar.get_fill_width() if _skip_bar != null else 0.0
+
+
+func get_skip_bar_rect() -> Rect2:
+	return _skip_bar.get_bar_rect() if _skip_bar != null else Rect2()
+
+
+func get_skip_bar_label_text() -> String:
+	return _skip_bar.get_label_text() if _skip_bar != null else ""
+
+
+func get_skip_bar_label_rect() -> Rect2:
+	return _skip_bar.get_label_rect() if _skip_bar != null else Rect2()
+
+
+func get_skip_bar_label_font_size() -> int:
+	return _skip_bar.get_label_font_size() if _skip_bar != null else 0
+
+
+func get_skip_bar_style() -> StyleBoxFlat:
+	return _skip_bar.get_style() if _skip_bar != null else null

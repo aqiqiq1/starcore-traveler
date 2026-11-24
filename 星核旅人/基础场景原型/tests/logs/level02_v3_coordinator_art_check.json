@@ -1,7 +1,0 @@
-{
-  "layer_platform_visual_640.png_source_exact": true,
-  "layer_platform_decor_640.png_source_exact": true,
-  "approved_composite_matches_reference": true,
-  "engine_raw_premultiplied_mismatch_pixels": 0,
-  "scope": "Independent check of delivered render against approved source; controlled isolated render is not an unmodified gameplay screenshot."
-}

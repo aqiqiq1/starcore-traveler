@@ -1,0 +1,13 @@
+{
+  "pixels": 230400,
+  "differing_pixels": 5932,
+  "fraction": 0.0257,
+  "max_channel_difference": 53,
+  "diff_bbox": [
+    0,
+    234,
+    640,
+    341
+  ],
+  "note": "t=0 static fidelity only; the rebuilt sea edges, arch-front composite and new projected shadows account for the difference"
+}

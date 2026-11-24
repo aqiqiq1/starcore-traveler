@@ -6,23 +6,33 @@ extends Node
 ## The logical canvas is always 640x360.  Windowed mode uses an approved 16:9
 ## integer multiple that fits the current screen's usable rectangle; fullscreen
 ## uses Window.MODE_FULLSCREEN (borderless desktop fullscreen, no physical mode
-## switch).  The root Window is kept at KEEP aspect with integer stretch, so odd
-## desktop sizes get black bars instead of a stretched or larger world.
+## switch).  The 1920x1080 windowed choice is the one exception to the usable
+## rectangle: it runs as a borderless window at the full screen size so it can
+## cover a 1920x1080 display that only exposes 1920x1032 of work area.  It is
+## still Window.MODE_WINDOWED (Alt-Tab works), never exclusive fullscreen.
+## The root Window is kept at KEEP aspect with integer stretch, so odd desktop
+## sizes get black bars instead of a stretched or larger world.
 ##
 ## Changing a setting is staged: begin_apply() changes the window, starts an
 ## absolute-clock deadline and leaves the config untouched.  Only confirm_pending()
 ## writes user://display_settings.cfg.  Timeout, Esc, scene release or exit
-## restores the previous mode/size/position/content scale.
+## restores the previous mode/size/borderless flag/position/content scale.
 
 signal pending_started
 signal pending_cancelled(reason: String)
 signal confirmed(saved: bool)
 signal apply_failed(message: String)
 
-const CONFIG_VERSION: int = 1
-const PENDING_TIMEOUT_SECONDS: float = 10.0
+const CONFIG_VERSION: int = 2
+const PENDING_TIMEOUT_SECONDS: float = 15.0
 const DEFAULT_CONFIG_PATH: String = "user://display_settings.cfg"
 const NO_POSITION: Vector2i = Vector2i(-2147483647, -2147483647)
+
+## Windows turns a borderless window that is sized and placed exactly over the
+## screen in the same frame into exclusive fullscreen a frame later.  Applying
+## the final screen position one frame after a 1 px offset keeps Godot in
+## Window.MODE_WINDOWED while still ending at the exact screen origin.
+const BORDERLESS_SETTLE_OFFSET: Vector2i = Vector2i(1, 1)
 
 ## Test-only injection: func(mode:int, size:Vector2i, position:Vector2i, center:bool)
 ## -> Dictionary {ok:bool, message:String}.  `mode` is DisplayOptions.Mode
@@ -45,6 +55,7 @@ var _pending_mode: int = DisplayOptions.Mode.WINDOWED
 var _pending_window_size: Vector2i = DisplayOptions.DEFAULT_WINDOW_SIZE
 var _pending_deadline_msec: int = 0
 var _snapshot: Dictionary = {}
+var _borderless_settle_token: int = 0
 
 var _startup_notice: String = ""
 
@@ -96,6 +107,7 @@ func _exit_tree() -> void:
 
 
 func dispose() -> void:
+	_borderless_settle_token += 1
 	if _pending:
 		_pending = false
 		_restore_window_state(_snapshot)
@@ -156,15 +168,23 @@ func get_usable_rect() -> Rect2i:
 
 
 func get_candidate_entries() -> Array[Dictionary]:
-	return DisplayOptions.candidate_entries(_usable_rect(), _frame_margin)
+	return DisplayOptions.candidate_entries(_usable_rect(), _frame_margin, _screen_rect())
 
 
 func is_size_available(size: Vector2i) -> bool:
-	return DisplayOptions.fits(size, _usable_rect(), _frame_margin)
+	return DisplayOptions.fits(size, _usable_rect(), _frame_margin, _screen_rect())
+
+
+func is_borderless_size(size: Vector2i) -> bool:
+	return DisplayOptions.is_borderless_size(size)
 
 
 func get_default_window_size() -> Vector2i:
 	return DisplayOptions.default_window_size(_usable_rect(), _frame_margin)
+
+
+func get_screen_rect() -> Rect2i:
+	return _screen_rect()
 
 
 # --- Apply / confirm / cancel ---------------------------------------------
@@ -175,7 +195,9 @@ func begin_apply(mode: int, window_size: Vector2i) -> Dictionary:
 	if mode == _active_mode and window_size == _active_window_size:
 		return {"ok": false, "message": "显示设置没有变化"}
 	var usable: Rect2i = _usable_rect()
-	var choice: Dictionary = DisplayOptions.validate_choice(mode, window_size, usable, _frame_margin)
+	var choice: Dictionary = DisplayOptions.validate_choice(
+		mode, window_size, usable, _frame_margin, _screen_rect()
+	)
 	if not bool(choice.get("ok", false)):
 		var failure: String = String(choice.get("message", "显示设置无效"))
 		apply_failed.emit(failure)
@@ -205,7 +227,7 @@ func confirm_pending() -> Dictionary:
 		return {"ok": false, "saved": false, "message": "没有待确认的显示设置"}
 	var usable: Rect2i = _usable_rect()
 	var choice: Dictionary = DisplayOptions.validate_choice(
-		_pending_mode, _pending_window_size, usable, _frame_margin
+		_pending_mode, _pending_window_size, usable, _frame_margin, _screen_rect()
 	)
 	if not bool(choice.get("ok", false)):
 		var message: String = String(choice.get("message", "显示设置已不可用"))
@@ -278,6 +300,19 @@ func _usable_rect() -> Rect2i:
 	return rect
 
 
+func _screen_rect() -> Rect2i:
+	if _headless:
+		return Rect2i(Vector2i.ZERO, Vector2i(1920, 1080))
+	var screen: int = DisplayServer.window_get_current_screen(_window_id())
+	if screen < 0:
+		screen = DisplayServer.get_primary_screen()
+	var position: Vector2i = DisplayServer.screen_get_position(screen)
+	var size: Vector2i = DisplayServer.screen_get_size(screen)
+	if size.x <= 0 or size.y <= 0:
+		return _usable_rect()
+	return Rect2i(position, size)
+
+
 func _window_id() -> int:
 	if _window == null:
 		return 0
@@ -299,12 +334,16 @@ func _capture_window_state() -> Dictionary:
 			"window_mode": _display_mode_to_window_mode(_active_mode),
 			"size": _active_window_size,
 			"position": NO_POSITION,
+			"borderless": DisplayOptions.is_borderless_choice(
+				_active_mode, _active_window_size
+			),
 		}
 	return {
 		"internal_mode": _window_mode_to_display_mode(_window.mode),
 		"window_mode": _window.mode,
 		"size": _window.size,
 		"position": _window.position,
+		"borderless": _window.borderless,
 		"content_scale_size": _window.content_scale_size,
 		"content_scale_mode": _window.content_scale_mode,
 		"content_scale_aspect": _window.content_scale_aspect,
@@ -322,11 +361,15 @@ func _restore_window_state(state: Dictionary) -> Dictionary:
 	var internal_mode: int = int(
 		state.get("internal_mode", DisplayOptions.Mode.WINDOWED)
 	)
+	var borderless_override: int = -1
+	if state.has("borderless"):
+		borderless_override = 1 if bool(state.get("borderless", false)) else 0
 	var result: Dictionary = _set_window_state(
 		internal_mode,
 		state.get("size", _window.size) as Vector2i,
 		position,
-		false
+		false,
+		borderless_override
 	)
 	if not _headless:
 		_window.content_scale_size = state.get("content_scale_size", DisplayOptions.LOGICAL_SIZE) as Vector2i
@@ -358,7 +401,8 @@ func _set_window_state(
 	mode: int,
 	size: Vector2i,
 	position: Vector2i,
-	center: bool
+	center: bool,
+	borderless_override: int = -1
 ) -> Dictionary:
 	if mode != DisplayOptions.Mode.WINDOWED and mode != DisplayOptions.Mode.FULLSCREEN:
 		push_warning("DisplaySettings: invalid internal mode %d; using windowed" % mode)
@@ -371,26 +415,124 @@ func _set_window_state(
 	if _headless or _window == null:
 		return {"ok": true, "message": ""}
 	if mode == DisplayOptions.Mode.FULLSCREEN:
+		_borderless_settle_token += 1
+		# Clearing the flag first keeps a later windowed restore deterministic.
+		_window.borderless = false
 		_window.mode = Window.MODE_FULLSCREEN
 		if _window.mode != Window.MODE_FULLSCREEN:
 			return {"ok": false, "message": "无法进入全屏模式"}
 		return {"ok": true, "message": ""}
+	# 1920x1080 is only offered as a borderless window.  Godot's Windows
+	# backend can report an exclusive-fullscreen mode if MODE_WINDOWED is set
+	# while FLAG_BORDERLESS is still on.  Reset to a framed windowed mode first,
+	# then re-enable the borderless flag for the 1920x1080 choice.
+	_borderless_settle_token += 1
+	var settle_token: int = _borderless_settle_token
+	var borderless: bool = DisplayOptions.is_borderless_size(size)
+	if borderless_override >= 0:
+		borderless = borderless_override != 0
+	var was_fullscreen: bool = (
+		_window.mode == Window.MODE_FULLSCREEN
+		or _window.mode == Window.MODE_EXCLUSIVE_FULLSCREEN
+	)
+	if _window.borderless:
+		_window.borderless = false
+	_window.mode = Window.MODE_WINDOWED
 	if _window.mode != Window.MODE_WINDOWED:
-		_window.mode = Window.MODE_WINDOWED
-		if _window.mode != Window.MODE_WINDOWED:
-			return {"ok": false, "message": "无法退出全屏模式"}
+		return {"ok": false, "message": "无法退出全屏模式"}
+	if borderless and not was_fullscreen:
+		_window.borderless = true
+		if not _window.borderless:
+			return {"ok": false, "message": "无法切换无边框窗口"}
 	_window.size = size
+	var target: Vector2i = NO_POSITION
 	if center:
-		var usable: Rect2i = _usable_rect()
-		var target: Vector2i = usable.position + (usable.size - size) / 2
-		target.x = maxi(target.x, usable.position.x)
-		target.y = maxi(target.y, usable.position.y)
-		_window.position = target
+		if borderless:
+			# A borderless window may cover the taskbar area; anchor it to the
+			# physical screen.  On a larger desktop the 1920x1080 choice is
+			# centred instead of stuck in the top-left corner.
+			var screen: Rect2i = _screen_rect()
+			if screen.size == size:
+				target = screen.position
+			else:
+				target = screen.position + (screen.size - size) / 2
+		else:
+			var usable: Rect2i = _usable_rect()
+			target = usable.position + (usable.size - size) / 2
+			target.x = maxi(target.x, usable.position.x)
+			target.y = maxi(target.y, usable.position.y)
 	elif position != NO_POSITION:
-		_window.position = position
+		target = position
+	var near_screen_origin: bool = (
+		borderless and target != NO_POSITION and target == _screen_rect().position
+	)
+	if target != NO_POSITION:
+		_window.position = (
+			target + BORDERLESS_SETTLE_OFFSET
+			if near_screen_origin
+			else target
+		)
+	if was_fullscreen and borderless:
+		# Leaving fullscreen and enabling borderless at 1920x1080 in the
+		# same frame re-triggers fullscreen.  Spend one frame as a framed
+		# windowed window, then enable borderless and settle the position.
+		_apply_borderless_after_fullscreen(target, size, settle_token)
+	elif near_screen_origin:
+		# See BORDERLESS_SETTLE_OFFSET.
+		_settle_borderless_position(target, settle_token)
 	if _window.size != size:
 		return {"ok": false, "message": "窗口尺寸未生效"}
+	if borderless and was_fullscreen:
+		# Borderless is enabled on the next frame; confirmation happens later.
+		return {"ok": true, "message": ""}
+	if _window.borderless != borderless:
+		return {"ok": false, "message": "无边框窗口状态未生效"}
 	return {"ok": true, "message": ""}
+
+
+func _apply_borderless_after_fullscreen(
+	target: Vector2i, size: Vector2i, token: int
+) -> void:
+	if not is_inside_tree():
+		return
+	await get_tree().process_frame
+	if token != _borderless_settle_token:
+		return
+	if _window == null or _window.mode != Window.MODE_WINDOWED:
+		return
+	_window.borderless = true
+	if not _window.borderless:
+		return
+	# Enabling the flag re-adds the frame allowance to the client size.
+	_window.size = size
+	var near_screen_origin: bool = target == _screen_rect().position
+	if target != NO_POSITION:
+		_window.position = (
+			target + BORDERLESS_SETTLE_OFFSET if near_screen_origin else target
+		)
+	if not near_screen_origin:
+		return
+	await get_tree().process_frame
+	if token != _borderless_settle_token:
+		return
+	if _window == null or not _window.borderless:
+		return
+	if _window.mode != Window.MODE_WINDOWED:
+		return
+	_window.position = target
+
+
+func _settle_borderless_position(target: Vector2i, token: int) -> void:
+	if not is_inside_tree():
+		return
+	await get_tree().process_frame
+	if token != _borderless_settle_token:
+		return
+	if _window == null or not _window.borderless:
+		return
+	if _window.mode != Window.MODE_WINDOWED:
+		return
+	_window.position = target
 
 
 func _pending_window_is_effective() -> bool:
@@ -398,7 +540,14 @@ func _pending_window_is_effective() -> bool:
 		return true
 	if _pending_mode == DisplayOptions.Mode.FULLSCREEN:
 		return _window.mode == Window.MODE_FULLSCREEN
-	return _window.mode == Window.MODE_WINDOWED and _window.size == _pending_window_size
+	var expected_borderless: bool = DisplayOptions.is_borderless_choice(
+		DisplayOptions.Mode.WINDOWED, _pending_window_size
+	)
+	return (
+		_window.mode == Window.MODE_WINDOWED
+		and _window.size == _pending_window_size
+		and _window.borderless == expected_borderless
+	)
 
 
 # --- Config ----------------------------------------------------------------
@@ -416,8 +565,12 @@ func _load_startup_state() -> Dictionary:
 	var mode_value: Variant = config.get_value("display", "mode", "")
 	var width_value: Variant = config.get_value("display", "window_width", 0)
 	var height_value: Variant = config.get_value("display", "window_height", 0)
+	var borderless_value: Variant = null
+	if config.has_section_key("display", "borderless"):
+		borderless_value = config.get_value("display", "borderless")
 	var state: Dictionary = DisplayOptions.validate_saved_state(
-		mode_value, width_value, height_value, usable, _frame_margin
+		mode_value, width_value, height_value, usable, _frame_margin,
+		borderless_value, _screen_rect()
 	)
 	var notice: String = ""
 	if bool(state.get("changed", false)):
@@ -426,16 +579,19 @@ func _load_startup_state() -> Dictionary:
 	return {
 		"mode": int(state.get("mode", DisplayOptions.Mode.WINDOWED)),
 		"window_size": state.get("window_size", DisplayOptions.DEFAULT_WINDOW_SIZE) as Vector2i,
+		"borderless": bool(state.get("borderless", false)),
 		"notice": notice,
 	}
 
 
 func _save_config(mode: int, window_size: Vector2i) -> bool:
+	var borderless: bool = DisplayOptions.is_borderless_choice(mode, window_size)
 	var config: ConfigFile = ConfigFile.new()
 	config.set_value("display", "version", CONFIG_VERSION)
 	config.set_value("display", "mode", DisplayOptions.mode_to_text(mode))
 	config.set_value("display", "window_width", window_size.x)
 	config.set_value("display", "window_height", window_size.y)
+	config.set_value("display", "borderless", borderless)
 	var temp_path: String = config_path + ".tmp"
 	var error: Error = config.save(temp_path)
 	if error != OK:
@@ -452,6 +608,7 @@ func _save_config(mode: int, window_size: Vector2i) -> bool:
 		String(verify.get_value("display", "mode", "")) != DisplayOptions.mode_to_text(mode)
 		or int(verify.get_value("display", "window_width", -1)) != window_size.x
 		or int(verify.get_value("display", "window_height", -1)) != window_size.y
+		or bool(verify.get_value("display", "borderless", not borderless)) != borderless
 	):
 		_remove_file(temp_path)
 		return false

@@ -1,0 +1,10 @@
+{
+  "original_ground_exact": true,
+  "layer_rebuild_exact": true,
+  "nearest_2x_exact": true,
+  "objects_unchanged": true,
+  "decoration_avoids_ground_and_core_lane": true,
+  "protected_checked": 144,
+  "protected_changed": [],
+  "scope": "Independent static pixel checks; no Godot integration or gameplay test."
+}

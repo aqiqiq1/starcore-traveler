@@ -1,0 +1,2517 @@
+{
+  "canvas": [
+    640,
+    360
+  ],
+  "sea_period": 1278,
+  "speeds": {
+    "sea_main": 4.2,
+    "sea_near": 7.2,
+    "sky_bank": 6.2,
+    "sky_wisp": 3.6
+  },
+  "phase_convention": "phase=(speed*t) mod P; texture column u is drawn at x=u+phase; +phase = +x (right). unwrapped_x is monotonic; rendered positions wrap only at the true texture period",
+  "seam_x_rule": "visible seam x=phase when phase<=640; seam marker is a period label, not an image reset",
+  "rows": [
+    {
+      "t": 0.0,
+      "sea_main_unwrapped_x": 0.0,
+      "sea_near_unwrapped_x": 0.0,
+      "sea_main_phase": 0,
+      "sea_near_phase": 0,
+      "sea_main_seam_x": 0,
+      "sea_near_seam_x": 0,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": -56.0,
+          "unwrapped_x": -56.0
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 376.0,
+          "unwrapped_x": 376.0
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 243.0,
+          "unwrapped_x": 243.0
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 466.0,
+          "unwrapped_x": 466.0
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 91.0,
+          "unwrapped_x": 91.0
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 198.0,
+          "unwrapped_x": 198.0
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 321.0,
+          "unwrapped_x": 321.0
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 207.0,
+          "bob": 0.0
+        },
+        {
+          "name": "debris_cluster",
+          "y": 244.73,
+          "bob": 1.73
+        },
+        {
+          "name": "debris_tiny",
+          "y": 234.24,
+          "bob": -0.76
+        },
+        {
+          "name": "debris_low",
+          "y": 292.26,
+          "bob": 3.26
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 317.0,
+          "y": 266.0,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.19,
+          "surface_phase": 0,
+          "surface_index": 337
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 272.31,
+          "y": 279.14,
+          "w": 30,
+          "h": 9,
+          "alpha": 0.16,
+          "surface_phase": 0,
+          "surface_index": 287
+        },
+        {
+          "name": "shadow_low",
+          "x": 243.35,
+          "y": 318.02,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.3,
+          "surface_phase": 0,
+          "surface_index": 257
+        }
+      ]
+    },
+    {
+      "t": 1.0,
+      "sea_main_unwrapped_x": 4.2,
+      "sea_near_unwrapped_x": 7.2,
+      "sea_main_phase": 4,
+      "sea_near_phase": 7,
+      "sea_main_seam_x": 4,
+      "sea_near_seam_x": 7,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": -49.8,
+          "unwrapped_x": -49.8
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 382.2,
+          "unwrapped_x": 382.2
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 246.6,
+          "unwrapped_x": 246.6
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 469.6,
+          "unwrapped_x": 469.6
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 94.6,
+          "unwrapped_x": 94.6
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 201.6,
+          "unwrapped_x": 201.6
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 324.6,
+          "unwrapped_x": 324.6
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 209.97,
+          "bob": 2.97
+        },
+        {
+          "name": "debris_cluster",
+          "y": 243.06,
+          "bob": 0.06
+        },
+        {
+          "name": "debris_tiny",
+          "y": 234.1,
+          "bob": -0.9
+        },
+        {
+          "name": "debris_low",
+          "y": 292.27,
+          "bob": 3.27
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 315.81,
+          "y": 266.51,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.19,
+          "surface_phase": 4,
+          "surface_index": 332
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 272.98,
+          "y": 279.97,
+          "w": 30,
+          "h": 9,
+          "alpha": 0.16,
+          "surface_phase": 4,
+          "surface_index": 284
+        },
+        {
+          "name": "shadow_low",
+          "x": 243.35,
+          "y": 317.02,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.3,
+          "surface_phase": 7,
+          "surface_index": 250
+        }
+      ]
+    },
+    {
+      "t": 2.0,
+      "sea_main_unwrapped_x": 8.4,
+      "sea_near_unwrapped_x": 14.4,
+      "sea_main_phase": 8,
+      "sea_near_phase": 14,
+      "sea_main_seam_x": 8,
+      "sea_near_seam_x": 14,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": -43.6,
+          "unwrapped_x": -43.6
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 388.4,
+          "unwrapped_x": 388.4
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 250.2,
+          "unwrapped_x": 250.2
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 473.2,
+          "unwrapped_x": 473.2
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 98.2,
+          "unwrapped_x": 98.2
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 205.2,
+          "unwrapped_x": 205.2
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 328.2,
+          "unwrapped_x": 328.2
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 210.98,
+          "bob": 3.98
+        },
+        {
+          "name": "debris_cluster",
+          "y": 241.33,
+          "bob": -1.67
+        },
+        {
+          "name": "debris_tiny",
+          "y": 235.04,
+          "bob": 0.04
+        },
+        {
+          "name": "debris_low",
+          "y": 290.56,
+          "bob": 1.56
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 315.41,
+          "y": 266.01,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.19,
+          "surface_phase": 8,
+          "surface_index": 327
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 273.67,
+          "y": 280.83,
+          "w": 32,
+          "h": 10,
+          "alpha": 0.12,
+          "surface_phase": 8,
+          "surface_index": 281
+        },
+        {
+          "name": "shadow_low",
+          "x": 243.69,
+          "y": 318.53,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.3,
+          "surface_phase": 14,
+          "surface_index": 244
+        }
+      ]
+    },
+    {
+      "t": 3.0,
+      "sea_main_unwrapped_x": 12.6,
+      "sea_near_unwrapped_x": 21.6,
+      "sea_main_phase": 13,
+      "sea_near_phase": 22,
+      "sea_main_seam_x": 13,
+      "sea_near_seam_x": 22,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": -37.4,
+          "unwrapped_x": -37.4
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 394.6,
+          "unwrapped_x": 394.6
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 253.8,
+          "unwrapped_x": 253.8
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 476.8,
+          "unwrapped_x": 476.8
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 101.8,
+          "unwrapped_x": 101.8
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 208.8,
+          "unwrapped_x": 208.8
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 331.8,
+          "unwrapped_x": 331.8
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 209.35,
+          "bob": 2.35
+        },
+        {
+          "name": "debris_cluster",
+          "y": 241.18,
+          "bob": -1.82
+        },
+        {
+          "name": "debris_tiny",
+          "y": 235.93,
+          "bob": 0.93
+        },
+        {
+          "name": "debris_low",
+          "y": 288.05,
+          "bob": -0.95
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 316.06,
+          "y": 266.82,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.19,
+          "surface_phase": 13,
+          "surface_index": 323
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 273.73,
+          "y": 280.91,
+          "w": 32,
+          "h": 10,
+          "alpha": 0.1163,
+          "surface_phase": 13,
+          "surface_index": 276
+        },
+        {
+          "name": "shadow_low",
+          "x": 244.19,
+          "y": 318.29,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.2902,
+          "surface_phase": 22,
+          "surface_index": 236
+        }
+      ]
+    },
+    {
+      "t": 4.0,
+      "sea_main_unwrapped_x": 16.8,
+      "sea_near_unwrapped_x": 28.8,
+      "sea_main_phase": 17,
+      "sea_near_phase": 29,
+      "sea_main_seam_x": 17,
+      "sea_near_seam_x": 29,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": -31.2,
+          "unwrapped_x": -31.2
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 400.8,
+          "unwrapped_x": 400.8
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 257.4,
+          "unwrapped_x": 257.4
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 480.4,
+          "unwrapped_x": 480.4
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 105.4,
+          "unwrapped_x": 105.4
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 212.4,
+          "unwrapped_x": 212.4
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 335.4,
+          "unwrapped_x": 335.4
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 206.17,
+          "bob": -0.83
+        },
+        {
+          "name": "debris_cluster",
+          "y": 242.74,
+          "bob": -0.26
+        },
+        {
+          "name": "debris_tiny",
+          "y": 235.7,
+          "bob": 0.7
+        },
+        {
+          "name": "debris_low",
+          "y": 286.03,
+          "bob": -2.97
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 317.33,
+          "y": 268.42,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.1781,
+          "surface_phase": 17,
+          "surface_index": 320
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 273.1,
+          "y": 280.13,
+          "w": 30,
+          "h": 9,
+          "alpha": 0.1538,
+          "surface_phase": 17,
+          "surface_index": 271
+        },
+        {
+          "name": "shadow_low",
+          "x": 244.59,
+          "y": 317.89,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.2694,
+          "surface_phase": 29,
+          "surface_index": 230
+        }
+      ]
+    },
+    {
+      "t": 5.0,
+      "sea_main_unwrapped_x": 21.0,
+      "sea_near_unwrapped_x": 36.0,
+      "sea_main_phase": 21,
+      "sea_near_phase": 36,
+      "sea_main_seam_x": 21,
+      "sea_near_seam_x": 36,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": -25.0,
+          "unwrapped_x": -25.0
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 407.0,
+          "unwrapped_x": 407.0
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 261.0,
+          "unwrapped_x": 261.0
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 484.0,
+          "unwrapped_x": 484.0
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 109.0,
+          "unwrapped_x": 109.0
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 216.0,
+          "unwrapped_x": 216.0
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 339.0,
+          "unwrapped_x": 339.0
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 203.54,
+          "bob": -3.46
+        },
+        {
+          "name": "debris_cluster",
+          "y": 244.55,
+          "bob": 1.55
+        },
+        {
+          "name": "debris_tiny",
+          "y": 234.62,
+          "bob": -0.38
+        },
+        {
+          "name": "debris_low",
+          "y": 285.56,
+          "bob": -3.44
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 318.39,
+          "y": 269.73,
+          "w": 42,
+          "h": 13,
+          "alpha": 0.1406,
+          "surface_phase": 21,
+          "surface_index": 317
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 272.38,
+          "y": 281.23,
+          "w": 30,
+          "h": 9,
+          "alpha": 0.16,
+          "surface_phase": 21,
+          "surface_index": 266
+        },
+        {
+          "name": "shadow_low",
+          "x": 244.69,
+          "y": 318.03,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.2646,
+          "surface_phase": 36,
+          "surface_index": 223
+        }
+      ]
+    },
+    {
+      "t": 6.0,
+      "sea_main_unwrapped_x": 25.2,
+      "sea_near_unwrapped_x": 43.2,
+      "sea_main_phase": 25,
+      "sea_near_phase": 43,
+      "sea_main_seam_x": 25,
+      "sea_near_seam_x": 43,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": -18.8,
+          "unwrapped_x": -18.8
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 413.2,
+          "unwrapped_x": 413.2
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 264.6,
+          "unwrapped_x": 264.6
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 487.6,
+          "unwrapped_x": 487.6
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 112.6,
+          "unwrapped_x": 112.6
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 219.6,
+          "unwrapped_x": 219.6
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 342.6,
+          "unwrapped_x": 342.6
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 203.2,
+          "bob": -3.8
+        },
+        {
+          "name": "debris_cluster",
+          "y": 244.89,
+          "bob": 1.89
+        },
+        {
+          "name": "debris_tiny",
+          "y": 234.0,
+          "bob": -1.0
+        },
+        {
+          "name": "debris_low",
+          "y": 286.89,
+          "bob": -2.11
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 318.52,
+          "y": 271.9,
+          "w": 42,
+          "h": 13,
+          "alpha": 0.1358,
+          "surface_phase": 25,
+          "surface_index": 314
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 272.24,
+          "y": 281.05,
+          "w": 30,
+          "h": 9,
+          "alpha": 0.16,
+          "surface_phase": 25,
+          "surface_index": 262
+        },
+        {
+          "name": "shadow_low",
+          "x": 244.42,
+          "y": 314.63,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.2783,
+          "surface_phase": 43,
+          "surface_index": 215
+        }
+      ]
+    },
+    {
+      "t": 7.0,
+      "sea_main_unwrapped_x": 29.4,
+      "sea_near_unwrapped_x": 50.4,
+      "sea_main_phase": 29,
+      "sea_near_phase": 50,
+      "sea_main_seam_x": 29,
+      "sea_near_seam_x": 50,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": -12.6,
+          "unwrapped_x": -12.6
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 419.4,
+          "unwrapped_x": 419.4
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 268.2,
+          "unwrapped_x": 268.2
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 491.2,
+          "unwrapped_x": 491.2
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 116.2,
+          "unwrapped_x": 116.2
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 223.2,
+          "unwrapped_x": 223.2
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 346.2,
+          "unwrapped_x": 346.2
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 205.37,
+          "bob": -1.63
+        },
+        {
+          "name": "debris_cluster",
+          "y": 243.46,
+          "bob": 0.46
+        },
+        {
+          "name": "debris_tiny",
+          "y": 234.59,
+          "bob": -0.41
+        },
+        {
+          "name": "debris_low",
+          "y": 289.32,
+          "bob": 0.32
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 317.65,
+          "y": 270.81,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.1668,
+          "surface_phase": 29,
+          "surface_index": 309
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 272.82,
+          "y": 281.77,
+          "w": 30,
+          "h": 9,
+          "alpha": 0.16,
+          "surface_phase": 29,
+          "surface_index": 259
+        },
+        {
+          "name": "shadow_low",
+          "x": 243.94,
+          "y": 311.9,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.3,
+          "surface_phase": 50,
+          "surface_index": 208
+        }
+      ]
+    },
+    {
+      "t": 8.0,
+      "sea_main_unwrapped_x": 33.6,
+      "sea_near_unwrapped_x": 57.6,
+      "sea_main_phase": 34,
+      "sea_near_phase": 58,
+      "sea_main_seam_x": 34,
+      "sea_near_seam_x": 58,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": -6.4,
+          "unwrapped_x": -6.4
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 425.6,
+          "unwrapped_x": 425.6
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 271.8,
+          "unwrapped_x": 271.8
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 494.8,
+          "unwrapped_x": 494.8
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 119.8,
+          "unwrapped_x": 119.8
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 226.8,
+          "unwrapped_x": 226.8
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 349.8,
+          "unwrapped_x": 349.8
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 208.63,
+          "bob": 1.63
+        },
+        {
+          "name": "debris_cluster",
+          "y": 241.59,
+          "bob": -1.41
+        },
+        {
+          "name": "debris_tiny",
+          "y": 235.68,
+          "bob": 0.68
+        },
+        {
+          "name": "debris_low",
+          "y": 291.58,
+          "bob": 2.58
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 316.35,
+          "y": 273.19,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.19,
+          "surface_phase": 34,
+          "surface_index": 302
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 273.56,
+          "y": 284.71,
+          "w": 32,
+          "h": 10,
+          "alpha": 0.1262,
+          "surface_phase": 34,
+          "surface_index": 255
+        },
+        {
+          "name": "shadow_low",
+          "x": 243.48,
+          "y": 311.22,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.3,
+          "surface_phase": 58,
+          "surface_index": 199
+        }
+      ]
+    },
+    {
+      "t": 9.0,
+      "sea_main_unwrapped_x": 37.8,
+      "sea_near_unwrapped_x": 64.8,
+      "sea_main_phase": 38,
+      "sea_near_phase": 65,
+      "sea_main_seam_x": 38,
+      "sea_near_seam_x": 65,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": -0.2,
+          "unwrapped_x": -0.2
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 431.8,
+          "unwrapped_x": 431.8
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 275.4,
+          "unwrapped_x": 275.4
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 498.4,
+          "unwrapped_x": 498.4
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 123.4,
+          "unwrapped_x": 123.4
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 230.4,
+          "unwrapped_x": 230.4
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 353.4,
+          "unwrapped_x": 353.4
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 210.8,
+          "bob": 3.8
+        },
+        {
+          "name": "debris_cluster",
+          "y": 241.05,
+          "bob": -1.95
+        },
+        {
+          "name": "debris_tiny",
+          "y": 235.94,
+          "bob": 0.94
+        },
+        {
+          "name": "debris_low",
+          "y": 292.5,
+          "bob": 3.5
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 315.48,
+          "y": 274.1,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.19,
+          "surface_phase": 38,
+          "surface_index": 297
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 273.78,
+          "y": 284.97,
+          "w": 32,
+          "h": 10,
+          "alpha": 0.1132,
+          "surface_phase": 38,
+          "surface_index": 251
+        },
+        {
+          "name": "shadow_low",
+          "x": 243.3,
+          "y": 309.95,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.3,
+          "surface_phase": 65,
+          "surface_index": 192
+        }
+      ]
+    },
+    {
+      "t": 10.0,
+      "sea_main_unwrapped_x": 42.0,
+      "sea_near_unwrapped_x": 72.0,
+      "sea_main_phase": 42,
+      "sea_near_phase": 72,
+      "sea_main_seam_x": 42,
+      "sea_near_seam_x": 72,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": 6.0,
+          "unwrapped_x": 6.0
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 438.0,
+          "unwrapped_x": 438.0
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 279.0,
+          "unwrapped_x": 279.0
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 502.0,
+          "unwrapped_x": 502.0
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 127.0,
+          "unwrapped_x": 127.0
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 234.0,
+          "unwrapped_x": 234.0
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 357.0,
+          "unwrapped_x": 357.0
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 210.46,
+          "bob": 3.46
+        },
+        {
+          "name": "debris_cluster",
+          "y": 242.35,
+          "bob": -0.65
+        },
+        {
+          "name": "debris_tiny",
+          "y": 235.07,
+          "bob": 0.07
+        },
+        {
+          "name": "debris_low",
+          "y": 291.59,
+          "bob": 2.59
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 315.61,
+          "y": 276.27,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.19,
+          "surface_phase": 42,
+          "surface_index": 294
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 273.26,
+          "y": 286.33,
+          "w": 30,
+          "h": 9,
+          "alpha": 0.1443,
+          "surface_phase": 42,
+          "surface_index": 246
+        },
+        {
+          "name": "shadow_low",
+          "x": 243.48,
+          "y": 310.22,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.3,
+          "surface_phase": 72,
+          "surface_index": 185
+        }
+      ]
+    },
+    {
+      "t": 11.0,
+      "sea_main_unwrapped_x": 46.2,
+      "sea_near_unwrapped_x": 79.2,
+      "sea_main_phase": 46,
+      "sea_near_phase": 79,
+      "sea_main_seam_x": 46,
+      "sea_near_seam_x": 79,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": 12.2,
+          "unwrapped_x": 12.2
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 444.2,
+          "unwrapped_x": 444.2
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 282.6,
+          "unwrapped_x": 282.6
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 505.6,
+          "unwrapped_x": 505.6
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 130.6,
+          "unwrapped_x": 130.6
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 237.6,
+          "unwrapped_x": 237.6
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 360.6,
+          "unwrapped_x": 360.6
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 207.83,
+          "bob": 0.83
+        },
+        {
+          "name": "debris_cluster",
+          "y": 244.26,
+          "bob": 1.26
+        },
+        {
+          "name": "debris_tiny",
+          "y": 234.11,
+          "bob": -0.89
+        },
+        {
+          "name": "debris_low",
+          "y": 289.33,
+          "bob": 0.33
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 316.67,
+          "y": 277.58,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.19,
+          "surface_phase": 46,
+          "surface_index": 291
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 272.5,
+          "y": 285.37,
+          "w": 30,
+          "h": 9,
+          "alpha": 0.16,
+          "surface_phase": 46,
+          "surface_index": 241
+        },
+        {
+          "name": "shadow_low",
+          "x": 243.93,
+          "y": 310.9,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.3,
+          "surface_phase": 79,
+          "surface_index": 179
+        }
+      ]
+    },
+    {
+      "t": 12.0,
+      "sea_main_unwrapped_x": 50.4,
+      "sea_near_unwrapped_x": 86.4,
+      "sea_main_phase": 50,
+      "sea_near_phase": 86,
+      "sea_main_seam_x": 50,
+      "sea_near_seam_x": 86,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": 18.4,
+          "unwrapped_x": 18.4
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 450.4,
+          "unwrapped_x": 450.4
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 286.2,
+          "unwrapped_x": 286.2
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 509.2,
+          "unwrapped_x": 509.2
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 134.2,
+          "unwrapped_x": 134.2
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 241.2,
+          "unwrapped_x": 241.2
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 364.2,
+          "unwrapped_x": 364.2
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 204.65,
+          "bob": -2.35
+        },
+        {
+          "name": "debris_cluster",
+          "y": 244.98,
+          "bob": 1.98
+        },
+        {
+          "name": "debris_tiny",
+          "y": 234.22,
+          "bob": -0.78
+        },
+        {
+          "name": "debris_low",
+          "y": 286.89,
+          "bob": -2.11
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 317.94,
+          "y": 281.18,
+          "w": 42,
+          "h": 13,
+          "alpha": 0.1565,
+          "surface_phase": 50,
+          "surface_index": 288
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 272.21,
+          "y": 285.01,
+          "w": 30,
+          "h": 9,
+          "alpha": 0.16,
+          "surface_phase": 50,
+          "surface_index": 237
+        },
+        {
+          "name": "shadow_low",
+          "x": 244.42,
+          "y": 310.63,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.2783,
+          "surface_phase": 86,
+          "surface_index": 172
+        }
+      ]
+    },
+    {
+      "t": 13.0,
+      "sea_main_unwrapped_x": 54.6,
+      "sea_near_unwrapped_x": 93.6,
+      "sea_main_phase": 55,
+      "sea_near_phase": 94,
+      "sea_main_seam_x": 55,
+      "sea_near_seam_x": 94,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": 24.6,
+          "unwrapped_x": 24.6
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 456.6,
+          "unwrapped_x": 456.6
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 289.8,
+          "unwrapped_x": 289.8
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 512.8,
+          "unwrapped_x": 512.8
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 137.8,
+          "unwrapped_x": 137.8
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 244.8,
+          "unwrapped_x": 244.8
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 367.8,
+          "unwrapped_x": 367.8
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 203.02,
+          "bob": -3.98
+        },
+        {
+          "name": "debris_cluster",
+          "y": 243.84,
+          "bob": 0.84
+        },
+        {
+          "name": "debris_tiny",
+          "y": 235.27,
+          "bob": 0.27
+        },
+        {
+          "name": "debris_low",
+          "y": 285.56,
+          "bob": -3.44
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 318.59,
+          "y": 281.99,
+          "w": 42,
+          "h": 13,
+          "alpha": 0.1333,
+          "surface_phase": 55,
+          "surface_index": 284
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 272.66,
+          "y": 285.58,
+          "w": 30,
+          "h": 9,
+          "alpha": 0.16,
+          "surface_phase": 55,
+          "surface_index": 233
+        },
+        {
+          "name": "shadow_low",
+          "x": 244.69,
+          "y": 311.03,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.2646,
+          "surface_phase": 94,
+          "surface_index": 165
+        }
+      ]
+    },
+    {
+      "t": 14.0,
+      "sea_main_unwrapped_x": 58.8,
+      "sea_near_unwrapped_x": 100.8,
+      "sea_main_phase": 59,
+      "sea_near_phase": 101,
+      "sea_main_seam_x": 59,
+      "sea_near_seam_x": 101,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": 30.8,
+          "unwrapped_x": 30.8
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 462.8,
+          "unwrapped_x": 462.8
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 293.4,
+          "unwrapped_x": 293.4
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 516.4,
+          "unwrapped_x": 516.4
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 141.4,
+          "unwrapped_x": 141.4
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 248.4,
+          "unwrapped_x": 248.4
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 371.4,
+          "unwrapped_x": 371.4
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 204.03,
+          "bob": -2.97
+        },
+        {
+          "name": "debris_cluster",
+          "y": 241.9,
+          "bob": -1.1
+        },
+        {
+          "name": "debris_tiny",
+          "y": 235.99,
+          "bob": 0.99
+        },
+        {
+          "name": "debris_low",
+          "y": 286.02,
+          "bob": -2.98
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 318.19,
+          "y": 281.49,
+          "w": 42,
+          "h": 13,
+          "alpha": 0.1476,
+          "surface_phase": 59,
+          "surface_index": 279
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 273.44,
+          "y": 286.55,
+          "w": 32,
+          "h": 10,
+          "alpha": 0.1337,
+          "surface_phase": 59,
+          "surface_index": 229
+        },
+        {
+          "name": "shadow_low",
+          "x": 244.6,
+          "y": 307.89,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.2694,
+          "surface_phase": 101,
+          "surface_index": 158
+        }
+      ]
+    },
+    {
+      "t": 15.0,
+      "sea_main_unwrapped_x": 63.0,
+      "sea_near_unwrapped_x": 108.0,
+      "sea_main_phase": 63,
+      "sea_near_phase": 108,
+      "sea_main_seam_x": 63,
+      "sea_near_seam_x": 108,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": 37.0,
+          "unwrapped_x": 37.0
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 469.0,
+          "unwrapped_x": 469.0
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 297.0,
+          "unwrapped_x": 297.0
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 520.0,
+          "unwrapped_x": 520.0
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 145.0,
+          "unwrapped_x": 145.0
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 252.0,
+          "unwrapped_x": 252.0
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 375.0,
+          "unwrapped_x": 375.0
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 207.0,
+          "bob": -0.0
+        },
+        {
+          "name": "debris_cluster",
+          "y": 241.0,
+          "bob": -2.0
+        },
+        {
+          "name": "debris_tiny",
+          "y": 235.51,
+          "bob": 0.51
+        },
+        {
+          "name": "debris_low",
+          "y": 288.04,
+          "bob": -0.96
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 317.0,
+          "y": 280.0,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.19,
+          "surface_phase": 63,
+          "surface_index": 274
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 273.8,
+          "y": 287.0,
+          "w": 32,
+          "h": 10,
+          "alpha": 0.112,
+          "surface_phase": 63,
+          "surface_index": 226
+        },
+        {
+          "name": "shadow_low",
+          "x": 244.19,
+          "y": 305.29,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.2901,
+          "surface_phase": 108,
+          "surface_index": 150
+        }
+      ]
+    },
+    {
+      "t": 16.0,
+      "sea_main_unwrapped_x": 67.2,
+      "sea_near_unwrapped_x": 115.2,
+      "sea_main_phase": 67,
+      "sea_near_phase": 115,
+      "sea_main_seam_x": 67,
+      "sea_near_seam_x": 115,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": 43.2,
+          "unwrapped_x": 43.2
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 475.2,
+          "unwrapped_x": 475.2
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 300.6,
+          "unwrapped_x": 300.6
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 523.6,
+          "unwrapped_x": 523.6
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 148.6,
+          "unwrapped_x": 148.6
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 255.6,
+          "unwrapped_x": 255.6
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 378.6,
+          "unwrapped_x": 378.6
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 209.97,
+          "bob": 2.97
+        },
+        {
+          "name": "debris_cluster",
+          "y": 241.98,
+          "bob": -1.02
+        },
+        {
+          "name": "debris_tiny",
+          "y": 234.41,
+          "bob": -0.59
+        },
+        {
+          "name": "debris_low",
+          "y": 290.56,
+          "bob": 1.56
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 315.81,
+          "y": 278.51,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.19,
+          "surface_phase": 67,
+          "surface_index": 269
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 273.41,
+          "y": 284.51,
+          "w": 32,
+          "h": 10,
+          "alpha": 0.1355,
+          "surface_phase": 67,
+          "surface_index": 221
+        },
+        {
+          "name": "shadow_low",
+          "x": 243.69,
+          "y": 302.53,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.3,
+          "surface_phase": 115,
+          "surface_index": 143
+        }
+      ]
+    },
+    {
+      "t": 17.0,
+      "sea_main_unwrapped_x": 71.4,
+      "sea_near_unwrapped_x": 122.4,
+      "sea_main_phase": 71,
+      "sea_near_phase": 122,
+      "sea_main_seam_x": 71,
+      "sea_near_seam_x": 122,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": 49.4,
+          "unwrapped_x": 49.4
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 481.4,
+          "unwrapped_x": 481.4
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 304.2,
+          "unwrapped_x": 304.2
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 527.2,
+          "unwrapped_x": 527.2
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 152.2,
+          "unwrapped_x": 152.2
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 259.2,
+          "unwrapped_x": 259.2
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 382.2,
+          "unwrapped_x": 382.2
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 210.98,
+          "bob": 3.98
+        },
+        {
+          "name": "debris_cluster",
+          "y": 243.92,
+          "bob": 0.92
+        },
+        {
+          "name": "debris_tiny",
+          "y": 234.02,
+          "bob": -0.98
+        },
+        {
+          "name": "debris_low",
+          "y": 292.26,
+          "bob": 3.26
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 315.41,
+          "y": 280.01,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.19,
+          "surface_phase": 71,
+          "surface_index": 264
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 272.63,
+          "y": 283.54,
+          "w": 30,
+          "h": 9,
+          "alpha": 0.16,
+          "surface_phase": 71,
+          "surface_index": 217
+        },
+        {
+          "name": "shadow_low",
+          "x": 243.35,
+          "y": 300.02,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.3,
+          "surface_phase": 122,
+          "surface_index": 135
+        }
+      ]
+    },
+    {
+      "t": 18.0,
+      "sea_main_unwrapped_x": 75.6,
+      "sea_near_unwrapped_x": 129.6,
+      "sea_main_phase": 76,
+      "sea_near_phase": 130,
+      "sea_main_seam_x": 76,
+      "sea_near_seam_x": 130,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": 55.6,
+          "unwrapped_x": 55.6
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 487.6,
+          "unwrapped_x": 487.6
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 307.8,
+          "unwrapped_x": 307.8
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 530.8,
+          "unwrapped_x": 530.8
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 155.8,
+          "unwrapped_x": 155.8
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 262.8,
+          "unwrapped_x": 262.8
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 385.8,
+          "unwrapped_x": 385.8
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 209.35,
+          "bob": 2.35
+        },
+        {
+          "name": "debris_cluster",
+          "y": 244.99,
+          "bob": 1.99
+        },
+        {
+          "name": "debris_tiny",
+          "y": 234.81,
+          "bob": -0.19
+        },
+        {
+          "name": "debris_low",
+          "y": 292.27,
+          "bob": 3.27
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 316.06,
+          "y": 280.82,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.19,
+          "surface_phase": 76,
+          "surface_index": 260
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 272.2,
+          "y": 283.0,
+          "w": 30,
+          "h": 9,
+          "alpha": 0.16,
+          "surface_phase": 76,
+          "surface_index": 211
+        },
+        {
+          "name": "shadow_low",
+          "x": 243.35,
+          "y": 300.02,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.3,
+          "surface_phase": 130,
+          "surface_index": 127
+        }
+      ]
+    },
+    {
+      "t": 19.0,
+      "sea_main_unwrapped_x": 79.8,
+      "sea_near_unwrapped_x": 136.8,
+      "sea_main_phase": 80,
+      "sea_near_phase": 137,
+      "sea_main_seam_x": 80,
+      "sea_near_seam_x": 137,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": 61.8,
+          "unwrapped_x": 61.8
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 493.8,
+          "unwrapped_x": 493.8
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 311.4,
+          "unwrapped_x": 311.4
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 534.4,
+          "unwrapped_x": 534.4
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 159.4,
+          "unwrapped_x": 159.4
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 266.4,
+          "unwrapped_x": 266.4
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 389.4,
+          "unwrapped_x": 389.4
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 206.17,
+          "bob": -0.83
+        },
+        {
+          "name": "debris_cluster",
+          "y": 244.19,
+          "bob": 1.19
+        },
+        {
+          "name": "debris_tiny",
+          "y": 235.83,
+          "bob": 0.83
+        },
+        {
+          "name": "debris_low",
+          "y": 290.56,
+          "bob": 1.56
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 317.33,
+          "y": 284.42,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.1781,
+          "surface_phase": 80,
+          "surface_index": 257
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 272.52,
+          "y": 281.41,
+          "w": 30,
+          "h": 9,
+          "alpha": 0.16,
+          "surface_phase": 80,
+          "surface_index": 208
+        },
+        {
+          "name": "shadow_low",
+          "x": 243.69,
+          "y": 300.53,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.3,
+          "surface_phase": 137,
+          "surface_index": 121
+        }
+      ]
+    },
+    {
+      "t": 20.0,
+      "sea_main_unwrapped_x": 84.0,
+      "sea_near_unwrapped_x": 144.0,
+      "sea_main_phase": 84,
+      "sea_near_phase": 144,
+      "sea_main_seam_x": 84,
+      "sea_near_seam_x": 144,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": 68.0,
+          "unwrapped_x": 68.0
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 500.0,
+          "unwrapped_x": 500.0
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 315.0,
+          "unwrapped_x": 315.0
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 538.0,
+          "unwrapped_x": 538.0
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 163.0,
+          "unwrapped_x": 163.0
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 270.0,
+          "unwrapped_x": 270.0
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 393.0,
+          "unwrapped_x": 393.0
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 203.54,
+          "bob": -3.46
+        },
+        {
+          "name": "debris_cluster",
+          "y": 242.26,
+          "bob": -0.74
+        },
+        {
+          "name": "debris_tiny",
+          "y": 235.84,
+          "bob": 0.84
+        },
+        {
+          "name": "debris_low",
+          "y": 288.05,
+          "bob": -0.95
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 318.39,
+          "y": 285.73,
+          "w": 42,
+          "h": 13,
+          "alpha": 0.1406,
+          "surface_phase": 84,
+          "surface_index": 254
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 273.29,
+          "y": 282.37,
+          "w": 30,
+          "h": 9,
+          "alpha": 0.1423,
+          "surface_phase": 84,
+          "surface_index": 204
+        },
+        {
+          "name": "shadow_low",
+          "x": 244.19,
+          "y": 300.29,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.2902,
+          "surface_phase": 144,
+          "surface_index": 114
+        }
+      ]
+    },
+    {
+      "t": 21.0,
+      "sea_main_unwrapped_x": 88.2,
+      "sea_near_unwrapped_x": 151.2,
+      "sea_main_phase": 88,
+      "sea_near_phase": 151,
+      "sea_main_seam_x": 88,
+      "sea_near_seam_x": 151,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": 74.2,
+          "unwrapped_x": 74.2
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 506.2,
+          "unwrapped_x": 506.2
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 318.6,
+          "unwrapped_x": 318.6
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 541.6,
+          "unwrapped_x": 541.6
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 166.6,
+          "unwrapped_x": 166.6
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 273.6,
+          "unwrapped_x": 273.6
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 396.6,
+          "unwrapped_x": 396.6
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 203.2,
+          "bob": -3.8
+        },
+        {
+          "name": "debris_cluster",
+          "y": 241.03,
+          "bob": -1.97
+        },
+        {
+          "name": "debris_tiny",
+          "y": 234.84,
+          "bob": -0.16
+        },
+        {
+          "name": "debris_low",
+          "y": 286.03,
+          "bob": -2.97
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 318.52,
+          "y": 285.9,
+          "w": 42,
+          "h": 13,
+          "alpha": 0.1358,
+          "surface_phase": 88,
+          "surface_index": 251
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 273.79,
+          "y": 282.98,
+          "w": 32,
+          "h": 10,
+          "alpha": 0.1128,
+          "surface_phase": 88,
+          "surface_index": 201
+        },
+        {
+          "name": "shadow_low",
+          "x": 244.59,
+          "y": 300.89,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.2694,
+          "surface_phase": 151,
+          "surface_index": 108
+        }
+      ]
+    },
+    {
+      "t": 22.0,
+      "sea_main_unwrapped_x": 92.4,
+      "sea_near_unwrapped_x": 158.4,
+      "sea_main_phase": 92,
+      "sea_near_phase": 158,
+      "sea_main_seam_x": 92,
+      "sea_near_seam_x": 158,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": 80.4,
+          "unwrapped_x": 80.4
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 512.4,
+          "unwrapped_x": 512.4
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 322.2,
+          "unwrapped_x": 322.2
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 545.2,
+          "unwrapped_x": 545.2
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 170.2,
+          "unwrapped_x": 170.2
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 277.2,
+          "unwrapped_x": 277.2
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 400.2,
+          "unwrapped_x": 400.2
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 205.37,
+          "bob": -1.63
+        },
+        {
+          "name": "debris_cluster",
+          "y": 241.66,
+          "bob": -1.34
+        },
+        {
+          "name": "debris_tiny",
+          "y": 234.03,
+          "bob": -0.97
+        },
+        {
+          "name": "debris_low",
+          "y": 285.56,
+          "bob": -3.44
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 317.65,
+          "y": 286.81,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.1668,
+          "surface_phase": 92,
+          "surface_index": 246
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 273.54,
+          "y": 282.67,
+          "w": 32,
+          "h": 10,
+          "alpha": 0.1277,
+          "surface_phase": 92,
+          "surface_index": 197
+        },
+        {
+          "name": "shadow_low",
+          "x": 244.69,
+          "y": 301.03,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.2646,
+          "surface_phase": 158,
+          "surface_index": 101
+        }
+      ]
+    },
+    {
+      "t": 23.0,
+      "sea_main_unwrapped_x": 96.6,
+      "sea_near_unwrapped_x": 165.6,
+      "sea_main_phase": 97,
+      "sea_near_phase": 166,
+      "sea_main_seam_x": 97,
+      "sea_near_seam_x": 166,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": 86.6,
+          "unwrapped_x": 86.6
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 518.6,
+          "unwrapped_x": 518.6
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 325.8,
+          "unwrapped_x": 325.8
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 548.8,
+          "unwrapped_x": 548.8
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 173.8,
+          "unwrapped_x": 173.8
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 280.8,
+          "unwrapped_x": 280.8
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 403.8,
+          "unwrapped_x": 403.8
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 208.63,
+          "bob": 1.63
+        },
+        {
+          "name": "debris_cluster",
+          "y": 243.54,
+          "bob": 0.54
+        },
+        {
+          "name": "debris_tiny",
+          "y": 234.39,
+          "bob": -0.61
+        },
+        {
+          "name": "debris_low",
+          "y": 286.89,
+          "bob": -2.11
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 316.35,
+          "y": 285.19,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.19,
+          "surface_phase": 97,
+          "surface_index": 239
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 272.78,
+          "y": 279.73,
+          "w": 30,
+          "h": 9,
+          "alpha": 0.16,
+          "surface_phase": 97,
+          "surface_index": 191
+        },
+        {
+          "name": "shadow_low",
+          "x": 244.42,
+          "y": 303.63,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.2783,
+          "surface_phase": 166,
+          "surface_index": 92
+        }
+      ]
+    },
+    {
+      "t": 24.0,
+      "sea_main_unwrapped_x": 100.8,
+      "sea_near_unwrapped_x": 172.8,
+      "sea_main_phase": 101,
+      "sea_near_phase": 173,
+      "sea_main_seam_x": 101,
+      "sea_near_seam_x": 173,
+      "sky": [
+        {
+          "name": "sky_bank_left",
+          "rendered_x": 92.8,
+          "unwrapped_x": 92.8
+        },
+        {
+          "name": "sky_bank_right",
+          "rendered_x": 524.8,
+          "unwrapped_x": 524.8
+        },
+        {
+          "name": "sky_mid_wisp",
+          "rendered_x": 329.4,
+          "unwrapped_x": 329.4
+        },
+        {
+          "name": "sky_low_wisp_r",
+          "rendered_x": 552.4,
+          "unwrapped_x": 552.4
+        },
+        {
+          "name": "sky_left_wisp",
+          "rendered_x": 177.4,
+          "unwrapped_x": 177.4
+        },
+        {
+          "name": "sky_low_wisp_l",
+          "rendered_x": 284.4,
+          "unwrapped_x": 284.4
+        },
+        {
+          "name": "sky_high_chip",
+          "rendered_x": 407.4,
+          "unwrapped_x": 407.4
+        }
+      ],
+      "rocks": [
+        {
+          "name": "debris_central",
+          "y": 210.8,
+          "bob": 3.8
+        },
+        {
+          "name": "debris_cluster",
+          "y": 244.92,
+          "bob": 1.92
+        },
+        {
+          "name": "debris_tiny",
+          "y": 235.49,
+          "bob": 0.49
+        },
+        {
+          "name": "debris_low",
+          "y": 289.32,
+          "bob": 0.32
+        }
+      ],
+      "shadows": [
+        {
+          "name": "shadow_central",
+          "x": 315.48,
+          "y": 284.1,
+          "w": 40,
+          "h": 12,
+          "alpha": 0.19,
+          "surface_phase": 101,
+          "surface_index": 234
+        },
+        {
+          "name": "shadow_cluster",
+          "x": 272.23,
+          "y": 279.04,
+          "w": 30,
+          "h": 9,
+          "alpha": 0.16,
+          "surface_phase": 101,
+          "surface_index": 186
+        },
+        {
+          "name": "shadow_low",
+          "x": 243.94,
+          "y": 306.9,
+          "w": 28,
+          "h": 9,
+          "alpha": 0.3,
+          "surface_phase": 173,
+          "surface_index": 85
+        }
+      ]
+    }
+  ]
+}

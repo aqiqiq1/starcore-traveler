@@ -1,0 +1,109 @@
+{
+  "version": "V1",
+  "date": "2026-11-02",
+  "canvas": {
+    "logical": [
+      640,
+      360
+    ],
+    "preview": [
+      1280,
+      720
+    ],
+    "scale": "NEAREST 2x"
+  },
+  "inputs": {
+    "background_only_v7.png": "2d65a27d432ce60d8562c71cf754049d49a106d08e63348d78cb08f4c8387aae",
+    "generate_background_v6.py": "01f849a02aecebc509e7972787796b67f25058ca146413c7bbd14f830bce7d0c",
+    "source_v7.md": "83322442d7d04931b26266ce09253622051c86f2de07e66c17c98a3b92ecde5d"
+  },
+  "outputs": {
+    "background_detail_v1.png": "6c49158bc4b67478361a9c4e36eff31f1f2330df3f5570a843689ed2972cc78a",
+    "background_detail_v1_640x360.png": "588cefc94dbfb0b60cc4e39bf708665818a20f73d905ac7370baae3182de4b27",
+    "generate_background_detail_v1.py": "9cf6175244f7a6f74169a3fe1db92e99552f871b1b585e8163a446e7312d6354"
+  },
+  "changed_pixels_logical": 2273,
+  "changed_bbox_logical": [
+    25,
+    138,
+    570,
+    304
+  ],
+  "protection": {
+    "outside_masks": 0,
+    "sky_above_y130_exact": true,
+    "cloud_palette_pixels_changed": 0,
+    "sky_gradient_pixels_changed": 0,
+    "v7_unchanged": true
+  },
+  "groups": [
+    {
+      "id": "G1_left_bridge",
+      "bbox": [
+        25,
+        144,
+        285,
+        300
+      ],
+      "pixels": 15346
+    },
+    {
+      "id": "G2_right_bridge",
+      "bbox": [
+        434,
+        144,
+        571,
+        300
+      ],
+      "pixels": 6529
+    },
+    {
+      "id": "G3_left_hall_island",
+      "bbox": [
+        31,
+        168,
+        101,
+        200
+      ],
+      "pixels": 967
+    },
+    {
+      "id": "G4_left_far_courtyard",
+      "bbox": [
+        245,
+        174,
+        309,
+        204
+      ],
+      "pixels": 991
+    },
+    {
+      "id": "G5_right_floating_island",
+      "bbox": [
+        444,
+        138,
+        535,
+        191
+      ],
+      "pixels": 1954
+    },
+    {
+      "id": "G6_cloud_arch_foot",
+      "bbox": [
+        279,
+        278,
+        326,
+        305
+      ],
+      "pixels": 121
+    }
+  ],
+  "unverified": [
+    "未接入 Godot、未做引擎截图或连续试玩",
+    "未制作浮动动画、未验证大幅度位移与遮挡补面",
+    "未修 DS02 两个动态问题（左右断桥遮挡、右桥下静止白云）",
+    "云中残拱仅两足 1px 受光/影，拱冠结构仍按原图读取",
+    "桥后/云后不可见建筑面未补绘",
+    "右浮岛 G5 与右桥断柱 G2 在画面上相接；独立浮移会断开支撑，需先定组合/遮挡方案"
+  ]
+}

@@ -1,0 +1,10 @@
+state=echo dialogue just ended, guard teaching popup opened
+guard_tip_ready=true
+cine_has_played=true
+player_position=(1985.248, 320.0)
+stable_stage=3 (STAGE_ARENA=3)
+guard_state=GRAVITY_CHARGE
+guard_action_elapsed=0.000
+guard_enemy_slam_count=0
+popup_page=1/2
+player_input_handed_back=true

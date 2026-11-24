@@ -1,0 +1,31 @@
+{
+  "title": "L2 first-platform facet id map (face-tint sync)",
+  "created": "2026-11-19",
+  "status": "new asset; approved base/active/mask/arrival untouched",
+  "provenance": {
+    "generator": "make_layered_core_approved_material.py",
+    "method": "same SEED/RUNS/points/Delaunay copied into this script (no import side effects)",
+    "seed": 20261118,
+    "triangles": 165,
+    "points": 88
+  },
+  "files": {
+    "facetid": {
+      "file": "layered_core_first_facetids_256x32.png",
+      "sha256": "0812b6dfad0d937605df2d4e8bd1cc8e9d4ebc8eb8c74c29baaf8a55d9d67fe9",
+      "size": [
+        256,
+        32
+      ]
+    },
+    "mask": {
+      "file": "layered_core_approved_mask_256x32.png",
+      "sha256": "8bd23c87bd0714d8cd979f3dba3323f497a3aba4ad77650aebe65605bb376feb"
+    }
+  },
+  "pixels": 3215,
+  "used_ids": 122,
+  "id_min": 1,
+  "id_max": 158,
+  "note": "R = triangle index + 1; 0 = not crystal. Same attribution as the approved generator; no new facet layout."
+}

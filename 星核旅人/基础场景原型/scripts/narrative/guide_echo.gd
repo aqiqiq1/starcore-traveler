@@ -122,7 +122,7 @@ var _voice = null
 var _font_missing_warned: bool = false
 ## Set by the level-01 opening film. While owned, the echo still exposes its
 ## public page API to that controller, but F is not accepted and the small
-## "交谈" prompt cannot compete with the opening's Space pages.
+## "交谈" prompt cannot compete with the opening's own pages.
 var _cinematic_owned: bool = false
 
 

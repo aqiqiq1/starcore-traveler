@@ -1,0 +1,147 @@
+{
+  "name": "星核旅人 · 星核仓首版（32×32 侧视像素分层）",
+  "version": 1,
+  "status": "prototype first pass, pending user visual feedback; not final art",
+  "generated_by": "generate_star_core_bay.py (Pillow, deterministic programmatic pixel art)",
+  "design": {
+    "view": "side view pixel art",
+    "canvas": [
+      32,
+      32
+    ],
+    "origin": "center of the 32×32 bay; all layers share the same origin",
+    "base": "white stone pedestal with grey-blue shading and thickness, starting at image y=24",
+    "glass": "pale-cyan bell dome: semicircular cap (outer radius 15) plus short vertical walls to y=24",
+    "glass_interior": "fully transparent over the core's 16×16 rect; only rim, seal and outside-core reflections are opaque",
+    "core": "existing 16×16 purple star core at (0,0), image rect x=8..23, y=8..23",
+    "core_bottom_y": 23,
+    "pedestal_top_y": 24,
+    "core_base_overlap": false,
+    "gold_runes": "small hollow diamond with a center dot plus one dim stud on the pedestal front",
+    "lock_marker": "4×3 code-drawn gold padlock on the pedestal; not baked into any PNG",
+    "dome_geometry_note": "A strict semicircle cannot enclose a 16×16 core above an 8px pedestal in 32×32: at the core top (16px above the base) a 32-wide strict semicircle would be only the apex, and its radius is just 16. The 32×32 bay therefore uses a semicircular cap plus short vertical walls; the core is not scaled and the pedestal is not redesigned. If a strict semicircle is mandatory, widen the canvas to about 44×32 (46×32 with margin), not merely 32×40: a taller 32×40 can host a half-ellipse/bell, not a strict semicircle."
+  },
+  "layer_order": [
+    "StarCoreBayVisual/Base (rear)",
+    "StarCoreBayVisual/Core (existing 16×16 purple)",
+    "StarCoreBayVisual/Glass (front)"
+  ],
+  "assets": {
+    "base": {
+      "file": "star_core_bay_base.png",
+      "project_path": "基础场景原型/assets/star_core_bay/star_core_bay_base.png",
+      "backup_path": "自制素材/星核仓/star_core_bay_base.png",
+      "size": [
+        32,
+        32
+      ],
+      "mode": "RGBA",
+      "opaque_pixels": 208,
+      "sha256": "a43f68e93af9d5df0569a50d1970f45452d1a3748d2d9eb31657943a06faa1fd",
+      "rgba_sha256": "98a7cd1e2de8693a7400e0bbe1f9c400531aac2ecf939f88a8d464b4e0a7eb31"
+    },
+    "glass": {
+      "file": "star_core_bay_glass.png",
+      "project_path": "基础场景原型/assets/star_core_bay/star_core_bay_glass.png",
+      "backup_path": "自制素材/星核仓/star_core_bay_glass.png",
+      "size": [
+        32,
+        32
+      ],
+      "mode": "RGBA",
+      "opaque_pixels": 176,
+      "sha256": "f65d4277b7b4156918cb98fd74a9c090a6fc0f39dcf9353579ba250b786d7143",
+      "rgba_sha256": "5311b5d193c4ecced5ab2aed359ead63f481a174789153de12e2eff85a150cd1"
+    },
+    "empty": {
+      "file": "star_core_bay_empty.png",
+      "project_path": "基础场景原型/assets/star_core_bay/star_core_bay_empty.png",
+      "backup_path": "自制素材/星核仓/star_core_bay_empty.png",
+      "size": [
+        32,
+        32
+      ],
+      "mode": "RGBA",
+      "opaque_pixels": 356,
+      "sha256": "35a4fa6deca16b740b5524ebcd9fdf2c99910ea127329d14b88ab16ad6ba5c2f",
+      "rgba_sha256": "a08cd98101a262f72d8a6c1e085bc6e11c61f554d727a412456e4f47cbf4c4b7"
+    }
+  },
+  "checks": {
+    "all_sizes_32x32": true,
+    "all_modes_rgba": true,
+    "alpha_preserved": true,
+    "corners_transparent": true,
+    "base_bbox": [
+      2,
+      24,
+      30,
+      32
+    ],
+    "glass_bbox": [
+      1,
+      1,
+      31,
+      25
+    ],
+    "base_alpha_pixels_above_y24": 0,
+    "core_rect_glass_alpha_max": 0,
+    "core_rect_glass_transparent": true,
+    "core_inside_dome_outer": true,
+    "core_bottom_above_base_top": true,
+    "empty_is_base_plus_glass": true,
+    "base_mean_opaque_luminance": 196.43,
+    "base_is_bright": true,
+    "gold_rune_pixel_count": 8,
+    "glass_bright_white_glint_pixels": 12,
+    "glass_cyan_edge_pixels": 149,
+    "source_core_unchanged": true,
+    "source_core_size": [
+      16,
+      16
+    ],
+    "core_rect": [
+      8,
+      8,
+      24,
+      24
+    ],
+    "pedestal_top_y": 24
+  },
+  "source": {
+    "core_file": "基础场景原型/assets/star_core/star_core_locked.png",
+    "core_sha256_before": "40a36f519bc495f217d88c96c04f0a4503da9be15de75198a4b3da2844ad557a",
+    "core_sha256_after": "40a36f519bc495f217d88c96c04f0a4503da9be15de75198a4b3da2844ad557a",
+    "core_unchanged": true,
+    "core_attribution": "Free Shiny Gem \"Round\" by Frakassets, CC BY 4.0, https://frakassets.itch.io/free-shiny-gem-round",
+    "note": "The existing purple core is only composited in the review image, the Godot scene, and the engine preview screenshot; no existing asset was modified."
+  },
+  "review_artifacts": {
+    "review_image": {
+      "file": "star_core_bay_review.png",
+      "size": [
+        1280,
+        900
+      ],
+      "mode": "RGB",
+      "sha256": "584cee40486297cec32bdbe87c53ebac8dc7c558db4def4134bb8a5411b5f88b",
+      "note": "Local nearest-neighbour composite review, not a Godot engine capture. Checkerboard, labels and the code-lock replica are not part of any exported PNG. The 1x player idle crop is the project's existing character art, used only for scale; its license is still unknown, so this sheet is for internal review only."
+    }
+  },
+  "integration": {
+    "godot_assets": "res://assets/star_core_bay/",
+    "godot_scene": "res://scenes/star_core_bay_visual.tscn",
+    "godot_script": "res://scripts/star_core_bay_visual.gd",
+    "preview_scene": "res://tools/preview_star_core_bay.tscn",
+    "preview_capture": "res://screenshots/star_core_bay_preview.png",
+    "core_state": "LOCKED (purple); the original StarCoreVisual bottom-right badge is disabled by the bay scene",
+    "occupied_export": "occupied: bool (default true) hides/shows the existing core and the code lock marker; pure display, no bay logic",
+    "not_included": "no opening animation, no storage/retrieval interaction, no collision, no suction, no default main scene wiring, no formal level layout"
+  },
+  "notes": [
+    "All three exported PNGs are 32×32, same origin. The empty composite is base+glass only; no core is baked in.",
+    "The glass layer is genuinely transparent over the full 16×16 core rect, verified by alpha sampling.",
+    "The review image's occupied composite is a reference only; the game scene layers base, the existing core, and glass separately.",
+    "This is a first-pass look-dev asset pending user visual feedback, not final art."
+  ]
+}

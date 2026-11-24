@@ -1,0 +1,14 @@
+second cleanup verification 2026-11-18
+manifest rows: 979, absent now: 979
+active files: 6142, bytes: 267788566
+orphan .import: 0, orphan .uid: 0
+待删除 exists: False
+PRESENT 基础场景原型/screenshots/level03_demo_finish_20261116/guard/a_pre_teaching_ordinary_hit.gif
+PRESENT 基础场景原型/screenshots/level03_demo_finish_20261116/guard/b_post_teaching_ordinary_hit.gif
+PRESENT 基础场景原型/screenshots/level03_gate_depth_20261116/r_gate_walk.gif
+PRESENT 基础场景原型/screenshots/level03_gate_inset_20261116/i_gate_walk.gif
+PRESENT 基础场景原型/screenshots/l3_recovery_20261116/transition.gif
+PRESENT 基础场景原型/previews/experience_alignment_art_20261117/refs/frames/celeste_ep1_sheet_140_184s.jpg
+PRESENT 基础场景原型/previews/experience_alignment_art_20261117/refs/frames/seq_140_229/f_061.jpg
+PRESENT 基础场景原型/tests/experience_alignment_20261117/opening_hud/superseded_valid_run_20261117_2105/captures/01_l1_run_in.png
+PRESENT 基础场景原型/tests/experience_alignment_20261117/opening_hud/captures/01_l1_run_in.png

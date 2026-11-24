@@ -1,0 +1,107 @@
+﻿Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OpenGL API 3.3.0 NVIDIA 616.56 - Compatibility - Using Device: NVIDIA - NVIDIA GeForce RTX 4060 Laptop GPU
+
+SKIP_PROGRESS capture=true display=Windows
+== L1 opening hold-to-skip bar ==
+  PASS L1 opening/echo/player exist
+  PASS L1 opening reached DIALOGUE
+  PASS L1 opening is still playing at DIALOGUE
+  PASS l1_opening bar at (528, 336)
+  PASS l1_opening bar is 96x6
+  PASS l1_opening label text is 璺宠繃
+  PASS l1_opening label font is 12
+  PASS l1_opening label sits left of the bar with a gap
+  PASS l1_opening label is vertically centred on the bar
+  PASS l1_opening bar style exists
+  PASS l1_opening bar has a 1 px border
+  PASS l1_opening bar anti_aliasing=false
+  PASS l1_opening bar has no corner radius
+  PASS l1_opening bar border is #739e9f
+  PASS l1_opening bar has a near-opaque dark track
+  PASS l1_opening bar fill is #f4cd63
+  PASS l1_opening bar hidden before any Space press
+  PASS l1_opening bar hidden on short-tap press frame
+  PASS l1_opening bar still hidden after a short tap
+  PASS l1_opening bar hidden after short-tap release
+HOLD_SAMPLE l1_opening target=0.2 progress=0.2014 width=19.0
+SHOT D:/godot game/鏄熸牳鏃呬汉/鍩虹鍦烘櫙鍘熷瀷/tests/skip_progress_20261119/l1_opening_hold_020.png size=640x360 error=0
+  PASS l1_opening_hold_020.png is 640x360
+  PASS l1_opening_hold_020.png saved
+HOLD_SAMPLE l1_opening target=0.4 progress=0.4059 width=38.0
+SHOT D:/godot game/鏄熸牳鏃呬汉/鍩虹鍦烘櫙鍘熷瀷/tests/skip_progress_20261119/l1_opening_hold_040.png size=640x360 error=0
+  PASS l1_opening_hold_040.png is 640x360
+  PASS l1_opening_hold_040.png saved
+HOLD_SAMPLE l1_opening target=0.6 progress=0.6040 width=57.0
+SHOT D:/godot game/鏄熸牳鏃呬汉/鍩虹鍦烘櫙鍘熷瀷/tests/skip_progress_20261119/l1_opening_hold_060.png size=640x360 error=0
+  PASS l1_opening_hold_060.png is 640x360
+  PASS l1_opening_hold_060.png saved
+  PASS l1_opening reached 0.2/0.4/0.6 progress
+  PASS l1_opening progress only increased during the hold
+  PASS l1_opening fill width tracks progress (round(94*p))
+  PASS l1_opening fill width stayed inside the track
+  PASS l1_opening bar hidden after releasing the charge
+  PASS l1_opening long Space still skipped the segment
+  PASS l1_opening bar hidden once the skip is committed
+  PASS l1_opening skip still reaches the hand-off boundary
+  PASS l1_opening held Space still owns control until release
+  PASS l1_opening bar hidden during await-release
+SHOT D:/godot game/鏄熸牳鏃呬汉/鍩虹鍦烘櫙鍘熷瀷/tests/skip_progress_20261119/l1_opening_after_skip_hidden.png size=640x360 error=0
+  PASS l1_opening_after_skip_hidden.png is 640x360
+  PASS l1_opening_after_skip_hidden.png saved
+  PASS l1_opening control returned after Space release
+  PASS l1_opening bar has no residue after hand-off
+  PASS l1_opening cinematic UI layer is gone
+  PASS L1 no jump from the skip Space after hand-off
+== L3 cinematic hold-to-skip bar ==
+  PASS L3 cinematic/player exist
+  PASS L3 cinematic started through the level entry
+  PASS L3 cinematic reached DIALOGUE
+  PASS L3 cinematic is still active at DIALOGUE
+  PASS l3_cinematic bar at (528, 336)
+  PASS l3_cinematic bar is 96x6
+  PASS l3_cinematic label text is 璺宠繃
+  PASS l3_cinematic label font is 12
+  PASS l3_cinematic label sits left of the bar with a gap
+  PASS l3_cinematic label is vertically centred on the bar
+  PASS l3_cinematic bar style exists
+  PASS l3_cinematic bar has a 1 px border
+  PASS l3_cinematic bar anti_aliasing=false
+  PASS l3_cinematic bar has no corner radius
+  PASS l3_cinematic bar border is #739e9f
+  PASS l3_cinematic bar has a near-opaque dark track
+  PASS l3_cinematic bar fill is #f4cd63
+  PASS l3_cinematic bar hidden before any Space press
+  PASS l3_cinematic bar hidden on short-tap press frame
+  PASS l3_cinematic bar still hidden after a short tap
+  PASS l3_cinematic bar hidden after short-tap release
+HOLD_SAMPLE l3_cinematic target=0.2 progress=0.2014 width=19.0
+SHOT D:/godot game/鏄熸牳鏃呬汉/鍩虹鍦烘櫙鍘熷瀷/tests/skip_progress_20261119/l3_cinematic_hold_020.png size=640x360 error=0
+  PASS l3_cinematic_hold_020.png is 640x360
+  PASS l3_cinematic_hold_020.png saved
+HOLD_SAMPLE l3_cinematic target=0.4 progress=0.4059 width=38.0
+SHOT D:/godot game/鏄熸牳鏃呬汉/鍩虹鍦烘櫙鍘熷瀷/tests/skip_progress_20261119/l3_cinematic_hold_040.png size=640x360 error=0
+  PASS l3_cinematic_hold_040.png is 640x360
+  PASS l3_cinematic_hold_040.png saved
+HOLD_SAMPLE l3_cinematic target=0.6 progress=0.6003 width=56.0
+SHOT D:/godot game/鏄熸牳鏃呬汉/鍩虹鍦烘櫙鍘熷瀷/tests/skip_progress_20261119/l3_cinematic_hold_060.png size=640x360 error=0
+  PASS l3_cinematic_hold_060.png is 640x360
+  PASS l3_cinematic_hold_060.png saved
+  PASS l3_cinematic reached 0.2/0.4/0.6 progress
+  PASS l3_cinematic progress only increased during the hold
+  PASS l3_cinematic fill width tracks progress (round(94*p))
+  PASS l3_cinematic fill width stayed inside the track
+  PASS l3_cinematic bar hidden after releasing the charge
+  PASS l3_cinematic long Space still skipped the segment
+  PASS l3_cinematic bar hidden once the skip is committed
+  PASS l3_cinematic skip still reaches the hand-off boundary
+  PASS l3_cinematic held Space still owns control until release
+  PASS l3_cinematic bar hidden during await-release
+SHOT D:/godot game/鏄熸牳鏃呬汉/鍩虹鍦烘櫙鍘熷瀷/tests/skip_progress_20261119/l3_cinematic_after_skip_hidden.png size=640x360 error=0
+  PASS l3_cinematic_after_skip_hidden.png is 640x360
+  PASS l3_cinematic_after_skip_hidden.png saved
+  PASS l3_cinematic control returned after Space release
+  PASS l3_cinematic bar has no residue after hand-off
+  PASS l3_cinematic cinematic UI layer is gone
+  PASS L3 no jump from the skip Space after hand-off
+SKIP_PROGRESS_RESULT pass=85 fail=0 shots=8
+SKIP_PROGRESS_OK

@@ -1,0 +1,10 @@
+{
+  "changed_logical_pixels": 2273,
+  "upper_sky_unchanged": true,
+  "cloud_palette_pixels_changed": 0,
+  "sky_gradient_pixels_changed": 0,
+  "nearest_2x_exact": true,
+  "source_sha256": "2d65a27d432ce60d8562c71cf754049d49a106d08e63348d78cb08f4c8387aae",
+  "ds02_runtime_assets_unchanged_vs_standalone": 19,
+  "ds02_runtime_assets_count": 19
+}

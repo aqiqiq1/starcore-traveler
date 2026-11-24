@@ -1,0 +1,97 @@
+{
+  "result": "PASS",
+  "checks": [
+    "exact V4 alpha and dimensions",
+    "transparent RGB unchanged",
+    "local nonzero RGB changes on all four",
+    "two-run PNG + manifest SHA256 determinism",
+    "V4 source files unchanged",
+    "preview differences confined to original column rectangles"
+  ],
+  "assets": [
+    {
+      "file": "doric_column_tall.png",
+      "size": [
+        52,
+        108
+      ],
+      "alpha_bbox": [
+        8,
+        0,
+        44,
+        108
+      ],
+      "foot_anchor": [
+        26,
+        108
+      ],
+      "rgb_changed_pixels": 129,
+      "visible_pixels": 2553,
+      "rgb_changed_percent": 5.05,
+      "alpha_changed_pixels": 0
+    },
+    {
+      "file": "doric_column_broken.png",
+      "size": [
+        52,
+        82
+      ],
+      "alpha_bbox": [
+        9,
+        0,
+        43,
+        82
+      ],
+      "foot_anchor": [
+        26,
+        82
+      ],
+      "rgb_changed_pixels": 141,
+      "visible_pixels": 1814,
+      "rgb_changed_percent": 7.77,
+      "alpha_changed_pixels": 0
+    },
+    {
+      "file": "doric_column_base.png",
+      "size": [
+        52,
+        24
+      ],
+      "alpha_bbox": [
+        9,
+        0,
+        43,
+        24
+      ],
+      "foot_anchor": [
+        26,
+        24
+      ],
+      "rgb_changed_pixels": 37,
+      "visible_pixels": 548,
+      "rgb_changed_percent": 6.75,
+      "alpha_changed_pixels": 0
+    },
+    {
+      "file": "doric_column_fallen.png",
+      "size": [
+        56,
+        28
+      ],
+      "alpha_bbox": [
+        1,
+        4,
+        56,
+        25
+      ],
+      "foot_anchor": [
+        28,
+        25
+      ],
+      "rgb_changed_pixels": 64,
+      "visible_pixels": 1093,
+      "rgb_changed_percent": 5.86,
+      "alpha_changed_pixels": 0
+    }
+  ]
+}

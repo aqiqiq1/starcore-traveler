@@ -1,0 +1,17 @@
+{
+	"capture_script": "res://tests/mechanic_popup_20261119/capture_mechanic_demos.gd",
+	"captured_from": "formal level scene, real gameplay state",
+	"crop": {
+		"h": 144,
+		"w": 256,
+		"x": 140,
+		"y": 110
+	},
+	"fps": 8.0,
+	"frame_height": 144,
+	"frame_width": 256,
+	"frames": 24,
+	"id": "polarity",
+	"note": "Player starts opposite the live RuneStoneHigh (attracted); real Q at frame 6 repels and at frame 16 attracts again, so the 3 s clip keeps the same rune and player in the fixed crop.",
+	"source": "L1 high-step rune, real force field, 3 s"
+}

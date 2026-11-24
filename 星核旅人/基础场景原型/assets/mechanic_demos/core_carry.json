@@ -1,0 +1,17 @@
+{
+	"capture_script": "res://tests/mechanic_popup_20261119/capture_mechanic_demos.gd",
+	"captured_from": "formal level scene, real gameplay state",
+	"crop": {
+		"h": 144,
+		"w": 256,
+		"x": 90,
+		"y": 200
+	},
+	"fps": 8.0,
+	"frame_height": 144,
+	"frame_width": 256,
+	"frames": 24,
+	"id": "core_carry",
+	"note": "Player releases the real start-bay core, walks right for 1 s, pauses while the core catches up, then walks left; the core keeps its own opposite polarity and follows the live pair force.",
+	"source": "L2 start bay, real E release + core pair force, 3 s"
+}

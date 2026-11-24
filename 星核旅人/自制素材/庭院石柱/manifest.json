@@ -1,0 +1,91 @@
+{
+  "version": "v5_detail",
+  "status": "transparent source assets; not engine-integrated",
+  "source": "../庭院地面物件概念示意/generate_concept_v4.py",
+  "source_sha256": "9b1fe31adcd5840b42fc2a007a5fe28f374f0b6a76a28b84de1289a10b6b2215",
+  "pixel_filter": "nearest",
+  "scale": "1 source pixel = 1 logical pixel",
+  "anchor_convention": "canvas中轴x；alpha bbox bottom半开边界y；不是最后一行像素坐标",
+  "assets": [
+    {
+      "file": "doric_column_tall.png",
+      "size": [
+        52,
+        108
+      ],
+      "alpha_bbox": [
+        8,
+        0,
+        44,
+        108
+      ],
+      "foot_anchor": [
+        26,
+        108
+      ],
+      "sha256": "3d919ef5167470b3e36929d6ccacf4bfd6714c4ea628cf062f3ba4e589c8e475",
+      "v4_source_function": "column()",
+      "detail_method": "原有不透明像素内手置离散色阶：浅槽局部倒角、少量石片层理、原裂纹边缘与断面小切面；保留全部alpha及透明RGB"
+    },
+    {
+      "file": "doric_column_broken.png",
+      "size": [
+        52,
+        82
+      ],
+      "alpha_bbox": [
+        9,
+        0,
+        43,
+        82
+      ],
+      "foot_anchor": [
+        26,
+        82
+      ],
+      "sha256": "6603feea5494f5e9377153ed44edc44d3dd0880dd2f1a08ad33cbcfe81d1b420",
+      "v4_source_function": "column(82, broken=True)",
+      "detail_method": "原有不透明像素内手置离散色阶：浅槽局部倒角、少量石片层理、原裂纹边缘与断面小切面；保留全部alpha及透明RGB"
+    },
+    {
+      "file": "doric_column_base.png",
+      "size": [
+        52,
+        24
+      ],
+      "alpha_bbox": [
+        9,
+        0,
+        43,
+        24
+      ],
+      "foot_anchor": [
+        26,
+        24
+      ],
+      "sha256": "f25ade68e3f78d1ba448a9d3aef7de51e70980e5fe92e9735104d4fc733328f5",
+      "v4_source_function": "column(24, stump=True)",
+      "detail_method": "原有不透明像素内手置离散色阶：浅槽局部倒角、少量石片层理、原裂纹边缘与断面小切面；保留全部alpha及透明RGB"
+    },
+    {
+      "file": "doric_column_fallen.png",
+      "size": [
+        56,
+        28
+      ],
+      "alpha_bbox": [
+        1,
+        4,
+        56,
+        25
+      ],
+      "foot_anchor": [
+        28,
+        25
+      ],
+      "sha256": "185d0300a44dcd6ba4501254da4fbba0f66b487da908f5ada7d7b3f96a8b5b61",
+      "v4_source_function": "fallen()",
+      "detail_method": "原有不透明像素内手置离散色阶：浅槽局部倒角、少量石片层理、原裂纹边缘与断面小切面；保留全部alpha及透明RGB"
+    }
+  ]
+}

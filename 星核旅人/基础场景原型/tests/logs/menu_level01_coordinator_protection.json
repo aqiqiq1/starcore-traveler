@@ -1,8 +1,0 @@
-{
-  "protected_files": 230,
-  "changed_protected_files": [],
-  "world_nodes_before": 33,
-  "world_nodes_after": 33,
-  "changed_world_paths": [],
-  "scope": "Coordinator independent file-hash and full World node block comparison, not a full runtime retest."
-}

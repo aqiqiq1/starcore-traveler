@@ -1,0 +1,56 @@
+{
+  "title": "LinkedWall + LinkedLip crystal component",
+  "created": "2026-11-18",
+  "status": "second high platform crystal visual; original wall/lip untouched",
+  "geometry": "200x60 combined L: original 40x12 lip at x0..39,y0..11; original 160x60 wall at x40..199,y0..59; transparent x0..39,y12..59",
+  "states": "inactive = approved dark purple; active = approved internal-lit purple",
+  "activation": "shared first Relay, 0.7 s face-following arrival, 0.16 s window; no independent trigger",
+  "files": {
+    "base": {
+      "file": "layered_linked_base_200x60.png",
+      "sha256": "f82638683b7b3d89c2d88705898d4fdba39455b9bbeb3a277a0ae5e7fa2a6dce"
+    },
+    "active": {
+      "file": "layered_linked_active_200x60.png",
+      "sha256": "803bd6a82de105d9567d180c6d8cc06a1fd1e0224c4fe394313ed31028f24801"
+    },
+    "mask": {
+      "file": "layered_linked_mask_200x60.png",
+      "sha256": "de7612e2ddef2ab41e5103e45dbc608b8ca84a314dc566e6a1031dcc48622c36"
+    },
+    "arrival": {
+      "file": "layered_linked_arrival_200x60.png",
+      "sha256": "f3e6c2dd01182f76a0e35605ccc67b5b732adc2a82ec8702c9ad84fc38ec3767"
+    }
+  },
+  "source": {
+    "wall": {
+      "file": "assets/level02_conductive_stone/conductive_sill_160x60.png",
+      "sha256": "24866145e2c8029fcf2771b931190ffbeb2a5773fbbe17b634d4b24841ac1ee0"
+    },
+    "lip": {
+      "file": "assets/level02_conductive_stone/conductive_lip_40x12.png",
+      "sha256": "2e56228a026a2cb4bb169e01348098cca34e0f613cabba332d45793d5cfb8664"
+    }
+  },
+  "info": {
+    "visible_triangles": 122,
+    "source_faces": 45,
+    "crystal_pixels": 5351,
+    "mask_pixels": 5351,
+    "arrival_min_norm": 0.0,
+    "arrival_max_norm": 0.7714285714285714,
+    "arrival_window_norm": 0.2285714285714286,
+    "arrival_window_s": 0.16,
+    "duration_s": 0.7,
+    "top_y": 8,
+    "bottom_y": 54
+  },
+  "design_notes": [
+    "Wall top/shell/side/bottom and lip stone are original pixels; a connected crystal panel and a 5x4 lip patch/vein are new.",
+    "The lip is not filled: only a small connected fragment at its right-bottom is crystal, joining the wall.",
+    "No first-platform texture is stretched or reused; this is a separate 200x60 original-size component.",
+    "No route/gold corners or independent unlock are present."
+  ],
+  "regenerate": "D:/minic/envs/2024212971/python.exe make_linked_crystal_assets.py"
+}

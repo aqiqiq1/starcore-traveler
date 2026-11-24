@@ -36,20 +36,38 @@ extends Node2D
 ## the dark 60,52,57 and the base line 198,187,174. No tiled ground strip, no
 ## random bright/dark checker, no yellow disc, no black brick, no second arch.
 ## Visual only: no collision, no visibility/alpha changes.
+##
+## Wall-art pass (2026-11-19): the same structure, drawn with a readable big
+## stone face instead of one even brick field. The visible front now has
+##   * a light pilaster shaft (122,108,111) against the deep bay (79,69,73) and
+##     the middle bay (94,84,88): 18 px shaft, 2 px lit edge, 1 px dark edge,
+##     cast shadow, capital and a new foot at the base line;
+##   * three bay tones so neighbouring bays never match, masonry joints still
+##     run continuously over them;
+##   * 1 px chipped corners and 2-4 px hairline cracks on roughly every fourth
+##     block (deterministic hash, no random noise, no large wash);
+##   * a 2 px dark contact row at the base bottom plus a few 1 px moss/stain
+##     marks (the gate plinth already uses the same muted green).
+## Geometry, clip, z and draw rect are untouched; the return side and corner
+## column keep their old silhouette and tones.
 
 enum Mode { RETURN_SIDE, CORNER_PILASTER, FRONT }
 
-const TONE_A: Color = Color(0.345, 0.310, 0.325, 1.0)      # 88 79 83, recess
-const TONE_B: Color = Color(0.369, 0.329, 0.345, 1.0)      # 94 84 88, field
-const TONE_C: Color = Color(0.424, 0.376, 0.388, 1.0)      # 108 96 99, pilaster
+const TONE_A: Color = Color(0.310, 0.271, 0.286, 1.0)      # 79 69 73, deep bay
+const TONE_B: Color = Color(0.369, 0.329, 0.345, 1.0)      # 94 84 88, field / middle bay
+const TONE_C: Color = Color(0.424, 0.376, 0.388, 1.0)      # 108 96 99, light bay / trim
+const PILASTER: Color = Color(0.478, 0.424, 0.435, 1.0)    # 122 108 111, lit shaft
 const SIDE: Color = Color(0.306, 0.275, 0.306, 1.0)        # 78 70 78, side face
 const SIDE_LIT: Color = Color(0.349, 0.290, 0.318, 1.0)    # 89 74 81
 const ARRIS: Color = Color(0.416, 0.369, 0.380, 1.0)       # 106 94 97, corner
 const HILITE: Color = Color(0.561, 0.502, 0.494, 1.0)      # 143 128 126
 const LIGHT: Color = Color(0.470, 0.408, 0.408, 1.0)       # 120 104 104
 const ARCT: Color = Color(0.235, 0.204, 0.224, 1.0)        # 60 52 57
+const CONTACT: Color = Color(0.208, 0.180, 0.196, 1.0)     # 53 46 50, base contact
+const MOSS: Color = Color(0.404, 0.478, 0.416, 1.0)        # 103 122 106
+const MOSS_DARK: Color = Color(0.318, 0.376, 0.322, 1.0)   # 81 96 82
 const BASE_LINE: Color = Color(0.776, 0.733, 0.682, 1.0)   # 198 187 174
-const NICHE_FILL: Color = Color(0.298, 0.263, 0.282, 1.0)  # 76 67 72, recessed stone
+const NICHE_FILL: Color = Color(0.271, 0.239, 0.255, 1.0)  # 69 61 65, recessed stone
 const COURSE: float = 16.0
 const JOINT: float = 24.0
 const CORNICE_TOP_WORLD_Y: float = 196.0
@@ -155,13 +173,36 @@ func _draw_joints(x0: float, x1: float, top_world_y: float, alpha: float) -> voi
 func _draw_base(x0: float, x1: float) -> void:
 	var base_y: float = _local_y(BASE_WORLD_Y)
 	_hline(x0, x1, base_y, BASE_LINE)
-	_r(x0, base_y + 1.0, x1 - x0, GROUND_WORLD_Y - BASE_WORLD_Y - 2.0, TONE_B)
-	_hline(x0, x1, _local_y(GROUND_WORLD_Y) - 1.0, ARCT)
+	_r(x0, base_y + 1.0, x1 - x0, 3.0, TONE_B)
+	# 2 px contact shadow at the foot of the plinth (2026-11-19).
+	_hline(x0, x1, base_y + 4.0, Color(ARCT, 0.85))
+	_hline(x0, x1, base_y + 5.0, CONTACT)
 	if base_drop > 0.0:
-		# Same plinth stone carried below the ground line, closed by one dark
-		# contact row that lines up with the gatehouse plinth (world 322).
-		_r(x0, _local_y(GROUND_WORLD_Y), x1 - x0, base_drop - 1.0, TONE_B)
+		# Same plinth stone carried below the ground line, darkened at the
+		# contact; closed by one dark row that lines up with the gatehouse
+		# plinth (world 322). Still no collision, no alpha tricks.
+		_r(x0, _local_y(GROUND_WORLD_Y), x1 - x0, base_drop - 1.0, TONE_A)
 		_hline(x0, x1, _local_y(GROUND_WORLD_Y) + base_drop - 1.0, ARCT)
+	_draw_base_wear(x0, x1, base_y)
+
+
+## A few 1 px moss/stain marks on the plinth, on the same deterministic grid as
+## the wall wear. Muted green taken from the approved gate plinth; no gradient,
+## no large wash, nothing wider than one pixel except the single 1x2 drip.
+func _draw_base_wear(x0: float, x1: float, base_y: float) -> void:
+	var x: float = x0 + 10.0
+	while x < x1 - 6.0:
+		var h: int = _cell_hash(61, int(round(x)))
+		match h % 7:
+			0:
+				_r(x, base_y + 2.0, 1.0, 1.0, Color(MOSS, 0.85))
+			2:
+				_r(x + 2.0, base_y + 3.0, 1.0, 2.0, Color(MOSS_DARK, 0.70))
+			4:
+				_r(x, base_y + 4.0, 1.0, 1.0, Color(MOSS, 0.60))
+			6:
+				_r(x + 3.0, base_y + 1.0, 1.0, 1.0, Color(MOSS_DARK, 0.55))
+		x += 37.0
 
 
 func _draw_return() -> void:
@@ -194,37 +235,43 @@ func _draw_front() -> void:
 	_r(0.0, lower_local, size.x, ground_local - lower_local, TONE_B)
 	_r(0.0, 0.0, SETBACK, top_local, SIDE)
 	_r(SETBACK, 0.0, size.x - SETBACK, top_local, TONE_B)
-	# --- recessed bays between the pilasters (both storeys) -----------------
-	for index: int in range(pilaster_xs.size() - 1):
+	# --- bays between the pilasters: three stone tones, full height --------
+	# The joints are still drawn over them, so the masonry grid stays
+	# continuous; only the stone behind it changes from bay to bay. The last
+	# panel runs from the third pilaster to the wall end (offscreen at the
+	# normal 640x360 camera, but it keeps the bay rhythm consistent).
+	var bay_tones: Array[Color] = [TONE_A, TONE_B, TONE_C]
+	for index: int in range(pilaster_xs.size()):
 		var bay_x: float = pilaster_xs[index] + pilaster_w
-		var bay_w: float = pilaster_xs[index + 1] - bay_x
+		var bay_right: float = size.x
+		if index + 1 < pilaster_xs.size():
+			bay_right = pilaster_xs[index + 1]
+		var bay_w: float = bay_right - bay_x
 		if bay_w > 14.0:
-			_r(bay_x + 6.0, 0.0, bay_w - 12.0, ground_local, TONE_A)
+			_r(bay_x, 0.0, bay_w, ground_local, bay_tones[index % bay_tones.size()])
 	# --- masonry grid over fields and bays ---------------------------------
 	_draw_courses(0.0, size.x, LOWER_TOP_WORLD_Y, 0.20)
 	_draw_joints(0.0, size.x, LOWER_TOP_WORLD_Y, 0.22)
 	_draw_courses(1.0, SETBACK, -80.0, 0.22)
 	_draw_courses(SETBACK, size.x, -80.0, 0.20)
 	_draw_joints(SETBACK, size.x, -80.0, 0.22)
-	# --- one-block-in-ten weathering, upper storey only --------------------
-	_draw_weathering(lower_local)
-	# --- pilasters run the whole height, broken only by the cornice --------
+	# --- deterministic chips / short cracks on ~every fourth block ---------
+	_draw_weathering()
+	# --- pilasters: 18 px shaft, 2 px lit edge, 1 px dark edge, foot -------
 	for index: int in range(pilaster_xs.size()):
 		var px: float = pilaster_xs[index]
 		if px + pilaster_w > size.x:
 			continue
-		_r(px, 0.0, pilaster_w, ground_local, TONE_C)
+		_r(px, 0.0, pilaster_w, ground_local, PILASTER)
 		_r(px, 0.0, 2.0, ground_local, HILITE)
 		_r(px + pilaster_w - 1.0, 0.0, 1.0, ground_local, ARCT)
-		_r(px + pilaster_w, 0.0, 2.0, ground_local, Color(ARCT, 0.28))
-	# bay inner shadow / lit return
-	for index: int in range(pilaster_xs.size() - 1):
-		var bay_x: float = pilaster_xs[index] + pilaster_w
-		var bay_w: float = pilaster_xs[index + 1] - bay_x
-		if bay_w <= 14.0:
-			continue
-		_r(bay_x + 6.0, 0.0, 2.0, ground_local, Color(ARCT, 0.45))
-		_r(bay_x + bay_w - 7.0, 0.0, 1.0, ground_local, Color(HILITE, 0.30))
+		_r(px + pilaster_w, 0.0, 2.0, ground_local, Color(ARCT, 0.34))
+		# foot: a 2 px outset block on the base line, so the shaft does not
+		# just vanish into the plinth (drawn before the base line itself).
+		var foot_y: float = _local_y(BASE_WORLD_Y) - 8.0
+		_r(px - 2.0, foot_y, pilaster_w + 4.0, 8.0, PILASTER)
+		_hline(px - 2.0, px + pilaster_w + 2.0, foot_y, HILITE)
+		_hline(px - 2.0, px + pilaster_w + 2.0, foot_y + 7.0, Color(ARCT, 0.50))
 	# --- belt course + pilaster capitals (new detail) ----------------------
 	_draw_belt(pilaster_xs, pilaster_w)
 	# --- one blind arched niche per upper bay (new detail) -----------------
@@ -257,13 +304,13 @@ func _draw_belt(pilaster_xs: Array[float], pilaster_w: float) -> void:
 		var px: float = pilaster_xs[index]
 		if px + pilaster_w > size.x:
 			continue
-		_r(px - 2.0, cap_y, pilaster_w + 4.0, CAPITAL_H, TONE_C)
+		_r(px - 2.0, cap_y, pilaster_w + 4.0, CAPITAL_H, PILASTER)
 		_hline(px - 2.0, px + pilaster_w + 2.0, cap_y, HILITE)
 		_hline(px - 2.0, px + pilaster_w + 2.0, cap_y + CAPITAL_H - 1.0,
 			Color(ARCT, 0.55))
 		# short pilaster base sitting on the existing cornice
 		var base_y: float = _local_y(CORNICE_TOP_WORLD_Y) - PILASTER_BASE_H
-		_r(px - 2.0, base_y, pilaster_w + 4.0, PILASTER_BASE_H, TONE_C)
+		_r(px - 2.0, base_y, pilaster_w + 4.0, PILASTER_BASE_H, PILASTER)
 		_hline(px - 2.0, px + pilaster_w + 2.0, base_y, HILITE)
 		_hline(px - 2.0, px + pilaster_w + 2.0, base_y + PILASTER_BASE_H - 1.0,
 			Color(ARCT, 0.45))
@@ -307,30 +354,38 @@ func _draw_niche(nx: float, bottom_local: float) -> void:
 	_hline(nx - 1.0, nx + NICHE_W + 1.0, bottom_local + 1.0, Color(ARCT, 0.35))
 
 
-## Deterministic, low-contrast wear on the same 16/24 world grid: about one
-## block in ten gets a 1 px chip, a 2-4 px crack or a slightly darker wash.
-## Never a full-face checker; structural lines stay stronger than the wear.
-func _draw_weathering(upper_limit_local: float) -> void:
+## Deterministic chips and short hairline cracks on roughly every fourth block
+## (the old pass marked one block in ten). Each mark is a single 1 px bite or a
+## 1x4 / 3x1 crack under the structural lines; no large wash, no bright/dark
+## checker, no runtime randomness.
+func _draw_weathering() -> void:
 	var course: int = 0
 	var y: float = _local_y(GROUND_WORLD_Y)
-	while y - COURSE > 0.0:
+	var limit: float = _local_y(-80.0) + 8.0
+	while y - COURSE > limit:
 		var top_y: float = y - COURSE
 		var x: float = 0.0 if course % 2 == 0 else JOINT * 0.5
 		while x + JOINT <= size.x:
-			if top_y < upper_limit_local - 8.0:
-				var h: int = _cell_hash(course, int(round(x)))
-				if h % 10 == 0:
-					var variant: int = (h / 10) % 4
-					match variant:
-						0:
-							_r(x + 1.0, top_y + 1.0, 1.0, 1.0, Color(ARCT, 0.45))
-						1:
-							_r(x + 1.0, top_y + 1.0, JOINT - 2.0, COURSE - 2.0,
-								Color(TONE_A, 0.20))
-						2:
-							_r(x + 7.0, top_y + 3.0, 1.0, 4.0, Color(ARCT, 0.36))
-						_:
-							_r(x + 15.0, top_y + 6.0, 3.0, 1.0, Color(ARCT, 0.30))
+			var h: int = _cell_hash(course, int(round(x)))
+			if h % 4 == 0:
+				match (h / 4) % 5:
+					0:
+						# chipped top-left corner: mortar bites 1 px in
+						_r(x + 1.0, top_y + 1.0, 1.0, 1.0, Color(ARCT, 0.55))
+					1:
+						# chipped top-right corner
+						_r(x + JOINT - 2.0, top_y + 1.0, 1.0, 1.0,
+							Color(ARCT, 0.50))
+					2:
+						# short vertical hairline crack
+						_r(x + 9.0, top_y + 2.0, 1.0, 4.0, Color(ARCT, 0.38))
+					3:
+						# short crack running along the course
+						_r(x + 5.0, top_y + 7.0, 3.0, 1.0, Color(ARCT, 0.34))
+					_:
+						# rare deeper 1 px bite at the bottom edge
+						_r(x + 14.0, top_y + COURSE - 2.0, 1.0, 1.0,
+							Color(ARCT, 0.58))
 			x += JOINT
 		y -= COURSE
 		course += 1

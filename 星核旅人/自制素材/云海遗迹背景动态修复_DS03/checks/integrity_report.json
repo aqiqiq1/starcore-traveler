@@ -1,0 +1,104 @@
+{
+  "standalone_file": "双击预览_DS03.html",
+  "single_file_protocol": "file:",
+  "single_file_embedded_assets": 24,
+  "single_file_asset_keys": 24,
+  "single_file_failed_assets": [],
+  "single_file_errors": [],
+  "single_file_external_requests": [],
+  "single_file_scripts": [],
+  "single_file_links": [],
+  "pause_resume": {
+    "before": 5,
+    "paused": 5,
+    "afterResume": 5.32260000000149,
+    "pausedStable": true,
+    "advanced": true
+  },
+  "play_button": {
+    "advanced": true,
+    "playing": true,
+    "pausedStable": true,
+    "ok": true
+  },
+  "scrub": {
+    "ok": true,
+    "t": 12
+  },
+  "inspection_buttons": {
+    "up": {
+      "t": 7.125,
+      "G1": 0,
+      "G2": 0
+    },
+    "down": {
+      "t": 2.375,
+      "G1": 0,
+      "G2": 0
+    },
+    "island": {
+      "t": 26.683
+    },
+    "forceUp": {
+      "G1": 0,
+      "G2": 0
+    },
+    "forceDown": {
+      "G1": 0,
+      "G2": 0
+    },
+    "worstBridge": {
+      "G1": 0,
+      "G2": 0
+    },
+    "worstIsland": {
+      "G1": 0,
+      "G2": 0,
+      "G5": 0.5
+    },
+    "cloudOffSkip": [
+      "seaMain",
+      "seaNear"
+    ],
+    "cloudOnSkip": [],
+    "ok": true
+  },
+  "reset_button": {
+    "clicked": true,
+    "t": 0.08920000000298023,
+    "playing": true,
+    "ok": true
+  },
+  "seam_button": {
+    "clicked": true,
+    "t": 58.922222222222224,
+    "markerOn": true,
+    "nearSeamX": 424,
+    "mainSeamX": 247.5
+  },
+  "hide_ui": {
+    "clicked": true,
+    "hidden": true
+  },
+  "split_failed_assets": [],
+  "split_errors": [],
+  "split_t0_matches_standalone": true,
+  "split_t8_matches_standalone": true,
+  "split_file_t0_matches_standalone": true,
+  "split_file_t8_matches_standalone": true,
+  "empty_dir_t8_matches_standalone": true,
+  "empty_dir_runtime": {
+    "title": "云海遗迹背景动态修复 DS03",
+    "protocol": "file:",
+    "failed": [],
+    "assets": 24
+  },
+  "param_state": {
+    "t": 8,
+    "playing": false,
+    "hudHidden": true,
+    "assets": 24
+  },
+  "temporary_http_only_for_test": "http://127.0.0.1:50759/preview.html",
+  "ok": true
+}

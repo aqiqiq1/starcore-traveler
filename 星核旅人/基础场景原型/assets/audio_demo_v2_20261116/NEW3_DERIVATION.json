@@ -120,7 +120,7 @@
   "outputs": [
     {
       "event": "polarity_switch",
-      "file": "polarity_switch_v2.wav",
+      "file": "polarity_switch.wav",
       "metrics": {
         "duration_s": 0.52,
         "sr": 44100,
@@ -149,7 +149,7 @@
     },
     {
       "event": "swing",
-      "file": "swing_v2.wav",
+      "file": "swing.wav",
       "metrics": {
         "duration_s": 0.1969,
         "sr": 44100,
@@ -173,7 +173,7 @@
     },
     {
       "event": "shell_shatter",
-      "file": "shell_shatter_heavy_v2.wav",
+      "file": "shell_shatter_heavy.wav",
       "metrics": {
         "duration_s": 1.12,
         "sr": 44100,

@@ -1,0 +1,50 @@
+L3 right-wall art pass — reference notes (implementer, 2026-11-19)
+=================================================================
+
+Read first: ../项目归档/收尾_20261119/REF_ART_20261119.md (coordinator record,
+read in full this round).
+
+Images actually opened again by me from the local research folder (not just the
+text description):
+  D:\godot game\星核旅人\非运行资料\预览参考\previews\l3_wall_detail_20261116\refs\
+    sotn_outerwall_stone_crop.png   (Castle outer-wall map crop)
+    sotn_entrance_60s.jpg           (320x240 entrance frame, 60 s source frame)
+Also opened (not a SotN wall reference): the approved current evidence
+  screenshots/l3_gate_shadow_20261118/after/00_closed_facade.png
+  and the same shot's 4x crop (before baseline).
+
+What I actually observed in sotn_outerwall_stone_crop.png:
+  - The wall is divided by tall, light vertical pilasters; the bays between them
+    are darker brick and carry the arched openings/ledges.
+  - The pilasters read as one solid light member with a lit edge and a dark
+    return; the bays change tone from one bay to the next.
+  - The plinth/ledge tops are the lightest lines, the undersides are dark; the
+    base has a light top course, a darker body and a dark contact where it
+    meets the ground.
+  - The wall is built from large blocks; small chips/cracks are 1 px and sparse,
+    not a noise field.
+  - The entrance frame (sotn_entrance_60s.jpg) is only 320x240 and dark; it
+    supports the "dark opening in a thick wall" reading, not pixel detail.
+
+Borrowed (structure only):
+  - vertical bay rhythm; light pilaster against darker bays;
+  - top-lit / bottom-dark base and cornice reading;
+  - a few 1 px chips and a darker contact band.
+
+Not borrowed:
+  - SotN's gothic black/red palette, moon, window tracery, specific patterns or
+    any pixels; the L3 wall stays the project's warm grey stone.
+
+Applied boundary:
+  - The visible right wall (world 2320..2612, camera shows to 2520) gets the
+    light pilaster, three bay tones, 1 px chips and the base contact. Return
+    side and corner column keep their exact old drawing.
+  - The 320x240 entrance frame is not used to claim camera motion or animation;
+    it is a static supporting frame only.
+  - I did not re-download the source video; the local crops are the same ones
+    the coordinator recorded, at their saved resolution.
+
+Unverified:
+  - Continuous camera/occlusion behaviour of the SotN source (static crops
+    only). The L3 occlusion values here are measured from this project's own
+    gate code, not inferred from SotN.

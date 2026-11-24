@@ -1,0 +1,122 @@
+{
+  "cloud_occlusion_cases": [
+    {
+      "time": 0.0,
+      "roi": "left",
+      "opaque_cloud_pixels": 4600,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 0.0,
+      "roi": "right",
+      "opaque_cloud_pixels": 2036,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 4.0,
+      "roi": "left",
+      "opaque_cloud_pixels": 3760,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 4.0,
+      "roi": "right",
+      "opaque_cloud_pixels": 2236,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 8.0,
+      "roi": "left",
+      "opaque_cloud_pixels": 2800,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 8.0,
+      "roi": "right",
+      "opaque_cloud_pixels": 3000,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 12.0,
+      "roi": "left",
+      "opaque_cloud_pixels": 2372,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 12.0,
+      "roi": "right",
+      "opaque_cloud_pixels": 3980,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 30.0,
+      "roi": "left",
+      "opaque_cloud_pixels": 3384,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 30.0,
+      "roi": "right",
+      "opaque_cloud_pixels": 8284,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 60.0,
+      "roi": "left",
+      "opaque_cloud_pixels": 3376,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 60.0,
+      "roi": "right",
+      "opaque_cloud_pixels": 2180,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 58.922222222222224,
+      "roi": "left",
+      "opaque_cloud_pixels": 3672,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 58.922222222222224,
+      "roi": "right",
+      "opaque_cloud_pixels": 2388,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 59.72222222222222,
+      "roi": "left",
+      "opaque_cloud_pixels": 3448,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 59.72222222222222,
+      "roi": "right",
+      "opaque_cloud_pixels": 2220,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 60.52222222222222,
+      "roi": "left",
+      "opaque_cloud_pixels": 3232,
+      "wrong_final_pixels": 0
+    },
+    {
+      "time": 60.52222222222222,
+      "roi": "right",
+      "opaque_cloud_pixels": 2100,
+      "wrong_final_pixels": 0
+    }
+  ],
+  "total_occlusion_cases": 18,
+  "total_wrong_final_pixels": 0,
+  "protected_files": 108,
+  "changed_protected_files": [],
+  "art_layers_unchanged": true,
+  "embedded_png_count": 24,
+  "embedded_png_bytes_match": true,
+  "renderer_embedded_unchanged": true,
+  "external_scripts": false,
+  "scope": "Independent actual captured-frame/cloud-texture pixel comparison and delivery integrity; not an independent repeat of all browser playback tests."
+}

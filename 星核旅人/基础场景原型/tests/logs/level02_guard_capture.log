@@ -1,9 +1,0 @@
-Level 02 guard integration GUI capture
-Godot: 4.7.2-stable (official)
-Display: Windows  window: (1920, 1080)  viewport: (640.0, 360.0)
-Scripted fixed frames from the running engine root viewport, not manual play.
-CAPTURED level02_guard_01_bridge.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_guard_01_bridge.png
-stele page index=2 pages=6
-CAPTURED level02_guard_02_stele_rules.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_guard_02_stele_rules.png
-level02_guard_01_bridge.png | bridge guard: orange-gold body, 3-pip bar at y=208, no head polarity word; labels moved to y=188..200
-level02_guard_02_stele_rules.png | new rule page: orange/blue phase recognition and same-phase J, native 12 px, 3 short lines

@@ -1,9 +1,0 @@
-Level 02 GUI capture log
-Godot: 4.7.2-stable (official)
-Display: Windows  window: (1280, 720)  viewport: (640.0, 360.0)
-route=real InputMap/key events; no teleport/test force/direct store/complete call
-CAPTURED level02_01_start.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_01_start.png
-CAPTURED level02_02_split.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_02_split.png
-CAPTURED level02_03_target.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_03_target.png
-CAPTURED level02_04_complete.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_04_complete.png
-FINAL completed=true count=1 core_x=372.0 player=(582.163, 319.9253)

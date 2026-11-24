@@ -1,0 +1,17 @@
+{
+	"capture_script": "res://tests/mechanic_popup_20261119/capture_mechanic_demos.gd",
+	"captured_from": "formal level scene, real gameplay state",
+	"crop": {
+		"h": 144,
+		"w": 256,
+		"x": 210,
+		"y": 190
+	},
+	"fps": 8.0,
+	"frame_height": 144,
+	"frame_width": 256,
+	"frames": 24,
+	"id": "guard_invalid",
+	"note": "The first frames are the real attraction field; a real Q switches to same phase and A backs the player out of the release ring. After the guard recovers, an ordinary opposite J runs _apply_normal_break: shell scatters and reassembles with no true damage.",
+	"source": "L3 guard real field -> Q escape -> ordinary J, 3 s"
+}

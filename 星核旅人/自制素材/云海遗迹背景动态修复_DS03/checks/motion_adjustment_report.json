@@ -1,0 +1,265 @@
+{
+  "ok": true,
+  "scope": "runtime motion only; no PNG, art_manifest, Godot or other page changes",
+  "notes": [
+    "G1/G2 use an enabled=false early-out in preview.js before force/worst branches; they are fixed at the art offset, with no rotation or scale.",
+    "G4 used amp 0.6 before and already quantized to a 0.5 rendered peak, so this round does not claim its actual peak decreased; it is 0.30/22 s versus 0.6/12 s and therefore quieter.",
+    "Rendered offset is within -0.5..+0.5 logical px for G3/G4/G5; peak-to-peak is therefore up to 1.0 logical px (2 device px), which is the intended quantization span, not a larger amplitude.",
+    "art_manifest.json amp_max values are old-asset upper bounds, not the current runtime motion rule; runtime_config.json groups[].float is current."
+  ],
+  "rules": {
+    "G1": {
+      "enabled": false,
+      "amp_formula_px": 1.5,
+      "period_s": 9.5,
+      "phase_s": 0.0,
+      "rendered_quantum_px": 0.5
+    },
+    "G2": {
+      "enabled": false,
+      "amp_formula_px": 1.0,
+      "period_s": 9.5,
+      "phase_s": 0.2,
+      "rendered_quantum_px": 0.5
+    },
+    "G3": {
+      "enabled": true,
+      "amp_formula_px": 0.35,
+      "period_s": 18.0,
+      "phase_s": 0.8,
+      "rendered_quantum_px": 0.5
+    },
+    "G4": {
+      "enabled": true,
+      "amp_formula_px": 0.3,
+      "period_s": 22.0,
+      "phase_s": 1.1,
+      "rendered_quantum_px": 0.5
+    },
+    "G5": {
+      "enabled": true,
+      "amp_formula_px": 0.45,
+      "period_s": 20.0,
+      "phase_s": 0.15,
+      "rendered_quantum_px": 0.5
+    }
+  },
+  "periods": {
+    "G3": {
+      "previous_period_s": 11.0,
+      "current_period_s": 18.0,
+      "measured_zero_crossing_period_s": 18.0,
+      "slower_than_previous": true,
+      "ok": true
+    },
+    "G4": {
+      "previous_period_s": 12.0,
+      "current_period_s": 22.0,
+      "measured_zero_crossing_period_s": 22.0,
+      "slower_than_previous": true,
+      "ok": true
+    },
+    "G5": {
+      "previous_period_s": 8.5,
+      "current_period_s": 20.0,
+      "measured_zero_crossing_period_s": 20.0,
+      "slower_than_previous": true,
+      "ok": true
+    }
+  },
+  "bridge_static": {
+    "ok": true,
+    "frame_count": 19,
+    "groups": {
+      "G1": {
+        "offset": [
+          25,
+          144
+        ],
+        "opaque_pixels": 61384,
+        "pixel_mismatch": 0,
+        "source_rgb_mismatch_on_opaque": 0,
+        "dyRendered_values": [
+          0
+        ],
+        "ok": true
+      },
+      "G2": {
+        "offset": [
+          434,
+          144
+        ],
+        "opaque_pixels": 25768,
+        "pixel_mismatch": 0,
+        "source_rgb_mismatch_on_opaque": 0,
+        "dyRendered_values": [
+          0
+        ],
+        "ok": true
+      }
+    },
+    "modes": [
+      "normal paused times",
+      "pause/resume",
+      "reset",
+      "seek 12 s",
+      "force=up",
+      "force=down",
+      "worst=bridge",
+      "worst=island"
+    ]
+  },
+  "small_ruins_actual": {
+    "G3": {
+      "dy_values": [
+        -0.5,
+        0,
+        0.5
+      ],
+      "peak_to_peak_dy": 1.0,
+      "max_abs_dy": 0.5,
+      "offset_limit_px": 0.5,
+      "top_values": [
+        167.5,
+        168.0,
+        168.5
+      ],
+      "top_peak_to_peak": 1.0,
+      "bottom_peak_to_peak": 1.0,
+      "frame_count": 10,
+      "ok": true
+    },
+    "G4": {
+      "dy_values": [
+        -0.5,
+        0,
+        0.5
+      ],
+      "peak_to_peak_dy": 1.0,
+      "max_abs_dy": 0.5,
+      "offset_limit_px": 0.5,
+      "top_values": [
+        173.5,
+        174.0,
+        174.5
+      ],
+      "top_peak_to_peak": 1.0,
+      "bottom_peak_to_peak": 0.0,
+      "frame_count": 10,
+      "ok": true
+    },
+    "G5": {
+      "dy_values": [
+        -0.5,
+        0,
+        0.5
+      ],
+      "peak_to_peak_dy": 1.0,
+      "max_abs_dy": 0.5,
+      "offset_limit_px": 0.5,
+      "top_values": [
+        137.5,
+        138.0,
+        138.5
+      ],
+      "top_peak_to_peak": 1.0,
+      "bottom_peak_to_peak": 0.0,
+      "frame_count": 10,
+      "ok": true
+    }
+  },
+  "gaps": {
+    "G5_G2_actual_min_px": 4.5,
+    "G5_G2_source_alpha_baseline_px": 5.0,
+    "G3_G1_actual_min_px": 4.5,
+    "G3_G1_source_alpha_baseline_px": 5.0,
+    "bridge_joint_cloud_overlap": [
+      {
+        "x": 49,
+        "cloud_top": 282,
+        "bridge_bottom": 300.0,
+        "overlap": 18.0
+      },
+      {
+        "x": 476,
+        "cloud_top": 278,
+        "bridge_bottom": 300.0,
+        "overlap": 22.0
+      }
+    ],
+    "base_sky_pixels_in_stone_to_cloud_strip": 0
+  },
+  "protection": {
+    "baseline_runtime_config": {
+      "sections_equal": {
+        "canvas": true,
+        "render_scale": true,
+        "sea_period": true,
+        "base": true,
+        "static": true,
+        "sky": true,
+        "sea": true,
+        "shadows": true,
+        "debris": true,
+        "stack": true
+      },
+      "groups_non_float_equal": true,
+      "group_float_changes": [
+        {
+          "id": "G1",
+          "non_float_changes": [],
+          "float_changed_fields": [
+            "enabled"
+          ]
+        },
+        {
+          "id": "G2",
+          "non_float_changes": [],
+          "float_changed_fields": [
+            "enabled"
+          ]
+        },
+        {
+          "id": "G3",
+          "non_float_changes": [],
+          "float_changed_fields": [
+            "amp",
+            "enabled",
+            "period"
+          ]
+        },
+        {
+          "id": "G4",
+          "non_float_changes": [],
+          "float_changed_fields": [
+            "amp",
+            "enabled",
+            "period"
+          ]
+        },
+        {
+          "id": "G5",
+          "non_float_changes": [],
+          "float_changed_fields": [
+            "amp",
+            "enabled",
+            "period"
+          ]
+        }
+      ]
+    },
+    "asset_hashes_24_unchanged": true,
+    "protected_baseline_108": 108,
+    "art_layers_8": 8,
+    "common_copies_16": 16
+  },
+  "browser": {
+    "standalone": "双击预览_DS03.html",
+    "protocol": "file:",
+    "embedded_assets": 24,
+    "external_requests": [],
+    "failed_assets": [],
+    "split_matches_standalone_t0_t8": true,
+    "file_and_empty_dir_match": true
+  }
+}

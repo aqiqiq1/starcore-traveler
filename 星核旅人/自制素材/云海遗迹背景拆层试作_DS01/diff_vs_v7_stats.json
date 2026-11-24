@@ -1,0 +1,13 @@
+{
+  "canvas": [
+    640,
+    360
+  ],
+  "pixels": 230400,
+  "differing_pixels": 0,
+  "max_channel_difference": 0,
+  "diff_bbox": null,
+  "exact_match": true,
+  "method": "composite all layers at their initial offsets; compare RGB to V7 640 logical pixels",
+  "note": "zero difference proves static reassembly only, not inpainting/motion quality"
+}

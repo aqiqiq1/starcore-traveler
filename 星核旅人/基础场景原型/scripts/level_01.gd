@@ -21,6 +21,7 @@ const PAUSE_MENU_SCRIPT = preload("res://scripts/ui/pause_menu.gd")
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const FOOTSTEP_SCRIPT = preload("res://scripts/audio/player_footstep_audio.gd")
 const OPENING_SCRIPT = preload("res://scripts/narrative/opening_cinematic.gd")
+const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popup.tscn")
 
 @export_range(2.0, 15.0, 0.05, "suffix:s") var intro_max_duration: float = 9.0
 ## Legacy safety cap for callers that inspect it. The opening itself hands off
@@ -72,6 +73,7 @@ var _next_level_started: bool = false
 var _scene_leaving: bool = false
 var _footsteps: Node = null
 var _opening: OpeningCinematic = null
+var _mechanic_popup: MechanicPopup = null
 
 
 ## Raw keyboard forwarding for left-Shift and double-tap intent. The movement
@@ -109,6 +111,7 @@ func _ready() -> void:
 	_hud.replay_requested.connect(_restart_level)
 	_hud.return_to_menu_requested.connect(_return_to_main_menu)
 	_setup_pause_menu()
+	_setup_mechanic_popup()
 	_setup_footsteps()
 	_setup_opening()
 
@@ -140,8 +143,8 @@ func _process(_delta: float) -> void:
 	if _menu != null and _menu.is_gameplay_blocked():
 		return
 	# The local opening controller owns bar easing, the scripted run, the
-	# echo's pages and the Space hold. This level keeps only compatibility
-	# state and the safe pause/focus/reset hand-offs.
+	# echo's pages, the F advance and the Space skip hold. This level keeps only
+	# compatibility state and the safe pause/focus/reset hand-offs.
 	if _intro_active and _opening != null:
 		_intro_elapsed = _opening.get_elapsed()
 
@@ -171,6 +174,7 @@ func _physics_process(_delta: float) -> void:
 		# Single aggregation point: individual field rules (range, inner safety,
 		# occlusion, caps) stay owned by RuneStoneField.
 		_player.apply_external_force(total_force)
+	_tick_mechanic_popup()
 
 
 func _setup_pause_menu() -> void:
@@ -190,7 +194,7 @@ func _setup_pause_menu() -> void:
 		["跳跃", "空格"],
 		["切换相性", "Q"],
 		["交谈 / 翻页", "F（未显完先补全文）"],
-		["开场对白", "空格：补全文 / 下一页 · 长按 0.6s 跳过"],
+		["开场对白", "F继续 · 长按空格跳过整段"],
 		["重来本关", "R"],
 		["暂停菜单", "Esc"],
 	]
@@ -199,6 +203,44 @@ func _setup_pause_menu() -> void:
 	_pause_menu.return_to_menu_requested.connect(_return_to_main_menu)
 	_pause_menu.opened.connect(_on_pause_opened)
 	_pause_menu.resumed.connect(_on_pause_resumed)
+
+
+## Teaching layer only: a run-scoped popup that pauses on first contact with a
+## mechanism. It owns no gameplay state and is never a gate.
+func _setup_mechanic_popup() -> void:
+	_mechanic_popup = MECHANIC_POPUP_SCENE.instantiate() as MechanicPopup
+	_mechanic_popup.name = "MechanicPopup"
+	_mechanic_popup.level_node = self
+	add_child(_mechanic_popup)
+
+
+## The first high-step/pit rune is the level's only early mechanism. It is the
+## same Q/rune force that later carries the player across the pit, so the
+## "borrow force" step is folded into this one entry rather than invented as a
+## separate mechanic.
+func _tick_mechanic_popup() -> void:
+	if _mechanic_popup == null or _mechanic_popup.is_open():
+		return
+	if _player == null or not is_instance_valid(_player):
+		return
+	if _player.global_position.x >= 640.0:
+		_mechanic_popup.request("polarity")
+
+
+func is_mechanic_popup_blocked() -> bool:
+	if get_tree().paused:
+		return true
+	if _completed or _intro_active or _resetting or _scene_leaving:
+		return true
+	if _menu != null and _menu.is_gameplay_blocked():
+		return true
+	if _pause_menu != null and _pause_menu.has_method("is_open") and bool(_pause_menu.call("is_open")):
+		return true
+	if is_instance_valid(_narrative_guide) and _narrative_guide.is_dialogue_open():
+		return true
+	if is_instance_valid(_mechanism_guide) and _mechanism_guide.is_dialogue_open():
+		return true
+	return false
 
 
 ## Local footstep bank, owned by the player. No DemoAudio change and no shared
@@ -216,7 +258,7 @@ func _setup_footsteps() -> void:
 
 
 ## Local opening film. It reuses the echo's public page API and the approved
-## L3 letterbox/Space rules; it does not fake a guard cinematic or a new camera.
+## L3 letterbox/F-advance/Space-skip rules; it does not fake a guard cinematic or a new camera.
 func _setup_opening() -> void:
 	_opening = OPENING_SCRIPT.new()
 	_opening.name = "OpeningCinematic"
@@ -376,7 +418,7 @@ func _on_pause_opened() -> void:
 	if _intro_active and _opening != null and _opening.is_active():
 		# Freeze in place: do not finish the run or close the page. The tree
 		# pause stops the opening's own timers; re-assert the movement lock and
-		# drop a held Space latch so resume cannot flip a page or jump.
+		# drop a held Space latch so resume cannot skip the segment or jump.
 		_opening.handle_pause_opened()
 		_footstep_stop()
 		_hud.set_pause_visible(true)
@@ -406,7 +448,13 @@ func _on_pause_resumed() -> void:
 
 
 func is_pause_menu_blocked() -> bool:
+	if _mechanic_popup != null and _mechanic_popup.is_open():
+		return true
 	return _menu != null and _menu.is_gameplay_blocked()
+
+
+func get_mechanic_popup() -> MechanicPopup:
+	return _mechanic_popup
 
 
 func get_pause_menu() -> Node:

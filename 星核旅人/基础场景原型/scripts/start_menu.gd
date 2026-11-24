@@ -51,7 +51,7 @@ const RES_1280_RECT: Rect2 = Rect2(324.0, 176.0, 144.0, 22.0)
 const RES_1920_RECT: Rect2 = Rect2(172.0, 202.0, 144.0, 22.0)
 const RES_2560_RECT: Rect2 = Rect2(324.0, 202.0, 144.0, 22.0)
 const APPLY_RECT: Rect2 = Rect2(172.0, 262.0, 144.0, 24.0)
-const DISPLAY_NOTE_RECT: Rect2 = Rect2(172.0, 230.0, 296.0, 14.0)
+const DISPLAY_NOTE_RECT: Rect2 = Rect2(172.0, 226.0, 296.0, 32.0)
 const STATUS_RECT: Rect2 = Rect2(172.0, 292.0, 296.0, 14.0)
 const PENDING_PANEL_RECT: Rect2 = Rect2(150.0, 100.0, 340.0, 150.0)
 const PENDING_CONFIRM_RECT: Rect2 = Rect2(166.0, 190.0, 140.0, 26.0)
@@ -482,7 +482,7 @@ func _build_settings_layer() -> Control:
 	for candidate: Vector2i in DisplayOptions.CANDIDATES:
 		var resolution_button: PixelMenuButton = _menu_button(
 			"Resolution%s" % DisplayOptions.format_size(candidate).replace("×", "x"),
-			DisplayOptions.format_size(candidate),
+			DisplayOptions.size_label(candidate),
 			_resolution_rect(candidate),
 			PixelMenuButton.Variant.OPTION
 		)
@@ -551,7 +551,7 @@ func _build_pending_overlay() -> Control:
 	var title: Label = _label("保留显示设置？", Vector2(0.0, 8.0), Vector2(340.0, 30.0), 24, GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(title)
-	_pending_countdown_label = _label("10 秒后自动恢复", Vector2(0.0, 42.0), Vector2(340.0, 16.0), 12, TEXT)
+	_pending_countdown_label = _label("15 秒后自动恢复", Vector2(0.0, 42.0), Vector2(340.0, 16.0), 12, TEXT)
 	_pending_countdown_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(_pending_countdown_label)
 	var hint: Label = _label("保留后才保存；Esc 或超时自动恢复", Vector2(0.0, 60.0), Vector2(340.0, 14.0), 12, MUTED)
@@ -1167,6 +1167,26 @@ func _on_apply_display_pressed() -> void:
 		_pending_cancel_button.grab_focus()
 
 
+func _windowed_display_note() -> String:
+	var borderless: Vector2i = DisplayOptions.BORDERLESS_SIZE
+	var first_line: String
+	if _display.is_size_available(borderless):
+		first_line = "%s：无边框窗口，3× 整数缩放" % DisplayOptions.format_size(borderless)
+	else:
+		first_line = "%s：需 %s 屏幕（无边框）" % [
+			DisplayOptions.format_size(borderless),
+			DisplayOptions.format_size(borderless),
+		]
+	var largest: Vector2i = DisplayOptions.CANDIDATES[DisplayOptions.CANDIDATES.size() - 1]
+	if _display.is_size_available(largest):
+		return first_line + "\n窗口按 16:9 整数缩放，余区黑边"
+	var usable: Vector2i = _display.get_usable_rect().size
+	return first_line + "\n%s：超出本屏工作区 %s" % [
+		DisplayOptions.format_size(largest),
+		DisplayOptions.format_size(usable),
+	]
+
+
 func _sync_display_controls() -> void:
 	if _display == null or _apply_button == null:
 		return
@@ -1176,7 +1196,6 @@ func _sync_display_controls() -> void:
 	_display_mode_window.disabled = pending
 	_display_mode_fullscreen.disabled = pending
 
-	var disabled_names: Array[String] = []
 	for candidate: Vector2i in DisplayOptions.CANDIDATES:
 		var button: PixelMenuButton = _resolution_buttons.get(candidate) as PixelMenuButton
 		if button == null:
@@ -1184,22 +1203,13 @@ func _sync_display_controls() -> void:
 		var fits_now: bool = _display.is_size_available(candidate)
 		button.selected = _draft_window_size == candidate
 		button.disabled = pending or _draft_mode != DisplayOptions.Mode.WINDOWED or not fits_now
-		if not fits_now:
-			disabled_names.append(DisplayOptions.format_size(candidate))
 
 	if pending:
 		_display_note_label.text = "显示设置待确认，其他选项暂时锁定"
 	elif _draft_mode == DisplayOptions.Mode.FULLSCREEN:
 		_display_note_label.text = "全屏使用桌面分辨率；仅窗口模式可选分辨率"
-	elif not disabled_names.is_empty():
-		if disabled_names.size() <= 2:
-			_display_note_label.text = "超出本屏：" + "、".join(disabled_names)
-		else:
-			_display_note_label.text = "超出本屏：%s 等%d项" % [
-				disabled_names[0], disabled_names.size()
-			]
 	else:
-		_display_note_label.text = "窗口按 16:9 整数放大；余区黑边"
+		_display_note_label.text = _windowed_display_note()
 
 	var changed: bool = (
 		_draft_mode != _display.get_active_mode()

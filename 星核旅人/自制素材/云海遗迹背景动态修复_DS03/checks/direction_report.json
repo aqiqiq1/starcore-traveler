@@ -1,0 +1,234 @@
+{
+  "ok": true,
+  "method": "binary difference mask vs baseonly; peak overlap shift in device px; positive = right",
+  "sky_full_band_0_8": {
+    "shift_device_px": 99,
+    "shift_logical_px": 49.5,
+    "score": 0.9577570093457944,
+    "peak_scores": [
+      [
+        99,
+        0.957757
+      ],
+      [
+        98,
+        0.955517
+      ],
+      [
+        97,
+        0.953285
+      ],
+      [
+        100,
+        0.952968
+      ],
+      [
+        96,
+        0.951054
+      ]
+    ]
+  },
+  "sky_full_band_0_12": {
+    "shift_device_px": 149,
+    "shift_logical_px": 74.5,
+    "score": 0.9625819234872732,
+    "peak_scores": [
+      [
+        149,
+        0.962582
+      ],
+      [
+        148,
+        0.959558
+      ],
+      [
+        150,
+        0.958518
+      ],
+      [
+        147,
+        0.956538
+      ],
+      [
+        151,
+        0.954521
+      ]
+    ]
+  },
+  "sea_main_band_0_8": {
+    "shift_device_px": 67,
+    "shift_logical_px": 33.5,
+    "score": 1.0,
+    "peak_scores": [
+      [
+        67,
+        1.0
+      ],
+      [
+        68,
+        0.998046
+      ],
+      [
+        66,
+        0.997536
+      ],
+      [
+        69,
+        0.996089
+      ],
+      [
+        65,
+        0.995077
+      ]
+    ]
+  },
+  "sea_main_band_0_12": {
+    "shift_device_px": 101,
+    "shift_logical_px": 50.5,
+    "score": 1.0,
+    "peak_scores": [
+      [
+        101,
+        1.0
+      ],
+      [
+        102,
+        0.997983
+      ],
+      [
+        100,
+        0.997457
+      ],
+      [
+        103,
+        0.995961
+      ],
+      [
+        99,
+        0.994918
+      ]
+    ]
+  },
+  "sea_near_band_0_8": {
+    "shift_device_px": 115,
+    "shift_logical_px": 57.5,
+    "mae": 0.11161659513590844,
+    "peak_scores": [
+      [
+        115,
+        -0.111617
+      ],
+      [
+        114,
+        -0.135034
+      ],
+      [
+        116,
+        -0.135352
+      ],
+      [
+        113,
+        -0.158412
+      ],
+      [
+        117,
+        -0.159129
+      ]
+    ]
+  },
+  "sea_near_band_0_12": {
+    "shift_device_px": 173,
+    "shift_logical_px": 86.5,
+    "mae": 0.11746461909063535,
+    "peak_scores": [
+      [
+        173,
+        -0.117465
+      ],
+      [
+        172,
+        -0.14096
+      ],
+      [
+        174,
+        -0.141305
+      ],
+      [
+        171,
+        -0.164412
+      ],
+      [
+        175,
+        -0.165189
+      ]
+    ]
+  },
+  "sea_near_full_0_8": {
+    "shift_device_px": 115,
+    "shift_logical_px": 57.5,
+    "mae": 0.42816165951359086,
+    "peak_scores": [
+      [
+        115,
+        -0.428162
+      ],
+      [
+        114,
+        -0.451265
+      ],
+      [
+        116,
+        -0.452019
+      ],
+      [
+        113,
+        -0.474329
+      ],
+      [
+        117,
+        -0.475917
+      ]
+    ]
+  },
+  "sea_near_full_0_12": {
+    "shift_device_px": 173,
+    "shift_logical_px": 86.5,
+    "mae": 0.2884598012646793,
+    "peak_scores": [
+      [
+        173,
+        -0.28846
+      ],
+      [
+        172,
+        -0.311755
+      ],
+      [
+        174,
+        -0.312297
+      ],
+      [
+        171,
+        -0.335009
+      ],
+      [
+        175,
+        -0.336176
+      ]
+    ]
+  },
+  "expected": {
+    "sky_near_bank_0_8_logical": 49.6,
+    "sky_near_bank_0_12_logical": 74.4,
+    "main_0_8_logical": 33.6,
+    "main_0_12_logical": 50.400000000000006,
+    "near_0_8_logical": 57.6,
+    "near_0_12_logical": 86.4
+  },
+  "cycle_exact_diff": {
+    "main_max_channel_diff": 0,
+    "near_max_channel_diff": 0,
+    "main_cycle_t": 304.2857142857143,
+    "near_cycle_t": 177.5
+  }
+}

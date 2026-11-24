@@ -1,9 +1,0 @@
-Level 02 V3 upper-label layout fix GUI capture log
-Godot: 4.7.2-stable (official)
-Display: Windows  window: (1280, 720)  viewport: (640.0, 360.0)
-route=real InputMap/key events up to the upper seam; no teleport/test force/direct store/complete
-label_band=212..224 (pre-fix 246..258); platform pixels and physics unchanged
-upper landing player=(249.6478, 263.924) core=(342.4996, 311.9253)
-upper seam active player=(383.2697, 263.924) core=(342.9318, 311.9253) dist=74.8 force=(334.3136, -522.144)
-CAPTURED level02_v3_03_upper_seam_labels_fixed.png size=(640, 360) path=D:/godot game/星核旅人/基础场景原型/screenshots/level02_v3_03_upper_seam_labels_fixed.png
-FINAL completed=false count=0 core_x=342.9 player=(383.2697, 263.924)

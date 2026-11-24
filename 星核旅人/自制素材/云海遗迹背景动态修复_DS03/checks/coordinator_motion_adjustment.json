@@ -1,0 +1,46 @@
+{
+  "frozen_runtime_sections_unchanged": {
+    "base": true,
+    "static": true,
+    "sky": true,
+    "sea": true,
+    "shadows": true,
+    "debris": true,
+    "stack": true
+  },
+  "group_geometry_unchanged": true,
+  "bridge_actual_frame_checks": {
+    "G1": {
+      "float_enabled": false,
+      "captured_frames_checked": 9,
+      "source_rgb_wrong_pixels": 0
+    },
+    "G2": {
+      "float_enabled": false,
+      "captured_frames_checked": 9,
+      "source_rgb_wrong_pixels": 0
+    }
+  },
+  "small_ruins_float": {
+    "G3": {
+      "enabled": true,
+      "amp": 0.35,
+      "period": 18.0,
+      "phase": 0.8
+    },
+    "G4": {
+      "enabled": true,
+      "amp": 0.3,
+      "period": 22.0,
+      "phase": 1.1
+    },
+    "G5": {
+      "enabled": true,
+      "amp": 0.45,
+      "period": 20.0,
+      "phase": 0.15
+    }
+  },
+  "protected_png_count": 24,
+  "changed_pngs": []
+}

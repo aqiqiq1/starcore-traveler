@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "cloud_occlusion_ok": true,
+  "direction_ok": true,
+  "float_gap_ok": true,
+  "motion_adjustment_ok": true,
+  "shadow_ok": true,
+  "integrity_ok": true,
+  "protected_baseline": 108,
+  "art_layers": 8,
+  "common_copies": 16,
+  "standalone_asset_count": 24
+}

@@ -26,10 +26,10 @@ signal attack_hit_window(swing_id: int, facing: int, positive: bool)
 signal attack_finished(swing_id: int)
 
 const ATTACK_TEXTURE: Texture2D = preload(
-	"res://assets/experiments/polarity_golem/hero/male_hero-combo_1.png"
+	"res://assets/experiments/polarity_golem/hero/male_hero_combo_1.png"
 )
 const ATTACK_END_TEXTURE: Texture2D = preload(
-	"res://assets/experiments/polarity_golem/hero/male_hero-combo_1_end.png"
+	"res://assets/experiments/polarity_golem/hero/male_hero_combo_1_end.png"
 )
 
 # --- tunable swing parameters (single place) -------------------------------

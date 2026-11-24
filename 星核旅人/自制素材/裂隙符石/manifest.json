@@ -1,0 +1,98 @@
+{
+  "name": "裂隙符石 / Rune Stone",
+  "version": "concept-derived direct 96->32 NEAREST (2026-10-31)",
+  "review_status": "generated only from the approved concept sprite(); awaiting user review; not re-designed",
+  "art_source": {
+    "concept_page": "../符石概念示意/concept.png",
+    "sprite_function": "../符石概念示意/generate_concept.py: sprite('sleep'/'gold'/'cyan')",
+    "note": "the 1600x1000 concept page is never cropped or used as a texture; only the original 96x96 sprite() images are converted"
+  },
+  "conversion": {
+    "source": "96x96 RGBA concept sprite",
+    "target": "32x32 RGBA display texture",
+    "method": "direct NEAREST, exact 3:1, destination-centre sampling via Pillow Image.Resampling.NEAREST",
+    "no_blending": true,
+    "no_manual_retouch": true
+  },
+  "component_scene": "res://scenes/rune_stone_visual.tscn",
+  "component_script": "res://scripts/rune_stone_visual.gd",
+  "preview_scene": "res://tools/preview_rune_stone_art_revision.tscn",
+  "preview_capture": "res://screenshots/rune_stone_art_revision.png",
+  "gameplay_connection": "none; force, collision, map, proximity and F2/F7 state remain owned by the existing components",
+  "integrations": {
+    "f7_record_room": "existing RuneStoneField/visual; initial inactive, first light-up and polarity commit timing unchanged",
+    "f2_anchor_room": "existing shared visual at (320,200), fixed GOLD; no force, collision or route change"
+  },
+  "logical_size": [
+    32,
+    32
+  ],
+  "origin": "image centre; centred Sprite2D at 1:1; integer 4x review scaling only",
+  "display_architecture": {
+    "base": "sleep state PNG, always visible, provides the exact approved dormant shell/core",
+    "accent": "gold or cyan whole-state PNG overlay; alpha 1 when settled, 0 when dormant",
+    "transition": "old accent alpha 1->0 during the dim fraction, then target accent 0->1; completion and transition_finished timing unchanged",
+    "why": "keeps the concept's baked coloured core, inner-wall reflection and highlights instead of collapsing them into an approximated shell + white mask"
+  },
+  "states": [
+    {
+      "state": "sleep",
+      "source_96": "source_96/rune_stone_sleep_96.png",
+      "display_32": "rune_stone_sleep.png",
+      "sha256_source_96": "59daa8c7387d6c85898202631dd6827cf58b5eeb8d031f79a53d356bae337b1b",
+      "sha256_display_32": "d723660d52f91083263a7bd8617ae0d05d5be2095dba16292f343f74b8e75e33"
+    },
+    {
+      "state": "gold",
+      "source_96": "source_96/rune_stone_gold_96.png",
+      "display_32": "rune_stone_gold.png",
+      "sha256_source_96": "5eea59538811117a24645d7da09a1930d23c47699266f99613558a9c68d59a66",
+      "sha256_display_32": "57a56ad27d2500cb4863d0ec3af865342be3e602a1fc78655845ce5b7319ad32"
+    },
+    {
+      "state": "cyan",
+      "source_96": "source_96/rune_stone_cyan_96.png",
+      "display_32": "rune_stone_cyan.png",
+      "sha256_source_96": "aefe28301016082e813d7ffdd9f2ca8b843e10df1f4635be692511e3a2442878",
+      "sha256_display_32": "8df389ba6ab4be8d0ff3b6b55f9596733b95c4e2ea9bc308b47a721fa0c0be88"
+    }
+  ],
+  "polarity_colors": {
+    "positive": "#f4cd63",
+    "negative": "#5fe1e6"
+  },
+  "same_silhouette_all_states": true,
+  "inactive": "sleep state PNG: same approved shell and crack network, dark core, no gold or cyan light",
+  "rotation": "none",
+  "float_animation": "none",
+  "hint_symbol": "drawn outside the 32x32 stone by the Godot component; not baked",
+  "preview_comparison": "preview_concept96_vs_direct32.png",
+  "preview_states": "preview_rune_stone_states.png",
+  "third_party_images": "none",
+  "generator": "generate_rune_stone_assets.py",
+  "stats": {
+    "source_96_size": [
+      96,
+      96
+    ],
+    "display_32_size": [
+      32,
+      32
+    ],
+    "conversion": "direct NEAREST, exact 3:1, destination-centre sampling",
+    "opaque_source_96": 4807,
+    "opaque_display_32": 535,
+    "same_silhouette_all_states": true,
+    "sleep_near_gold_pixels": 0,
+    "sleep_near_cyan_pixels": 0,
+    "gold_near_accent_pixels": 29,
+    "cyan_near_accent_pixels": 29,
+    "changed_pixels_gold_vs_sleep": 147,
+    "changed_pixels_cyan_vs_sleep": 147,
+    "changed_pixels_gold_vs_cyan": 147
+  },
+  "sha256": {
+    "preview_concept96_vs_direct32.png": "83aea51d5f2c0784fcd7dea7115a1293d276cdf3517242a3758306c6d651e72e",
+    "preview_rune_stone_states.png": "cce1650a57ec872b3a6fa4a47c2bdb7cdbb79f181dccba73e48c3c3d3bea087c"
+  }
+}

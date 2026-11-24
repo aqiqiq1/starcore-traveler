@@ -1,0 +1,791 @@
+{
+  "ok": true,
+  "baseline": {
+    "checked": 108,
+    "ok": 108,
+    "rows": [
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\build_standalone.py",
+        "sha256": "C2884829038512944C3368D20C03D0BF16231D3C4BC2F12E0CF6693EE3FD27BF",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\config.js",
+        "sha256": "C43F3D9FCD1107DBE79A4AE61AF474300384DD6E9381286D49497B3F7542B1BE",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\config.json",
+        "sha256": "7746C7B88EA0B0186864179EBFD5C472F10C637546D1BE74519399C15DAA7C7F",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\diff_vs_v7.png",
+        "sha256": "02C744D752665F02CECF0ABB7CABACE7E085C2298CF67D28AF33CBC947322B90",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\diff_vs_v7_report.md",
+        "sha256": "7848A91202521A9E6F947FC45B02E1683015EE149CA745861754BAEC634094F4",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\generate_ds02.py",
+        "sha256": "3564878823DB2F8C06A746D4598636A56E4F106D917B2744911974FAE5A3F98C",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\manifest.json",
+        "sha256": "CFFD4FD95A84648B642BDCCCFD246EEFAB4787A656A198BE8930699B0558CE86",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\preview.html",
+        "sha256": "00A621B96510354492894AEE085B20EF800818FAFD0FCB190EFB4CA22A7F02B4",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\preview.js",
+        "sha256": "EC4EF32F5932BB88697A729987D98F77EFA14258F25D746748F58DD6AFE06C81",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\README.md",
+        "sha256": "EACF84FC9D99F63EC2D6F1F0198626F5AD27FB93645C360545A6F11ED3961DFE",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\reference.png",
+        "sha256": "F95DFC1B8BC95644F01CE0A632DD01AF568B62ACC217E011E897BE45DFC35EA7",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\reference_2x.png",
+        "sha256": "5E8748120D8F966824612CA3B1077BE3B2D82AE6895D39571D720482C73F1B48",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\双击预览_DS02.html",
+        "sha256": "11DA7C7C67F2E77FD17EEB9EE8255EBCCB67E1EFCA8F4B59018378991C9AA56C",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\browser_2x_t0.jpg",
+        "sha256": "F47A48B2640FC2FD7AB668865E61E57042CE9A9725C44C04F9D509B11D6E809A",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\browser_2x_t12.jpg",
+        "sha256": "383100BDDAD65EA8904DF0D2811AD6DC6480FF2DC90CB56640BC61D97623A48E",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\browser_2x_t8.jpg",
+        "sha256": "F31E75C903E2512A6DACDCA91F23D80016622EE0C7A96B4CE84EC7606AB33DB8",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\browser_direction_check.json",
+        "sha256": "B79A6FF078ED325288C4335AB7ED29D77DE3EC29F4D9B30CF08B07E958B1D4A5",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\browser_seam_after.jpg",
+        "sha256": "9FC6E3ECFC689F2F476D75A239D0EC2F4F432823C1D4F88947734FB787C22C6F",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\browser_seam_before.jpg",
+        "sha256": "BBDC79961BD53FF359C47383EBEE1FE15EA6C4A23C885EE38DE1F15C499681AB",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\coordinator_delivery_audit.json",
+        "sha256": "301863A428B74F3741AEF4B72A66782D1625C35BDB0E1E0701BB484358F5F017",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\coordinator_motion_audit.json",
+        "sha256": "B08665CE58349BA01E909A3EC9B6B6AECA5F7DC62EE0653CF60410867DD88E8B",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\diff_vs_v7_stats.json",
+        "sha256": "4B6A6158B214297A6815F64615D0D41EE27D2D393FE01D0516F2E1494B811822",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\flow_0_8_12.png",
+        "sha256": "7EC0A56BA43D53BF2B02E5BD9EE5204A88AA97487B552B02C5091CF5D28690EB",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\flow_direction_probe.png",
+        "sha256": "50EC0A173B1D30B13CF8974F385120A350633DDC3E30BC265BDF5DC355DFBEC9",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\flow_direction_report.json",
+        "sha256": "E1EE6B8BDF1173CA8C6D3C0BB64A27A19EE665C7856DC3EB23C1E75FE9C87F4B",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\motion_audit.json",
+        "sha256": "D6900F1346429F3B2D03014D1B7C490EBEA53A86A5FD4980E475B065CD49242E",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\protected_hashes_check.json",
+        "sha256": "04C34676E00F0B5868EB37B8A869EA78559804FD1351F8B3EF0DCA30824EC458",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\seam_after.png",
+        "sha256": "2AE1D0545E718622A95927741BBF7600A2B66CDD531113EE3300EB18035DADA5",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\seam_after_marker.png",
+        "sha256": "53313CA67BBB1594CCE90692EA10B330B86DA6F2565B7B9BA58A7B0BA34AC51F",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\seam_before.png",
+        "sha256": "2033EC9F5E4CDA84E32300B2399D82601A70E2EDC25BCFF572ABA0D835325A96",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\seam_before_marker.png",
+        "sha256": "23634462B2444D3A9332CF3D6271AF36C6D2629C0DA183167957877888AF6B16",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\seam_main_after_closeup.png",
+        "sha256": "1180506C7FC8CCF006EF1C3ACC3D84D0887253E349FECC824600AE321386C625",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\seam_main_before_closeup.png",
+        "sha256": "2D56382C66E6AF28AD5B2848FB7418F35F0FFB40B86E3E49DAC15C9E6CCC66B6",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\seam_near_after_closeup.png",
+        "sha256": "810EFA5B5B0C67DABAD954A15EE34963C300FBBAE3B5E7F08D0F37C32F3862C9",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\seam_near_before_closeup.png",
+        "sha256": "5EDDD69AB36ACF6DE5A6F710B1ADC61CD007D9DE0D29935DB5FE3C79BB43C351",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\seam_render_check.json",
+        "sha256": "F885939518860DD6407967D879F2A30B217A7D409C982F516CA1F987C3CACA67",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\seam_texture_check.json",
+        "sha256": "542868809316D81454DEC4E6B35FB490A388703F8D7B8418EDAFC9718D2D54DC",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\seam_texture_main.png",
+        "sha256": "A727474FD59117C71C7146A562E3397261CBE6FE795EAF12636844FA56272659",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\seam_texture_main_marked.png",
+        "sha256": "89C5CC10E27BB001F9A207DB3D31647A25F81B64CF0A76AD18731B43C60DB359",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\seam_texture_near.png",
+        "sha256": "1C2FED29F41B6A765F9DAC1A1826435B1D15FF27A4DFC2A4041373D38BB2D564",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\seam_texture_near_marked.png",
+        "sha256": "93949906AA275A224C0D32EB2B1D02562ACEC78044F9006FE67CC6D8A0771AE8",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\shadow_central_3heights.png",
+        "sha256": "4F7A6A10712864BB53F91C6893286B6053F19BDB6B4F112D97FC908D14380476",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\shadow_context_8s.png",
+        "sha256": "51200919122DBD09A42408AF7AF21A4BB172D0AFB7557E83E4A9CD82D3625028",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\shadow_low_3heights.png",
+        "sha256": "D322C2C37536C074D06AD2FE7A53567C156DD3668A367CC0D0F7C5C5CDD4398A",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\sky_wrap_3panel.png",
+        "sha256": "7ED0D02A1B83FB226B2D79D893A2D1244D016A7604FC5F9D7B585F6E5FE38399",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\time_trajectory.json",
+        "sha256": "5FE821867E1188AB6140E807DCEA00D62621BFA74A6C323B2B283ECAEE677B69",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\t_04s.png",
+        "sha256": "E278CE6921C86F619F1135BECEFB0B3F40327A5E0EF51A4F91526BADF7CB0374",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\t_08s.png",
+        "sha256": "F7602429BFAD8C775BAC559C6972ED177A9FB8E6A7FC35179DC6AB754D57E932",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\checks\\t_12s.png",
+        "sha256": "B8E54E4E88D2018B9D1F54B86AC222F584371EC85CBA7347A69F06073D42C173",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\arch_overlay.png",
+        "sha256": "46D8C85F410623E52B931A3987FF573461A69F3569C9696A6A908D9DFDDEE282",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\base_static.png",
+        "sha256": "0B78F0368512F71621645285D791D39BA4FBA60168A405F492D94FCDEBFE2303",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\debris_central.png",
+        "sha256": "29A101D1107139990A21EAFD899BED978BDB313DCDEF987E290FC239C64B0EB7",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\debris_cluster.png",
+        "sha256": "F90912C8131D5835BC353ED9875832099A7FC80D1E32DFC0B8A68B8A0EAA9946",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\debris_low.png",
+        "sha256": "C47FD5557650F05E4F9C468069C782D829FD56200D7FD2B579141FED0C6C0BE3",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\debris_tiny.png",
+        "sha256": "FB387E17062918B8CDCBFF7DA5A3998FBB58B89A38A4AF1DDC587D6EBDB9A8D2",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\island_overlay.png",
+        "sha256": "29FDF942BD7C3066DA940568FE24FF24ACEB88DC0FFBF45FE675A9E296A7320B",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sea_main.png",
+        "sha256": "C1C5DCC1B09A578D21FB3BFB57BF27C4AACF0AFE1D7A6E37F1FCBF3839F2C2CF",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sea_near.png",
+        "sha256": "FFC79BD7E1E035EC1F7F7DA88A953EFFEFB3FEA6C72378FF84BEAA80F559F996",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\shadow_central.png",
+        "sha256": "FAF5A907103EC6E6BF96AD28E31581E0D972ADD0C38617215B54D290EB0FFC01",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\shadow_cluster.png",
+        "sha256": "0E90AF352019B897CCA37F142F37D5A03A0550249FC3F58F0098E6514D9A9D0B",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\shadow_low.png",
+        "sha256": "532BE50EF00CEA9D47165AAF2F73639F1C28A247242040C46BA74915ED2B6737",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sky_bank_left.png",
+        "sha256": "09B8B37C6BC1940C64EB89FFAC4CA47EC8AE13F37006CA6B5D77D3E3407DB821",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sky_bank_right.png",
+        "sha256": "FA253012CB50C8F3BA2C559D2FDDCC8790DD7B913BFBA332F91D177E7198D44E",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sky_high_chip.png",
+        "sha256": "E96FF5B67DB74D86DBDE263C0A97B7E64FB4F23C2DA88F732AEC2088431EDC9F",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sky_left_wisp.png",
+        "sha256": "AE0303F947B0E64F8485E3C781430E4EFF1F30DACB50C743851A7337EF27EE00",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sky_low_wisp_l.png",
+        "sha256": "7347A0B5BF6092D5EC48BAAAB022CDCB8E25A47BF625221E7A1E65058D0560AD",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sky_low_wisp_r.png",
+        "sha256": "01F20E64E503998E37775E2E0B07022C1459BA1AFD88A6867FACE5E919F0D05F",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sky_mid_wisp.png",
+        "sha256": "675B35E4A349A5066318DEF3CE01A4FEB37D7A10C3FA91295C313880CE5062EF",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\后景遗迹细化预览_V2\\background_detail_v2.png",
+        "sha256": "D0E4A333C1E3C4439023D2442EEBF230273BAD0EAF6B2FC2ABAEC313E8610ADC",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\后景遗迹细化预览_V2\\background_detail_v2_640x360.png",
+        "sha256": "EE9E39305F8A697FFCE318328B365D02C6E66D07F61A43C8F2FFB1E250A5F94A",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\后景遗迹细化预览_V2\\check_local_v1_vs_v2.png",
+        "sha256": "58D931C4D882577577EC1DE33E801A8A88A4E1B888D36B5B9FB303DAEFC762E6",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\后景遗迹细化预览_V2\\coordinator_review.json",
+        "sha256": "754062FBA91B68F9C28B9208D57BB546090BE34169EE1AA75B577FF4035C163D",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\后景遗迹细化预览_V2\\generate_background_detail_v2.py",
+        "sha256": "E3F6139A682D39EF86477C423905B84DD8C4AFB01B05DF54F0991167EAE3481A",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\后景遗迹细化预览_V2\\manifest_v2.json",
+        "sha256": "906479B923A55DACB59A84A3ACF89DAC5512075638C6CC05828FF5FAC0030DBC",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\后景遗迹细化预览_V2\\mask_detail_v2.png",
+        "sha256": "EAAC6C7A6A53A2E3E6DC9A7C3EA69FA9A4F5E2436EDC6E4B8810CC30C59E22F9",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\后景遗迹细化预览_V2\\README_v2.md",
+        "sha256": "08C4DEBBABAFF9987B21A504DC62A3FBCB59AFFFE348BC3D1A8789B304C4BC3D",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\background_only.png",
+        "sha256": "B140F3985C3945A8E62A93E473BA89FF961CD87ED8D4044391398EB7B75A2192",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\background_only_v2.png",
+        "sha256": "3BC5D8F3FE42E69DF592A11F502EF8386AF6442DB155851BDA3A1381899E73F8",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\background_only_v3.png",
+        "sha256": "444258DEFFD61E95BF27AF4689C60974A48CFA9E1814E1B0E51A07831D39FDB1",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\background_only_v4.png",
+        "sha256": "F7139F1CB195DE230DC55E7A9FEB205D84667830B14B4E17B90C65A3A65DD2EB",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\background_only_v5.png",
+        "sha256": "C08DE18D994CA67678CD84C84AEBF27635777A6357A835338BD30DFB389FC036",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\background_only_v6.png",
+        "sha256": "6628CF2EC083B49219E208C5AD0DB0FDD4239025651D7760CD1ECFB2FF08A220",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\background_only_v7.png",
+        "sha256": "2D65A27D432CE60D8562C71CF754049D49A106D08E63348D78CB08F4C8387AAE",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\concept.png",
+        "sha256": "3CB908CB41608ABE6469C18FB742956772A95B18BB9F41F06796E21BA01EC7C3",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\concept_v2.png",
+        "sha256": "511D86AE91344DE41E37F333DBD1DE6AD67D355B78664E5650B0194EB86F4E70",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\concept_v3.png",
+        "sha256": "21C0B9A831560FC11C3A9802303BF4CE37DF38F0A4E5F15AD259BF56AD498EB9",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\concept_v4.png",
+        "sha256": "2569013908EECD7D84EE71105EC725099CB2C09252BE96E4F31CEBB37FE9945C",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\concept_v5.png",
+        "sha256": "066ACEF0C0A6E4122AA784FCFADDB831734E6892E79126E4130B41C717DDF0BD",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\generate_background_v6.py",
+        "sha256": "01F849A02AECEBC509E7972787796B67F25058CA146413C7BBD14F830BCE7D0C",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\generate_background_v7.py",
+        "sha256": "15D881EB078EE1D0A2E46BCDB87806926F990CEC7D51286C53C855B6E2C177E8",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\generate_concept.py",
+        "sha256": "9747E0F52AA4BC29D3438451C74BBE07FA56F552A9AFD858E1842DAF7BD8C6C0",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\generate_concept_v2.py",
+        "sha256": "910A76FFD47089EC18F5BDADCDC50C60D7B8A8FE8D77039BD1365B73A1580685",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\generate_concept_v3.py",
+        "sha256": "EA578F884970FF376B7CF42B9E60BC03665CD7627F24AB3A56C493C54E37F405",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\generate_concept_v4.py",
+        "sha256": "6B917D95BA83792DE389B1308D245A1974689E54176B50D984744262FE9B8153",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\generate_concept_v5.py",
+        "sha256": "27A4EA1789972C6E033DD2E79D5C87F05CF500827DE652493592ACC22BE2A5A1",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\midground_mask_v5.png",
+        "sha256": "7EDAB90E4F59E527DD81AC8E05C86A5403710C55FBAC2AB0DDB1E0C19033C0C8",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\source.md",
+        "sha256": "5C985E734BAB23E2D3A3923A1150068724B5ACDE599033ACF05E1D9C3E218606",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\source_v2.md",
+        "sha256": "6AF5BB4140184F25A8EF7EE642A3E69CA1B290E0A6C6F59A7A33F439BDD0CC0A",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\source_v3.md",
+        "sha256": "ECA3BB3E10B155088140F0B2D5E34118371542B7ECC314E46CAE0BD78CA8AEC6",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\source_v4.md",
+        "sha256": "23A70DCDAC30C06414206F3539B0FFDC0944748DC9C45BC8496D9E962A336D38",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\source_v5.md",
+        "sha256": "26FDE033ED7EE8407EA317042FF73590A1604B2E2D204C3728343BC8AB9B73C2",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\source_v6.md",
+        "sha256": "DC54CCB0F01891792E2D5A79C3C0EE018D6EAD45B042271948F7BF602A00010C",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景概念示意\\source_v7.md",
+        "sha256": "83322442D7D04931B26266CE09253622051C86F2DE07E66C17C98A3B92ECDE5D",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\基础场景原型\\scenes\\level_01.tscn",
+        "sha256": "95130739CFF5AC67AAE09302747C261EF4B9CF8687E1E1E82158A9CEE4D083DF",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\level_01.gd",
+        "sha256": "DBC24205827BBAD97AC820C2CE228D96DE94D8A8DD47F3A748E0379BB4269D07",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\基础场景原型\\scripts\\player.gd",
+        "sha256": "5711828A3FF6C9E01A21D515B3B8A57EB467E56B4765B53C8A591082E17C76DA",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\基础场景原型\\project.godot",
+        "sha256": "FCFC61E314F61B21DD2878238BA15F973A41324C8547B48277CB3B8CB71CAAC1",
+        "ok": true
+      },
+      {
+        "path": "D:\\godot game\\星核旅人\\基础场景原型\\assets\\backgrounds\\cloud_ruins_v7.png",
+        "sha256": "0C81488D74EB87B0219EA3EAD2AA31F074C1A371AB9A7ABA0984B67A4A0F9092",
+        "ok": true
+      }
+    ]
+  },
+  "art_layers": {
+    "checked": 8,
+    "ok": 8,
+    "rows": [
+      {
+        "id": "base_sky",
+        "file": "art_assets/base_sky_640x360.png",
+        "sha256": "f2860676c097e512fac79792b23581b6437bb2a2555612a27d55ad06780cc12b",
+        "ok": true
+      },
+      {
+        "id": "G1_left_bridge",
+        "file": "art_assets/g1_left_bridge.png",
+        "sha256": "371011a39a6fbc1867cba8239a6588fd9f83dd911b0098361e1a15c4f524b207",
+        "ok": true
+      },
+      {
+        "id": "G2_right_bridge",
+        "file": "art_assets/g2_right_bridge.png",
+        "sha256": "7f587eb24f6b8f6118a4dcfe8cf94ea6ce887d55b3d04d5f07f98c08113f8242",
+        "ok": true
+      },
+      {
+        "id": "G3_left_hall_island",
+        "file": "art_assets/g3_left_hall_island.png",
+        "sha256": "307d5f0ac6838c064f2ab3545ea1a9031133f0c17925109681c234be5aabda89",
+        "ok": true
+      },
+      {
+        "id": "G4_far_courtyard",
+        "file": "art_assets/g4_far_courtyard.png",
+        "sha256": "f854433be3d07f938464cfd7ccf095c469ee70d88237eed7225d509ad7c9e824",
+        "ok": true
+      },
+      {
+        "id": "G5_right_temple_island",
+        "file": "art_assets/g5_right_temple_island.png",
+        "sha256": "23a0e64d4569f894237195b2ca43d06784cc77839fd6f9d5a7c1032ebd8574f8",
+        "ok": true
+      },
+      {
+        "id": "arch_stone",
+        "file": "art_assets/arch_stone.png",
+        "sha256": "2254d1d4971f291be06149dbd237138fb4c4d65b3df3a09cd5d68b629700ec9e",
+        "ok": true
+      },
+      {
+        "id": "rock_remnants_static",
+        "file": "art_assets/rock_remnants_static.png",
+        "sha256": "6f75d933681605170eaadb27dcfee578a4c99b5c493a957202ccac306cd676c4",
+        "ok": true
+      }
+    ]
+  },
+  "common_copies": {
+    "checked": 16,
+    "ok": 16,
+    "rows": [
+      {
+        "name": "sky_bank_left",
+        "source": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sky_bank_left.png",
+        "destination": "common/sky_bank_left.png",
+        "sha256": "09b8b37c6bc1940c64eb89ffac4ca47ec8ae13f37006ca6b5d77d3e3407db821",
+        "bytes": 1101,
+        "ok": true
+      },
+      {
+        "name": "sky_bank_right",
+        "source": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sky_bank_right.png",
+        "destination": "common/sky_bank_right.png",
+        "sha256": "fa253012cb50c8f3ba2c559d2fddcc8790dd7b913bfba332f91d177e7198d44e",
+        "bytes": 1123,
+        "ok": true
+      },
+      {
+        "name": "sky_mid_wisp",
+        "source": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sky_mid_wisp.png",
+        "destination": "common/sky_mid_wisp.png",
+        "sha256": "675b35e4a349a5066318def3ce01a4feb37d7a10c3fa91295c313880ce5062ef",
+        "bytes": 333,
+        "ok": true
+      },
+      {
+        "name": "sky_low_wisp_r",
+        "source": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sky_low_wisp_r.png",
+        "destination": "common/sky_low_wisp_r.png",
+        "sha256": "01f20e64e503998e37775e2e0b07022c1459ba1afd88a6867face5e919f0d05f",
+        "bytes": 236,
+        "ok": true
+      },
+      {
+        "name": "sky_left_wisp",
+        "source": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sky_left_wisp.png",
+        "destination": "common/sky_left_wisp.png",
+        "sha256": "ae0303f947b0e64f8485e3c781430e4eff1f30dacb50c743851a7337ef27ee00",
+        "bytes": 193,
+        "ok": true
+      },
+      {
+        "name": "sky_low_wisp_l",
+        "source": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sky_low_wisp_l.png",
+        "destination": "common/sky_low_wisp_l.png",
+        "sha256": "7347a0b5bf6092d5ec48baaab022cdcb8e25a47bf625221e7a1e65058d0560ad",
+        "bytes": 185,
+        "ok": true
+      },
+      {
+        "name": "sky_high_chip",
+        "source": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sky_high_chip.png",
+        "destination": "common/sky_high_chip.png",
+        "sha256": "e96ff5b67db74d86dbde263c0a97b7e64fb4f23c2da88f732aec2088431edc9f",
+        "bytes": 156,
+        "ok": true
+      },
+      {
+        "name": "sea_main",
+        "source": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sea_main.png",
+        "destination": "common/sea_main.png",
+        "sha256": "c1c5dcc1b09a578d21fb3bfb57bf27c4aacf0afe1d7a6e37f1fcbf3839f2c2cf",
+        "bytes": 3430,
+        "ok": true
+      },
+      {
+        "name": "sea_near",
+        "source": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\sea_near.png",
+        "destination": "common/sea_near.png",
+        "sha256": "ffc79bd7e1e035ec1f7f7da88a953effefb3fea6c72378ff84beaa80f559f996",
+        "bytes": 3641,
+        "ok": true
+      },
+      {
+        "name": "shadow_central",
+        "source": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\shadow_central.png",
+        "destination": "common/shadow_central.png",
+        "sha256": "faf5a907103ec6e6bf96ad28e31581e0d972add0c38617215b54d290eb0ffc01",
+        "bytes": 281,
+        "ok": true
+      },
+      {
+        "name": "shadow_cluster",
+        "source": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\shadow_cluster.png",
+        "destination": "common/shadow_cluster.png",
+        "sha256": "0e90af352019b897cca37f142f37d5a03a0550249fc3f58f0098e6514d9a9d0b",
+        "bytes": 216,
+        "ok": true
+      },
+      {
+        "name": "shadow_low",
+        "source": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\shadow_low.png",
+        "destination": "common/shadow_low.png",
+        "sha256": "532be50ef00cea9d47165aaf2f73639f1c28a247242040c46ba74915ed2b6737",
+        "bytes": 199,
+        "ok": true
+      },
+      {
+        "name": "debris_central",
+        "source": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\debris_central.png",
+        "destination": "common/debris_central.png",
+        "sha256": "29a101d1107139990a21eafd899bed978bdb313dcdef987e290fc239c64b0eb7",
+        "bytes": 442,
+        "ok": true
+      },
+      {
+        "name": "debris_cluster",
+        "source": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\debris_cluster.png",
+        "destination": "common/debris_cluster.png",
+        "sha256": "f90912c8131d5835bc353ed9875832099a7fc80d1e32dfc0b8a68b8a0eaa9946",
+        "bytes": 282,
+        "ok": true
+      },
+      {
+        "name": "debris_tiny",
+        "source": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\debris_tiny.png",
+        "destination": "common/debris_tiny.png",
+        "sha256": "fb387e17062918b8cdcbff7da5a3998fbb58b89a38a4af1ddc587d6ebdb9a8d2",
+        "bytes": 132,
+        "ok": true
+      },
+      {
+        "name": "debris_low",
+        "source": "D:\\godot game\\星核旅人\\自制素材\\云海遗迹背景动态重制_DS02\\layers\\debris_low.png",
+        "destination": "common/debris_low.png",
+        "sha256": "c47fd5557650f05e4f9c468069c782d829fd56200d7fd2b579141fed0c6c0be3",
+        "bytes": 551,
+        "ok": true
+      }
+    ]
+  },
+  "config": {
+    "file": "runtime_config.json",
+    "sha256": "c1e7b4779416d0e268b130be7ee286d32cc4eb87dd87bd7f80fa1c9605859899",
+    "config_js_sha256": "5b6ba1e67b40d44bb06eb91d328985547454eded3cf7f2167c88198ad4095a4a",
+    "common_asset_count": 16,
+    "art_asset_count": 8,
+    "inspection": {
+      "bridge_static_t1": 7.125,
+      "bridge_static_t2": 2.375,
+      "bridge_joint_t": 64.47,
+      "island_min_t": 26.683,
+      "g3_g1_min_t": 2.375,
+      "seam_t": 59.72222222222222,
+      "seam_offsets": [
+        -0.8,
+        0.0,
+        0.8
+      ],
+      "cycle_t": 304.2857142857143,
+      "sky_wrap_t": 43.87096774193548
+    },
+    "rois": {
+      "left_foot": [
+        30,
+        250,
+        120,
+        283
+      ],
+      "right_foot": [
+        455,
+        250,
+        560,
+        283
+      ],
+      "sky_band": [
+        0,
+        35,
+        640,
+        125
+      ],
+      "sea_band": [
+        0,
+        330,
+        640,
+        360
+      ],
+      "g5_g2_column": [
+        474,
+        138,
+        483,
+        205
+      ]
+    }
+  }
+}

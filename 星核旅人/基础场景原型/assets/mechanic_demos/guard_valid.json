@@ -1,0 +1,17 @@
+{
+	"capture_script": "res://tests/mechanic_popup_20261119/capture_mechanic_demos.gd",
+	"captured_from": "formal level scene, real gameplay state",
+	"crop": {
+		"h": 144,
+		"w": 256,
+		"x": 190,
+		"y": 190
+	},
+	"fps": 8.0,
+	"frame_height": 144,
+	"frame_width": 256,
+	"frames": 24,
+	"id": "guard_valid",
+	"note": "Player is opposite and starts just inside the field; the clip shows the live pull, a real J at reach, the true hit, shell scatter/rebuild and the guard's new phase.",
+	"source": "L3 guard GRAVITY_CHARGE, real attraction + weakpoint J, 3 s"
+}

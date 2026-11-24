@@ -1,0 +1,17 @@
+{
+	"capture_script": "res://tests/mechanic_popup_20261119/capture_mechanic_demos.gd",
+	"captured_from": "formal level scene, real gameplay state",
+	"crop": {
+		"h": 144,
+		"w": 256,
+		"x": 190,
+		"y": 130
+	},
+	"fps": 8.0,
+	"frame_height": 144,
+	"frame_width": 256,
+	"frames": 24,
+	"id": "float_platform",
+	"note": "Device was started by a real E at the device; the player stands on Block2. The first 1.5 s is the stone's real 1.1 s countdown and shake; the last 1.5 s repeats those real shake frames because the true drop leads into the recovery black, which would be an unrelated screen.",
+	"source": "L3 floating stones, real countdown/shake + looped shake tail, 3 s"
+}

@@ -2,13 +2,18 @@ class_name LayeredCoreMaterial
 extends Sprite2D
 
 ## Presentation-only crystal cover for ConductiveRoof or LinkedWall+Lip
-## (approved 2026-11-18).
+## (approved 2026-11-18; second platform face mode 2026-11-19).
 ##
 ## It draws a full component-sized opaque/L-shaped material over the original
 ## stone sprites: the upper shell is copied verbatim from the source PNG at
 ## build time, the lower part is continuous star-core crystal. Both approved
 ## states share one facet layout and live with the masks in
 ## `assets/interaction_projection_20261117/layered_core/`.
+##
+## The second platform uses face mode: its own candidate mask/arrival/facet map
+## are the real crossing test, and the real segment tints the crossed and
+## adjacent facets by weight instead of drawing a radial spot. The first
+## platform keeps the original shader path unchanged.
 ##
 ## The first relay store starts a ~0.7 s face-following lit flow: a per-facet
 ## arrival map drives connected facets in a staggered top-to-bottom order, not
@@ -31,6 +36,13 @@ const ACTIVE_TEXTURE_PATH: String = "res://assets/interaction_projection_2026111
 const MASK_TEXTURE_PATH: String = "res://assets/interaction_projection_20261117/layered_core/layered_core_approved_mask_256x32.png"
 const ARRIVAL_TEXTURE_PATH: String = "res://assets/interaction_projection_20261117/layered_core/layered_core_facetflow_arrival_256x32.png"
 const SHADER_PATH: String = "res://scripts/narrative/layered_core.gdshader"
+## Second platform face-based tint shader (2026-11-19). Preloaded so it is an
+## explicit export dependency, unlike a path-only load.
+const FACE_SHADER: Shader = preload("res://scripts/narrative/layered_core_faces.gdshader")
+const FACE_RANGE_PX: float = 18.0
+const FACE_MAX: int = 12
+const FACE_ADJACENT_WEIGHT: float = 0.55
+const FACE_CROSSED_WEIGHT: float = 0.95
 
 const DEFAULT_TEXTURE_SIZE: Vector2 = Vector2(256.0, 32.0)
 const MASK_ALPHA_THRESHOLD: int = 128
@@ -86,6 +98,16 @@ var _texture_size: Vector2 = DEFAULT_TEXTURE_SIZE
 var _mask_image: Image = null
 var _mask_pixel_count: int = 0
 var _arrival_image: Image = null
+
+## Face-tint mode (second platform). The same node owns the real hit test and
+## activation; it only changes how the force tint is drawn.
+var _face_mode: bool = false
+var _facet_image: Image = null
+var _facet_centroids: Dictionary = {}
+var _facet_neighbors: Dictionary = {}
+var _face_ids: PackedFloat32Array = PackedFloat32Array()
+var _face_weights: PackedFloat32Array = PackedFloat32Array()
+var _active_faces: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -170,6 +192,210 @@ func setup_custom(anchor_sprite: Sprite2D, base_path: String, active_path: Strin
 	return true
 
 
+## Second-platform face mode: the component's own candidate mask/arrival/facet
+## map are the hit-test and activation source (no v3 mask judge-first step).
+## Textures arrive as preloaded resources so the export keeps them.
+func setup_face_tint(anchor_sprite: Sprite2D, base_tex: Texture2D,
+		active_tex: Texture2D, mask_tex: Texture2D, arrival_tex: Texture2D,
+		facet_tex: Texture2D, size: Vector2) -> bool:
+	if anchor_sprite == null or anchor_sprite.texture == null:
+		push_warning("LayeredCoreMaterial: face anchor visual missing; material disabled")
+		return false
+	if anchor_sprite.centered:
+		push_warning("LayeredCoreMaterial: centered anchor sprite unsupported")
+		return false
+	if base_tex == null or active_tex == null or mask_tex == null \
+		or arrival_tex == null or facet_tex == null:
+		push_warning("LayeredCoreMaterial: face textures missing; material disabled")
+		return false
+	if Vector2(base_tex.get_width(), base_tex.get_height()) != size \
+		or Vector2(active_tex.get_width(), active_tex.get_height()) != size \
+		or Vector2(mask_tex.get_width(), mask_tex.get_height()) != size \
+		or Vector2(arrival_tex.get_width(), arrival_tex.get_height()) != size \
+		or Vector2(facet_tex.get_width(), facet_tex.get_height()) != size:
+		push_warning("LayeredCoreMaterial: face texture size is not %s" % size)
+		return false
+	_texture_size = size
+	_mask_image = mask_tex.get_image()
+	_arrival_image = arrival_tex.get_image()
+	_facet_image = facet_tex.get_image()
+	if _mask_image == null or _arrival_image == null or _facet_image == null:
+		push_warning("LayeredCoreMaterial: face mask/arrival/facet image unavailable")
+		return false
+	for img: Image in [_mask_image, _arrival_image, _facet_image]:
+		if img.is_compressed():
+			img.decompress()
+	_mask_pixel_count = 0
+	for y: int in range(int(_texture_size.y)):
+		for x: int in range(int(_texture_size.x)):
+			if _mask_image.get_pixel(x, y).a * 255.0 >= float(MASK_ALPHA_THRESHOLD):
+				_mask_pixel_count += 1
+	if _mask_pixel_count <= 0:
+		push_warning("LayeredCoreMaterial: face mask has no exposed core pixels")
+		return false
+	_build_faces()
+	if _facet_centroids.is_empty():
+		push_warning("LayeredCoreMaterial: facet map has no faces")
+		return false
+
+	_face_mode = true
+	_face_ids.resize(FACE_MAX)
+	_face_weights.resize(FACE_MAX)
+	for i: int in range(FACE_MAX):
+		_face_ids[i] = -1.0
+		_face_weights[i] = 0.0
+
+	texture = base_tex
+	_material = ShaderMaterial.new()
+	_material.shader = FACE_SHADER
+	_material.set_shader_parameter("base_tex", base_tex)
+	_material.set_shader_parameter("active_tex", active_tex)
+	_material.set_shader_parameter("mask_tex", mask_tex)
+	_material.set_shader_parameter("arrival_tex", arrival_tex)
+	_material.set_shader_parameter("facetid_tex", facet_tex)
+	material = _material
+	global_transform = anchor_sprite.global_transform
+	visible = true
+	_configured = true
+	_apply_uniforms()
+	return true
+
+
+## Visible pixel centroid + edge adjacency per facet id, from the facet map.
+func _build_faces() -> void:
+	_facet_centroids.clear()
+	_facet_neighbors.clear()
+	var sums: Dictionary = {}
+	var w: int = int(_texture_size.x)
+	var h: int = int(_texture_size.y)
+	for y: int in range(h):
+		for x: int in range(w):
+			if _mask_image.get_pixel(x, y).a < 0.5:
+				continue
+			var id: int = int(roundf(_facet_image.get_pixel(x, y).r * 255.0))
+			if id <= 0:
+				continue
+			var rec: Dictionary = sums.get(id, {"x": 0.0, "y": 0.0, "n": 0})
+			rec["x"] = float(rec["x"]) + float(x) + 0.5
+			rec["y"] = float(rec["y"]) + float(y) + 0.5
+			rec["n"] = int(rec["n"]) + 1
+			sums[id] = rec
+	for id: int in sums.keys():
+		var rec: Dictionary = sums[id]
+		var n: int = int(rec["n"])
+		_facet_centroids[id] = Vector2(float(rec["x"]) / n, float(rec["y"]) / n)
+	for y: int in range(h):
+		for x: int in range(w):
+			if _mask_image.get_pixel(x, y).a < 0.5:
+				continue
+			var id: int = int(roundf(_facet_image.get_pixel(x, y).r * 255.0))
+			if id <= 0:
+				continue
+			for off: Vector2i in [Vector2i(1, 0), Vector2i(0, 1)]:
+				var nx: int = x + off.x
+				var ny: int = y + off.y
+				if nx >= w or ny >= h:
+					continue
+				if _mask_image.get_pixel(nx, ny).a < 0.5:
+					continue
+				var other: int = int(roundf(_facet_image.get_pixel(nx, ny).r * 255.0))
+				if other <= 0 or other == id:
+					continue
+				var a: Array = _facet_neighbors.get(id, [])
+				if not a.has(other):
+					a.append(other)
+				_facet_neighbors[id] = a
+				var b: Array = _facet_neighbors.get(other, [])
+				if not b.has(id):
+					b.append(id)
+				_facet_neighbors[other] = b
+
+
+func _line_face_hits(a: Vector2, b: Vector2) -> Dictionary:
+	var hits: Dictionary = {}
+	if _mask_image == null or _facet_image == null:
+		return hits
+	var length: float = a.distance_to(b)
+	if length <= 0.001:
+		return hits
+	var steps: int = maxi(2, int(ceilf(length * 2.0)))
+	for i: int in range(steps + 1):
+		var p: Vector2 = a.lerp(b, float(i) / float(steps))
+		var x: int = int(floorf(p.x))
+		var y: int = int(floorf(p.y))
+		if x < 0 or y < 0 or x >= int(_texture_size.x) or y >= int(_texture_size.y):
+			continue
+		if _mask_alpha_at_px(p) <= 0.0:
+			continue
+		var id: int = int(roundf(_facet_image.get_pixel(x, y).r * 255.0))
+		if id > 0:
+			hits[id] = int(hits.get(id, 0)) + 1
+	return hits
+
+
+## Crossed faces get a strong fixed weight; edge neighbours a mid one; the rest
+## fade with distance from the segment (compact, no long line-shaped stain).
+func _update_face_weights(a: Vector2, b: Vector2) -> void:
+	var hits: Dictionary = _line_face_hits(a, b)
+	var picked: Array[Dictionary] = []
+	for id: int in _facet_centroids.keys():
+		var c: Vector2 = _facet_centroids[id]
+		var d: float = _point_segment_distance(c, a, b)
+		var crossed: bool = hits.has(id)
+		var adjacent: bool = false
+		if not crossed:
+			for n: Variant in _facet_neighbors.get(id, []):
+				if hits.has(int(n)):
+					adjacent = true
+					break
+		if not crossed and not adjacent and d > FACE_RANGE_PX:
+			continue
+		var w: float = pow(clampf(1.0 - d / FACE_RANGE_PX, 0.0, 1.0), 0.9)
+		if adjacent:
+			w = maxf(w, FACE_ADJACENT_WEIGHT)
+		if crossed:
+			w = maxf(w, FACE_CROSSED_WEIGHT)
+		if w <= 0.01:
+			continue
+		picked.append({"id": id, "w": w, "d": d, "crossed": crossed})
+	picked.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return float(x["w"]) > float(y["w"]))
+	if picked.size() > FACE_MAX:
+		picked.resize(FACE_MAX)
+	_active_faces = picked
+	for i: int in range(FACE_MAX):
+		if i < picked.size():
+			_face_ids[i] = float(picked[i]["id"])
+			_face_weights[i] = float(picked[i]["w"])
+		else:
+			_face_ids[i] = -1.0
+			_face_weights[i] = 0.0
+	if _material != null:
+		_material.set_shader_parameter("face_ids", _face_ids)
+		_material.set_shader_parameter("face_weights", _face_weights)
+
+
+func _clear_faces() -> void:
+	if not _face_mode:
+		return
+	_active_faces.clear()
+	if _face_ids.size() == FACE_MAX:
+		for i: int in range(FACE_MAX):
+			_face_ids[i] = -1.0
+			_face_weights[i] = 0.0
+	if _material != null:
+		_material.set_shader_parameter("face_ids", _face_ids)
+		_material.set_shader_parameter("face_weights", _face_weights)
+
+
+func _point_segment_distance(p: Vector2, a: Vector2, b: Vector2) -> float:
+	var ab: Vector2 = b - a
+	var len2: float = ab.length_squared()
+	if len2 < 0.0001:
+		return p.distance_to(a)
+	var t: float = clampf((p - a).dot(ab) / len2, 0.0, 1.0)
+	return p.distance_to(a + ab * t)
+
+
 ## False immediately returns to the approved dark-purple inactive (R/restart),
 ## not black, and clears tint. True is the first relay completion: animate_first
 ## starts the ~0.7 s face-following lit flow. A restore/debug/repeat call with
@@ -186,6 +412,7 @@ func set_unlocked(unlocked: bool, animate_first: bool = false) -> void:
 		_line_valid = false
 		_line_intersects_mask = false
 		_tint_color_current = _tint_color_target
+		_clear_faces()
 		_apply_uniforms()
 		set_process(false)
 		return
@@ -258,7 +485,10 @@ func update_force_state(
 
 	_line_a_px = a
 	_line_b_px = b
-	_tint_center_px = run["center"]
+	if _face_mode:
+		_update_face_weights(a, b)
+	else:
+		_tint_center_px = run["center"]
 	_line_valid = true
 	_line_intersects_mask = true
 	_line_hit_samples = hits
@@ -313,6 +543,9 @@ func _process(delta: float) -> void:
 		moving = true
 
 	_apply_uniforms()
+	if _face_mode and _tint_strength <= 0.0001 and _tint_target <= 0.0001 \
+		and not _active_faces.is_empty():
+		_clear_faces()
 	if not moving:
 		set_process(false)
 
@@ -323,6 +556,12 @@ func _apply_uniforms() -> void:
 	_material.set_shader_parameter("texture_size_px", _texture_size)
 	_material.set_shader_parameter("lit_progress", _lit_progress)
 	_material.set_shader_parameter("arrival_window", ARRIVAL_WINDOW)
+	if _face_mode:
+		_material.set_shader_parameter("face_ids", _face_ids)
+		_material.set_shader_parameter("face_weights", _face_weights)
+		_material.set_shader_parameter("face_color", _tint_color_current)
+		_material.set_shader_parameter("face_strength", _tint_strength)
+		return
 	_material.set_shader_parameter("tint_center_px", _tint_center_px)
 	_material.set_shader_parameter("tint_strength", _tint_strength)
 	_material.set_shader_parameter("tint_color", _tint_color_current)
@@ -412,6 +651,23 @@ func is_line_valid() -> bool:
 
 func did_line_intersect_mask() -> bool:
 	return _line_intersects_mask
+
+
+func is_face_mode() -> bool:
+	return _face_mode
+
+
+func get_face_count() -> int:
+	return _facet_centroids.size()
+
+
+func get_face_centroid_px(id: int) -> Vector2:
+	return _facet_centroids.get(id, Vector2.ZERO)
+
+
+## Faces tinted by the last valid real crossing (id / weight / distance).
+func get_active_faces() -> Array[Dictionary]:
+	return _active_faces.duplicate()
 
 
 func get_line_hit_samples() -> int:

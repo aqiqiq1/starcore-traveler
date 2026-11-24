@@ -1,0 +1,84 @@
+{
+  "method": "detect the cloud-top silhouette in actual composed frames; cross-correlate t=0 vs t=8/12; +shift = rendered content moved right",
+  "direction": "+x = right",
+  "old_motion_cause": "old compose drew x0=-phase while phase increased, so the texture moved left; old audit only tested speed*t>0 and never measured rendered pixels",
+  "quantization": "static PNG checks use integer logical px; HTML draws at 0.5 logical px (1 device px at 2x). Measured integers may differ from speed*t by <=0.5 px",
+  "probes": {
+    "main": {
+      "target_8s_px": 33.6,
+      "target_12s_px": 50.4,
+      "measured": {
+        "8s": {
+          "shift_px": 34,
+          "target_px": 33.6,
+          "difference_from_target_px": 0.4,
+          "profile_mae_px": 0.075,
+          "overlap_px": 186
+        },
+        "12s": {
+          "shift_px": 50,
+          "target_px": 50.4,
+          "difference_from_target_px": -0.4,
+          "profile_mae_px": 0.376,
+          "overlap_px": 170
+        }
+      },
+      "feature_x0": 94,
+      "crop_y": [
+        258,
+        296
+      ]
+    },
+    "near": {
+      "target_8s_px": 57.6,
+      "target_12s_px": 86.4,
+      "measured": {
+        "8s": {
+          "shift_px": 58,
+          "target_px": 57.6,
+          "difference_from_target_px": 0.4,
+          "profile_mae_px": 0.0,
+          "overlap_px": 162
+        },
+        "12s": {
+          "shift_px": 86,
+          "target_px": 86.4,
+          "difference_from_target_px": -0.4,
+          "profile_mae_px": 0.0,
+          "overlap_px": 134
+        }
+      },
+      "feature_x0": 90,
+      "crop_y": [
+        314,
+        360
+      ]
+    },
+    "sky_bank_left": {
+      "target_8s_px": 49.6,
+      "target_12s_px": 74.4,
+      "measured": {
+        "8s": {
+          "shift_px": 50,
+          "target_px": 49.6,
+          "difference_from_target_px": 0.4,
+          "profile_mae_px": 0.0,
+          "overlap_px": 170
+        },
+        "12s": {
+          "shift_px": 74,
+          "target_px": 74.4,
+          "difference_from_target_px": -0.4,
+          "profile_mae_px": 0.0,
+          "overlap_px": 146
+        }
+      },
+      "feature_x0": 81,
+      "crop_y": [
+        48,
+        112
+      ]
+    }
+  },
+  "conclusion": "all three probes are positive; sea and sky move to the right"
+}

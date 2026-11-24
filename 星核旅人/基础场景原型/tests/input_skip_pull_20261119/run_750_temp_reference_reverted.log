@@ -1,0 +1,89 @@
+﻿Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+== A. L1 opening cinematic ==
+  PASS L1 opening/player/echo exist
+  PASS L1 opening auto-started
+  PASS L1 opening reached DIALOGUE
+  PASS L1 first echo page opened
+  PASS L1 starts on page 1/1
+  PASS L1 line is still revealing before input
+  PASS L1 short Space did not advance the page
+  PASS L1 short Space did not complete the line
+  PASS L1 short Space stayed under SKIP_HOLD
+  PASS L1 short Space did not skip
+  PASS L1 F completed the revealing line
+  PASS L1 F completion stayed on the same page
+  PASS L1 second F advanced to page 2
+  PASS L1 long Space skipped the whole segment
+  PASS L1 skip reached the hand-off boundary while Space held
+  PASS L1 held Space keeps control until release
+  PASS L1 control returned after Space release
+  PASS L1 echo page closed by the skip
+  PASS L1 level intro state cleared
+  PASS L1 opening recorded skipped=true
+  PASS L1 no jump from the skip Space after hand-off
+== B. L3 cinematic ==
+  PASS L3 cinematic/player exist
+  PASS L3 cinematic started
+  PASS L3 cinematic reached DIALOGUE
+  PASS L3 first page bubble opened
+  PASS L3 line is still revealing before input
+  PASS L3 short Space did not advance the page
+  PASS L3 short Space did not complete the line
+  PASS L3 short Space did not skip
+  PASS L3 F completed the revealing line
+  PASS L3 F completion stayed on the same page
+  PASS L3 second F advanced to page 2
+  PASS L3 long Space recorded skipped=true
+  PASS L3 skip reached the hand-off boundary while Space held
+  PASS L3 held Space keeps control until release
+  PASS L3 control returned after Space release
+  PASS L3 dialogue bubble closed by the skip
+  PASS L3 no jump from the skip Space after hand-off
+== C. L3 guard GRAVITY_CHARGE pull ==
+  PASS L3 guard/player available
+PULL_TUNING acceleration=750.0 range=118.0 inner=16.0 full=42.0 fade=24.0
+  FAIL FIELD_ACCELERATION is 520.0
+  PASS field range/inner/full/fade unchanged
+  PASS player set to the opposite polarity (attract)
+PULL_PASS acceleration=750.0
+PULL_PASS run_start_x=1983.08
+PULL_PASS chest_x=2124.68
+PULL_PASS entry_speed=160.0
+PULL_PASS peak_speed=320.0
+PULL_PASS max_accel=734.51
+PULL_PASS impulse_pre_cross_dv=220.41
+PULL_PASS time_above_run_s=0.733
+PULL_PASS frames_in_charge=76
+PULL_PASS end_x_minus_chest=132.56
+PULL_PASS crossed_weakpoint=true
+PULL_PASS crossed_guard=true
+PULL_PASS velocity_cap_reached=true
+PULL_STOP acceleration=750.0
+PULL_STOP release_x_minus_chest=-22.27
+PULL_STOP release_speed=320.0
+PULL_STOP rest_x_minus_chest=118.2
+PULL_STOP coast_past_release=140.47
+PULL_STOP passed_weakpoint=true
+PULL_STOP charge_still_active_at_rest=false
+PULL_STOP rest_on_floor=true
+PULL_STOP rest_y=319.92
+PULL_STOP stop_frames=61
+PULL_STOP approach_frames=32
+PULL_STOP player_hits=1
+PULL_STOP trace=["f0 vx=320.0 x=-22.3 floor=false force=291.9 y=319.8", "f4 vx=320.0 x=-0.9 floor=true force=1.3 y=319.9", "f8 vx=317.4 x=20.3 floor=true force=-236.0 y=319.9", "f12 vx=286.7 x=40.4 floor=false force=-678.9 y=320.0", "f16 vx=240.4 x=57.6 floor=true force=-712.5 y=319.9", "f20 vx=192.6 x=71.7 floor=true force=-725.1 y=319.9", "f24 vx=144.1 x=82.5 floor=true force=-731.0 y=319.9", "f28 vx=95.2 x=90.1 floor=true force=-734.0 y=319.9", "f32 vx=-1.4 x=92.1 floor=true force=-734.6 y=319.9", "f36 vx=-22.1 x=90.9 floor=true force=-734.3 y=319.9", "f40 vx=-23.4 x=89.7 floor=true force=-733.8 y=319.9", "f44 vx=160.0 x=88.4 floor=true force=0.0 y=319.9", "f48 vx=139.2 x=97.7 floor=true force=0.0 y=319.9", "f52 vx=139.2 x=106.9 floor=true force=0.0 y=319.9", "f56 vx=97.5 x=115.2 floor=true force=0.0 y=319.9", "f60 vx=14.2 x=118.2 floor=true force=0.0 y=319.9"]
+PULL_EARLY acceleration=750.0
+PULL_EARLY release_x_minus_chest=-58.12
+PULL_EARLY release_speed=298.88
+PULL_EARLY rest_x_minus_chest=110.12
+PULL_EARLY coast_past_release=168.24
+PULL_EARLY overshoot_past_weakpoint=110.12
+PULL_EARLY charge_still_active_at_rest=false
+PULL_EARLY player_hits=2
+PULL_EARLY stop_frames=60
+PULL_OLD750_THEORY impulse_ratio=1.0000 pass_pre_cross_extra=220.41
+PULL_OLD750_THEORY max_accel=734.5 (measured 750.0 x 1.0000)
+  PASS 160 px/s pass still crosses the guard weakpoint (not hard-locked)
+  PASS sampled pull acceleration never exceeds FIELD_ACCELERATION
+INPUT_SKIP_PULL_RESULT pass=43 fail=1
+FAIL: FIELD_ACCELERATION is 520.0

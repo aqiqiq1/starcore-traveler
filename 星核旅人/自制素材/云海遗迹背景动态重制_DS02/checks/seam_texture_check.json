@@ -1,0 +1,20 @@
+{
+  "sea_main": {
+    "width": 1278,
+    "internal_transparent_columns": 0,
+    "mirror_seam_max_channel_diff": 0,
+    "wrap_seam_max_channel_diff": 0,
+    "top_cusp_639_640": 0,
+    "top_cusp_0_last": 0,
+    "period": 1278
+  },
+  "sea_near": {
+    "width": 1278,
+    "internal_transparent_columns": 0,
+    "mirror_seam_max_channel_diff": 0,
+    "wrap_seam_max_channel_diff": 0,
+    "top_cusp_639_640": 0,
+    "top_cusp_0_last": 0,
+    "period": 1278
+  }
+}

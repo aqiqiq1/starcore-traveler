@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tests/mechanic_popup_20261119/capture_mechanic_demos.gd" id="1_capture"]
+
+[node name="CaptureMechanicDemos" type="Node"]
+script = ExtResource("1_capture")

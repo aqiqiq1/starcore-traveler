@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tests/input_skip_pull_20261119/test_input_skip_pull_20261119.gd" id="1_test"]
+
+[node name="TestInputSkipPull20261119" type="Node"]
+script = ExtResource("1_test")

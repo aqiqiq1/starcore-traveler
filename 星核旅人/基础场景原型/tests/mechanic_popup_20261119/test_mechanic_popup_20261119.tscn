@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tests/mechanic_popup_20261119/test_mechanic_popup_20261119.gd" id="1_test"]
+
+[node name="TestMechanicPopup" type="Node"]
+script = ExtResource("1_test")

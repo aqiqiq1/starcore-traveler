@@ -1,0 +1,17 @@
+{
+	"capture_script": "res://tests/mechanic_popup_20261119/capture_mechanic_demos.gd",
+	"captured_from": "formal level scene, real gameplay state",
+	"crop": {
+		"h": 144,
+		"w": 256,
+		"x": 230,
+		"y": 180
+	},
+	"fps": 8.0,
+	"frame_height": 144,
+	"frame_width": 256,
+	"frames": 24,
+	"id": "relay_link",
+	"note": "Player carried the core from the start bay and stores it into the real relay bay; the clip starts on the accepted E store, then holds the real seated/unlocked bay and wall state for the remaining seconds.",
+	"source": "L2 relay bay, real store completion, 3 s"
+}

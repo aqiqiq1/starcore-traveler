@@ -1,0 +1,807 @@
+{
+  "name": "星核旅人 · 星核三态（锁定原紫 / 正金 / 负青，静帧 + 12 帧）",
+  "version": 2,
+  "generated_by": "generate_star_core_states.py (Pillow, 色相重映射)",
+  "source": {
+    "author": "Frakassets",
+    "asset": "Free Shiny Gem \"Round\"",
+    "url": "https://frakassets.itch.io/free-shiny-gem-round",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "file": "素材库/古遗迹候选/03_star_core_gem/extracted/free_gem_round_frakassets/gem_round_16x16_12f_0d.png",
+    "sha256": "1a7f8bfcb6f2c770b07002aad2d3419108971e731363297ee424fce975e63f4c",
+    "sheet_size": [
+      192,
+      16
+    ],
+    "frame_size": [
+      16,
+      16
+    ],
+    "frame_count": 12,
+    "selected_frame_index": 0,
+    "frame_opaque_counts": [
+      208,
+      196,
+      176,
+      144,
+      100,
+      68,
+      48,
+      68,
+      100,
+      144,
+      176,
+      196
+    ],
+    "selection_reason": "12 帧旋转表中第 0 帧不透明像素最多（208），正面面积最大且适合 16px 识别；未使用 20d、32px 或 _normal 法线图。",
+    "selected_frame_rgba_sha256": "4b95b9325ae53fb8d9277695ce5fef7209e77c17cfc5df7df5423fefcc3c1449",
+    "unmodified": true
+  },
+  "animation": {
+    "frame_count": 12,
+    "frame_size": [
+      16,
+      16
+    ],
+    "sheet_size": [
+      192,
+      16
+    ],
+    "fps_default": 12,
+    "fps_exportable_range": [
+      1.0,
+      60.0
+    ],
+    "display_size": [
+      16,
+      16
+    ],
+    "loop": true,
+    "note": "Godot 组件默认 12 FPS 循环；每个显示实例仍是 16×16，不随薄边帧缩放。"
+  },
+  "modifications": [
+    "从 16px / 0d / 12 帧彩色表裁切第 0 帧，作为既有静帧锁定态，RGBA 逐像素未改。",
+    "新增 192×16 锁定 12 帧表：直接复制源表，12 帧 RGBA 逐像素与源表一致。",
+    "正/负态静帧与 12 帧表均用 HSV 色相重映射到金 43° / 青 186°，保留源表各级宝石明暗。",
+    "5 个中性暗轮廓颜色按 45% 混入深金 / 深青，保持暗轮廓与剪影。",
+    "12 帧表逐帧保留 16×16 画布、alpha 和帧位置；未使用 32px、20d、_normal 法线图，未放大画布。"
+  ],
+  "assets": {
+    "locked": {
+      "file": "star_core_locked.png",
+      "project_path": "基础场景原型/assets/star_core/star_core_locked.png",
+      "backup_path": "自制素材/星核三态/star_core_locked.png",
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "opaque_pixels": 208,
+      "unique_opaque_rgb": 16,
+      "sha256": "40a36f519bc495f217d88c96c04f0a4503da9be15de75198a4b3da2844ad557a",
+      "rgba_sha256": "4b95b9325ae53fb8d9277695ce5fef7209e77c17cfc5df7df5423fefcc3c1449"
+    },
+    "positive": {
+      "file": "star_core_positive.png",
+      "project_path": "基础场景原型/assets/star_core/star_core_positive.png",
+      "backup_path": "自制素材/星核三态/star_core_positive.png",
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "opaque_pixels": 208,
+      "unique_opaque_rgb": 16,
+      "sha256": "9a72e93bc6de4effaa297191248fd5428d97500d5fb241d9e440be67d7082266",
+      "rgba_sha256": "9383599212bc0999647eac51754a1b8036d9918e106b9319204042221b0e147c"
+    },
+    "negative": {
+      "file": "star_core_negative.png",
+      "project_path": "基础场景原型/assets/star_core/star_core_negative.png",
+      "backup_path": "自制素材/星核三态/star_core_negative.png",
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "opaque_pixels": 208,
+      "unique_opaque_rgb": 16,
+      "sha256": "b21b819251b1f067e0dc16000dd8ede83d1a71281208216f9c7d644f42ada216",
+      "rgba_sha256": "c017a19684cec00cdb9463d5879f1ded09c973bc1850de0494f5d8fa31c18cb4"
+    }
+  },
+  "animated_assets": {
+    "locked": {
+      "file": "star_core_locked_12f.png",
+      "project_path": "基础场景原型/assets/star_core/star_core_locked_12f.png",
+      "backup_path": "自制素材/星核三态/star_core_locked_12f.png",
+      "size": [
+        192,
+        16
+      ],
+      "frame_size": [
+        16,
+        16
+      ],
+      "frame_count": 12,
+      "fps_default": 12,
+      "mode": "RGBA",
+      "opaque_pixels_per_frame": [
+        208,
+        196,
+        176,
+        144,
+        100,
+        68,
+        48,
+        68,
+        100,
+        144,
+        176,
+        196
+      ],
+      "sha256": "1a7f8bfcb6f2c770b07002aad2d3419108971e731363297ee424fce975e63f4c",
+      "rgba_sha256": "fe682ae4ef66df4c3097674ff3780ac33f01195e77224605087ae1ff38285825",
+      "frame_alpha_sha256": [
+        "e9316e7a372a0b9dc14a203562d13c8426ce44fb1a9732da8fa3032a43b5dec7",
+        "7d58104786b3c7a8448d52ca8975ca47e979d94ff45968da35d6ef32c582142f",
+        "7faeebc2702a1cd86dc4445a7983facc5ba392e8990f8300a8c85e7f3df8d606",
+        "72e36c1deef7471a09d5b18fd1d000ef0fd8f6ba5cafe95395d450e6f1f6841d",
+        "8679b6b3996b81dfb631e69d5cc1dc34452f49a6a428a5799f9c9aab61b905db",
+        "24061b4955fa9d78d4092cc3ef966f5cb2a1d1c0805ba2951035caf031d9587e",
+        "5abbcf795dec2062a4a9d9882229876c4201be6b60bab273c5c21cf228c47b7a",
+        "24061b4955fa9d78d4092cc3ef966f5cb2a1d1c0805ba2951035caf031d9587e",
+        "8679b6b3996b81dfb631e69d5cc1dc34452f49a6a428a5799f9c9aab61b905db",
+        "72e36c1deef7471a09d5b18fd1d000ef0fd8f6ba5cafe95395d450e6f1f6841d",
+        "7faeebc2702a1cd86dc4445a7983facc5ba392e8990f8300a8c85e7f3df8d606",
+        "7d58104786b3c7a8448d52ca8975ca47e979d94ff45968da35d6ef32c582142f"
+      ]
+    },
+    "positive": {
+      "file": "star_core_positive_12f.png",
+      "project_path": "基础场景原型/assets/star_core/star_core_positive_12f.png",
+      "backup_path": "自制素材/星核三态/star_core_positive_12f.png",
+      "size": [
+        192,
+        16
+      ],
+      "frame_size": [
+        16,
+        16
+      ],
+      "frame_count": 12,
+      "fps_default": 12,
+      "mode": "RGBA",
+      "opaque_pixels_per_frame": [
+        208,
+        196,
+        176,
+        144,
+        100,
+        68,
+        48,
+        68,
+        100,
+        144,
+        176,
+        196
+      ],
+      "sha256": "282e668fa72ed504abcbe6aebb9bfadfdb398de4e1796109540d15c4e6d4fa23",
+      "rgba_sha256": "f210cadaeebad605bcd0e449b536303edff9e35b4a9f57374042ac41ba4b3948",
+      "frame_alpha_sha256": [
+        "e9316e7a372a0b9dc14a203562d13c8426ce44fb1a9732da8fa3032a43b5dec7",
+        "7d58104786b3c7a8448d52ca8975ca47e979d94ff45968da35d6ef32c582142f",
+        "7faeebc2702a1cd86dc4445a7983facc5ba392e8990f8300a8c85e7f3df8d606",
+        "72e36c1deef7471a09d5b18fd1d000ef0fd8f6ba5cafe95395d450e6f1f6841d",
+        "8679b6b3996b81dfb631e69d5cc1dc34452f49a6a428a5799f9c9aab61b905db",
+        "24061b4955fa9d78d4092cc3ef966f5cb2a1d1c0805ba2951035caf031d9587e",
+        "5abbcf795dec2062a4a9d9882229876c4201be6b60bab273c5c21cf228c47b7a",
+        "24061b4955fa9d78d4092cc3ef966f5cb2a1d1c0805ba2951035caf031d9587e",
+        "8679b6b3996b81dfb631e69d5cc1dc34452f49a6a428a5799f9c9aab61b905db",
+        "72e36c1deef7471a09d5b18fd1d000ef0fd8f6ba5cafe95395d450e6f1f6841d",
+        "7faeebc2702a1cd86dc4445a7983facc5ba392e8990f8300a8c85e7f3df8d606",
+        "7d58104786b3c7a8448d52ca8975ca47e979d94ff45968da35d6ef32c582142f"
+      ]
+    },
+    "negative": {
+      "file": "star_core_negative_12f.png",
+      "project_path": "基础场景原型/assets/star_core/star_core_negative_12f.png",
+      "backup_path": "自制素材/星核三态/star_core_negative_12f.png",
+      "size": [
+        192,
+        16
+      ],
+      "frame_size": [
+        16,
+        16
+      ],
+      "frame_count": 12,
+      "fps_default": 12,
+      "mode": "RGBA",
+      "opaque_pixels_per_frame": [
+        208,
+        196,
+        176,
+        144,
+        100,
+        68,
+        48,
+        68,
+        100,
+        144,
+        176,
+        196
+      ],
+      "sha256": "e99fab67c35cdc9cc9a1bf9ec70d92340105341fb82b286237146a70b0c09b23",
+      "rgba_sha256": "d2921678edc16bdeb3db83c78cd93795d964164fac86b12a7be18f364ad00ee3",
+      "frame_alpha_sha256": [
+        "e9316e7a372a0b9dc14a203562d13c8426ce44fb1a9732da8fa3032a43b5dec7",
+        "7d58104786b3c7a8448d52ca8975ca47e979d94ff45968da35d6ef32c582142f",
+        "7faeebc2702a1cd86dc4445a7983facc5ba392e8990f8300a8c85e7f3df8d606",
+        "72e36c1deef7471a09d5b18fd1d000ef0fd8f6ba5cafe95395d450e6f1f6841d",
+        "8679b6b3996b81dfb631e69d5cc1dc34452f49a6a428a5799f9c9aab61b905db",
+        "24061b4955fa9d78d4092cc3ef966f5cb2a1d1c0805ba2951035caf031d9587e",
+        "5abbcf795dec2062a4a9d9882229876c4201be6b60bab273c5c21cf228c47b7a",
+        "24061b4955fa9d78d4092cc3ef966f5cb2a1d1c0805ba2951035caf031d9587e",
+        "8679b6b3996b81dfb631e69d5cc1dc34452f49a6a428a5799f9c9aab61b905db",
+        "72e36c1deef7471a09d5b18fd1d000ef0fd8f6ba5cafe95395d450e6f1f6841d",
+        "7faeebc2702a1cd86dc4445a7983facc5ba392e8990f8300a8c85e7f3df8d606",
+        "7d58104786b3c7a8448d52ca8975ca47e979d94ff45968da35d6ef32c582142f"
+      ]
+    }
+  },
+  "palette": {
+    "positive": {
+      "hue_deg": 43.0,
+      "sat_gamma": 0.62,
+      "sat_scale": 1.15,
+      "min_sat": 0.22,
+      "value_scale": 0.98,
+      "outline_tint": [
+        72,
+        41,
+        17
+      ],
+      "outline_mix": 0.45,
+      "reference_accent": "#f4cd63",
+      "note": "色相 43°，饱和度按源明暗层级重映射，保留高光/阴影；非单色平涂。"
+    },
+    "negative": {
+      "hue_deg": 186.0,
+      "sat_gamma": 0.62,
+      "sat_scale": 1.12,
+      "min_sat": 0.2,
+      "value_scale": 0.96,
+      "outline_tint": [
+        9,
+        43,
+        53
+      ],
+      "outline_mix": 0.45,
+      "reference_accent": "#5fe1e6",
+      "note": "色相 186°，饱和度按源明暗层级重映射，保留高光/阴影；非单色平涂。"
+    }
+  },
+  "checks": {
+    "source_unchanged": true,
+    "locked_matches_source_frame_exact_rgba": true,
+    "locked_alpha_matches_source_alpha": true,
+    "all_sizes_16x16": true,
+    "all_modes_rgba": true,
+    "alpha_pixels_identical_across_states": true,
+    "alpha_binary_0_or_255": true,
+    "opaque_pixels_equal_across_states": true,
+    "opaque_pixels": 208,
+    "silhouette_bbox_equal": true,
+    "silhouette_bbox": [
+      0,
+      0,
+      16,
+      16
+    ],
+    "border_occupancy_equal": true,
+    "border_occupancy": {
+      "top": 6,
+      "bottom": 6,
+      "left": 6,
+      "right": 6
+    },
+    "dark_outline_pixels_44": {
+      "locked": 44,
+      "positive": 44,
+      "negative": 44
+    },
+    "dark_outline_max_luminance_below_60": true,
+    "dark_outline_max_luminance": {
+      "locked": 48.0,
+      "positive": 47.18,
+      "negative": 42.89
+    },
+    "unique_opaque_rgb": {
+      "locked": 16,
+      "positive": 16,
+      "negative": 16
+    },
+    "corner_pixels_transparent": true,
+    "mean_hue_deg": {
+      "locked": 291.07,
+      "positive": 42.96,
+      "negative": 185.99
+    },
+    "hue_shift_deg": {
+      "positive": 111.89,
+      "negative": 105.07
+    },
+    "hue_changed_positively": true,
+    "shading_positive": {
+      "source_level_count": 11,
+      "output_level_count": 11,
+      "monotonic_luminance": true,
+      "source_luminance": [
+        106.17,
+        128.4,
+        142.2,
+        159.14,
+        178.23,
+        189.66,
+        192.02,
+        214.9,
+        221.12,
+        238.77,
+        241.13
+      ],
+      "output_luminance": [
+        172.77,
+        180.79,
+        185.66,
+        192.46,
+        200.34,
+        205.29,
+        206.22,
+        217.75,
+        220.83,
+        232.44,
+        232.59
+      ],
+      "source_tones": [
+        [
+          213,
+          61,
+          239
+        ],
+        [
+          219,
+          90,
+          242
+        ],
+        [
+          223,
+          108,
+          243
+        ],
+        [
+          228,
+          130,
+          245
+        ],
+        [
+          233,
+          155,
+          247
+        ],
+        [
+          236,
+          170,
+          248
+        ],
+        [
+          237,
+          173,
+          248
+        ],
+        [
+          243,
+          203,
+          250
+        ],
+        [
+          245,
+          211,
+          251
+        ],
+        [
+          250,
+          234,
+          253
+        ],
+        [
+          251,
+          237,
+          253
+        ]
+      ],
+      "output_tones": [
+        [
+          234,
+          171,
+          10
+        ],
+        [
+          237,
+          179,
+          33
+        ],
+        [
+          238,
+          184,
+          48
+        ],
+        [
+          240,
+          191,
+          67
+        ],
+        [
+          242,
+          199,
+          91
+        ],
+        [
+          243,
+          204,
+          107
+        ],
+        [
+          243,
+          205,
+          110
+        ],
+        [
+          245,
+          217,
+          145
+        ],
+        [
+          246,
+          220,
+          155
+        ],
+        [
+          248,
+          232,
+          191
+        ],
+        [
+          248,
+          232,
+          193
+        ]
+      ]
+    },
+    "shading_negative": {
+      "source_level_count": 11,
+      "output_level_count": 11,
+      "monotonic_luminance": true,
+      "source_luminance": [
+        106.17,
+        128.4,
+        142.2,
+        159.14,
+        178.23,
+        189.66,
+        192.02,
+        214.9,
+        221.12,
+        238.77,
+        241.13
+      ],
+      "output_luminance": [
+        168.48,
+        176.95,
+        181.65,
+        188.48,
+        196.37,
+        201.06,
+        201.7,
+        212.65,
+        216.28,
+        227.02,
+        229.01
+      ],
+      "source_tones": [
+        [
+          213,
+          61,
+          239
+        ],
+        [
+          219,
+          90,
+          242
+        ],
+        [
+          223,
+          108,
+          243
+        ],
+        [
+          228,
+          130,
+          245
+        ],
+        [
+          233,
+          155,
+          247
+        ],
+        [
+          236,
+          170,
+          248
+        ],
+        [
+          237,
+          173,
+          248
+        ],
+        [
+          243,
+          203,
+          250
+        ],
+        [
+          245,
+          211,
+          251
+        ],
+        [
+          250,
+          234,
+          253
+        ],
+        [
+          251,
+          237,
+          253
+        ]
+      ],
+      "output_tones": [
+        [
+          15,
+          208,
+          229
+        ],
+        [
+          37,
+          213,
+          232
+        ],
+        [
+          52,
+          215,
+          233
+        ],
+        [
+          70,
+          219,
+          235
+        ],
+        [
+          93,
+          223,
+          237
+        ],
+        [
+          108,
+          225,
+          238
+        ],
+        [
+          111,
+          225,
+          238
+        ],
+        [
+          145,
+          230,
+          240
+        ],
+        [
+          155,
+          232,
+          241
+        ],
+        [
+          188,
+          237,
+          243
+        ],
+        [
+          194,
+          238,
+          243
+        ]
+      ]
+    },
+    "shading_monotonic_both": true,
+    "shading_levels_preserved_both": true,
+    "most_common_body_tone": {
+      "source_rgb": [
+        233,
+        155,
+        247
+      ],
+      "source_pixel_count": 44,
+      "positive_rgb": [
+        242,
+        199,
+        91
+      ],
+      "negative_rgb": [
+        93,
+        223,
+        237
+      ],
+      "positive_reference_distance_rgb": 10.2,
+      "negative_reference_distance_rgb": 7.55
+    },
+    "reference_accents": {
+      "positive": "#f4cd63",
+      "negative": "#5fe1e6"
+    },
+    "animation_sheets": {
+      "all_sizes_192x16": true,
+      "all_modes_rgba": true,
+      "frame_count": 12,
+      "frame_size": [
+        16,
+        16
+      ],
+      "fps_default": 12,
+      "locked_sheet_matches_source_sheet_exact_rgba": true,
+      "alpha_frames_identical_across_states": true,
+      "frame_bboxes_identical_across_states": true,
+      "frame_opaque_counts_identical_across_states": true,
+      "opaque_counts_per_frame": [
+        208,
+        196,
+        176,
+        144,
+        100,
+        68,
+        48,
+        68,
+        100,
+        144,
+        176,
+        196
+      ],
+      "static_frame_zero_matches_sheet_frame_zero": true,
+      "all_12_frames_have_visible_pixels": true,
+      "alpha_binary_0_or_255_all_frames": true,
+      "frame_bboxes": [
+        [
+          0,
+          0,
+          16,
+          16
+        ],
+        [
+          0,
+          0,
+          16,
+          16
+        ],
+        [
+          1,
+          0,
+          15,
+          16
+        ],
+        [
+          2,
+          0,
+          14,
+          16
+        ],
+        [
+          4,
+          0,
+          12,
+          16
+        ],
+        [
+          5,
+          0,
+          11,
+          16
+        ],
+        [
+          6,
+          1,
+          10,
+          15
+        ],
+        [
+          5,
+          0,
+          11,
+          16
+        ],
+        [
+          4,
+          0,
+          12,
+          16
+        ],
+        [
+          2,
+          0,
+          14,
+          16
+        ],
+        [
+          1,
+          0,
+          15,
+          16
+        ],
+        [
+          0,
+          0,
+          16,
+          16
+        ]
+      ],
+      "normal_map_not_read": true
+    }
+  },
+  "review_artifacts": {
+    "preview": {
+      "file": "star_core_states_preview.png",
+      "size": [
+        1118,
+        584
+      ],
+      "mode": "RGB (opaque composite)",
+      "sha256": "00bc6c0aeb35a406786702b4368893df467a54921a61af5b12e8ef36761f201c",
+      "note": "16×16 静帧兼容对比；本地 NEAREST 合成预览，不是游戏截图；叠加的项目自制护符图标仅作配色对照。"
+    },
+    "animation_preview": {
+      "file": "star_core_animation_sheet_preview.png",
+      "size": [
+        1808,
+        624
+      ],
+      "mode": "RGB (opaque composite)",
+      "sha256": "1c6405e1f5e6b8ba111a6a118f8ac7b1590b933251fc9054138096ba1fb85781",
+      "note": "三态 × 12 帧的本地 NEAREST 素材检查图；不是 Godot 引擎截图，也不代表实际播放速度。"
+    }
+  },
+  "integration": {
+    "godot_path": "res://assets/star_core/",
+    "files": [
+      "star_core_locked.png",
+      "star_core_positive.png",
+      "star_core_negative.png"
+    ],
+    "animated_files": [
+      "star_core_locked_12f.png",
+      "star_core_positive_12f.png",
+      "star_core_negative_12f.png"
+    ],
+    "render": "StarCoreVisual 默认读取 12 帧表，以 AtlasTexture 逐帧显示 16×16；Nearest、Mipmaps Off、12 FPS 可 export。",
+    "polarity_symbol": "不在 PNG 内；由组件/UI 层叠加金/青极性符号，避免只靠颜色识别；符号不随帧旋转或镜像。",
+    "engine_verification": "由组件 Agent 在 Godot 4.7.2 导入、挂载并运行视觉测试；本生成器只验证 RGBA/alpha 和文件写入。"
+  },
+  "attribution": "Free Shiny Gem \"Round\" by Frakassets, CC BY 4.0, https://frakassets.itch.io/free-shiny-gem-round",
+  "license_note": "三张静帧及三张 12 帧派生 PNG 均为 CC BY 4.0 衍生作品，需保留 Frakassets 署名、许可链接和修改说明。预览是内部评审合成图，含项目自制护符图标，不随本包重新授权，不作为可分发素材。原图未被修改，也未随附原包。",
+  "notes": [
+    "预览中的棋盘与文字仅用于评审，不属于透明 PNG。",
+    "既有三张 PNG 均为 16×16 静帧；新增三张 192×16 表各含 12 帧，不含极性符号、HUD 或引擎配置。",
+    "锁定 12 帧表为源表逐字节复制；正/负表只调色，alpha 与每帧位置不变。",
+    "本任务未写入 .import；工程目录内 .import 为 Godot 编辑器自动生成。",
+    "组件/场景接入、目标文件名以外的文件由开发 Agent 负责。"
+  ]
+}

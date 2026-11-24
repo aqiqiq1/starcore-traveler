@@ -6,7 +6,7 @@
 
 `res://scenes/level_01.tscn`
 
-在 Godot 4.7.2 打开工程 `基础场景原型/project.godot`，双击该场景后按 **F6** 运行。F6 默认先进入集成开始菜单（不切独立主页场景），点“开始游戏”后才淡出标题、下移镜头并跑入；按 **F5** 仍进入原 `scenes/main.tscn` 原型，默认入口未改。
+在 Godot 4.7.2 打开 `基础场景原型/project.godot`，按 **F5** 进入正式第一关内置标题；打开本场景按 **F6** 可单独调试。点“开始游戏”后才淡出标题、下移镜头并跑入。
 
 ## 1. 场景里有什么
 
@@ -114,7 +114,7 @@
 - 运行中 Esc 暂停会冻结背景时钟，恢复不跳时；R 整关重开会通过玩家 `reset_performed("level_restart")` 把背景时钟归零，重新载入场景也会从 t=0 开始。菜单或镜头过渡期间 Esc/窗口失焦暂停同样冻结 DS03 时钟与 Tween；恢复后继续原进度。组件自己监听这个既有信号，没有改 `level_01.gd` 的玩法逻辑。
 - `Background/CloudRuinsV7` 仍保留但已 `visible = false`，只作旧静态对照；旧的 `Background/Sky`、`FarRuins`、`NearRuins`、`Mist`，以及 `World/PitCloudBack`、`PitCloudFront`、`PitCloudGlow` 也都只隐藏、参数未删。**不要重新显示叠在 DS03 上**，否则会重新出现旧色/旧静态云。
 - 背景运行资源在 `assets/backgrounds/cloud_ruins_ds03/`：`art_assets/` 8 张 + `common/` 16 张，共 24 张 PNG 与 DS03 源逐字节相同；另有运行时配置副本和 `source_manifest.json`。组件布局数据在 `scripts/backgrounds/cloud_ruins_ds03_data.gd`，由 `tools/import_ds03_background.py` 从只读 DS03 配置生成；不要手改生成文件或调色/缩放/重画 PNG。说明见该目录 `README.md`。
-- 旧 `assets/map/background2.png`、`background4.png` 与默认 `scenes/main.tscn` 原型本次未改。F5 仍进入旧 main，正式第一关 F6。
+- 旧 `assets/map/background2.png`、`background4.png` 和 `scenes/main.tscn` 属于此处记录的旧原型上下文，不是当前 F5 入口。
 - `Player` 场景现在自带 idle 第 0 帧、辉相护符和 glow 的静态预览；正式关 `show_head_polarity = false`，运行时不显示头顶 +/−。
 - 两处 `GuideEcho*`、符石、恢复点、出口和地形在编辑器里都能看到；残响场景自带 48×64 帧表预览，运行时代码再构建提示/对白 CanvasLayer。`Guide` 的辅助线只在编辑器绘制，运行时隐藏，且它不是残响 NPC。
 - 打开场景时出生点在画面左外侧（为了「从左侧跑入」），把 2D 视图往左拖一点即可看到 `Player` 与出生标记。

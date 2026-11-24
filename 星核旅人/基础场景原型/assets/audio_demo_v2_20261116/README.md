@@ -20,9 +20,9 @@ copies are in `NEW3_DERIVATION.json` and `source_evidence/`.
 
 | event | file | source | peak |
 | --- | --- | --- | --- |
-| `polarity_switch` | `polarity_switch_v2.wav` | PWL `bell_ding1.wav` (0.52 s segment) + Bobjt `gem-gather-stereo.wav` at -12 dB | -6 dBFS |
-| `swing` | `swing_v2.wav` | artisticdude `swish-9.wav` (full 0.197 s air swing) | -6 dBFS |
-| `shell_shatter` | `shell_shatter_heavy_v2.wav` | Spring Spring `break_stone.wav` 96k→44.1k, 1.12 s + Kenney `impactMining_000` short low-mid first hit | -3 dBFS |
+| `polarity_switch` | `polarity_switch.wav` | PWL `bell_ding1.wav` (0.52 s segment) + Bobjt `gem-gather-stereo.wav` at -12 dB | -6 dBFS |
+| `swing` | `swing.wav` | artisticdude `swish-9.wav` (full 0.197 s air swing) | -6 dBFS |
+| `shell_shatter` | `shell_shatter_heavy.wav` | Spring Spring `break_stone.wav` 96k→44.1k, 1.12 s + Kenney `impactMining_000` short low-mid first hit | -3 dBFS |
 
 All three source pages declare CC0 1.0 (uploader statement; no legal review).
 They may be modified, bundled with the game and redistributed with the public

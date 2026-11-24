@@ -1,5 +1,7 @@
 # 第三关首轮试玩反馈 · 改版实施报告
 
+> 当期历史复核，保留旧入口、运行状态与证据数字。现版操作见[当前交接](../../progress.md)。
+
 2026-11-15 · 依据 `docs/L3_PLAYTEST_REVISION_BRIEF_20261115.md`（本轮权威）与
 `previews/l3_task_guidance_20261115/reference_notes.md`。本文件只记录本轮真跑结果；
 首版 `docs/L3_PLAYTEST_REPORT_20261115.md`、旧截图目录与 199/112 数字作为历史保留，不作本轮证据。

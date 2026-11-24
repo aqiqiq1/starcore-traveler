@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>云海遗迹背景动态重制 DS02</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: #0c1317; }
+  body {
+    display: flex; flex-direction: column; align-items: center;
+    font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+    color: #d9e6eb;
+  }
+  #stage {
+    position: relative;
+    width: min(640px, 100vw);
+    margin: 0 auto;
+    background: #0c1317;
+  }
+  @media (min-width: 1280px) {
+    #stage { width: 1280px; }
+  }
+  canvas {
+    display: block; width: 100%; height: auto;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background: #233d4c;
+  }
+  #hud {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    padding: 10px 12px;
+    background: #0f1a1f;
+    border-top: 1px solid #223740;
+    font-size: 13px; line-height: 1.35;
+  }
+  #hud.hidden { display: none; }
+  button {
+    appearance: none; border: 1px solid #3b5560; border-radius: 5px;
+    background: #17262d; color: #e3eff3; padding: 5px 9px;
+    font: inherit; cursor: pointer;
+  }
+  button:hover { background: #20343d; border-color: #5e7f8c; }
+  button.on { background: #2b5563; border-color: #7fb0bd; }
+  #time { min-width: 118px; font-variant-numeric: tabular-nums; color: #a9c9d3; }
+  #scrub { width: min(280px, 42vw); accent-color: #76aebc; }
+  .sep { width: 1px; height: 22px; background: #34505b; margin: 0 2px; }
+  #readout {
+    margin-left: auto; color: #9dbfc9; font: 12px/1.4 ui-monospace, Consolas, monospace;
+    white-space: pre; text-align: right;
+  }
+  #hint { width: 100%; color: #84a3ad; font-size: 12px; }
+  @media (max-width: 720px) {
+    #readout { margin-left: 0; width: 100%; text-align: left; }
+    #hud { font-size: 12px; padding: 8px; }
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="frame" width="1280" height="720" aria-label="云海遗迹动态背景预览"></canvas>
+  <div id="hud">
+    <button id="play">暂停</button>
+    <button id="reset">重置</button>
+    <span id="time">t = 0.00 s</span>
+    <input id="scrub" type="range" min="0" max="120" step="0.05" value="0" aria-label="时间">
+    <span class="sep"></span>
+    <button id="seamBefore">海面接缝前</button>
+    <button id="seamAfter">海面接缝后</button>
+    <button id="seamMark">接缝标记</button>
+    <button id="skyWrap">天空云换边</button>
+    <button id="hideUI">隐藏控件</button>
+    <div id="readout"></div>
+    <div id="hint">单向 +x 流动；海面周期 <span id="period">1278</span> px。红=主海接缝，黄=近海接缝；接缝前/后跳时会让两层接缝同框，不必等数分钟。</div>
+  </div>
+</div>
+<script src="config.js"></script>
+<script src="preview.js"></script>
+</body>
+</html>

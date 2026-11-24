@@ -1,0 +1,58 @@
+{
+  "seam_probe_x": 430,
+  "note": "with +phase the visible texture seam is x=phase; columns phase-1 and phase are the two texture-wrap columns",
+  "main": {
+    "t": 59.7222,
+    "phase": 251,
+    "visible": true,
+    "column_pair": [
+      250,
+      251
+    ],
+    "max_channel_diff": 0,
+    "mean_abs_diff": 0.0
+  },
+  "near": {
+    "t": 59.7222,
+    "phase": 430,
+    "visible": true,
+    "column_pair": [
+      429,
+      430
+    ],
+    "max_channel_diff": 0,
+    "mean_abs_diff": 0.0
+  },
+  "phase_wrap": {
+    "sea_main": {
+      "period_s": 304.2857,
+      "half_step_s": 0.25,
+      "expected_shift_px": 2.1,
+      "measured_profile_shift_px": 2,
+      "profile_mae_px": 0.0,
+      "overlap_px": 218,
+      "raw_mean_abs_diff_at_boundary_0_02s": 0.0
+    },
+    "sea_near": {
+      "period_s": 177.5,
+      "half_step_s": 0.25,
+      "expected_shift_px": 3.6,
+      "measured_profile_shift_px": 4,
+      "profile_mae_px": 0.0,
+      "overlap_px": 216,
+      "raw_mean_abs_diff_at_boundary_0_02s": 0.0
+    }
+  },
+  "seams": {
+    "before": {
+      "t": 58.9222,
+      "main_phase": 247,
+      "near_phase": 424
+    },
+    "after": {
+      "t": 60.5222,
+      "main_phase": 254,
+      "near_phase": 436
+    }
+  }
+}

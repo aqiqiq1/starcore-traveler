@@ -1,0 +1,120 @@
+{
+  "generated": "2026-11-17",
+  "purpose": "Faster echo syllable pack (~80 ms) for a snappier Undertale-like cadence. Pitch-preserving time compression only; runtime text speed (34 cps) unchanged.",
+  "identity": {
+    "author": "SilentStrikeZ",
+    "page_url": "https://freesound.org/people/SilentStrikeZ/sounds/389644/",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "downloaded_kind": "lossy HQ preview MP3 (original WAV requires login and was not downloaded)",
+    "derived_from": "assets/dialogue_feedback_20261117/echo_mumble_{1,2,3}.wav (CC0, already licensed)",
+    "human_audition": false
+  },
+  "processing": {
+    "tool": "ffmpeg 8.0.1 (D:/minic/envs/2024212971/Library/bin/ffmpeg.exe)",
+    "filter": "atempo=1.500",
+    "pitch_preserved": true,
+    "pitch_shift_semitones": 0.0,
+    "output_format": "PCM16 48000 Hz mono",
+    "edge_taper_ms": 4.0,
+    "gain_boost_db": 0.0,
+    "synthesis": false,
+    "layering": false,
+    "note": "atempo changes duration only; no pitch_scale/resample trick is used to fake a different voice. Peaks stay below the original clip peaks, so no overshoot."
+  },
+  "files": [
+    {
+      "role": "echo mumble syllable 1 (fast)",
+      "source_file": "assets/dialogue_feedback_20261117/echo_mumble_1.wav",
+      "source_sha256": "75d6bc6473608008f5d18742e6ddb975ea9e980c00c6e21df7929b00588fc27a",
+      "source_duration_s": 0.120021,
+      "output_file": "echo_mumble_1.wav",
+      "output_sha256": "75a0486d1c116bd7b25aea74c0389e4b40099b448d5f97c974a71f0bf5970d4a",
+      "output_samples": 3841,
+      "duration_s": 0.080021,
+      "samplerate": 48000,
+      "channels": 1,
+      "speed_factor": 1.5,
+      "pitch_shift_semitones": 0.0,
+      "f0_before_hz": 173.3,
+      "f0_after_hz": 173.3,
+      "fade_in_ms": 4.0,
+      "fade_out_ms": 4.0,
+      "gain_db": 0.0,
+      "peak_dbfs": -12.478,
+      "rms_dbfs": -21.798,
+      "clipped_samples": 0
+    },
+    {
+      "role": "echo mumble syllable 2 (fast)",
+      "source_file": "assets/dialogue_feedback_20261117/echo_mumble_2.wav",
+      "source_sha256": "127d8df49c282f22ebbf28c3b22decafbb42822caf52c131a4eba080f61cbca7",
+      "source_duration_s": 0.12,
+      "output_file": "echo_mumble_2.wav",
+      "output_sha256": "a83e71cea8406985cae331c136ef392677c9d9b6ea1dd9dd3af0519f214852c2",
+      "output_samples": 3840,
+      "duration_s": 0.08,
+      "samplerate": 48000,
+      "channels": 1,
+      "speed_factor": 1.5,
+      "pitch_shift_semitones": 0.0,
+      "f0_before_hz": 167.2,
+      "f0_after_hz": 167.2,
+      "fade_in_ms": 4.0,
+      "fade_out_ms": 4.0,
+      "gain_db": 0.0,
+      "peak_dbfs": -14.729,
+      "rms_dbfs": -24.779,
+      "clipped_samples": 0
+    },
+    {
+      "role": "echo mumble syllable 3 (fast)",
+      "source_file": "assets/dialogue_feedback_20261117/echo_mumble_3.wav",
+      "source_sha256": "8789fafba7359813b709b3afd6e7017e333074d29a3ac0f0be3796fa9853fcd4",
+      "source_duration_s": 0.12,
+      "output_file": "echo_mumble_3.wav",
+      "output_sha256": "89e9ca7c10c14fd51b3ad914e727e53a7b081d394546ad69a2367fa2ff9d5f36",
+      "output_samples": 3840,
+      "duration_s": 0.08,
+      "samplerate": 48000,
+      "channels": 1,
+      "speed_factor": 1.5,
+      "pitch_shift_semitones": 0.0,
+      "f0_before_hz": 183.2,
+      "f0_after_hz": 183.2,
+      "fade_in_ms": 4.0,
+      "fade_out_ms": 4.0,
+      "gain_db": 0.0,
+      "peak_dbfs": -13.025,
+      "rms_dbfs": -23.94,
+      "clipped_samples": 0
+    }
+  ],
+  "license_evidence": [
+    {
+      "file": "../../dialogue_feedback_20261117/evidence/freesound_389644_human_male_mumble_short.html",
+      "sha256": "2080d99bc7d7745851f2ba53a21ec3ae9d4b2b3fa957a0103cf57eb690a3cd74",
+      "bytes": 36694,
+      "matches_old_manifest": true
+    },
+    {
+      "file": "../../dialogue_feedback_20261117/evidence/freesound_389644.jpg",
+      "sha256": "8e6be20c9a0aa8cb8520684b08de7329f1e180986a2a6455881fe49265b694ac",
+      "bytes": 70202,
+      "matches_old_manifest": true
+    },
+    {
+      "file": "../../dialogue_feedback_20261117/evidence/oga_qubodup_male_vocal.html",
+      "sha256": "85c18b0d92bba17d702e6db7211b233995c1c3141fd948ba97e4dcda76a36716",
+      "bytes": 31846,
+      "matches_old_manifest": true
+    },
+    {
+      "file": "../../dialogue_feedback_20261117/evidence/oga_joth_7_assorted_ui.html",
+      "sha256": "04b1ea6e4542d337fe0964695083f36f0eedec67d2e1bb7be7e816d3d2c9b756",
+      "bytes": 30384,
+      "matches_old_manifest": true
+    }
+  ],
+  "usage": "scripts/narrative/dialogue_voice.gd (DIR), -10 dB, one at a time"
+}

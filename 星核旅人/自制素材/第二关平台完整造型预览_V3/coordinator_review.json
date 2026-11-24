@@ -1,0 +1,12 @@
+{
+  "ground_matches_verified_v2": true,
+  "objects_match_v2": true,
+  "composite_rebuild_exact": true,
+  "nearest_2x_exact": true,
+  "continuous_top_edge": true,
+  "no_visuals_in_core_lane": true,
+  "jump_gap_preserved": true,
+  "protected_checked": 144,
+  "protected_changed": [],
+  "scope": "Static preview validation only; not engine or gameplay acceptance."
+}

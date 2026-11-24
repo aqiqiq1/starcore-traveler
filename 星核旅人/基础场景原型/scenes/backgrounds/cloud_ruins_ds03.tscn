@@ -58,6 +58,10 @@ clip_children = 2
 [node name="ShadowsMain" type="Node2D" parent="SeaMain"]
 texture_filter = 1
 
+[node name="HorizonHaze" type="Node2D" parent="."]
+visible = false
+texture_filter = 1
+
 [node name="Arch" type="Node2D" parent="."]
 texture_filter = 1
 

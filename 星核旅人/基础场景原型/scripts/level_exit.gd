@@ -12,7 +12,7 @@ signal player_reached_exit
 
 const OPEN_TEXTURE: Texture2D = preload("res://assets/checkpoint_exit/exit_open.png")
 const COMPLETED_TEXTURE: Texture2D = preload("res://assets/checkpoint_exit/exit_completed.png")
-const DEFAULT_GATE_FX_SHEET: Texture2D = preload("res://assets/checkpoint_exit/gate_portal_fx_v2_8f.png")
+const DEFAULT_GATE_FX_SHEET: Texture2D = preload("res://assets/checkpoint_exit/gate_portal_fx_8f.png")
 const TEXTURE_FOOT_ANCHOR: Vector2 = Vector2(38.0, 99.0)
 const GATE_FX_FRAMES: int = 8
 const GATE_FX_FPS: float = 8.0

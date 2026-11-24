@@ -22,8 +22,11 @@ extends Node2D
 ## crystal + lip), so after it binds successfully the original Wall/Lip
 ## Sprite2D nodes are hidden and their previous `visible` is remembered for
 ## rebuild/cleanup; a failed bind leaves the original art untouched.
-## The material's real player-core gold/cyan tint (per its own mask) and the
-## core's own polarity marker are untouched.
+## Both components run in face-tint mode: each uses its own mask as the real
+## crossing test and only the crossed/adjacent facets change colour. The
+## first platform keeps its approved base/active/mask/arrival and 0.7 s flow;
+## the second keeps its candidate set. The material's fade clock is pausable,
+## so a real pause freezes it.
 ##
 ## The whole effect is behind the player/core (z=2 vs player 5, core 4) and the
 ## material is limited palette, nearest-filter pixels. The material's fade clock
@@ -31,11 +34,21 @@ extends Node2D
 
 const LAYERED_CORE_MATERIAL = preload("res://scripts/narrative/layered_core_material.gd")
 
-const LINKED_BASE_PATH: String = "res://assets/interaction_projection_20261117/layered_core/layered_linked_v3_base_200x60.png"
-const LINKED_ACTIVE_PATH: String = "res://assets/interaction_projection_20261117/layered_core/layered_linked_v3_active_200x60.png"
-const LINKED_MASK_PATH: String = "res://assets/interaction_projection_20261117/layered_core/layered_linked_v3_mask_200x60.png"
-const LINKED_ARRIVAL_PATH: String = "res://assets/interaction_projection_20261117/layered_core/layered_linked_v3_arrival_200x60.png"
+const LINKED_BASE_TEX: Texture2D = preload("res://assets/interaction_projection_20261117/layered_core/layered_linked_crystal_base_200x60.png")
+const LINKED_ACTIVE_TEX: Texture2D = preload("res://assets/interaction_projection_20261117/layered_core/layered_linked_crystal_active_200x60.png")
+const LINKED_MASK_TEX: Texture2D = preload("res://assets/interaction_projection_20261117/layered_core/layered_linked_crystal_mask_200x60.png")
+const LINKED_ARRIVAL_TEX: Texture2D = preload("res://assets/interaction_projection_20261117/layered_core/layered_linked_crystal_arrival_200x60.png")
+const LINKED_FACET_TEX: Texture2D = preload("res://assets/interaction_projection_20261117/layered_core/layered_linked_crystal_facetid_200x60.png")
 const LINKED_SIZE: Vector2 = Vector2(200.0, 60.0)
+
+## First platform: the approved base/active/mask/arrival stay exactly as they
+## were; only the force tint becomes face-based (new facet id map, 2026-11-19).
+const FIRST_BASE_TEX: Texture2D = preload("res://assets/interaction_projection_20261117/layered_core/layered_core_approved_inactive_256x32.png")
+const FIRST_ACTIVE_TEX: Texture2D = preload("res://assets/interaction_projection_20261117/layered_core/layered_core_approved_active_256x32.png")
+const FIRST_MASK_TEX: Texture2D = preload("res://assets/interaction_projection_20261117/layered_core/layered_core_approved_mask_256x32.png")
+const FIRST_ARRIVAL_TEX: Texture2D = preload("res://assets/interaction_projection_20261117/layered_core/layered_core_facetflow_arrival_256x32.png")
+const FIRST_FACET_TEX: Texture2D = preload("res://assets/interaction_projection_20261117/layered_core/layered_core_first_facetids_256x32.png")
+const FIRST_SIZE: Vector2 = Vector2(256.0, 32.0)
 
 const DURATION: float = 0.7
 const Z_INDEX: int = 2
@@ -195,7 +208,8 @@ func _build_layered_core(roof_sprite: Sprite2D) -> void:
 	_layered_core = LAYERED_CORE_MATERIAL.new()
 	_layered_core.name = "LayeredCoreMaterial"
 	add_child(_layered_core)
-	if not _layered_core.setup(roof_sprite):
+	if not _layered_core.setup_face_tint(roof_sprite, FIRST_BASE_TEX, FIRST_ACTIVE_TEX,
+			FIRST_MASK_TEX, FIRST_ARRIVAL_TEX, FIRST_FACET_TEX, FIRST_SIZE):
 		push_warning("ConductiveActivation: layered core material failed to set up")
 		_layered_core.queue_free()
 		_layered_core = null
@@ -211,8 +225,8 @@ func _build_linked_platform(level: Node) -> void:
 	_linked_platform = LAYERED_CORE_MATERIAL.new()
 	_linked_platform.name = "LayeredLinkedPlatform"
 	add_child(_linked_platform)
-	if not _linked_platform.setup_custom(anchor, LINKED_BASE_PATH, LINKED_ACTIVE_PATH,
-			LINKED_MASK_PATH, LINKED_ARRIVAL_PATH, LINKED_SIZE):
+	if not _linked_platform.setup_face_tint(anchor, LINKED_BASE_TEX, LINKED_ACTIVE_TEX,
+			LINKED_MASK_TEX, LINKED_ARRIVAL_TEX, LINKED_FACET_TEX, LINKED_SIZE):
 		push_warning("ConductiveActivation: linked crystal material failed to set up")
 		_linked_platform.queue_free()
 		_linked_platform = null
