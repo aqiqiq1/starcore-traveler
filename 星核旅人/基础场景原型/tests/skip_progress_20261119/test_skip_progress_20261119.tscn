@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3]
-
-[ext_resource type="Script" path="res://tests/skip_progress_20261119/test_skip_progress_20261119.gd" id="1_test"]
-
-[node name="TestSkipProgress20261119" type="Node"]
-script = ExtResource("1_test")

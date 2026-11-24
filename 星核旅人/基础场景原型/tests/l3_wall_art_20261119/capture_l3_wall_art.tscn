@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3]
-
-[ext_resource type="Script" path="res://tests/l3_wall_art_20261119/capture_l3_wall_art.gd" id="1_wall"]
-
-[node name="CaptureL3WallArt" type="Node"]
-script = ExtResource("1_wall")

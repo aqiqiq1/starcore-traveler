@@ -1,9 +1,0 @@
-﻿l1_opening_hold_020.png: 640x360 gold x=529..547 width=19 rows=337..340 border=528..623 label_pixels=99
-l1_opening_hold_040.png: 640x360 gold x=529..566 width=38 rows=337..340 border=528..623 label_pixels=99
-l1_opening_hold_060.png: 640x360 gold x=529..585 width=57 rows=337..340 border=528..623 label_pixels=99
-l1_opening_after_skip_hidden.png: 640x360 gold_in_bar=0 border_in_bar=0
-l3_cinematic_hold_020.png: 640x360 gold x=529..547 width=19 rows=337..340 border=528..623 label_pixels=99
-l3_cinematic_hold_040.png: 640x360 gold x=529..566 width=38 rows=337..340 border=528..623 label_pixels=99
-l3_cinematic_hold_060.png: 640x360 gold x=529..584 width=56 rows=337..340 border=528..623 label_pixels=99
-l3_cinematic_after_skip_hidden.png: 640x360 gold_in_bar=0 border_in_bar=0
-PIXEL_AUDIT_OK
