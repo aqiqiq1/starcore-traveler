@@ -1,0 +1,19 @@
+{
+	"camera": {
+		"wide_limits": false,
+		"zoom": 1.0
+	},
+	"crop": {
+		"h": 144,
+		"w": 256,
+		"x": 190,
+		"y": 200
+	},
+	"fps": 8.0,
+	"frame_height": 144,
+	"frame_width": 256,
+	"frames": 24,
+	"id": "rift_bridge",
+	"note": "Formal rift terrace. Real Q materialises the gold deck, the player walks on, Q again dissolves it and the body falls to the safe lower shelf.",
+	"source": "formal DLC scene, real input/state"
+}

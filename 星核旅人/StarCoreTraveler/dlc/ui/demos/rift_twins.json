@@ -1,0 +1,19 @@
+{
+	"camera": {
+		"wide_limits": true,
+		"zoom": 0.45
+	},
+	"crop": {
+		"h": 144,
+		"w": 256,
+		"x": 190,
+		"y": 104
+	},
+	"fps": 8.0,
+	"frame_height": 144,
+	"frame_width": 256,
+	"frames": 24,
+	"id": "rift_twins",
+	"note": "Formal rift arena. Both guards hover for the opening; the gold guard is then put into its existing GRAVITY_CHARGE and a real J removes one true cell while both bars stay visible.",
+	"source": "formal DLC scene, real input/state"
+}

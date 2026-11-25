@@ -243,7 +243,8 @@ $godot = "D:/Godot/Godot_v4.7.2-stable_win64_console.exe"
 | 基础三关 90 帧 | 三关均 exit 0，0 错误 | `level_01_90.log` 等 |
 | 移走 `dlc/rift_workshop` 后 level_01 90 帧 | exit 0，0 错误 | `level_01_deleted_90.log` |
 | 真实 J（共享 `dlc/ui/tests`） | **23 / 0** | `../ui/tests/real_j_damage_test.log` |
-| 开场说明页（共享） | **38 / 0** | `../ui/tests/guide_test.log` |
+| 开场说明页（共享） | **81 / 0** | `../ui/tests/guide_test.log` |
+| 说明页演示 | 3 页均真实关卡帧条 24 帧 / 8 fps | `../ui/demos/rift_*.png` |
 | 640×360 说明页 | 两关各 3 页，均 640×360 | `../ui/tests/out/*_guide_*.png` |
 
 机制测试新增覆盖：

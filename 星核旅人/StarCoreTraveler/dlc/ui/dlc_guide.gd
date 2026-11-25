@@ -5,8 +5,9 @@ extends CanvasLayer
 ##
 ## One 560x236 page at a time, opened once at level start by
 ## TrialChambers / RiftWorkshop (each level sets show_intro_guide = false before
-## add_child() in the automated tests).  The left 160x90 window is a 1x pixel
-## diagram drawn in code; the right side is title + 2-3 body lines + key hint.
+## add_child() in the automated tests).  The left 256x144 window plays a real
+## 24-frame / 8 fps loop captured from the formal chapter scene; the right side
+## is title + 2-3 body lines + key hint.
 ##
 ## Input while open (the tree is paused):
 ##   F                 next page, close on the last page
@@ -16,7 +17,8 @@ extends CanvasLayer
 ##
 ## Visual language is copied from the approved trial/rift HUD and the mechanic
 ## popup: near-black panel, 2 px cyan-grey border, gold title, 12 px body.
-## No external art is added; the diagrams are draw_rect pixels only.
+## The demo strips live in dlc/ui/demos and are captured from the real scenes;
+## no diagram or external screenshot is used as gameplay footage.
 
 signal opened(kind: String)
 signal closed(kind: String)
@@ -25,11 +27,16 @@ const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const VIEW_SIZE: Vector2 = Vector2(640.0, 360.0)
 const PANEL_POSITION: Vector2 = Vector2(40.0, 62.0)
 const PANEL_SIZE: Vector2 = Vector2(560.0, 236.0)
-const DIAGRAM_POSITION: Vector2 = Vector2(12.0, 12.0)
-const DIAGRAM_SIZE: Vector2 = Vector2(160.0, 90.0)
-const RIGHT_X: float = 188.0
-const RIGHT_WIDTH: float = 356.0
+const DEMO_POSITION: Vector2 = Vector2(12.0, 12.0)
+const DEMO_SIZE: Vector2 = Vector2(256.0, 144.0)
+const RIGHT_X: float = 282.0
+const RIGHT_WIDTH: float = 266.0
+const TITLE_WIDTH: float = 196.0
 const SKIP_HOLD: float = 0.5
+const DEMO_DIR: String = "res://dlc/ui/demos"
+const DEFAULT_DEMO_FRAME_WIDTH: int = 256
+const DEFAULT_DEMO_FRAME_HEIGHT: int = 144
+const DEFAULT_DEMO_FPS: float = 8.0
 
 const GOLD: Color = Color("#f4cd63")
 const CYAN: Color = Color("#5fe1e6")
@@ -45,41 +52,41 @@ const PAGES: Dictionary = {
 	"trial": [
 		{
 			"title": "目标：穿过两道极性门",
-			"body": "从澜相出发：Q 换辉相过金门，再 Q 回澜相过青门。\n门后是守卫竞技场，击败守卫才会点亮完成点。",
+			"body": "Q 换辉相过金门，再 Q 回澜相过青门。\n门后是守卫竞技场，击败守卫才会点亮完成点。",
 			"key": "Q 换相 · 与门同相才能通过",
-			"diagram": "gates",
+			"demo": "trial_gate",
 		},
 		{
 			"title": "Q 换相与门内安全",
-			"body": "门只读取你的相性：同相放行，异相拦停。\n站在门内切换相性不会被夹住，离开后门才重新闭合。",
+			"body": "门只读取你的相性：同相放行，异相拦停。\n门内切换相性不会被夹住，离开后门才重新闭合。",
 			"key": "Q 切换辉相 / 澜相 · 门内切相不夹",
-			"diagram": "gates",
+			"demo": "trial_gate_inside",
 		},
 		{
 			"title": "守卫战：异相 J 打弱点",
-			"body": "守卫蓄力时保持异相，靠近后按 J 命中弱点。\n每次真伤后守卫换相，再按 Q 切回异相，累计 3 次。\n两次受击失败会回到竞技场入口，守卫重置。",
+			"body": "守卫蓄力时保持异相，靠近后按 J 命中弱点。\n每次真伤后换相，Q 切回异相，累计 3 次。\n两次受击失败回到竞技场入口，守卫重置。",
 			"key": "J 攻击 · Q 保持异相",
-			"diagram": "twins",
+			"demo": "trial_guard_hit",
 		},
 	],
 	"rift": [
 		{
-			"title": "路线：回廊 · 光桥 · 双生守卫",
-			"body": "穿过紫色反转光幕与极性门，再按相性跨过三座光桥。\n高台尽头记录检查点，然后进入双生守卫竞技场。",
+			"title": "路线：回廊 → 光桥 → 守卫",
+			"body": "穿过紫色光幕与极性门，按相性跨过三座光桥。\n高台尽头记录检查点，然后进入双生守卫竞技场。",
 			"key": "Q 换相 · 紫色光幕会自动翻转相性",
-			"diagram": "curtain",
+			"demo": "rift_inversion",
 		},
 		{
 			"title": "反转场与相性桥",
-			"body": "进入紫色光幕会自动反转一次相性，停在幕内不会反复翻转。\n光桥只在与你同相时实体化；异相时桥面消失，会落到下层安全台。",
+			"body": "紫色光幕进入即反转一次，停在幕内不重复翻转。\n光桥同相才实体化；异相消失会落到下层。",
 			"key": "Q 换相 · 与桥同色才能站上去",
-			"diagram": "bridge",
+			"demo": "rift_bridge",
 		},
 		{
 			"title": "双生守卫：两只都要打",
-			"body": "金守卫与青守卫都要打：蓄力时保持异相，按 J 命中弱点 3 次。\n每次真伤后守卫换相，需再按 Q 切回异相。\n两只都倒下才会打开裂隙核心；失败或坠落后两只都会完整重生。",
+			"body": "两只都要打：蓄力时异相 J 命中弱点 3 次。\n每次真伤后守卫换相，再按 Q 切回异相。\n两只都倒才开核心；失败/坠落时两只完整重生。",
 			"key": "J 命中弱点 · 每只 3 点真伤",
-			"diagram": "twins",
+			"demo": "rift_twins",
 		},
 	],
 }
@@ -87,10 +94,15 @@ const PAGES: Dictionary = {
 ## Set by the owning chapter before open_guide().
 var level_node: Node = null
 var guide_kind: String = ""
+## Overridable so the guide test can exercise the missing-demo fallback without
+## touching the approved capture directory.
+var demo_dir: String = DEMO_DIR
 
 var _root: Control = null
 var _panel: Panel = null
-var _diagram: PixelDiagram = null
+var _demo_border: Panel = null
+var _demo_rect: TextureRect = null
+var _demo_placeholder: Label = null
 var _title_label: Label = null
 var _body_label: Label = null
 var _key_label: Label = null
@@ -99,6 +111,15 @@ var _page_indicator: Label = null
 var _skip_bar: SkipHoldBar = null
 var _font: Font = null
 
+var _demo_atlas: AtlasTexture = null
+var _demo_id: String = ""
+var _demo_frames: int = 0
+var _demo_fps: float = DEFAULT_DEMO_FPS
+var _demo_frame: int = 0
+var _demo_time: float = 0.0
+var _has_demo: bool = false
+var _demo_still: bool = false
+
 var _open: bool = false
 var _page_index: int = 0
 var _paused_before: bool = false
@@ -106,125 +127,6 @@ var _space_held: bool = false
 var _space_hold: float = 0.0
 var _space_armed: bool = false
 var _open_count: int = 0
-
-
-## 160x90 pixel diagram. Everything is an axis-aligned rect so it stays 1x and
-## crisp under the project's nearest-neighbour scaling.
-class PixelDiagram extends Control:
-	const BG: Color = Color("#050b0e")
-	const BORDER: Color = Color(0.45, 0.66, 0.63, 0.55)
-	const FLOOR: Color = Color("#24323a")
-	const FLOOR_LIGHT: Color = Color("#3a4f58")
-	const GOLD: Color = Color("#f4cd63")
-	const CYAN: Color = Color("#5fe1e6")
-	const PURPLE: Color = Color("#b06ce8")
-	const WHITE: Color = Color("#e7eceb")
-	const DIM: Color = Color("#728889")
-
-	var kind: String = ""
-
-	func _ready() -> void:
-		mouse_filter = Control.MOUSE_FILTER_IGNORE
-		clip_contents = true
-		queue_redraw()
-
-	func set_kind(value: String) -> void:
-		kind = value
-		queue_redraw()
-
-	func _px(x: float, y: float, w: float, h: float, color: Color) -> void:
-		draw_rect(Rect2(x, y, w, h), color)
-
-	func _draw() -> void:
-		draw_rect(Rect2(Vector2.ZERO, size), BG)
-		match kind:
-			"gates":
-				_draw_gates()
-			"curtain":
-				_draw_curtain()
-			"bridge":
-				_draw_bridge()
-			"twins":
-				_draw_twins()
-		draw_rect(Rect2(Vector2.ZERO, size), BORDER, false, 1.0)
-
-	func _draw_gates() -> void:
-		# Floor and two gates: gold first, cyan second (the trial route).
-		_px(8.0, 74.0, 144.0, 2.0, FLOOR)
-		_px(52.0, 46.0, 6.0, 28.0, GOLD)
-		_px(54.0, 50.0, 2.0, 20.0, Color(GOLD, 0.55))
-		_px(100.0, 46.0, 6.0, 28.0, CYAN)
-		_px(102.0, 50.0, 2.0, 20.0, Color(CYAN, 0.55))
-		# Start player (澜相) + forward hint.
-		_px(28.0, 62.0, 6.0, 10.0, CYAN)
-		_px(30.0, 58.0, 2.0, 4.0, CYAN)
-		_px(37.0, 63.0, 8.0, 1.0, WHITE)
-		_px(43.0, 60.0, 2.0, 2.0, WHITE)
-		_px(43.0, 66.0, 2.0, 2.0, WHITE)
-		# Dotted path between the gates.
-		for index: int in range(5):
-			_px(66.0 + float(index) * 6.0, 72.0, 2.0, 2.0, DIM)
-		# Dim finish core beyond the second gate.
-		_px(128.0, 64.0, 6.0, 8.0, Color(GOLD, 0.55))
-		_px(130.0, 62.0, 2.0, 2.0, WHITE)
-
-	func _draw_curtain() -> void:
-		# Purple inversion curtain with two 1 px edges and alternating bands.
-		_px(8.0, 74.0, 144.0, 2.0, FLOOR)
-		_px(67.0, 18.0, 1.0, 58.0, BORDER)
-		_px(78.0, 18.0, 1.0, 58.0, BORDER)
-		for index: int in range(10):
-			var alpha: float = 0.72 if index % 2 == 0 else 0.34
-			_px(69.0, 22.0 + float(index) * 5.0, 8.0, 3.0, Color(PURPLE, alpha))
-		# Player before the curtain (澜相) and after it (辉相).
-		_px(44.0, 62.0, 6.0, 10.0, CYAN)
-		_px(46.0, 58.0, 2.0, 4.0, CYAN)
-		_px(94.0, 62.0, 6.0, 10.0, GOLD)
-		_px(96.0, 58.0, 2.0, 4.0, GOLD)
-		_px(53.0, 63.0, 10.0, 1.0, WHITE)
-		_px(60.0, 60.0, 2.0, 2.0, WHITE)
-		_px(60.0, 66.0, 2.0, 2.0, WHITE)
-		_px(84.0, 63.0, 7.0, 1.0, WHITE)
-		_px(89.0, 60.0, 2.0, 2.0, WHITE)
-		_px(89.0, 66.0, 2.0, 2.0, WHITE)
-
-	func _draw_bridge() -> void:
-		# Left / right stone landings, three alternating decks, safe lower shelf.
-		_px(8.0, 74.0, 144.0, 2.0, FLOOR)
-		_px(10.0, 62.0, 38.0, 12.0, FLOOR)
-		_px(10.0, 60.0, 38.0, 2.0, FLOOR_LIGHT)
-		_px(112.0, 62.0, 38.0, 12.0, FLOOR)
-		_px(112.0, 60.0, 38.0, 2.0, FLOOR_LIGHT)
-		_px(48.0, 60.0, 20.0, 3.0, GOLD)
-		_px(70.0, 60.0, 20.0, 3.0, CYAN)
-		_px(92.0, 60.0, 20.0, 3.0, GOLD)
-		# Standing player on the first gold deck.
-		_px(54.0, 48.0, 6.0, 10.0, CYAN)
-		_px(56.0, 44.0, 2.0, 4.0, CYAN)
-		# Lower safe shelf under the gap.
-		_px(48.0, 80.0, 64.0, 1.0, Color(DIM, 0.8))
-		for index: int in range(5):
-			_px(52.0 + float(index) * 14.0, 77.0, 2.0, 2.0, Color(DIM, 0.55))
-
-	func _draw_twins() -> void:
-		# Two guard colour blocks with three health cells each, player between.
-		_px(8.0, 74.0, 144.0, 2.0, FLOOR)
-		_px(42.0, 46.0, 24.0, 28.0, Color(0.10, 0.09, 0.05, 1.0))
-		_px(44.0, 48.0, 20.0, 24.0, GOLD)
-		_px(49.0, 54.0, 10.0, 12.0, Color(0.10, 0.09, 0.05, 1.0))
-		_px(52.0, 58.0, 4.0, 4.0, WHITE)
-		_px(94.0, 46.0, 24.0, 28.0, Color(0.03, 0.08, 0.10, 1.0))
-		_px(96.0, 48.0, 20.0, 24.0, CYAN)
-		_px(101.0, 54.0, 10.0, 12.0, Color(0.03, 0.08, 0.10, 1.0))
-		_px(104.0, 58.0, 4.0, 4.0, WHITE)
-		for index: int in range(3):
-			_px(44.0 + float(index) * 8.0, 38.0, 5.0, 3.0, Color(GOLD, 0.85))
-			_px(96.0 + float(index) * 8.0, 38.0, 5.0, 3.0, Color(CYAN, 0.85))
-		# Player with a J spark between the two guards.
-		_px(76.0, 60.0, 6.0, 12.0, WHITE)
-		_px(78.0, 56.0, 2.0, 4.0, WHITE)
-		_px(72.0, 64.0, 4.0, 1.0, GOLD)
-		_px(82.0, 64.0, 4.0, 1.0, CYAN)
 
 
 func _ready() -> void:
@@ -310,33 +212,45 @@ func _build_ui() -> void:
 	_panel.add_theme_stylebox_override("panel", style)
 	_root.add_child(_panel)
 
-	var diagram_border: Panel = Panel.new()
-	diagram_border.name = "DiagramBorder"
-	diagram_border.position = DIAGRAM_POSITION - Vector2.ONE
-	diagram_border.size = DIAGRAM_SIZE + Vector2(2.0, 2.0)
-	diagram_border.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var diagram_style: StyleBoxFlat = StyleBoxFlat.new()
-	diagram_style.bg_color = Color(0.0, 0.0, 0.0, 1.0)
-	diagram_style.border_width_left = 1
-	diagram_style.border_width_top = 1
-	diagram_style.border_width_right = 1
-	diagram_style.border_width_bottom = 1
-	diagram_style.border_color = Color(0.45, 0.66, 0.63, 0.75)
-	diagram_style.anti_aliasing = false
-	diagram_border.add_theme_stylebox_override("panel", diagram_style)
-	_panel.add_child(diagram_border)
+	_demo_border = Panel.new()
+	_demo_border.name = "DemoBorder"
+	_demo_border.position = DEMO_POSITION - Vector2.ONE
+	_demo_border.size = DEMO_SIZE + Vector2(2.0, 2.0)
+	_demo_border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var demo_style: StyleBoxFlat = StyleBoxFlat.new()
+	demo_style.bg_color = Color(0.0, 0.0, 0.0, 1.0)
+	demo_style.border_width_left = 1
+	demo_style.border_width_top = 1
+	demo_style.border_width_right = 1
+	demo_style.border_width_bottom = 1
+	demo_style.border_color = Color(0.45, 0.66, 0.63, 0.75)
+	demo_style.anti_aliasing = false
+	_demo_border.add_theme_stylebox_override("panel", demo_style)
+	_panel.add_child(_demo_border)
 
-	_diagram = PixelDiagram.new()
-	_diagram.name = "Diagram"
-	_diagram.position = DIAGRAM_POSITION
-	_diagram.size = DIAGRAM_SIZE
-	_panel.add_child(_diagram)
+	_demo_rect = TextureRect.new()
+	_demo_rect.name = "Demo"
+	_demo_rect.position = DEMO_POSITION
+	_demo_rect.size = DEMO_SIZE
+	_demo_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_demo_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	_demo_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_panel.add_child(_demo_rect)
 
-	_title_label = _label("", Vector2(RIGHT_X, 13.0), Vector2(274.0, 20.0), 16, GOLD)
+	_demo_placeholder = _label(
+		"演示缺失", DEMO_POSITION, DEMO_SIZE, 12, MUTED
+	)
+	_demo_placeholder.name = "DemoPlaceholder"
+	_demo_placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_demo_placeholder.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_demo_placeholder.visible = false
+	_panel.add_child(_demo_placeholder)
+
+	_title_label = _label("", Vector2(RIGHT_X, 13.0), Vector2(TITLE_WIDTH, 20.0), 16, GOLD)
 	_title_label.name = "Title"
 	_panel.add_child(_title_label)
 
-	_page_indicator = _label("", Vector2(470.0, 12.0), Vector2(74.0, 16.0), 12, MUTED)
+	_page_indicator = _label("", Vector2(486.0, 12.0), Vector2(62.0, 16.0), 12, MUTED)
 	_page_indicator.name = "PageIndicator"
 	_page_indicator.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_panel.add_child(_page_indicator)
@@ -349,12 +263,12 @@ func _build_ui() -> void:
 	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_panel.add_child(divider)
 
-	_body_label = _label("", Vector2(RIGHT_X, 44.0), Vector2(RIGHT_WIDTH, 64.0), 12, TEXT)
+	_body_label = _label("", Vector2(RIGHT_X, 43.0), Vector2(RIGHT_WIDTH, 62.0), 12, TEXT)
 	_body_label.name = "Body"
 	_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_panel.add_child(_body_label)
 
-	_key_label = _label("", Vector2(RIGHT_X, 112.0), Vector2(RIGHT_WIDTH, 40.0), 12, CYAN)
+	_key_label = _label("", Vector2(RIGHT_X, 108.0), Vector2(RIGHT_WIDTH, 38.0), 12, CYAN)
 	_key_label.name = "Key"
 	_key_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_panel.add_child(_key_label)
@@ -408,16 +322,48 @@ func get_footer_text() -> String:
 	return _footer_label.text if _footer_label != null else ""
 
 
-func get_diagram_kind() -> String:
-	return _diagram.kind if _diagram != null else ""
+func get_demo_id() -> String:
+	return _demo_id
 
 
-func get_diagram_size() -> Vector2:
-	return _diagram.size if _diagram != null else Vector2.ZERO
+func get_demo_frame_count() -> int:
+	return _demo_frames
+
+
+func get_demo_fps() -> float:
+	return _demo_fps
+
+
+func get_demo_frame() -> int:
+	return _demo_frame
+
+
+func has_demo() -> bool:
+	return _has_demo
+
+
+func is_demo_playing() -> bool:
+	return _has_demo and _demo_frames > 1
+
+
+func is_demo_still() -> bool:
+	return _demo_still
+
+
+func is_demo_placeholder_visible() -> bool:
+	return _demo_placeholder != null and _demo_placeholder.visible
+
+
+func get_demo_placeholder_text() -> String:
+	return _demo_placeholder.text if _demo_placeholder != null else ""
 
 
 func get_panel_rect() -> Rect2:
 	return Rect2(PANEL_POSITION, PANEL_SIZE)
+
+
+func get_demo_rect() -> Rect2:
+	return Rect2(DEMO_POSITION, DEMO_SIZE)
 
 
 func is_skip_bar_visible() -> bool:
@@ -516,6 +462,7 @@ func _input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if not _open:
 		return
+	_advance_demo(delta)
 	if not _space_armed or not _space_held:
 		return
 	_space_hold = minf(_space_hold + delta, SKIP_HOLD)
@@ -557,7 +504,7 @@ func _apply_page() -> void:
 	_title_label.text = String(data.get("title", ""))
 	_body_label.text = String(data.get("body", ""))
 	_key_label.text = String(data.get("key", ""))
-	_diagram.set_kind(String(data.get("diagram", "")))
+	_load_demo(String(data.get("demo", "")))
 	var count: int = get_page_count()
 	_page_indicator.text = "%d / %d" % [_page_index + 1, count]
 	_footer_label.text = (
@@ -565,6 +512,118 @@ func _apply_page() -> void:
 		if _page_index + 1 < count
 		else "F 关闭 · 长按空格 跳过"
 	)
+
+
+# --- Demo strip ------------------------------------------------------------
+
+## Loads a 24-frame horizontal strip and starts from frame 0.  A missing strip
+## never falls back to a code diagram: the 256x144 window shows the "演示缺失"
+## placeholder and the page's title/body/key stay readable.
+func _load_demo(id: String) -> void:
+	_demo_id = id
+	_demo_atlas = null
+	_demo_frames = 0
+	_demo_fps = DEFAULT_DEMO_FPS
+	_demo_frame = 0
+	_demo_time = 0.0
+	_has_demo = false
+	_demo_still = false
+	if _demo_rect != null:
+		_demo_rect.texture = null
+		_demo_rect.visible = true
+	if _demo_placeholder != null:
+		_demo_placeholder.visible = false
+	if id.is_empty():
+		_show_missing_demo()
+		return
+
+	var json_path: String = "%s/%s.json" % [demo_dir, id]
+	var png_path: String = "%s/%s.png" % [demo_dir, id]
+	var fps: float = DEFAULT_DEMO_FPS
+	var frame_width: int = DEFAULT_DEMO_FRAME_WIDTH
+	var frame_height: int = DEFAULT_DEMO_FRAME_HEIGHT
+	if FileAccess.file_exists(json_path):
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(json_path))
+		if parsed is Dictionary:
+			var data: Dictionary = parsed as Dictionary
+			fps = float(data.get("fps", fps))
+			frame_width = int(data.get("frame_width", frame_width))
+			frame_height = int(data.get("frame_height", frame_height))
+	if fps <= 0.0:
+		fps = DEFAULT_DEMO_FPS
+	if frame_width <= 0 or frame_height <= 0:
+		_show_missing_demo()
+		return
+
+	var texture: Texture2D = _load_demo_texture(png_path)
+	if texture == null:
+		_show_missing_demo()
+		return
+	# A non-strip texture (for example a single still) is shown as the first
+	# frame, without animation and without an error.
+	if texture.get_width() % frame_width != 0 or texture.get_height() != frame_height:
+		_demo_rect.texture = texture
+		_demo_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		_demo_still = true
+		return
+	var frames: int = texture.get_width() / frame_width
+	if frames <= 0:
+		_show_missing_demo()
+		return
+	_demo_atlas = AtlasTexture.new()
+	_demo_atlas.atlas = texture
+	_demo_atlas.region = Rect2(0.0, 0.0, float(frame_width), float(frame_height))
+	_demo_rect.texture = _demo_atlas
+	_demo_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	_demo_rect.visible = true
+	_demo_frames = frames
+	_demo_fps = fps
+	_has_demo = frames > 1
+	_demo_still = not _has_demo
+
+
+func _show_missing_demo() -> void:
+	_demo_atlas = null
+	_demo_frames = 0
+	_has_demo = false
+	_demo_still = false
+	if _demo_rect != null:
+		_demo_rect.texture = null
+		_demo_rect.visible = false
+	if _demo_placeholder != null:
+		_demo_placeholder.visible = true
+
+
+func _advance_demo(delta: float) -> void:
+	if not _has_demo or _demo_frames <= 1 or _demo_fps <= 0.0:
+		return
+	_demo_time += delta
+	var next_frame: int = int(_demo_time * _demo_fps)
+	if next_frame == _demo_frame:
+		return
+	_demo_frame = next_frame % _demo_frames
+	_demo_atlas.region = Rect2(
+		float(_demo_frame) * _demo_atlas.region.size.x,
+		0.0,
+		_demo_atlas.region.size.x,
+		_demo_atlas.region.size.y
+	)
+
+
+func _load_demo_texture(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var loaded: Resource = ResourceLoader.load(path)
+		if loaded is Texture2D:
+			return loaded as Texture2D
+	# The capture tool may write a fresh PNG before the editor import pass.  A
+	# direct read keeps the same page runnable in that window.
+	var absolute: String = ProjectSettings.globalize_path(path)
+	if not FileAccess.file_exists(absolute):
+		return null
+	var image: Image = Image.load_from_file(absolute)
+	if image == null or image.is_empty():
+		return null
+	return ImageTexture.create_from_image(image)
 
 
 # --- Input cleanup ---------------------------------------------------------

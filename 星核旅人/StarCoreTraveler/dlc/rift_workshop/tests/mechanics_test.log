@@ -3,33 +3,33 @@
 PASS: rift scene loads
 PASS: chapter exposes an L3Player
 PASS: rift HUD exists
-PASS: spawn is 澜相
-PASS: HUD title reads 裂隙工坊 [裂隙工坊]
-PASS: HUD shows an objective [目标：穿过反转回廊]
+PASS: spawn is 婢滅浉
+PASS: HUD title reads 瑁傞殭宸ュ潑 [瑁傞殭宸ュ潑]
+PASS: HUD shows an objective [鐩爣锛氱┛杩囧弽杞洖寤奭
 PASS: four PolarityWisps exist [4]
 PASS: twin guards start in opposite phases
 PASS: bridges alternate gold / cyan / gold
 PASS: Esc opens the simple pause page
 PASS: HUD pause overlay is visible
-PASS: pause page exposes 继续 and 返回标题
-PASS: Enter on 继续 closes the pause page
+PASS: pause page exposes 缁х画 and 杩斿洖鏍囬
+PASS: Enter on 缁х画 closes the pause page
 PASS: resume unpauses the tree
 PASS: field is armed before entry [0]
 PASS: player can walk into the inversion field [x=167.54]
 PASS: entry flips the phase exactly once [triggers=1]
-PASS: field flipped the player to 辉相
+PASS: field flipped the player to 杈夌浉
 PASS: player body is inside the 24 px curtain
 PASS: standing inside does not flip again [triggers=1]
-PASS: phase stays 辉相 while inside
-PASS: Q inside the field switches to 澜相
+PASS: phase stays 杈夌浉 while inside
+PASS: Q inside the field switches to 婢滅浉
 PASS: Q inside does not count as a field entry [1]
 PASS: player can leave the field [x=237.65]
 PASS: field reads the player as outside
 PASS: re-entry flips again [triggers=2]
-PASS: second entry returns to 澜相
-PASS: gold gate is open for 辉相
-PASS: gold gate is solid for 澜相
-PASS: gold bridge is solid for a 辉相 player
+PASS: second entry returns to 婢滅浉
+PASS: gold gate is open for 杈夌浉
+PASS: gold gate is solid for 婢滅浉
+PASS: gold bridge is solid for a 杈夌浉 player
 PASS: solid bridge uses collision layer 1 [1]
 PASS: player stands on the matching bridge [y=280.00]
 PASS: bridge disappears on the other phase
@@ -53,14 +53,14 @@ PASS: wisp pulse period is 3.0 s [3.00]
 PASS: wisp pulses within its 3 s period
 PASS: same phase at the pulse becomes a pull [pull force=170.0]
 PASS: pulse reports a real force [170.0]
-PASS: pull velocity points toward the wisp [vx=97.1]
+PASS: pull velocity points toward the wisp [vx=96.8]
 PASS: opposite phase at the pulse becomes a push [push]
-PASS: push velocity points away from the wisp [vx=-16.7]
+PASS: push velocity points away from the wisp [vx=-17.1]
 PASS: one J hit dissolves the wisp
-PASS: kill shows a short white burst at the wisp [0.90]
+PASS: kill shows a short white burst at the wisp [0.85]
 PASS: other wisps stay alive [wisp0 alive=true]
 PASS: R returns to the start [x=40.00]
-PASS: R restores 澜相
+PASS: R restores 婢滅浉
 PASS: R resets the timer [0.15]
 PASS: R clears the checkpoint
 PASS: R respawns defeated wisps
@@ -70,9 +70,9 @@ PASS: R leaves no pause lock
 PASS: player can move after R [x=55.25]
 PASS: arena entry flag set
 PASS: both guards hover during the 0.8 s arena opening [intro=0.72]
-PASS: HUD announces the twin guards waking [双生守卫苏醒 · 金 / 青]
+PASS: HUD announces the twin guards waking [鍙岀敓瀹堝崼鑻忛啋 路 閲?/ 闈抅
 PASS: both guards wake together after the opening hover [gold=ACTIVE cyan=ACTIVE]
-PASS: HUD objective switches to the twin guards [目标：击败双生守卫（0 / 2）]
+PASS: HUD objective switches to the twin guards [鐩爣锛氬嚮璐ュ弻鐢熷畧鍗紙0 / 2锛塢
 PASS: two accepted hits start the recovery transition
 PASS: combat recovery finishes without staying black
 PASS: failure restarts the 0.8 s arena opening [intro=0.80]
@@ -88,7 +88,7 @@ PASS: both guards wake after the one-down retry opening
 PASS: both guards are ACTIVE after a one-down failure [gold=ACTIVE cyan=ACTIVE]
 PASS: both guards return with full cells [gold=3 cyan=3]
 PASS: one-down failure clears both defeat flags and the 0 / 2 count
-PASS: HUD objective is back to 0 / 2 [目标：击败双生守卫（0 / 2）]
+PASS: HUD objective is back to 0 / 2 [鐩爣锛氬嚮璐ュ弻鐢熷畧鍗紙0 / 2锛塢
 PASS: finish core is dark again after the one-down failure
 PASS: player can move after the one-down failure [x=1115.25]
 PASS: gold guard is down again before the fall
@@ -98,7 +98,7 @@ PASS: both guards wake after the fall retry opening
 PASS: both guards are ACTIVE after a fall with one down [gold=ACTIVE cyan=ACTIVE]
 PASS: both guards return with full cells after a fall [gold=3 cyan=3]
 PASS: fall retry clears both defeat flags and the 0 / 2 count
-PASS: HUD objective is 0 / 2 after the fall [目标：击败双生守卫（0 / 2）]
+PASS: HUD objective is 0 / 2 after the fall [鐩爣锛氬嚮璐ュ弻鐢熷畧鍗紙0 / 2锛塢
 PASS: finish core stays dark after the fall retry
 PASS: gold guard true hit 1 resolved [marks=1]
 PASS: gold guard true hit 2 resolved [marks=2]
@@ -115,10 +115,10 @@ PASS: both guards defeated opens the finish
 PASS: finish point becomes bright after both defeats
 PASS: touching the finish completes the chapter [x=1550.00]
 PASS: completion page is visible
-PASS: completion text is 裂隙封闭 · 用时 mm:ss [裂隙封闭 · 用时 00:08]
+PASS: completion text is 瑁傞殭灏侀棴 路 鐢ㄦ椂 mm:ss [瑁傞殭灏侀棴 路 鐢ㄦ椂 00:08]
 PASS: completion time is real [8.55 s]
 PASS: E returns to level_01.tscn title [res://scenes/level_01.tscn]
 PASS: returned scene contains the title menu
-PASS: title shows the 裂隙工坊 entry while the DLC exists
-PASS: entry text is 裂隙工坊
+PASS: title shows the 瑁傞殭宸ュ潑 entry while the DLC exists
+PASS: entry text is 瑁傞殭宸ュ潑
 RIFT_MECHANICS_TEST checks=121 failures=0

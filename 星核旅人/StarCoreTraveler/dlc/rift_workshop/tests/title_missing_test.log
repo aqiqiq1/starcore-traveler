@@ -5,13 +5,13 @@ PASS: availability helper reports the entry as missing
 PASS: level_01 loads with the DLC scene absent
 PASS: title menu is open
 PASS: hidden entry still exists as a node
-PASS: missing DLC hides the 裂隙工坊 button
+PASS: missing DLC hides the 瑁傞殭宸ュ潑 button
 PASS: missing DLC leaves the button disabled
 PASS: hidden button cannot take focus [0]
 PASS: start focus_next is still settings
 PASS: settings focus_next is still quit
 PASS: quit focus_next still reaches the trial button
 PASS: trial focus_next loops back to start, skipping the hidden entry
-PASS: existing 开始游戏 row stays visible and enabled
+PASS: existing 寮€濮嬫父鎴?row stays visible and enabled
 PASS: existing start row still takes focus
 RIFT_TITLE_MISSING_TEST checks=14 failures=0

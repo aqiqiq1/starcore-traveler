@@ -7,23 +7,49 @@ PASS: opening the guide pauses the tree
 PASS: trial guide has 3 pages [3]
 PASS: trial page indicator starts at 1 / 3 [1 / 3]
 PASS: guide panel is 560x236 [(560.0, 236.0)]
-PASS: diagram is 160x90 [(160.0, 90.0)]
-PASS: trial page 1 draws the gold/cyan gates [gates]
+PASS: page binds demo trial_gate [trial_gate]
+PASS: demo trial_gate is present
+PASS: demo trial_gate has 24 frames [24]
+PASS: demo trial_gate plays at 8 fps [8.00]
+PASS: demo window is 256x144 [(256.0, 144.0)]
 PASS: footer shows F next + hold-space skip [F 涓嬩竴椤?路 闀挎寜绌烘牸 璺宠繃]
+PASS: page 1 demo is playing [frame=5]
 PASS: Esc does not close the guide
 PASS: Esc does not open the pause page
 PASS: a short Space tap changes nothing [page=0]
 PASS: F advances to page 2
 PASS: page indicator is 2 / 3 [2 / 3]
+PASS: page 2 demo restarts at frame 0 [frame=0]
+PASS: page binds demo trial_gate_inside [trial_gate_inside]
+PASS: demo trial_gate_inside is present
+PASS: demo trial_gate_inside has 24 frames [24]
+PASS: demo trial_gate_inside plays at 8 fps [8.00]
+PASS: demo window is 256x144 [(256.0, 144.0)]
+PASS: page 2 demo is playing [frame=3]
 PASS: F advances to page 3
 PASS: page indicator is 3 / 3 [3 / 3]
+PASS: page 3 demo restarts at frame 0 [frame=0]
+PASS: page binds demo trial_guard_hit [trial_guard_hit]
+PASS: demo trial_guard_hit is present
+PASS: demo trial_guard_hit has 24 frames [24]
+PASS: demo trial_guard_hit plays at 8 fps [8.00]
+PASS: demo window is 256x144 [(256.0, 144.0)]
 PASS: last page footer says F closes [F 鍏抽棴 路 闀挎寜绌烘牸 璺宠繃]
-PASS: trial page 3 draws the twin guard dots [twins]
+PASS: page 3 demo is playing [frame=3]
 PASS: long Space hold closes the guide
 PASS: skip bar is visible during the hold
 PASS: closing the guide unpauses the tree
 PASS: trial guide opened exactly once [1]
 PASS: trial guide does not reopen after closing
+PASS: guide can reopen for the missing-demo fallback
+PASS: missing demo is not treated as a playing strip
+PASS: missing demo shows the placeholder
+PASS: placeholder text is 婕旂ず缂哄け [婕旂ず缂哄け]
+PASS: missing demo has no frame count [0]
+PASS: missing demo keeps the page text
+PASS: missing demo fallback still advances pages
+PASS: missing demo guide closes with F
+PASS: missing demo close unpauses the tree
 PASS: player can move after closing the trial guide [x=59.21]
 === RIFT GUIDE ===
 PASS: rift auto-creates the shared guide
@@ -31,13 +57,30 @@ PASS: rift guide opens at level start
 PASS: rift guide pauses the tree
 PASS: rift guide has 3 pages [3]
 PASS: rift page indicator starts at 1 / 3 [1 / 3]
-PASS: rift page 1 draws the purple inversion curtain [curtain]
+PASS: page binds demo rift_inversion [rift_inversion]
+PASS: demo rift_inversion is present
+PASS: demo rift_inversion has 24 frames [24]
+PASS: demo rift_inversion plays at 8 fps [8.00]
+PASS: demo window is 256x144 [(256.0, 144.0)]
+PASS: rift page 1 demo is playing [frame=4]
 PASS: rift F advances to page 2
-PASS: rift page 2 draws the horizontal light bridge [bridge]
+PASS: rift page 2 demo restarts at frame 0 [frame=0]
+PASS: page binds demo rift_bridge [rift_bridge]
+PASS: demo rift_bridge is present
+PASS: demo rift_bridge has 24 frames [24]
+PASS: demo rift_bridge plays at 8 fps [8.00]
+PASS: demo window is 256x144 [(256.0, 144.0)]
+PASS: rift page 2 demo is playing [frame=3]
 PASS: rift F advances to page 3
-PASS: rift page 3 draws the twin guard dots [twins]
+PASS: rift page 3 demo restarts at frame 0 [frame=0]
+PASS: page binds demo rift_twins [rift_twins]
+PASS: demo rift_twins is present
+PASS: demo rift_twins has 24 frames [24]
+PASS: demo rift_twins plays at 8 fps [8.00]
+PASS: demo window is 256x144 [(256.0, 144.0)]
+PASS: rift page 3 demo is playing [frame=3]
 PASS: F on the last page closes the rift guide
 PASS: rift guide close unpauses the tree
 PASS: rift guide opened exactly once [1]
-PASS: player can move after closing the rift guide [x=59.21]
-DLC_GUIDE_TEST checks=38 failures=0
+PASS: player can move after closing the rift guide [x=55.88]
+DLC_GUIDE_TEST checks=81 failures=0

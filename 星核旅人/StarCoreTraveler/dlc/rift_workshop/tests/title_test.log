@@ -5,13 +5,13 @@ PASS: availability helper reports the entry
 PASS: availability helper rejects a missing path
 PASS: level_01 loads for the keyboard test
 PASS: title menu is open
-PASS: menu exposes the 裂隙工坊 button
+PASS: menu exposes the 瑁傞殭宸ュ潑 button
 PASS: rift entry is visible while the scene exists
 PASS: rift entry is enabled while the scene exists
-PASS: button text is 裂隙工坊 [裂隙工坊]
+PASS: button text is 瑁傞殭宸ュ潑 [瑁傞殭宸ュ潑]
 PASS: button uses STONE variant [1]
 PASS: button is 112x20 [(112.0, 20.0)]
-PASS: button sits below the 试炼场 row [y=262.0]
+PASS: button sits below the 璇曠偧鍦?row [y=262.0]
 PASS: button sits at y=262 [y=262.0]
 PASS: button lies inside the 640x360 menu [[P: (264.0, 262.0), S: (112.0, 20.0)]]
 PASS: button is keyboard focusable
@@ -29,9 +29,9 @@ PASS: rift button can take keyboard focus
 PASS: Enter on the focused rift button opens the chapter [current=res://dlc/rift_workshop/rift_workshop.tscn]
 PASS: level_01 loads again for the mouse test
 PASS: title menu reopens
-PASS: mouse click on 裂隙工坊 opens the chapter [current=res://dlc/rift_workshop/rift_workshop.tscn]
-PASS: existing 开始游戏 row still triggers the opening
+PASS: mouse click on 瑁傞殭宸ュ潑 opens the chapter [current=res://dlc/rift_workshop/rift_workshop.tscn]
+PASS: existing 寮€濮嬫父鎴?row still triggers the opening
 PASS: start no longer leaves the menu idle [title_fade]
-PASS: existing 设置 row still opens settings
+PASS: existing 璁剧疆 row still opens settings
 PASS: Esc still closes settings
 RIFT_TITLE_TEST checks=34 failures=0

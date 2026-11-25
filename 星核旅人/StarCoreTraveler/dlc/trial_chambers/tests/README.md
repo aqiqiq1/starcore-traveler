@@ -133,7 +133,8 @@ Godot：`D:/Godot/Godot_v4.7.2-stable_win64_console.exe`，工程目录：`D:/go
 | 标题入口 | **25 / 0** | `title_test.log` |
 | 暂停返回标题 | **5 / 0** | `pause_title_test.log` |
 | 真实 J（共享测试，含 trial） | **23 / 0** | `../ui/tests/real_j_damage_test.log` |
-| 开场说明页（共享测试） | **38 / 0** | `../ui/tests/guide_test.log` |
+| 开场说明页（共享测试） | **81 / 0** | `../ui/tests/guide_test.log` |
+| 说明页演示 | 3 页均真实关卡帧条 24 帧 / 8 fps | `../ui/demos/trial_*.png` |
 
 真实 J 实测（修复后）：
 

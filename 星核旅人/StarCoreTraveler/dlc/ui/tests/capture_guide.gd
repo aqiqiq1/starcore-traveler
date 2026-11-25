@@ -27,6 +27,10 @@ func _wait_process(count: int) -> void:
 		await get_tree().process_frame
 
 
+func _wait_seconds(seconds: float) -> void:
+	await get_tree().create_timer(seconds, true).timeout
+
+
 func _save(name: String) -> void:
 	await RenderingServer.frame_post_draw
 	var directory: String = ProjectSettings.globalize_path(OUT_DIR)
@@ -66,10 +70,14 @@ func _capture_chapter(path: String, prefix: String) -> void:
 	if guide == null or not guide.is_open():
 		print("CAPTURE_FAIL %s guide not open" % prefix)
 		return
+	# Let the real gameplay loop reach a readable action frame on every page.
+	await _wait_seconds(1.6)
 	await _save("%s_guide_1.png" % prefix)
 	await _tap_f()
+	await _wait_seconds(1.6)
 	await _save("%s_guide_2.png" % prefix)
 	await _tap_f()
+	await _wait_seconds(1.6)
 	await _save("%s_guide_3.png" % prefix)
 	await _tap_f()
 	await _wait_process(4)

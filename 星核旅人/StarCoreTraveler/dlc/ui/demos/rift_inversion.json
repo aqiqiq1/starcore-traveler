@@ -1,0 +1,19 @@
+{
+	"camera": {
+		"wide_limits": false,
+		"zoom": 1.0
+	},
+	"crop": {
+		"h": 144,
+		"w": 256,
+		"x": 190,
+		"y": 190
+	},
+	"fps": 8.0,
+	"frame_height": 144,
+	"frame_width": 256,
+	"frames": 24,
+	"id": "rift_inversion",
+	"note": "Formal rift corridor. Player walks into InversionB; the automatic field flips the phase once and flashes.",
+	"source": "formal DLC scene, real input/state"
+}
