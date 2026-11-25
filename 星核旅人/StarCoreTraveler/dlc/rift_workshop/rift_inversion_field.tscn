@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://dlc/rift_workshop/rift_inversion_field.gd" id="1_field"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_field"]
+size = Vector2(24, 120)
+
+[node name="InversionField" type="Node2D"]
+z_index = 3
+script = ExtResource("1_field")
+
+[node name="Trigger" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+monitoring = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Trigger"]
+position = Vector2(0, -60)
+shape = SubResource("RectangleShape2D_field")

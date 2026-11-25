@@ -1,0 +1,42 @@
+﻿Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: rift scene loads
+PASS: chapter exposes an L3Player
+PASS: spawn is 澜相
+PASS: real walk reaches the terrace start [x=633.30 y=279.93]
+PASS: first curtain fired while walking [triggers=1]
+PASS: second curtain fired while walking [triggers=1]
+PASS: corridor ends in 澜相 (cyan gate passed)
+PASS: player stands on the raised terrace [y=279.93]
+PASS: gold bridge is not solid for the arriving 澜相 player
+PASS: HUD asks for the bridges [目标：Q 换相，让光桥实体化]
+PASS: Q turns the player 辉相 for the gold bridge
+PASS: gold bridge materialised
+PASS: walked across gold bridge 1 to landing A [x=773.20 y=279.93]
+PASS: Q turns the player 澜相 for the cyan bridge
+PASS: cyan bridge materialised
+PASS: walked across cyan bridge 2 to landing B [x=883.31 y=279.93]
+PASS: Q turns the player 辉相 for the second gold bridge
+PASS: second gold bridge materialised
+PASS: walked across gold bridge 3 to the end terrace [x=1003.66 y=279.93]
+PASS: walking over the marker records the checkpoint [x=1043.64]
+PASS: walking into the arena wakes the twin guards [x=1099.52 y=290.93]
+PASS: HUD switches to the twin guard objective [目标：击败双生守卫（0 / 2）]
+PASS: gold guard hit 1 resolved [marks=1]
+PASS: gold guard hit 2 resolved [marks=2]
+PASS: gold guard hit 3 resolved [marks=3]
+PASS: gold guard defeated [guards=1]
+PASS: cyan guard hit 1 resolved [marks=1]
+PASS: cyan guard hit 2 resolved [marks=2]
+PASS: cyan guard hit 3 resolved [marks=3]
+PASS: both guards defeated [guards=2]
+PASS: finish core becomes bright
+PASS: walking into the finish closes the rift [x=1543.57]
+PASS: completion page is visible
+PASS: completion text is 裂隙封闭 · 用时 mm:ss [裂隙封闭 · 用时 00:23]
+PASS: completion time is real [23.57 s]
+RIFT_ROUTE_COMPLETION_TEXT 裂隙封闭 · 用时 00:23
+PASS: E returns to level_01.tscn title [res://scenes/level_01.tscn]
+PASS: returned scene contains the title menu
+RIFT_ROUTE legs=corridor(585)=633.3, bridge1(770)=773.2/279.9, bridge2(880)=883.3/279.9, bridge3(1000)=1003.7/279.9, checkpoint(1040)=1043.6/279.9, arena(1096)=1099.5/290.9, finish(1545)=1543.6/320.0
+RIFT_ROUTE_TEST checks=37 failures=0

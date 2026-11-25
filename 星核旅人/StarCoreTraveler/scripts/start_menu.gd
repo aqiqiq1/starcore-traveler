@@ -32,6 +32,10 @@ const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const TRIAL_SCENE_PATH: String = "res://dlc/trial_chambers/trial_chambers.tscn"
+## Optional DLC chapter 2.  Its entry only exists while the scene file is
+## present; with dlc/rift_workshop/ removed the base game shows the original
+## three rows again (plus the trial entry if that DLC is present).
+const RIFT_SCENE_PATH: String = "res://dlc/rift_workshop/rift_workshop.tscn"
 
 const UI_BASE: Texture2D = preload("res://assets/menu/main_menu_ui_640.png")
 const UI_FOCUS_START: Texture2D = preload("res://assets/menu/main_menu_focus_start_640.png")
@@ -47,6 +51,9 @@ const QUIT_RECT: Rect2 = Rect2(284.0, 212.0, 72.0, 20.0)
 ## Optional trial entry, directly below the existing Quit row.  112x20 is the
 ## same small STONE button style used by the settings page.
 const TRIAL_RECT: Rect2 = Rect2(264.0, 238.0, 112.0, 20.0)
+## Optional rift-workshop entry, directly below the trial row.  Same 112x20
+## STONE style, same focus chain, hidden when the DLC scene is missing.
+const RIFT_RECT: Rect2 = Rect2(264.0, 262.0, 112.0, 20.0)
 const RETURN_RECT: Rect2 = Rect2(324.0, 262.0, 144.0, 24.0)
 const SLIDER_RECT: Rect2 = Rect2(172.0, 92.0, 296.0, 16.0)
 const PERCENT_RECT: Rect2 = Rect2(386.0, 74.0, 80.0, 14.0)
@@ -96,6 +103,7 @@ var _start_button: Button = null
 var _settings_button: Button = null
 var _quit_button: Button = null
 var _trial_button: PixelMenuButton = null
+var _rift_button: PixelMenuButton = null
 
 var _settings_layer: Control = null
 var _settings_return_focus_rect: TextureRect = null
@@ -178,6 +186,8 @@ func activate(level: Node, menu_camera: Camera2D) -> void:
 	_settings_button.disabled = false
 	_quit_button.disabled = false
 	_trial_button.disabled = false
+	if _rift_button != null and _rift_button.visible:
+		_rift_button.disabled = false
 	_settings_layer.visible = false
 	_pending_overlay.visible = false
 	_pause_overlay.visible = false
@@ -275,6 +285,16 @@ func get_quit_button() -> Button:
 
 func get_trial_button() -> PixelMenuButton:
 	return _trial_button
+
+
+func get_rift_button() -> PixelMenuButton:
+	return _rift_button
+
+
+## True when the DLC scene file exists on disk.  Used by the menu build and by
+## the availability test; returning false hides the entry instead of crashing.
+static func is_rift_entry_available(path: String = RIFT_SCENE_PATH) -> bool:
+	return ResourceLoader.exists(path)
 
 
 func get_slider() -> PixelVolumeSlider:
@@ -446,9 +466,25 @@ func _build_ui() -> void:
 	_trial_button.focus_exited.connect(_deferred_refresh_focus)
 	_trial_button.mouse_entered.connect(_on_hover.bind("trial"))
 	_trial_button.mouse_exited.connect(_on_unhover.bind("trial"))
-	var trial_available: bool = ResourceLoader.exists(TRIAL_SCENE_PATH)
+	var trial_available: bool = FileAccess.file_exists(TRIAL_SCENE_PATH)
 	_trial_button.visible = trial_available
 	_trial_button.disabled = not trial_available
+
+	# Optional DLC chapter 2 entry, below the trial row.  Building it always and
+	# only hiding/disabling it when the scene file is missing keeps every other
+	# menu path identical; the focus chain skips hidden entries.
+	_rift_button = _menu_button(
+		"RiftButton", "裂隙工坊", RIFT_RECT, PixelMenuButton.Variant.STONE
+	)
+	_fade_group.add_child(_rift_button)
+	_rift_button.pressed.connect(_on_rift_pressed)
+	_rift_button.focus_entered.connect(_deferred_refresh_focus)
+	_rift_button.focus_exited.connect(_deferred_refresh_focus)
+	_rift_button.mouse_entered.connect(_on_hover.bind("rift"))
+	_rift_button.mouse_exited.connect(_on_unhover.bind("rift"))
+	var rift_available: bool = FileAccess.file_exists(RIFT_SCENE_PATH)
+	_rift_button.visible = rift_available
+	_rift_button.disabled = not rift_available
 	_refresh_menu_focus_chain()
 
 	_settings_layer = _build_settings_layer()
@@ -798,19 +834,22 @@ func _refresh_focus_overlays() -> void:
 func _refresh_menu_focus_chain() -> void:
 	if (
 		_start_button == null or _settings_button == null or _quit_button == null
-		or _trial_button == null
 	):
 		return
-	var chain: Array[Control] = [
-		_start_button, _settings_button, _quit_button, _trial_button
-	]
+	var chain: Array[Control] = [_start_button, _settings_button, _quit_button]
+	# Hidden DLC entries are skipped, so the base three-row loop and the
+	# five-row loop both stay a clean ring.
+	if _trial_button != null and _trial_button.visible:
+		chain.append(_trial_button)
+	if _rift_button != null and _rift_button.visible:
+		chain.append(_rift_button)
 	for index: int in range(chain.size()):
 		var current: Control = chain[index]
 		var next: Control = chain[(index + 1) % chain.size()]
 		var previous: Control = chain[(index - 1 + chain.size()) % chain.size()]
 		current.focus_next = current.get_path_to(next)
 		current.focus_previous = current.get_path_to(previous)
-		# Up/Down follow the same three-entry loop as Tab/Shift+Tab.
+		# Up/Down follow the same entry loop as Tab/Shift+Tab.
 		current.focus_neighbor_bottom = current.get_path_to(next)
 		current.focus_neighbor_top = current.get_path_to(previous)
 
@@ -839,10 +878,14 @@ func _on_start_pressed() -> void:
 	_settings_button.release_focus()
 	_quit_button.release_focus()
 	_trial_button.release_focus()
+	if _rift_button != null:
+		_rift_button.release_focus()
 	_start_button.disabled = true
 	_settings_button.disabled = true
 	_quit_button.disabled = true
 	_trial_button.disabled = true
+	if _rift_button != null:
+		_rift_button.disabled = true
 	_hover_kind = ""
 	_focus_start_rect.visible = false
 	_focus_settings_rect.visible = false
@@ -874,10 +917,14 @@ func _on_quit_pressed() -> void:
 	_settings_button.release_focus()
 	_quit_button.release_focus()
 	_trial_button.release_focus()
+	if _rift_button != null:
+		_rift_button.release_focus()
 	_start_button.disabled = true
 	_settings_button.disabled = true
 	_quit_button.disabled = true
 	_trial_button.disabled = true
+	if _rift_button != null:
+		_rift_button.disabled = true
 	_hover_kind = ""
 	_focus_start_rect.visible = false
 	_focus_settings_rect.visible = false
@@ -902,10 +949,14 @@ func _on_trial_pressed() -> void:
 	_settings_button.release_focus()
 	_quit_button.release_focus()
 	_trial_button.release_focus()
+	if _rift_button != null:
+		_rift_button.release_focus()
 	_start_button.disabled = true
 	_settings_button.disabled = true
 	_quit_button.disabled = true
 	_trial_button.disabled = true
+	if _rift_button != null:
+		_rift_button.disabled = true
 	_hover_kind = ""
 	_focus_start_rect.visible = false
 	_focus_settings_rect.visible = false
@@ -928,6 +979,56 @@ func _restore_after_failed_trial() -> void:
 	_settings_button.disabled = false
 	_quit_button.disabled = false
 	_trial_button.disabled = false
+	if _rift_button != null and _rift_button.visible:
+		_rift_button.disabled = false
+	call_deferred("_focus_start")
+
+
+## Optional rift-workshop entry.  Same lock/release sequence as the trial row:
+## every hot zone is disabled, focus is released and one-shot actions are
+## cleared before the scene swap, so the activating Enter/Space cannot become a
+## jump or a Q press on the chapter's first frames.
+func _on_rift_pressed() -> void:
+	if _rift_button == null or not _rift_button.visible:
+		return
+	if _phase != Phase.MENU or _settings_open or _start_locked or _quit_locked:
+		return
+	if _display != null and _display.is_pending():
+		return
+	DemoAudio.play_ui_click()
+	_start_locked = true
+	_start_button.release_focus()
+	_settings_button.release_focus()
+	_quit_button.release_focus()
+	_trial_button.release_focus()
+	_rift_button.release_focus()
+	_start_button.disabled = true
+	_settings_button.disabled = true
+	_quit_button.disabled = true
+	_trial_button.disabled = true
+	_rift_button.disabled = true
+	_hover_kind = ""
+	_focus_start_rect.visible = false
+	_focus_settings_rect.visible = false
+	_focus_quit_rect.visible = false
+	LEVEL_FLOW.release_one_shot_actions()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
+	var error: Error = get_tree().change_scene_to_file(RIFT_SCENE_PATH)
+	if error != OK:
+		_restore_after_failed_rift()
+
+
+func _restore_after_failed_rift() -> void:
+	_start_locked = false
+	_phase = Phase.MENU
+	_start_button.disabled = false
+	_settings_button.disabled = false
+	_quit_button.disabled = false
+	_trial_button.disabled = false
+	_rift_button.disabled = false
 	call_deferred("_focus_start")
 
 
@@ -1144,10 +1245,14 @@ func _open_settings() -> void:
 	_settings_button.disabled = true
 	_quit_button.disabled = true
 	_trial_button.disabled = true
+	if _rift_button != null:
+		_rift_button.disabled = true
 	_start_button.release_focus()
 	_settings_button.release_focus()
 	_quit_button.release_focus()
 	_trial_button.release_focus()
+	if _rift_button != null:
+		_rift_button.release_focus()
 	_hover_kind = ""
 	_focus_quit_rect.visible = false
 	_fade_group.visible = false
@@ -1188,6 +1293,8 @@ func _close_settings() -> void:
 	_settings_button.disabled = false
 	_quit_button.disabled = false
 	_trial_button.disabled = false
+	if _rift_button != null and _rift_button.visible:
+		_rift_button.disabled = false
 	_settings_return_focus_rect.visible = false
 	call_deferred("_focus_settings")
 

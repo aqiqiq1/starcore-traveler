@@ -1,0 +1,97 @@
+﻿Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: rift scene loads
+PASS: chapter exposes an L3Player
+PASS: rift HUD exists
+PASS: spawn is 澜相
+PASS: HUD title reads 裂隙工坊 [裂隙工坊]
+PASS: HUD shows an objective [目标：穿过反转回廊]
+PASS: four PolarityWisps exist [4]
+PASS: twin guards start in opposite phases
+PASS: bridges alternate gold / cyan / gold
+PASS: Esc opens the simple pause page
+PASS: HUD pause overlay is visible
+PASS: pause page exposes 继续 and 返回标题
+PASS: Enter on 继续 closes the pause page
+PASS: resume unpauses the tree
+PASS: field is armed before entry [0]
+PASS: player can walk into the inversion field [x=167.54]
+PASS: entry flips the phase exactly once [triggers=1]
+PASS: field flipped the player to 辉相
+PASS: player body is inside the 24 px curtain
+PASS: standing inside does not flip again [triggers=1]
+PASS: phase stays 辉相 while inside
+PASS: Q inside the field switches to 澜相
+PASS: Q inside does not count as a field entry [1]
+PASS: player can leave the field [x=237.65]
+PASS: field reads the player as outside
+PASS: re-entry flips again [triggers=2]
+PASS: second entry returns to 澜相
+PASS: gold gate is open for 辉相
+PASS: gold gate is solid for 澜相
+PASS: gold bridge is solid for a 辉相 player
+PASS: solid bridge uses collision layer 1 [1]
+PASS: player stands on the matching bridge [y=280.00]
+PASS: bridge disappears on the other phase
+PASS: gone bridge uses collision layer 0 [0]
+PASS: falling lands on the safe lower shelf, no kill line [y=339.99]
+PASS: safe shelf needs no recovery fade
+PASS: player can walk on the safe shelf [x=745.93]
+PASS: re-materialising waits for the body to clear
+PASS: bridge solidifies after the body falls clear [solid]
+PASS: player can stand on the bridge again after retry [y=280.00]
+PASS: stepping on the marker records the checkpoint
+PASS: checkpoint art switches to active
+PASS: falling below the kill line starts the recovery fade
+PASS: fall recovery finishes without staying black
+PASS: fall recovery returns to the recorded checkpoint [x=1030.00 y=280.00]
+PASS: wisp phase period is 2.2 s [2.20]
+PASS: wisp pulse period is 3.0 s [3.00]
+PASS: wisp pulses within its 3 s period
+PASS: same phase at the pulse becomes a pull [pull force=170.0]
+PASS: pulse reports a real force [170.0]
+PASS: pull velocity points toward the wisp [vx=90.0]
+PASS: opposite phase at the pulse becomes a push [push]
+PASS: push velocity points away from the wisp [vx=-62.5]
+PASS: one J hit dissolves the wisp
+PASS: other wisps stay alive [wisp0 alive=true]
+PASS: R returns to the start [x=40.00]
+PASS: R restores 澜相
+PASS: R resets the timer [0.15]
+PASS: R clears the checkpoint
+PASS: R respawns defeated wisps
+PASS: R restores both guards
+PASS: R clears completion
+PASS: R leaves no pause lock
+PASS: player can move after R [x=55.25]
+PASS: arena entry flag set
+PASS: both guards wake on arena entry
+PASS: HUD objective switches to the twin guards [目标：击败双生守卫（0 / 2）]
+PASS: two accepted hits start the recovery transition
+PASS: combat recovery finishes without staying black
+PASS: failure returns the player to the arena entrance [x=1100.00]
+PASS: failure clears the hit count
+PASS: both guards reset to ACTIVE after failure
+PASS: player can move after the arena failure [x=1115.25]
+PASS: gold guard true hit 1 resolved [marks=1]
+PASS: gold guard true hit 2 resolved [marks=2]
+PASS: gold guard true hit 3 resolved [marks=3]
+PASS: gold guard is defeated
+PASS: chapter records the gold guard
+PASS: one guard is not enough to open the finish
+PASS: finish stays dim with one guard
+PASS: cyan guard true hit 1 resolved [marks=1]
+PASS: cyan guard true hit 2 resolved [marks=2]
+PASS: cyan guard true hit 3 resolved [marks=3]
+PASS: cyan guard is defeated
+PASS: both guards defeated opens the finish
+PASS: finish point becomes bright after both defeats
+PASS: touching the finish completes the chapter [x=1550.00]
+PASS: completion page is visible
+PASS: completion text is 裂隙封闭 · 用时 mm:ss [裂隙封闭 · 用时 00:07]
+PASS: completion time is real [7.77 s]
+PASS: E returns to level_01.tscn title [res://scenes/level_01.tscn]
+PASS: returned scene contains the title menu
+PASS: title shows the 裂隙工坊 entry while the DLC exists
+PASS: entry text is 裂隙工坊
+RIFT_MECHANICS_TEST checks=94 failures=0

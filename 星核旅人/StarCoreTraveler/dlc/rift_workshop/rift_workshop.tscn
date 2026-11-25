@@ -1,0 +1,233 @@
+[gd_scene load_steps=18 format=3]
+
+[ext_resource type="Script" path="res://dlc/rift_workshop/rift_workshop.gd" id="1_rift"]
+[ext_resource type="Script" path="res://dlc/rift_workshop/rift_hud.gd" id="2_hud"]
+[ext_resource type="PackedScene" path="res://scenes/backgrounds/cloud_ruins_ds03.tscn" id="3_ds03"]
+[ext_resource type="Script" path="res://dlc/rift_workshop/rift_fog.gd" id="4_fog"]
+[ext_resource type="Script" path="res://scripts/level03/l3_terrain.gd" id="5_terrain"]
+[ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_tall.tscn" id="6_col_tall"]
+[ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_broken.tscn" id="7_col_broken"]
+[ext_resource type="PackedScene" path="res://scenes/level03/l3_player.tscn" id="8_player"]
+[ext_resource type="PackedScene" path="res://dlc/trial_chambers/polarity_gate.tscn" id="9_gate"]
+[ext_resource type="PackedScene" path="res://dlc/rift_workshop/rift_inversion_field.tscn" id="10_field"]
+[ext_resource type="PackedScene" path="res://dlc/rift_workshop/rift_phase_bridge.tscn" id="11_bridge"]
+[ext_resource type="PackedScene" path="res://dlc/rift_workshop/rift_polarity_wisp.tscn" id="12_wisp"]
+[ext_resource type="PackedScene" path="res://scenes/level03/guard.tscn" id="13_guard"]
+[ext_resource type="Texture2D" path="res://assets/level03_prototype/key_core_12f.png" id="14_core"]
+[ext_resource type="Script" path="res://scripts/level_checkpoint.gd" id="15_checkpoint"]
+[ext_resource type="Script" path="res://dlc/rift_workshop/rift_audio.gd" id="16_audio"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_checkpoint"]
+size = Vector2(40, 72)
+
+[node name="RiftWorkshop" type="Node2D"]
+process_mode = 3
+process_physics_priority = -10
+script = ExtResource("1_rift")
+
+[node name="Background" type="CanvasLayer" parent="."]
+process_mode = 1
+layer = -10
+
+[node name="CloudRuinsDS03" parent="Background" instance=ExtResource("3_ds03")]
+process_mode = 1
+depth_grade = "l3_depth"
+
+[node name="RiftFog" type="Node2D" parent="Background"]
+process_mode = 1
+script = ExtResource("4_fog")
+
+[node name="Terrain" type="Node2D" parent="."]
+process_mode = 1
+z_index = 2
+
+[node name="Ground" type="Node2D" parent="Terrain"]
+position = Vector2(0, 320)
+script = ExtResource("5_terrain")
+block_rect = Rect2(0, 0, 560, 40)
+
+[node name="TerraceStart" type="Node2D" parent="Terrain"]
+position = Vector2(560, 280)
+script = ExtResource("5_terrain")
+block_rect = Rect2(0, 0, 128, 80)
+
+[node name="LandingA" type="Node2D" parent="Terrain"]
+position = Vector2(752, 280)
+script = ExtResource("5_terrain")
+block_rect = Rect2(0, 0, 48, 80)
+
+[node name="LandingB" type="Node2D" parent="Terrain"]
+position = Vector2(864, 280)
+script = ExtResource("5_terrain")
+block_rect = Rect2(0, 0, 48, 80)
+
+[node name="TerraceEnd" type="Node2D" parent="Terrain"]
+position = Vector2(976, 280)
+script = ExtResource("5_terrain")
+block_rect = Rect2(0, 0, 104, 80)
+
+[node name="PitFloor" type="Node2D" parent="Terrain"]
+position = Vector2(688, 340)
+script = ExtResource("5_terrain")
+block_rect = Rect2(0, 0, 288, 60)
+
+[node name="ArenaGround" type="Node2D" parent="Terrain"]
+position = Vector2(1080, 320)
+script = ExtResource("5_terrain")
+block_rect = Rect2(0, 0, 520, 40)
+
+[node name="Decorations" type="Node2D" parent="."]
+process_mode = 1
+z_index = 1
+
+[node name="ColumnEntry" parent="Decorations" instance=ExtResource("6_col_tall")]
+position = Vector2(96, 320)
+
+[node name="ColumnWisp" parent="Decorations" instance=ExtResource("7_col_broken")]
+position = Vector2(360, 320)
+
+[node name="ColumnGate" parent="Decorations" instance=ExtResource("6_col_tall")]
+position = Vector2(470, 320)
+
+[node name="ColumnTerrace" parent="Decorations" instance=ExtResource("7_col_broken")]
+position = Vector2(1000, 280)
+
+[node name="ColumnArena" parent="Decorations" instance=ExtResource("6_col_tall")]
+position = Vector2(1130, 320)
+
+[node name="ColumnTwin" parent="Decorations" instance=ExtResource("6_col_tall")]
+position = Vector2(1345, 320)
+
+[node name="ColumnFinish" parent="Decorations" instance=ExtResource("7_col_broken")]
+position = Vector2(1520, 320)
+
+[node name="InversionA" parent="." instance=ExtResource("10_field")]
+process_mode = 1
+position = Vector2(160, 320)
+player_path = NodePath("../Player")
+
+[node name="InversionB" parent="." instance=ExtResource("10_field")]
+process_mode = 1
+position = Vector2(400, 320)
+player_path = NodePath("../Player")
+
+[node name="GateGold" parent="." instance=ExtResource("9_gate")]
+process_mode = 1
+position = Vector2(270, 320)
+required_positive = true
+player_path = NodePath("../Player")
+
+[node name="GateCyan" parent="." instance=ExtResource("9_gate")]
+process_mode = 1
+position = Vector2(490, 320)
+required_positive = false
+player_path = NodePath("../Player")
+
+[node name="BridgeA" parent="." instance=ExtResource("11_bridge")]
+process_mode = 1
+position = Vector2(688, 280)
+required_positive = true
+player_path = NodePath("../Player")
+
+[node name="BridgeB" parent="." instance=ExtResource("11_bridge")]
+process_mode = 1
+position = Vector2(800, 280)
+required_positive = false
+player_path = NodePath("../Player")
+
+[node name="BridgeC" parent="." instance=ExtResource("11_bridge")]
+process_mode = 1
+position = Vector2(912, 280)
+required_positive = true
+player_path = NodePath("../Player")
+
+[node name="WispA" parent="." instance=ExtResource("12_wisp")]
+process_mode = 1
+position = Vector2(330, 248)
+start_positive = true
+
+[node name="WispB" parent="." instance=ExtResource("12_wisp")]
+process_mode = 1
+position = Vector2(530, 246)
+start_positive = false
+
+[node name="WispC" parent="." instance=ExtResource("12_wisp")]
+process_mode = 1
+position = Vector2(776, 246)
+start_positive = true
+
+[node name="WispD" parent="." instance=ExtResource("12_wisp")]
+process_mode = 1
+position = Vector2(888, 246)
+start_positive = false
+
+[node name="Player" parent="." instance=ExtResource("8_player")]
+process_mode = 1
+position = Vector2(40, 320)
+allow_self_reset = false
+show_head_polarity = false
+world_left = 0.0
+world_right = 1600.0
+kill_y = 430.0
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0
+limit_left = 0
+limit_top = 0
+limit_right = 1600
+limit_bottom = 360
+drag_horizontal_enabled = false
+drag_vertical_enabled = false
+
+[node name="RiftCheckpoint" type="Area2D" parent="."]
+process_mode = 1
+position = Vector2(1030, 280)
+script = ExtResource("15_checkpoint")
+trigger_size = Vector2(40, 72)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RiftCheckpoint"]
+position = Vector2(0, -36)
+shape = SubResource("RectangleShape2D_checkpoint")
+
+[node name="GuardGold" parent="." instance=ExtResource("13_guard")]
+process_mode = 1
+position = Vector2(1240, 320)
+floor_y = 320.0
+patrol_left = 1150.0
+patrol_right = 1320.0
+pursuit_left = 1120.0
+pursuit_right = 1335.0
+start_positive = true
+
+[node name="GuardCyan" parent="." instance=ExtResource("13_guard")]
+process_mode = 1
+position = Vector2(1450, 320)
+floor_y = 320.0
+patrol_left = 1370.0
+patrol_right = 1530.0
+pursuit_left = 1355.0
+pursuit_right = 1560.0
+start_positive = false
+
+[node name="FinishPoint" type="Node2D" parent="."]
+process_mode = 1
+position = Vector2(1560, 320)
+z_index = 4
+
+[node name="Core" type="Sprite2D" parent="FinishPoint"]
+z_index = 4
+texture_filter = 1
+position = Vector2(0, -34)
+scale = Vector2(2, 2)
+texture = ExtResource("14_core")
+hframes = 12
+
+[node name="Audio" type="Node" parent="."]
+process_mode = 1
+script = ExtResource("16_audio")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+process_mode = 3
+layer = 10
+script = ExtResource("2_hud")

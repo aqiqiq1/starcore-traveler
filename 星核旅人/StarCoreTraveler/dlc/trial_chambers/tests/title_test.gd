@@ -139,18 +139,23 @@ func _run() -> void:
 	_check(trial_button.mouse_filter == Control.MOUSE_FILTER_STOP,
 		"button accepts mouse input")
 
-	# Focus chain: start -> settings -> quit -> trial -> start.
+	# Focus chain: start -> settings -> quit -> trial -> rift -> start
+	# (rift is skipped when its DLC folder is absent).
 	var start_button: Button = menu.get_start_button()
 	var settings_button: Button = menu.get_settings_button()
 	var quit_button: Button = menu.get_quit_button()
+	var rift_button: PixelMenuButton = menu.get_rift_button()
 	_check(start_button.get_node(start_button.focus_next) == settings_button,
 		"start focus_next is settings")
 	_check(settings_button.get_node(settings_button.focus_next) == quit_button,
 		"settings focus_next is quit")
 	_check(quit_button.get_node(quit_button.focus_next) == trial_button,
 		"quit focus_next reaches the trial button")
-	_check(trial_button.get_node(trial_button.focus_next) == start_button,
-		"trial focus_next loops back to start")
+	var trial_next: Control = start_button
+	if rift_button != null and rift_button.visible:
+		trial_next = rift_button
+	_check(trial_button.get_node(trial_button.focus_next) == trial_next,
+		"trial focus_next reaches the next visible entry")
 	_check(trial_button.get_node(trial_button.focus_previous) == quit_button,
 		"trial focus_previous is quit")
 	_check(quit_button.focus_neighbor_bottom != NodePath()
