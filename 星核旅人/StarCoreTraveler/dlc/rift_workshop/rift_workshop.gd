@@ -22,7 +22,7 @@ signal level_completed
 @export var show_intro_guide: bool = true
 
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
-const DLC_GUIDE_SCENE: PackedScene = preload("res://dlc/ui/dlc_guide.tscn")
+const RIFT_GUIDE_SCRIPT: Script = preload("res://dlc/rift_workshop/rift_guide.gd")
 
 const START_SPAWN: Vector2 = Vector2(40.0, 320.0)
 const ARENA_SPAWN: Vector2 = Vector2(1100.0, 320.0)
@@ -35,6 +35,11 @@ const ARENA_LEFT: float = 1080.0
 ## Both guards hover asleep for this long after the arena entry event line, so
 ## the player is never caught between two charge-ups on the first step in.
 const ARENA_INTRO_TIME: float = 0.8
+## The gold guard's first real GRAVITY_CHARGE starts as soon as the player is
+## this close after the opening.  The guard's own teaching state
+## (`reset_state(..., keep_teaching = true)`) makes GRAVITY its first action;
+## this range only decides when the queued teaching charge fires.
+const TEACHING_TRIGGER_RANGE: float = 110.0
 const FINISH_RANGE: float = 18.0
 const KILL_Y: float = 430.0
 const WORLD_RIGHT: float = 1600.0
@@ -65,6 +70,7 @@ enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 @onready var _finish_core: Sprite2D = $FinishPoint/Core
 @onready var _audio = $Audio
 @onready var _ambience: DlcChapterAmbience = $Ambience
+@onready var _cue: RiftGuardCue = $GuardCue
 
 var _wisps: Array[RiftPolarityWisp] = []
 
@@ -75,6 +81,7 @@ var _arena_entered: bool = false
 var _guards_defeated: int = 0
 var _gold_defeated: bool = false
 var _cyan_defeated: bool = false
+var _gold_teaching_pending: bool = false
 var _arena_intro_left: float = 0.0
 var _checkpoint_active: bool = false
 var _finish_time: float = 0.0
@@ -141,13 +148,17 @@ func _ready() -> void:
 
 	_guard_gold.set_player_target(_player)
 	_guard_cyan.set_player_target(_player)
-	_guard_gold.reset_state(GUARD_GOLD_SPAWN, true, false)
-	_guard_cyan.reset_state(GUARD_CYAN_SPAWN, false, false)
+	# keep_teaching = true: the guards' own approved teaching contract makes
+	# GRAVITY_CHARGE their first action.  The old false value was the actual
+	# reason neither guard ever exposed a weakpoint in real play.
+	_guard_gold.reset_state(GUARD_GOLD_SPAWN, true, true)
+	_guard_cyan.reset_state(GUARD_CYAN_SPAWN, false, true)
 	_guard_gold.set_suspended(true)
 	_guard_cyan.set_suspended(true)
 	_player.set_strike_source(_guard_gold)
 	_connect_guard(_guard_gold)
 	_connect_guard(_guard_cyan)
+	_cue.configure(_player, [_guard_gold, _guard_cyan])
 
 	for wisp: RiftPolarityWisp in _wisps:
 		wisp.defeated.connect(_on_wisp_defeated)
@@ -181,7 +192,7 @@ func _open_intro_guide() -> void:
 		return
 	if _intro_guide != null and is_instance_valid(_intro_guide):
 		return
-	_intro_guide = DLC_GUIDE_SCENE.instantiate() as DlcGuide
+	_intro_guide = RIFT_GUIDE_SCRIPT.new() as DlcGuide
 	if _intro_guide == null:
 		_ambience.play(true)
 		return
@@ -243,18 +254,21 @@ func _physics_process(delta: float) -> void:
 	if _arena_intro_left > 0.0:
 		_arena_intro_left = maxf(_arena_intro_left - delta, 0.0)
 		if _arena_intro_left <= 0.0:
-			_wake_twin_guards()
+			_wake_gold_guard()
 
 	_apply_guard_force()
 	_update_strike_source()
+	_tick_gold_teaching()
 
 	if not _arena_entered and _player.global_position.x >= ARENA_ENTER_X:
 		_arena_entered = true
 		_arena_intro_left = ARENA_INTRO_TIME
-		# Both stay suspended for the whole intro, then wake on the same tick.
+		# Only the gold guard is introduced first; the cyan guard stays asleep
+		# until the gold one is defeated, so the first fight is readable.
 		_guard_gold.set_suspended(true)
 		_guard_cyan.set_suspended(true)
-		_hud.show_event("双生守卫苏醒 · 金 / 青", 2.2)
+		_gold_teaching_pending = false
+		_hud.show_event("金守卫先苏醒 · 青守卫待机", 2.2)
 		DemoAudio.play_record_save()
 	_update_objective()
 	if _guards_defeated >= 2 and not _completed:
@@ -349,8 +363,12 @@ func _update_objective(force: bool = false) -> void:
 		text = "目标：触碰裂隙核心"
 		key = "finish"
 	elif _arena_entered:
-		text = "目标：击败双生守卫（%d / 2）" % _guards_defeated
-		key = "arena"
+		if not _gold_defeated:
+			text = "目标：先击败金守卫（蓄力时异相 J）"
+			key = "arena_gold"
+		else:
+			text = "目标：再击败青守卫（%d / 2）" % _guards_defeated
+			key = "arena_cyan"
 	elif _player.global_position.x >= 976.0:
 		text = "目标：沿高台前进，记录检查点"
 		key = "terrace"
@@ -450,9 +468,9 @@ func _set_paused(value: bool) -> void:
 	LEVEL_FLOW.release_one_shot_actions()
 	_player.clear_input_buffers()
 	# A pause during the 0.8 s intro must not shorten or skip it; the intro
-	# timer resumes with the tree and wakes both guards itself.
+	# timer resumes with the tree and wakes the gold guard itself.
 	if _arena_entered and not _completed and _arena_intro_left <= 0.0:
-		_wake_twin_guards()
+		_resume_guards_after_pause()
 
 
 # --- room 1: inversion / gates / wisps -------------------------------------
@@ -507,16 +525,22 @@ func _show_attack_result_hint(gold_result: Dictionary, cyan_result: Dictionary) 
 	var gold_dx: float = absf(_guard_gold.global_position.x - _player.global_position.x)
 	var cyan_dx: float = absf(_guard_cyan.global_position.x - _player.global_position.x)
 	var result: Dictionary = gold_result if gold_dx <= cyan_dx else cyan_result
+	var nearest: L3Guard = _guard_gold if gold_dx <= cyan_dx else _guard_cyan
 	var dx: float = minf(gold_dx, cyan_dx)
 	if dx > 220.0:
 		return
-	match String(result.get("code", "")):
+	var code: String = String(result.get("code", ""))
+	if code == "INACTIVE":
+		if nearest != null and is_instance_valid(nearest) and nearest.is_suspended():
+			_hud.show_event("%s待机 · 先击败金守卫" % _guard_label(nearest), 1.5)
+		return
+	match code:
 		"SHELL_SHATTER":
-			_hud.show_event("仅碎壳 · 蓄力时异相 J 才掉血", 1.4)
+			_hud.show_event("仅碎壳 · 蓄力时异相 J 才是真伤", 1.5)
 		"SAME_PHASE":
-			_hud.show_event("同相无效 · Q 切异相再按 J", 1.4)
+			_hud.show_event("同相无效 · Q 切异相，蓄力时再 J", 1.5)
 		"MISS_RANGE":
-			_hud.show_event("距离不够 · 贴近守卫再按 J", 1.4)
+			_hud.show_event("距离不够 · 贴近到 36px 内再 J", 1.4)
 		"MISS_BEHIND":
 			_hud.show_event("转身面向守卫再按 J", 1.4)
 		"BLOCKED":
@@ -557,16 +581,55 @@ func _on_checkpoint_entered(checkpoint: LevelCheckpoint) -> void:
 
 # --- room 3: twin guards ---------------------------------------------------
 
-## Wakes both remaining guards on the same tick, after the arena intro.  Their
-## health, attack, true-damage and patrol rules are untouched.
-func _wake_twin_guards() -> void:
+## Gold first: after the 0.8 s arena hover only the gold guard wakes.  Its
+## reset_state(keep_teaching = true) already queued GRAVITY as the first action;
+## the queued teaching charge below fires as soon as the player is close enough.
+func _wake_gold_guard() -> void:
 	if _completed or _scene_leaving or _recovery_active:
 		return
+	if not _arena_entered or _gold_defeated:
+		return
+	_guard_gold.set_suspended(false)
+	_gold_teaching_pending = true
+
+
+func _wake_cyan_guard() -> void:
+	if _completed or _scene_leaving or _recovery_active:
+		return
+	if not _arena_entered or _cyan_defeated:
+		return
+	_guard_cyan.set_suspended(false)
+
+
+## The guard's own force_gravity_first() requires teaching_seen and ACTIVE; it
+## starts the already-approved GRAVITY_CHARGE (not a scripted hit).  If the
+## player is far, the action stays queued, and the guard's own 100 px trigger
+## would fire first anyway.
+func _tick_gold_teaching() -> void:
+	if not _gold_teaching_pending:
+		return
+	if _gold_defeated or not is_instance_valid(_guard_gold) or _guard_gold.is_defeated():
+		_gold_teaching_pending = false
+		return
+	if _guard_gold.is_suspended():
+		return
+	if _guard_gold.get_state_name() == "GRAVITY_CHARGE":
+		_gold_teaching_pending = false
+		return
+	var dx: float = absf(_player.global_position.x - _guard_gold.global_position.x)
+	if dx <= TEACHING_TRIGGER_RANGE:
+		_gold_teaching_pending = false
+		_guard_gold.force_gravity_first()
+
+
+## After a pause, only the guard that is allowed to be awake resumes: gold
+## while it lives, cyan only after the gold one is down.
+func _resume_guards_after_pause() -> void:
 	if not _arena_entered:
 		return
 	if not _gold_defeated:
 		_guard_gold.set_suspended(false)
-	if not _cyan_defeated:
+	elif not _cyan_defeated:
 		_guard_cyan.set_suspended(false)
 
 
@@ -593,7 +656,7 @@ func _on_guard_shattered(guard: L3Guard) -> void:
 
 
 func _on_guard_charge_started(_positive: bool, guard: L3Guard) -> void:
-	_hud.show_event("%s引力蓄力 · 异相 J 有效" % _guard_label(guard), 1.0)
+	_hud.show_event("%s蓄力中 · 异相 J 打弱点" % _guard_label(guard), 1.4)
 
 
 func _on_guard_slam_contact(_facing: int, _guard: L3Guard) -> void:
@@ -634,6 +697,11 @@ func _on_guard_defeated(guard: L3Guard) -> void:
 		# replaced it with the core line, so the final count was never readable.
 		_hud.show_event("双生守卫已倒下 · 2 / 2 · 裂隙核心开启", 2.4)
 		_audio.play_bridge(true)
+	elif guard == _guard_gold:
+		# Gold first: its fall is what releases the cyan guard.
+		_gold_teaching_pending = false
+		_wake_cyan_guard()
+		_hud.show_event("金守卫已倒下 · 1 / 2 · 青守卫苏醒", 2.4)
 	else:
 		_hud.show_event(
 			"%s已倒下 · %d / 2" % [_guard_label(guard), _guards_defeated], 2.0
@@ -663,6 +731,7 @@ func _begin_recovery(kind: String) -> void:
 	_recovery_elapsed = 0.0
 	_recovery_alpha = 0.0
 	_attack_key_down = false
+	_gold_teaching_pending = false
 	DemoAudio.play_failure()
 	_hud.set_recovery_alpha(0.0)
 	_player.begin_input_override()
@@ -744,7 +813,10 @@ func _finish_recovery() -> void:
 		_arena_entered and not _completed and not _scene_leaving
 		and _arena_intro_left <= 0.0
 	):
-		_wake_twin_guards()
+		if _gold_defeated:
+			_wake_cyan_guard()
+		else:
+			_wake_gold_guard()
 
 
 ## A failure or a fall inside the arena returns the whole twin fight to its
@@ -758,19 +830,21 @@ func _retry_combat() -> void:
 	_gold_defeated = false
 	_cyan_defeated = false
 	_guards_defeated = 0
-	_guard_gold.reset_state(GUARD_GOLD_SPAWN, true, false)
+	_guard_gold.reset_state(GUARD_GOLD_SPAWN, true, true)
 	_guard_gold.set_player_target(_player)
 	_guard_gold.set_suspended(true)
-	_guard_cyan.reset_state(GUARD_CYAN_SPAWN, false, false)
+	_guard_cyan.reset_state(GUARD_CYAN_SPAWN, false, true)
 	_guard_cyan.set_player_target(_player)
 	_guard_cyan.set_suspended(true)
 	# Written at black; the first physics tick after the fade finishes starts
-	# counting it down, then both guards wake on the same tick.
+	# counting it down, then the gold guard wakes and re-runs its teaching
+	# GRAVITY_CHARGE (keep_teaching = true above).
 	_arena_intro_left = ARENA_INTRO_TIME
+	_gold_teaching_pending = true
 	_reset_player_at(ARENA_SPAWN)
 	_update_finish_marker()
 	_update_objective(true)
-	_hud.show_event("失败 · 回竞技场入口", 1.8)
+	_hud.show_event("失败 · 回竞技场入口 · 先打金守卫", 2.0)
 
 
 func _reset_player_at(point: Vector2) -> void:
@@ -814,6 +888,7 @@ func _complete_chapter() -> void:
 	_completed = true
 	_retry_pending = false
 	_arena_intro_left = 0.0
+	_gold_teaching_pending = false
 	_player_hits = 0
 	_player.clear_input_buffers()
 	_player.clear_external_force()
@@ -887,12 +962,13 @@ func _restart_chapter() -> void:
 	_player.end_recovery_hold()
 	_player.unlock_completion_input()
 	_reset_player_at(START_SPAWN)
-	_guard_gold.reset_state(GUARD_GOLD_SPAWN, true, false)
+	_guard_gold.reset_state(GUARD_GOLD_SPAWN, true, true)
 	_guard_gold.set_player_target(_player)
 	_guard_gold.set_suspended(true)
-	_guard_cyan.reset_state(GUARD_CYAN_SPAWN, false, false)
+	_guard_cyan.reset_state(GUARD_CYAN_SPAWN, false, true)
 	_guard_cyan.set_player_target(_player)
 	_guard_cyan.set_suspended(true)
+	_gold_teaching_pending = false
 	for wisp: RiftPolarityWisp in _wisps:
 		if wisp != null and is_instance_valid(wisp):
 			wisp.respawn()
@@ -948,6 +1024,18 @@ func get_hud() -> RiftWorkshopHUD:
 
 func get_ambience() -> DlcChapterAmbience:
 	return _ambience
+
+
+func get_guard_cue() -> RiftGuardCue:
+	return _cue
+
+
+func is_gold_teaching_pending() -> bool:
+	return _gold_teaching_pending
+
+
+func get_teaching_trigger_range() -> float:
+	return TEACHING_TRIGGER_RANGE
 
 
 func get_intro_guide() -> DlcGuide:

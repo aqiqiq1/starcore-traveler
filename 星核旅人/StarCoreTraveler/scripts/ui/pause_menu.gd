@@ -51,6 +51,7 @@ var _quit_button: PixelMenuButton = null
 var _controls_header: Label = null
 var _controls_labels: Array[Label] = []
 var _font: Font = null
+var _reveal: UiReveal = null
 
 var _settings_host: StartMenu = null
 var _open: bool = false
@@ -65,6 +66,8 @@ func _ready() -> void:
 	_font = _load_font()
 	_build_ui()
 	_build_settings_host()
+	_reveal = UiReveal.new()
+	_reveal.setup(self, _root, _shade, _panel, _panel.position)
 	_root.visible = false
 	set_process(true)
 
@@ -83,6 +86,11 @@ func _process(_delta: float) -> void:
 
 func is_open() -> bool:
 	return _open
+
+
+## Shared reveal state for tests/audits; pause state never waits on it.
+func get_reveal() -> UiReveal:
+	return _reveal
 
 
 func is_settings_open() -> bool:
@@ -159,7 +167,11 @@ func open_pause() -> void:
 	_root.visible = true
 	_panel.visible = true
 	get_tree().paused = true
+	if _reveal != null:
+		_reveal.play_open()
 	_clean_player_input()
+	# The deferred focus happens after the reveal starts; the tween never owns
+	# pause/focus and cannot delay them.
 	call_deferred("_focus_continue")
 	opened.emit()
 
@@ -169,9 +181,14 @@ func resume() -> void:
 		return
 	if _settings_open:
 		close_settings()
+	# Resume (and any focus hand-back) is immediate; the root only remains for
+	# the 0.12 s visual exit and ignores mouse input during it.
 	_open = false
-	_root.visible = false
 	get_tree().paused = false
+	if _reveal != null:
+		_reveal.play_close()
+	else:
+		_root.visible = false
 	_clean_player_input()
 	LEVEL_FLOW.release_one_shot_actions()
 	if level_node != null and level_node.has_method("on_pause_resumed"):
@@ -186,6 +203,8 @@ func force_close() -> void:
 	_settings_open = false
 	if _settings_host != null:
 		_settings_host.hide_settings_host()
+	if _reveal != null:
+		_reveal.snap_closed()
 	if _root != null:
 		_root.visible = false
 	get_tree().paused = false
@@ -206,6 +225,8 @@ func open_settings() -> void:
 		return
 	_settings_open = true
 	_panel.visible = false
+	if _reveal != null:
+		_reveal.snap_closed()
 	_root.visible = false
 	_settings_host.open_settings_host()
 
@@ -222,6 +243,8 @@ func close_settings() -> void:
 		_root.visible = true
 	_panel.visible = true
 	get_tree().paused = true
+	if _reveal != null:
+		_reveal.play_open()
 	call_deferred("_focus_settings")
 
 
@@ -263,20 +286,30 @@ func _handle_reset() -> void:
 # --- Buttons ---------------------------------------------------------------
 
 func _on_continue_pressed() -> void:
+	if not _open:
+		return
 	resume()
 
 
 func _on_settings_pressed() -> void:
+	if not _open:
+		return
 	open_settings()
 
 
 func _on_restart_pressed() -> void:
+	if not _open:
+		return
 	_restart_from_pause()
 
 
 func _restart_from_pause() -> void:
+	if not _open:
+		return
 	_open = false
 	_settings_open = false
+	if _reveal != null:
+		_reveal.snap_closed()
 	if _root != null:
 		_root.visible = false
 	get_tree().paused = false
@@ -286,11 +319,15 @@ func _restart_from_pause() -> void:
 
 
 func _on_return_pressed() -> void:
+	if not _open:
+		return
 	prepare_scene_change()
 	return_to_menu_requested.emit()
 
 
 func _on_quit_pressed() -> void:
+	if not _open:
+		return
 	prepare_scene_change()
 	quit_requested.emit()
 	get_tree().quit(0)
@@ -315,6 +352,8 @@ func _on_settings_host_closed() -> void:
 	_root.visible = true
 	_panel.visible = true
 	get_tree().paused = true
+	if _reveal != null:
+		_reveal.play_open()
 	call_deferred("_focus_settings")
 
 

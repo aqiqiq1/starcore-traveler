@@ -99,6 +99,7 @@ var guide_kind: String = ""
 var demo_dir: String = DEMO_DIR
 
 var _root: Control = null
+var _shade: ColorRect = null
 var _panel: Panel = null
 var _demo_border: Panel = null
 var _demo_rect: TextureRect = null
@@ -110,6 +111,7 @@ var _footer_label: Label = null
 var _page_indicator: Label = null
 var _skip_bar: SkipHoldBar = null
 var _font: Font = null
+var _reveal: UiReveal = null
 
 var _demo_atlas: AtlasTexture = null
 var _demo_id: String = ""
@@ -134,6 +136,8 @@ func _ready() -> void:
 	layer = 15
 	_font = _load_font()
 	_build_ui()
+	_reveal = UiReveal.new()
+	_reveal.setup(self, _root, _shade, _panel, PANEL_POSITION)
 	_root.visible = false
 	set_process(true)
 
@@ -187,13 +191,13 @@ func _build_ui() -> void:
 	_root.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_root)
 
-	var shade: ColorRect = ColorRect.new()
-	shade.name = "Shade"
-	shade.position = Vector2.ZERO
-	shade.size = VIEW_SIZE
-	shade.color = Color(0.006, 0.014, 0.018, 0.72)
-	shade.mouse_filter = Control.MOUSE_FILTER_STOP
-	_root.add_child(shade)
+	_shade = ColorRect.new()
+	_shade.name = "Shade"
+	_shade.position = Vector2.ZERO
+	_shade.size = VIEW_SIZE
+	_shade.color = Color(0.006, 0.014, 0.018, 0.72)
+	_shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	_root.add_child(_shade)
 
 	_panel = Panel.new()
 	_panel.name = "GuidePanel"
@@ -288,6 +292,11 @@ func _build_ui() -> void:
 
 func is_open() -> bool:
 	return _open
+
+
+## Shared reveal state for tests/audits; F/hold-skip/close never wait on it.
+func get_reveal() -> UiReveal:
+	return _reveal
 
 
 func get_open_count() -> int:
@@ -393,6 +402,8 @@ func open_guide() -> bool:
 	if _skip_bar != null:
 		_skip_bar.hide_progress()
 	_root.visible = true
+	if _reveal != null:
+		_reveal.play_open()
 	_clean_player_input()
 	opened.emit(guide_kind)
 	return true
@@ -402,14 +413,19 @@ func close() -> void:
 	if not _open:
 		return
 	var closed_kind: String = guide_kind
+	# Close/unpause is immediate; the panel only performs its 0.12 s exit and
+	# no longer receives input.
 	_open = false
-	_root.visible = false
 	get_tree().paused = _paused_before
 	_space_held = false
 	_space_hold = 0.0
 	_space_armed = false
 	if _skip_bar != null:
 		_skip_bar.hide_progress()
+	if _reveal != null:
+		_reveal.play_close()
+	else:
+		_root.visible = false
 	_clean_player_input()
 	closed.emit(closed_kind)
 
@@ -419,6 +435,8 @@ func _exit_tree() -> void:
 	if _open and get_tree() != null:
 		get_tree().paused = _paused_before
 		_open = false
+	if _reveal != null:
+		_reveal.snap_closed()
 
 
 # --- Input / pages ---------------------------------------------------------

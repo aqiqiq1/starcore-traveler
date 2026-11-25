@@ -103,6 +103,7 @@ var _page_indicator: Label = null
 var _footer_label: Label = null
 var _skip_bar: SkipHoldBar = null
 var _font: Font = null
+var _reveal: UiReveal = null
 
 var _open: bool = false
 var _current_id: String = ""
@@ -125,6 +126,8 @@ func _ready() -> void:
 	layer = 14
 	_font = _load_font()
 	_build_ui()
+	_reveal = UiReveal.new()
+	_reveal.setup(self, _root, _shade, _panel, PANEL_POSITION)
 	_root.visible = false
 	set_process(true)
 
@@ -133,6 +136,11 @@ func _ready() -> void:
 
 func is_open() -> bool:
 	return _open
+
+
+## Shared reveal state for tests/audits; gameplay never waits on it.
+func get_reveal() -> UiReveal:
+	return _reveal
 
 
 func get_current_id() -> String:
@@ -247,6 +255,8 @@ func _open_internal(id: String, ignore_seen: bool) -> bool:
 	_reset_space_state()
 	_clean_player_input()
 	_root.visible = true
+	if _reveal != null:
+		_reveal.play_open()
 	opened.emit(id)
 	return true
 
@@ -255,13 +265,17 @@ func close() -> void:
 	if not _open:
 		return
 	var closed_id: String = _current_id
+	# State and pause are released before the 0.12 s exit fade.
 	_open = false
-	_root.visible = false
 	get_tree().paused = _paused_before
 	_space_hold = 0.0
 	_space_armed = false
 	if _skip_bar != null:
 		_skip_bar.hide_progress()
+	if _reveal != null:
+		_reveal.play_close()
+	else:
+		_root.visible = false
 	_current_id = ""
 	_clean_player_input()
 	closed.emit(closed_id)

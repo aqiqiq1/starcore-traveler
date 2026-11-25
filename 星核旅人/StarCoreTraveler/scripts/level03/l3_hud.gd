@@ -29,6 +29,9 @@ var _guide: L3Guide
 ## pause CanvasLayer (layer 16) stays above it.
 var _recovery_cover: ColorRect
 var _completion_overlay: ColorRect
+var _completion_panel: Panel
+var _completion_panel_base: Vector2 = Vector2.ZERO
+var _completion_tween: Tween
 var _completion_title: Label
 var _completion_subtitle: Label
 var _completion_hint: Label
@@ -158,6 +161,8 @@ func _build_completion() -> void:
 	style.border_color = Color(0.95, 0.80, 0.39, 0.9)
 	panel.add_theme_stylebox_override("panel", style)
 	_completion_overlay.add_child(panel)
+	_completion_panel = panel
+	_completion_panel_base = panel.position
 
 	var title: Label = _label("感谢游玩", Vector2(0.0, 12.0), Vector2(400.0, 34.0), 24, GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -318,10 +323,28 @@ func show_completion(value: bool, completion_count: int = 0) -> void:
 		_guide.visible = not value and not _pause_visible
 	if value:
 		# A failed scene change must never leave the page with dead buttons.
+		_play_completion_reveal()
 		set_completion_buttons_enabled(true)
 		call_deferred("focus_completion_primary")
 	else:
 		release_completion_focus()
+		_stop_completion_reveal()
+
+
+## Same-frame page; only alpha/scale/slide animate (see UiReveal).
+func _play_completion_reveal() -> void:
+	if _completion_tween != null and _completion_tween.is_valid():
+		_completion_tween.kill()
+	_completion_tween = UiReveal.play_overlay_open(
+		self, _completion_overlay, _completion_panel, _completion_panel_base
+	)
+
+
+func _stop_completion_reveal() -> void:
+	if _completion_tween != null and _completion_tween.is_valid():
+		_completion_tween.kill()
+	_completion_tween = null
+	UiReveal.snap_overlay(_completion_overlay, _completion_panel, _completion_panel_base)
 
 
 func focus_completion_primary() -> void:
@@ -352,6 +375,11 @@ func get_completion_replay_button() -> PixelMenuButton:
 
 func is_completion_active() -> bool:
 	return _completion_active
+
+
+## Test/audit hook for the completion reveal; no gameplay effect.
+func get_completion_reveal_alpha() -> float:
+	return _completion_overlay.modulate.a if _completion_overlay != null else 0.0
 
 
 func get_compact_header() -> CompactLevelHeader:

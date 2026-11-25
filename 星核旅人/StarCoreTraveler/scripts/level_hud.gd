@@ -27,6 +27,9 @@ var _opening_active: bool = false
 var _pending_event_text: String = ""
 var _pending_event_left: float = 0.0
 var _completion_overlay: ColorRect
+var _completion_panel: Panel
+var _completion_panel_base: Vector2 = Vector2.ZERO
+var _completion_tween: Tween
 var _completion_title: Label
 var _completion_count_label: Label
 var _completion_primary: PixelMenuButton
@@ -140,6 +143,8 @@ func _build_completion() -> void:
 	style.border_color = Color(0.95, 0.80, 0.39, 0.9)
 	panel.add_theme_stylebox_override("panel", style)
 	_completion_overlay.add_child(panel)
+	_completion_panel = panel
+	_completion_panel_base = panel.position
 
 	var title: Label = _label("第一关完成", Vector2(0.0, 12.0), Vector2(400.0, 34.0), 24, GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -295,6 +300,7 @@ func show_completion(value: bool, completion_count: int = 0) -> void:
 	_completion_overlay.visible = value
 	_completion_active = value
 	if value:
+		_play_completion_reveal()
 		_event_left = 0.0
 		_event_text = ""
 		_pending_event_text = ""
@@ -307,8 +313,27 @@ func show_completion(value: bool, completion_count: int = 0) -> void:
 		if _objective != null:
 			_objective.visible = not _opening_active
 			_objective.text = _objective_base
+	if not value:
+		_stop_completion_reveal()
 	if _completion_count_label != null:
 		_completion_count_label.text = "本关结算 · Esc 可打开暂停菜单" if value else ""
+
+
+## The page shows on the same frame it is requested; only its alpha and 0.96
+## scale/slide animate, so buttons and focus never wait on the tween.
+func _play_completion_reveal() -> void:
+	if _completion_tween != null and _completion_tween.is_valid():
+		_completion_tween.kill()
+	_completion_tween = UiReveal.play_overlay_open(
+		self, _completion_overlay, _completion_panel, _completion_panel_base
+	)
+
+
+func _stop_completion_reveal() -> void:
+	if _completion_tween != null and _completion_tween.is_valid():
+		_completion_tween.kill()
+	_completion_tween = null
+	UiReveal.snap_overlay(_completion_overlay, _completion_panel, _completion_panel_base)
 
 
 func focus_completion_primary() -> void:
@@ -345,6 +370,11 @@ func get_completion_return_button() -> PixelMenuButton:
 
 func is_completion_active() -> bool:
 	return _completion_active
+
+
+## Test/audit hook for the completion reveal; no gameplay effect.
+func get_completion_reveal_alpha() -> float:
+	return _completion_overlay.modulate.a if _completion_overlay != null else 0.0
 
 
 func has_controls_bar() -> bool:

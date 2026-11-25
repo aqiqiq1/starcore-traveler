@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=20 format=3]
 
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_workshop.gd" id="1_rift"]
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_hud.gd" id="2_hud"]
@@ -17,6 +17,7 @@
 [ext_resource type="Script" path="res://scripts/level_checkpoint.gd" id="15_checkpoint"]
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_audio.gd" id="16_audio"]
 [ext_resource type="Script" path="res://dlc/trial_chambers/chapter_ambience.gd" id="17_ambience"]
+[ext_resource type="Script" path="res://dlc/rift_workshop/rift_guard_cue.gd" id="18_cue"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_checkpoint"]
 size = Vector2(40, 72)
@@ -210,6 +211,10 @@ patrol_right = 1530.0
 pursuit_left = 1355.0
 pursuit_right = 1560.0
 start_positive = false
+
+[node name="GuardCue" type="Node2D" parent="."]
+process_mode = 1
+script = ExtResource("18_cue")
 
 [node name="FinishPoint" type="Node2D" parent="."]
 process_mode = 1

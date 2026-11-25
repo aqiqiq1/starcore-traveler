@@ -22,6 +22,11 @@ const PANEL_BORDER: Color = Color(0.45, 0.66, 0.63, 0.9)
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 const TITLE: String = "裂隙工坊"
 const DEFAULT_OBJECTIVE: String = "目标：穿过反转回廊"
+const PANEL_ANIM_TIME: float = 0.16
+const PANEL_SLIDE_PX: float = 6.0
+const LEGEND_TEXT: String = (
+	"金/青=相性 · 紫幕=换相 · 引力=吸附 · 胸口菱形=弱点 · 蓄力+异相 J=真伤"
+)
 
 var _root: Control
 var _header: CompactLevelHeader
@@ -31,13 +36,77 @@ var _recovery_cover: ColorRect
 var _completion_overlay: ColorRect
 var _completion_title: Label
 var _completion_hint: Label
+var _completion_panel: Panel
+var _completion_base_y: float = 108.0
+var _completion_anim: float = 0.0
+var _completion_animating: bool = false
 var _pause_overlay: ColorRect
+var _pause_panel: Panel
+var _pause_base_y: float = 116.0
+var _pause_anim: float = 0.0
+var _pause_animating: bool = false
 var _pause_continue: PixelMenuButton
 var _pause_title: PixelMenuButton
+var _legend: RiftLegend
 var _font: Font
 var _subtitle: String = ""
 var _completion_visible: bool = false
 var _pause_visible: bool = false
+
+
+## Small permanent element legend under the event line.  Drawn by the HUD
+## itself (no panel): a gold/cyan pair for the two phases, a purple bar for the
+## inversion curtain, a ring for the gravity field and a diamond for the
+## weakpoint.  It is a read-only hint, not an interactable control.
+class RiftLegend extends Control:
+	const LEGEND_GOLD: Color = Color("#f4cd63")
+	const LEGEND_CYAN: Color = Color("#5fe1e6")
+	const LEGEND_PURPLE: Color = Color("#b98cff")
+	const LEGEND_TEXT_COLOR: Color = Color("#a4b3be")
+	const LEGEND_SHADOW: Color = Color(0.006, 0.014, 0.018, 0.92)
+	const LEGEND_SIZE: Vector2 = Vector2(616.0, 14.0)
+
+	var font: Font = null
+
+	func _ready() -> void:
+		position = Vector2(12.0, 58.0)
+		size = LEGEND_SIZE
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		if font == null:
+			return
+		_diamond(Vector2(5.0, 7.0), 3.5, LEGEND_GOLD)
+		_diamond(Vector2(15.0, 7.0), 3.5, LEGEND_CYAN)
+		_text("金/青 相性", 21.0)
+		draw_rect(Rect2(78.0, 3.0, 4.0, 9.0), Color(LEGEND_PURPLE, 0.95))
+		_text("紫幕换相", 86.0)
+		draw_arc(Vector2(136.0, 7.0), 5.0, 0.0, TAU, 14, LEGEND_GOLD, 1.0)
+		_text("引力吸附", 144.0)
+		_diamond(Vector2(196.0, 7.0), 3.5, Color(1.0, 0.98, 0.9))
+		_text("弱点", 204.0)
+		_text("· 蓄力时异相 J 才真伤", 232.0)
+
+	func _text(value: String, x: float) -> void:
+		draw_string(
+			font, Vector2(x + 1.0, 12.0), value,
+			HORIZONTAL_ALIGNMENT_LEFT, -1.0, 10, LEGEND_SHADOW
+		)
+		draw_string(
+			font, Vector2(x, 11.0), value,
+			HORIZONTAL_ALIGNMENT_LEFT, -1.0, 10, LEGEND_TEXT_COLOR
+		)
+
+	func _diamond(center: Vector2, radius: float, color: Color) -> void:
+		draw_colored_polygon(
+			PackedVector2Array([
+				center + Vector2(0.0, -radius),
+				center + Vector2(radius, 0.0),
+				center + Vector2(0.0, radius),
+				center + Vector2(-radius, 0.0),
+			]),
+			color
+		)
 
 
 func _ready() -> void:
@@ -51,6 +120,7 @@ func _ready() -> void:
 	add_child(_root)
 	_build_header()
 	_build_event()
+	_build_legend()
 	_build_recovery_cover()
 	_build_completion()
 	_build_pause()
@@ -86,6 +156,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
+	# Panel fades run even while the tree is paused (the HUD is ALWAYS), so the
+	# pause page slides in instead of appearing instantly.
+	_advance_panel_animations(delta)
 	if get_tree().paused:
 		return
 	if _event_left <= 0.0:
@@ -158,6 +231,13 @@ func _build_event() -> void:
 	_root.add_child(_event_label)
 
 
+func _build_legend() -> void:
+	_legend = RiftLegend.new()
+	_legend.name = "ElementLegend"
+	_legend.font = _font
+	_root.add_child(_legend)
+
+
 func _build_recovery_cover() -> void:
 	_recovery_cover = ColorRect.new()
 	_recovery_cover.name = "RecoveryCover"
@@ -184,6 +264,8 @@ func _build_completion() -> void:
 	panel.position = Vector2(140.0, 108.0)
 	panel.size = Vector2(360.0, 144.0)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_completion_panel = panel
+	_completion_base_y = panel.position.y
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = PANEL_BG
 	style.border_width_left = 2
@@ -233,6 +315,8 @@ func _build_pause() -> void:
 	panel.position = Vector2(196.0, 116.0)
 	panel.size = Vector2(248.0, 128.0)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_pause_panel = panel
+	_pause_base_y = panel.position.y
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = PANEL_BG
 	style.border_width_left = 1
@@ -302,7 +386,18 @@ func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 	_completion_visible = value
 	if _completion_overlay == null:
 		return
-	_completion_overlay.visible = value
+	if value:
+		_completion_overlay.visible = true
+		_completion_anim = 0.0
+		_completion_animating = true
+		_apply_completion_anim(0.0)
+	else:
+		_completion_animating = false
+		_completion_overlay.visible = false
+		_completion_overlay.modulate.a = 1.0
+		if _completion_panel != null:
+			_completion_panel.modulate.a = 1.0
+			_completion_panel.position.y = _completion_base_y
 	_completion_title.text = "裂隙封闭 · 用时 %s" % _format_time(elapsed_seconds)
 
 
@@ -310,12 +405,53 @@ func show_pause(value: bool) -> void:
 	_pause_visible = value
 	if _pause_overlay == null:
 		return
-	_pause_overlay.visible = value
 	if value:
+		_pause_overlay.visible = true
+		_pause_anim = 0.0
+		_pause_animating = true
+		_apply_pause_anim(0.0)
 		call_deferred("_focus_pause")
-	else:
-		_pause_continue.release_focus()
-		_pause_title.release_focus()
+		return
+	_pause_animating = false
+	_pause_overlay.visible = false
+	_pause_overlay.modulate.a = 1.0
+	if _pause_panel != null:
+		_pause_panel.modulate.a = 1.0
+		_pause_panel.position.y = _pause_base_y
+	_pause_continue.release_focus()
+	_pause_title.release_focus()
+
+
+## 0.16 s eased fade + 6 px slide for the two modal panels.  Runs from
+## _process(), which is PROCESS_MODE_ALWAYS, so the pause page still finishes
+## its entrance while the tree is paused.
+func _advance_panel_animations(delta: float) -> void:
+	if _completion_animating and _completion_overlay != null:
+		_completion_anim = minf(_completion_anim + delta / PANEL_ANIM_TIME, 1.0)
+		_apply_completion_anim(_completion_anim)
+		if _completion_anim >= 1.0:
+			_completion_animating = false
+	if _pause_animating and _pause_overlay != null:
+		_pause_anim = minf(_pause_anim + delta / PANEL_ANIM_TIME, 1.0)
+		_apply_pause_anim(_pause_anim)
+		if _pause_anim >= 1.0:
+			_pause_animating = false
+
+
+func _apply_completion_anim(progress: float) -> void:
+	var eased: float = 1.0 - pow(1.0 - clampf(progress, 0.0, 1.0), 3.0)
+	_completion_overlay.modulate.a = eased
+	if _completion_panel != null:
+		_completion_panel.modulate.a = eased
+		_completion_panel.position.y = _completion_base_y + (1.0 - eased) * PANEL_SLIDE_PX
+
+
+func _apply_pause_anim(progress: float) -> void:
+	var eased: float = 1.0 - pow(1.0 - clampf(progress, 0.0, 1.0), 3.0)
+	_pause_overlay.modulate.a = eased
+	if _pause_panel != null:
+		_pause_panel.modulate.a = eased
+		_pause_panel.position.y = _pause_base_y + (1.0 - eased) * PANEL_SLIDE_PX
 
 
 func _focus_pause() -> void:
@@ -381,3 +517,45 @@ func get_event_text() -> String:
 
 func is_event_visible() -> bool:
 	return _event_label != null and _event_label.visible
+
+
+func is_legend_visible() -> bool:
+	return _legend != null and _legend.visible and _legend.font != null
+
+
+func get_legend_text() -> String:
+	return LEGEND_TEXT
+
+
+func get_legend_rect() -> Rect2:
+	if _legend == null:
+		return Rect2()
+	return Rect2(_legend.position, _legend.size)
+
+
+func get_pause_panel_alpha() -> float:
+	return _pause_panel.modulate.a if _pause_panel != null else 0.0
+
+
+func get_pause_panel_offset() -> float:
+	if _pause_panel == null:
+		return 0.0
+	return _pause_panel.position.y - _pause_base_y
+
+
+func get_completion_panel_alpha() -> float:
+	return _completion_panel.modulate.a if _completion_panel != null else 0.0
+
+
+func get_completion_panel_offset() -> float:
+	if _completion_panel == null:
+		return 0.0
+	return _completion_panel.position.y - _completion_base_y
+
+
+func is_panel_animating() -> bool:
+	return _pause_animating or _completion_animating
+
+
+func get_panel_anim_time() -> float:
+	return PANEL_ANIM_TIME

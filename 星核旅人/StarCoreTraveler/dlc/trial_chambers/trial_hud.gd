@@ -27,9 +27,15 @@ var _event_label: Label
 var _event_left: float = 0.0
 var _recovery_cover: ColorRect
 var _completion_overlay: ColorRect
+var _completion_panel: Panel
+var _completion_panel_base: Vector2 = Vector2.ZERO
+var _completion_tween: Tween
 var _completion_title: Label
 var _completion_hint: Label
 var _pause_overlay: ColorRect
+var _pause_panel: Panel
+var _pause_panel_base: Vector2 = Vector2.ZERO
+var _pause_tween: Tween
 var _pause_continue: PixelMenuButton
 var _pause_title: PixelMenuButton
 var _font: Font
@@ -196,6 +202,8 @@ func _build_completion() -> void:
 	style.anti_aliasing = false
 	panel.add_theme_stylebox_override("panel", style)
 	_completion_overlay.add_child(panel)
+	_completion_panel = panel
+	_completion_panel_base = panel.position
 
 	_completion_title = _label(
 		"试炼完成 · 用时 00:00", Vector2(0.0, 28.0), Vector2(360.0, 24.0), 18, GOLD
@@ -245,6 +253,8 @@ func _build_pause() -> void:
 	style.anti_aliasing = false
 	panel.add_theme_stylebox_override("panel", style)
 	_pause_overlay.add_child(panel)
+	_pause_panel = panel
+	_pause_panel_base = panel.position
 
 	var title: Label = _label("已暂停", Vector2(0.0, 14.0), Vector2(248.0, 24.0), 18, GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -305,6 +315,13 @@ func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 		return
 	_completion_overlay.visible = value
 	_completion_title.text = "试炼完成 · 用时 %s" % _format_time(elapsed_seconds)
+	if value:
+		_completion_tween = _play_reveal(
+			_completion_tween, _completion_overlay, _completion_panel, _completion_panel_base
+		)
+	else:
+		_snap_reveal(_completion_tween, _completion_overlay, _completion_panel, _completion_panel_base)
+		_completion_tween = null
 
 
 func show_pause(value: bool) -> void:
@@ -313,10 +330,31 @@ func show_pause(value: bool) -> void:
 		return
 	_pause_overlay.visible = value
 	if value:
+		_pause_tween = _play_reveal(_pause_tween, _pause_overlay, _pause_panel, _pause_panel_base)
 		call_deferred("_focus_pause")
 	else:
+		_snap_reveal(_pause_tween, _pause_overlay, _pause_panel, _pause_panel_base)
+		_pause_tween = null
 		_pause_continue.release_focus()
 		_pause_title.release_focus()
+
+
+## Same-frame overlay with a 0.18 s alpha/scale/slide entrance (see UiReveal).
+## The HUD is PROCESS_MODE_ALWAYS, so the tweens finish while the tree is paused.
+func _play_reveal(
+	previous: Tween, overlay: ColorRect, panel: Panel, panel_base: Vector2
+) -> Tween:
+	if previous != null and previous.is_valid():
+		previous.kill()
+	return UiReveal.play_overlay_open(self, overlay, panel, panel_base)
+
+
+func _snap_reveal(
+	previous: Tween, overlay: ColorRect, panel: Panel, panel_base: Vector2
+) -> void:
+	if previous != null and previous.is_valid():
+		previous.kill()
+	UiReveal.snap_overlay(overlay, panel, panel_base)
 
 
 func _focus_pause() -> void:

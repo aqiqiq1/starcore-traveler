@@ -1,0 +1,19 @@
+{
+	"camera": {
+		"wide_limits": true,
+		"zoom": 0.8
+	},
+	"crop": {
+		"h": 144,
+		"w": 256,
+		"x": 190,
+		"y": 50
+	},
+	"fps": 8.0,
+	"frame_height": 144,
+	"frame_width": 256,
+	"frames": 24,
+	"id": "rift_elements",
+	"note": "Formal rift arena. The gold guard is kept in its real GRAVITY_CHARGE (the charge is re-entered on release) so its weakpoint, phase-coloured field and the DLC cue stay readable for 3 s; the player stands 100 px away outside the damage ring and the cyan guard waits asleep. No damage is resolved.",
+	"source": "formal DLC scene, real guard state"
+}
