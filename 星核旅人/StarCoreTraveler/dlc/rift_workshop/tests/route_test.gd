@@ -241,6 +241,8 @@ func _run() -> void:
 	_legs.append("arena(1096)=%.1f/%.1f" % [_player.global_position.x, _player.global_position.y])
 	_check(ok and _rift.is_arena_entered(), "walking into the arena wakes the twin guards",
 		"x=%.2f y=%.2f" % [_player.global_position.x, _player.global_position.y])
+	# The 0.8 s opening hover must end before the fight is judged.
+	await _wait_until(func() -> bool: return not _rift.is_arena_intro_active(), 120)
 	await _wait_physics(20)
 	_check(_rift.get_hud().get_objective_text().contains("双生守卫"),
 		"HUD switches to the twin guard objective",

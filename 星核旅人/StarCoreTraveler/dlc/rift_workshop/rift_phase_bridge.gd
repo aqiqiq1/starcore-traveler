@@ -25,6 +25,7 @@ const CYAN: Color = Color("#5fe1e6")
 const DARK_EDGE: Color = Color(0.004, 0.012, 0.016, 0.96)
 const GONE_EDGE: Color = Color(0.55, 0.72, 0.78, 0.30)
 const FLASH_TIME: float = 0.22
+const DISSOLVE_TIME: float = 0.18
 
 @export var required_positive: bool = true
 @export var bridge_width: float = 64.0
@@ -36,6 +37,7 @@ var _blocker: StaticBody2D = null
 var _shape: CollisionShape2D = null
 var _solid: bool = false
 var _flash: float = 0.0
+var _dissolve: float = 0.0
 var _time: float = 0.0
 var _deferred_reforms: int = 0
 
@@ -60,6 +62,8 @@ func _process(delta: float) -> void:
 	_time += delta
 	if _flash > 0.0:
 		_flash = maxf(_flash - delta / FLASH_TIME, 0.0)
+	if _dissolve > 0.0:
+		_dissolve = maxf(_dissolve - delta / DISSOLVE_TIME, 0.0)
 	queue_redraw()
 
 
@@ -76,8 +80,12 @@ func _physics_process(_delta: float) -> void:
 	if solid_now != _solid:
 		_solid = solid_now
 		_apply_collision()
+		# Both directions get 0.15-0.22 s of feedback; collision is applied
+		# first, so pressing Q still removes the deck on the same tick.
 		if _solid:
 			_flash = 1.0
+		else:
+			_dissolve = 1.0
 		solidity_changed.emit(_solid)
 
 
@@ -129,18 +137,35 @@ func get_deferred_reform_count() -> int:
 	return _deferred_reforms
 
 
+## 1.0 on the tick the deck dissolves, falling to 0 over DISSOLVE_TIME.
+func get_dissolve_strength() -> float:
+	return _dissolve
+
+
 # --- public write API (scene wiring / tests) -------------------------------
 
 func set_required_positive(value: bool) -> void:
 	required_positive = value
+	var before: bool = _solid
 	_solid = _compute_desired()
+	if _solid != before:
+		if _solid:
+			_flash = 1.0
+		else:
+			_dissolve = 1.0
 	_apply_collision()
 	queue_redraw()
 
 
 func set_player_node(player: Node2D) -> void:
 	_player = player
+	var before: bool = _solid
 	_solid = _compute_desired()
+	if _solid != before:
+		if _solid:
+			_flash = 1.0
+		else:
+			_dissolve = 1.0
 	_apply_collision()
 	queue_redraw()
 
@@ -210,6 +235,26 @@ func _draw() -> void:
 			var spark_alpha: float = 0.25 + 0.35 * absf(sin(_time * 2.0 + float(index)))
 			draw_rect(Rect2(spark_x, 4.0 + float(index % 2), 1.0, 1.0),
 				Color(color, spark_alpha))
+		# Dissolve: 0.18 s of 1 px fragments + one residual bright edge, so a
+		# vanishing deck no longer looks like the same instant as a still one.
+		if _dissolve > 0.0:
+			var fade: float = _dissolve
+			var travel: float = 1.0 - fade
+			# First 0.08 s: a white-hot line on the deck edge, then the
+			# coloured fragments and a shorter afterglow on the lower lip.
+			if fade > 0.55:
+				var hot: float = (fade - 0.55) / 0.45
+				draw_rect(Rect2(0.0, -1.0, w, 1.0),
+					Color(1.0, 1.0, 1.0, 0.85 * hot))
+			draw_rect(Rect2(0.0, 0.0, w, 1.0),
+				Color(color.lerp(Color.WHITE, 0.55), 0.70 * fade))
+			for index: int in range(9):
+				var chip_x: float = 3.0 + float(index) * 7.0
+				var rise: float = 1.0 + 10.0 * travel + float(index % 3) * 1.5
+				draw_rect(Rect2(chip_x, -rise, 1.0, 2.0),
+					Color(color.lerp(Color.WHITE, 0.45), 0.95 * fade))
+				draw_rect(Rect2(chip_x + 3.0, h - 2.0 + rise * 0.35, 1.0, 1.0),
+					Color(color, 0.55 * fade))
 		return
 
 	# Solid: dark silhouette, saturated body, bright core stripe and end caps.

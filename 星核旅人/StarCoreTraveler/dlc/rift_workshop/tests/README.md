@@ -17,8 +17,10 @@ Godot：`D:/Godot/Godot_v4.7.2-stable_win64_console.exe`
 | `rift_fog.gd` | DS03 之上的紫色雾 + 代码绘制浮屑 overlay |
 | `assets/sprites/polarity_wisp_16x16_8f.png` | 生成：128×16，4 帧 × 金/青两态 |
 | `assets/rift_fog_640x360.png` | 生成：640×360 紫色雾 |
-| `assets/audio/*.wav` | 生成：inversion / bridge / wisp_hum / wisp_pop / complete |
-| `tools/gen_assets.py` | 上述图片与 WAV 的生成脚本（无网络、无第三方采样） |
+| `assets/audio/*.wav` | 生成：inversion / bridge / wisp_hum / wisp_pop / complete；峰值已归一化 |
+| `tools/gen_assets.py` | 上述图片与 WAV 的生成脚本（无网络、无第三方采样；WAV 写出时做峰值归一化） |
+| `tools/check_audio_peaks.py` | 只读峰值/时长核对工具（-3 dBFS 一次性音效、-9 dBFS hum） |
+| `REFERENCE_PASS_CUE.md` | 本轮“门开启提示 / 桥消失反馈”的逐帧参考核看记录 |
 | `DESIGN.md` / `REFERENCE.md` | 章节设计、参考核看记录 |
 | `tests/*` | 本目录全部测试、日志、截图、repro 脚本 |
 
@@ -122,3 +124,76 @@ $godot = "D:/Godot/Godot_v4.7.2-stable_win64_console.exe"
 - `git status` 会把许多既有 `*.import` 标成 modified；已抽查并用
   `git hash-object` 对比索引 blob 一致，`git diff --numstat` 为 0/0（仅 stat
   cache/行尾标记），未对 assets 运行资源做内容修改。本轮没有任何 git add/commit/push。
+
+---
+
+## 2026-11-25 全玩法打磨轮
+
+本轮只改 DLC 呈现与测试；基础三关的场景/碰撞/数值/门/守卫/紫晶/石壳未改，
+`scripts/start_menu.gd` 未改。分支仍为 `dlc`，未提交、未推送、未导出。
+
+### 音频
+
+5 条 WAV 由 `gen_assets.py` 重新生成，写出时按峰值归一化；时长与内容不变
+（hum 仍精确 1.000 s，播放端仍 0..data/2-1 循环）：
+
+| 文件 | 实际峰值 | 时长 | 播放增益 | 最终峰值 |
+| --- | --- | --- | --- | --- |
+| sfx_inversion.wav | -3.00 dBFS | 0.550 s | 0.0 dB | -3.0 dBFS |
+| sfx_bridge.wav | -3.00 dBFS | 0.420 s | 实化 -2.0 / 消失 -4.0 dB | -5.0 / -7.0 dBFS |
+| sfx_wisp_pop.wav | -3.00 dBFS | 0.340 s | 击破 -4.0 / 脉冲 -12.0 dB | -7.0 / -15.0 dBFS |
+| sfx_wisp_hum.wav | -9.00 dBFS | 1.000 s | -12.0 dB | -21.0 dBFS/只 |
+| sfx_complete.wav | -3.00 dBFS | 1.900 s | 0.0 dB | -3.0 dBFS |
+
+核对命令：`D:/minic/envs/2024212971/python.exe dlc/rift_workshop/tools/check_audio_peaks.py`
+（输出 `AUDIO_PEAK_RESULT PASS failed=0`）。同一 Q 按下的 3 座桥仍先合并成 1 次桥音，
+不会三条叠成爆音；hum 只有玩家 250 px 内且存活时才播放。
+
+### 呈现
+
+- 极性门开启态：8×88 轮廓内新增 3 条 4×1 px 近白横线，每条上方 3 px 箭头，2.2 s
+  自下而上循环，两端淡入淡出；关闭态仍是实体亮场 + 横向火花刻度。碰撞/防夹/API 未改。
+- 相性桥消失：新增 0.18 s 白热顶边 + 9 个 1×2 px 上浮碎片 + 底沿余辉；实化保留原
+  0.22 s 白闪。`solidity_changed` 仍在碰撞切换当帧发出，Q 不延迟。
+- 双生守卫：进入竞技场后两只先用 `set_suspended(true)` 悬浮 0.8 s，HUD 事件行
+  “双生守卫苏醒 · 金 / 青”，计时结束同一帧一起解除；暂停会保留剩余开场时间。
+  血量、攻击、真伤、巡逻未改。
+- wisp 击破：0.14 s 白色 2×2 核心 + 四向 1 px 爆点（随后原有 0.34 s 六片碎屑）；
+  蓄力环仍为脉冲前 0.45 s；推力/拉力/命中规则未改。
+
+### 本轮测试结果
+
+| 项目 | 结果 | 证据 |
+| --- | --- | --- |
+| 导入 | exit 0，0 ERROR/WARNING | `import.log` |
+| 机制测试 | **100 / 0** | `mechanics_test.log` |
+| 真实输入路线 | **37 / 0** | `route_test.log`（corridor 635.4 → 三桥 773.3/883.4/1003.7 → 检查点 1043.7 → 竞技场 1099.6 → 完成点 1543.6，用时 00:24） |
+| 标题入口（存在） | **34 / 0** | `title_test.log` |
+| 标题入口（缺失） | **14 / 0** | `title_missing_test.log` |
+| 新章 90 帧 | exit 0，0 ERROR/WARNING | `rift_90.log` |
+| 基础三关 90 帧 | 三关均 exit 0，0 ERROR/WARNING | `level_01_90.log` 等 |
+| 删除整个 DLC 后 level_01 | exit 0，0 ERROR/WARNING | `level_01_deleted_90.log` |
+| 640×360 截图 | 11 张，均 640×360 error=0 | `capture_visuals.log`、`out/` |
+
+新增/更新的截图：
+
+- `out/gate_closed.png` / `out/gate_open.png`：裂隙工坊金门的关/开两态，开启态可见上浮箭头；
+- `out/bridge_solid.png` / `out/bridge_gone.png`：金桥实体 / Q 后消失（0.18 s 碎裂余辉）；
+- `out/twins_intro.png`：0.8 s 开场悬浮 + HUD“双生守卫苏醒 · 金 / 青”；
+- `out/twins.png`：开场结束后两只同时激活；
+- `out/wisp_burst.png`：击破爆点（取证用 `kill()`，真实 J 击破由机制测试与路线覆盖）；
+- `out/completion.png`：完成后页面。
+
+机制测试新增的断言：桥消失 `dissolve>0`、桥实化/消失两侧各触发一次桥音、击破爆点
+`>0`、开场两只同时 suspended 且 HUD 事件行正确、开场结束后同帧解除。
+
+### 正作审计（只读）
+
+- 导入与三关 90 帧：0 ERROR/WARNING（见上表）。
+- 640×360 实测截图：`out/audit_title.png`、`audit_level_01.png`、`audit_level_02.png`、
+  `audit_level_03.png`（`audit_base_levels.tscn`，只加载/按键，不改基础文件）。
+- 实际看到：标题“开始游戏”有金色焦点框，“设置/退出游戏”为低对比灰字，而 DLC 的
+  “试炼场/裂隙工坊”是常显描边按钮，视觉层级不完全统一；第二关“释放星核”与
+  “E 交谈”、第三关“送核入符石台”可读；第一关开场是黑边过场、HUD 暂隐。
+  这些均属既有基础设计，本轮未改；未发现需要立即修的客观 bug。
+- 局限：未做正作整关手感/节奏人工试玩，只覆盖出生点/开场与既有测试路线。

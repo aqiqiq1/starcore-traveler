@@ -372,3 +372,12 @@ func get_recovery_cover() -> ColorRect:
 
 func get_completion_title_label() -> Label:
 	return _completion_title
+
+
+## Current event-line text, whether or not its display timer has expired.
+func get_event_text() -> String:
+	return _event_label.text if _event_label != null else ""
+
+
+func is_event_visible() -> bool:
+	return _event_label != null and _event_label.visible

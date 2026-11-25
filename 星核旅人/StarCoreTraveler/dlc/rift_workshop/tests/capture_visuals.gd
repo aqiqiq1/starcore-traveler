@@ -6,11 +6,16 @@ extends Node
 ##
 ## Saves to res://dlc/rift_workshop/tests/out/:
 ##   inversion.png        real walk into InversionA, flip flash + event line
+##   gate_closed.png      gold polarity gate closed (澜相 player outside)
+##   gate_open.png        gold polarity gate open, 3 rising dashes visible
 ##   bridge_solid.png     player standing on the gold PhaseBridge
-##   bridge_gone.png      same spot after Q: the deck is gone and the body is
+##   bridge_gone.png      same spot after Q: deck gone, dissolve burst + body
 ##                        already falling toward the safe lower shelf
 ##   wisp.png             PolarityWisp with its pre-pulse telegraph ring
-##   twins.png            both guards active in the arena
+##   wisp_burst.png       wisp kill burst (0.14 s; visual-only kill here, the
+##                        real J kill is covered by mechanics/route tests)
+##   twins_intro.png      0.8 s opening hover, both guards suspended, HUD line
+##   twins.png            both guards live after the intro
 ##   completion.png       "裂隙封闭 · 用时 mm:ss" (visual state only; the real
 ##                        three-hit + three-hit route is route_test.tscn)
 ##   title_rift_button.png  title menu with 裂隙工坊 focused
@@ -75,6 +80,13 @@ func _press_right_until(target: float, max_frames: int) -> void:
 	Input.action_release(&"move_right")
 
 
+func _wait_until_intro_done() -> void:
+	for _index: int in range(180):
+		if not _rift.is_arena_intro_active():
+			return
+		await get_tree().physics_frame
+
+
 func _run() -> void:
 	var packed: PackedScene = load(RIFT_SCENE) as PackedScene
 	if packed == null:
@@ -93,15 +105,26 @@ func _run() -> void:
 	await _wait_physics(2)
 	await _save("inversion.png")
 
+	# 1b. Polarity gate: closed and open at the chapter's own gold gate.  The
+	# open state now adds three rising dashes, so hold it for a few frames.
+	await _place(235.0, 320.0, false)
+	await _wait_physics(6)
+	await _wait_process(6)
+	await _save("gate_closed.png")
+	await _place(235.0, 320.0, true)
+	await _wait_physics(10)
+	await _wait_process(8)
+	await _save("gate_open.png")
+
 	# 2. Bridge solid: 辉相 player on the gold deck.
 	await _place(710.0, 280.0, true)
 	await _wait_process(24)
 	await _save("bridge_solid.png")
 
-	# 3. Bridge gone: the same spot one Q later, body already falling.
+	# 3. Bridge gone: the same spot one Q later, body just starting to fall and
+	# the 0.18 s dissolve burst still bright.
 	_player.set_polarity_state(false)
-	await _wait_physics(4)
-	await _wait_process(2)
+	await _wait_physics(2)
 	await _save("bridge_gone.png")
 
 	# 4. Wisp telegraph: stand on landing A and wait for the charging ring.
@@ -113,12 +136,23 @@ func _run() -> void:
 		await get_tree().physics_frame
 	await _save("wisp.png")
 
-	# 5. Twin guards: walk-in arena state, both awake.  Standing between them
-	# (mid-arena column) keeps both bodies and both health bars in the frame.
+	# 4b. Wisp burst: kill this one for the picture only, so the white burst is
+	# not covered by the player's swing arc.  mechanics_test.tscn proves the
+	# same burst arrives from a real J hit.
+	wisp.kill()
+	await _wait_physics(1)
+	await _save("wisp_burst.png")
+
+	# 5. Twin guards: the 0.8 s opening hover with both guards suspended and the
+	# HUD event line, then the live fight state after the intro.
 	await _place(1100.0, 320.0, false)
-	await _wait_physics(16)
+	await _wait_physics(10)
 	await _place(1338.0, 320.0, false)
-	await _wait_physics(8)
+	await _wait_physics(6)
+	await _wait_process(4)
+	await _save("twins_intro.png")
+	await _wait_until_intro_done()
+	await _wait_physics(12)
 	await _wait_process(6)
 	await _save("twins.png")
 

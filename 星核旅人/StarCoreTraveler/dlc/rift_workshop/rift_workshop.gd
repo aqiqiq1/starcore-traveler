@@ -29,6 +29,9 @@ const GUARD_GOLD_SPAWN: Vector2 = Vector2(1240.0, 320.0)
 const GUARD_CYAN_SPAWN: Vector2 = Vector2(1450.0, 320.0)
 const ARENA_ENTER_X: float = 1090.0
 const ARENA_LEFT: float = 1080.0
+## Both guards hover asleep for this long after the arena entry event line, so
+## the player is never caught between two charge-ups on the first step in.
+const ARENA_INTRO_TIME: float = 0.8
 const FINISH_RANGE: float = 18.0
 const KILL_Y: float = 430.0
 const WORLD_RIGHT: float = 1600.0
@@ -63,6 +66,7 @@ var _arena_entered: bool = false
 var _guards_defeated: int = 0
 var _gold_defeated: bool = false
 var _cyan_defeated: bool = false
+var _arena_intro_left: float = 0.0
 var _checkpoint_active: bool = false
 var _finish_time: float = 0.0
 var _objective_key: String = ""
@@ -195,14 +199,19 @@ func _physics_process(delta: float) -> void:
 			_player.end_input_override()
 		return
 
+	if _arena_intro_left > 0.0:
+		_arena_intro_left = maxf(_arena_intro_left - delta, 0.0)
+		if _arena_intro_left <= 0.0:
+			_wake_twin_guards()
+
 	_update_strike_source()
 
 	if not _arena_entered and _player.global_position.x >= ARENA_ENTER_X:
 		_arena_entered = true
-		if not _gold_defeated:
-			_guard_gold.set_suspended(false)
-		if not _cyan_defeated:
-			_guard_cyan.set_suspended(false)
+		_arena_intro_left = ARENA_INTRO_TIME
+		# Both stay suspended for the whole intro, then wake on the same tick.
+		_guard_gold.set_suspended(true)
+		_guard_cyan.set_suspended(true)
 		_hud.show_event("双生守卫苏醒 · 金 / 青", 2.2)
 		DemoAudio.play_record_save()
 	_update_objective()
@@ -345,11 +354,10 @@ func _set_paused(value: bool) -> void:
 	get_tree().paused = false
 	LEVEL_FLOW.release_one_shot_actions()
 	_player.clear_input_buffers()
-	if _arena_entered and not _completed:
-		if not _gold_defeated:
-			_guard_gold.set_suspended(false)
-		if not _cyan_defeated:
-			_guard_cyan.set_suspended(false)
+	# A pause during the 0.8 s intro must not shorten or skip it; the intro
+	# timer resumes with the tree and wakes both guards itself.
+	if _arena_entered and not _completed and _arena_intro_left <= 0.0:
+		_wake_twin_guards()
 
 
 # --- room 1: inversion / gates / wisps -------------------------------------
@@ -419,6 +427,19 @@ func _on_checkpoint_entered(checkpoint: LevelCheckpoint) -> void:
 
 
 # --- room 3: twin guards ---------------------------------------------------
+
+## Wakes both remaining guards on the same tick, after the arena intro.  Their
+## health, attack, true-damage and patrol rules are untouched.
+func _wake_twin_guards() -> void:
+	if _completed or _scene_leaving or _recovery_active:
+		return
+	if not _arena_entered:
+		return
+	if not _gold_defeated:
+		_guard_gold.set_suspended(false)
+	if not _cyan_defeated:
+		_guard_cyan.set_suspended(false)
+
 
 func _on_guard_player_struck(_facing: int) -> void:
 	if _completed or _scene_leaving or _recovery_active or _retry_pending:
@@ -514,6 +535,7 @@ func _begin_recovery(kind: String) -> void:
 	_player.set_input_override_axis(0.0, false)
 	_player.cancel_attack()
 	_player.begin_recovery_hold()
+	_arena_intro_left = 0.0
 	_guard_gold.set_suspended(true)
 	_guard_cyan.set_suspended(true)
 	for wisp: RiftPolarityWisp in _wisps:
@@ -581,10 +603,7 @@ func _finish_recovery() -> void:
 	_attack_key_down = false
 	LEVEL_FLOW.release_one_shot_actions()
 	if _arena_entered and not _completed and not _scene_leaving:
-		if not _gold_defeated:
-			_guard_gold.set_suspended(false)
-		if not _cyan_defeated:
-			_guard_cyan.set_suspended(false)
+		_wake_twin_guards()
 
 
 func _retry_combat() -> void:
@@ -592,6 +611,7 @@ func _retry_combat() -> void:
 	_player_hits = 0
 	_retry_pending = false
 	_retry_pending_left = 0.0
+	_arena_intro_left = 0.0
 	if not _gold_defeated:
 		_guard_gold.reset_state(GUARD_GOLD_SPAWN, true, false)
 		_guard_gold.set_player_target(_player)
@@ -644,6 +664,7 @@ func _complete_chapter() -> void:
 		return
 	_completed = true
 	_retry_pending = false
+	_arena_intro_left = 0.0
 	_player_hits = 0
 	_player.clear_input_buffers()
 	_player.clear_external_force()
@@ -689,6 +710,7 @@ func _restart_chapter() -> void:
 	_guards_defeated = 0
 	_gold_defeated = false
 	_cyan_defeated = false
+	_arena_intro_left = 0.0
 	_checkpoint_active = false
 	_retry_pending = false
 	_retry_pending_left = 0.0
@@ -822,6 +844,15 @@ func is_cyan_defeated() -> bool:
 
 func is_arena_entered() -> bool:
 	return _arena_entered
+
+
+## Remaining opening hover after arena entry (0 when the guards are live).
+func get_arena_intro_left() -> float:
+	return _arena_intro_left
+
+
+func is_arena_intro_active() -> bool:
+	return _arena_intro_left > 0.0
 
 
 func is_checkpoint_active() -> bool:

@@ -104,13 +104,15 @@ func _build_audio() -> void:
 		# 1.000 s at 44.1 kHz, mono 16-bit: two bytes per frame.
 		hum_stream.loop_end = maxi(hum_stream.data.size() / 2 - 1, 1)
 	_hum.stream = hum_stream
-	_hum.volume_db = -24.0
+	# -12 dB over a -9 dBFS loop: audible near the player, never masking a
+	# bridge chime or the base levels' cues even with two wisps in range.
+	_hum.volume_db = -12.0
 	_hum.pitch_scale = 0.94 + 0.03 * float(get_index() % 4)
 	add_child(_hum)
 	_sfx = AudioStreamPlayer.new()
 	_sfx.name = "Sfx"
 	_sfx.stream = POP_STREAM
-	_sfx.volume_db = -10.0
+	_sfx.volume_db = -4.0
 	add_child(_sfx)
 
 
@@ -203,7 +205,8 @@ func _do_pulse() -> void:
 	pulsed.emit(mode, force)
 	_last_pulse_mode = mode
 	_last_pulse_force = force
-	_play_sfx(0.72, -15.0)
+	# Pulse body: quieter than the kill pop so a 3 s repeat never dominates.
+	_play_sfx(0.72, -12.0)
 
 
 func _play_sfx(pitch: float, volume_db: float) -> void:
@@ -251,9 +254,14 @@ func kill() -> void:
 	_pop_time = 0.0
 	if _hum != null and _hum.playing:
 		_hum.stop()
-	_play_sfx(1.28, -7.0)
+	# -4 dB over the -3 dBFS pop: the clearest single cue of the chapter, but
+	# still below a full-scale hit.
+	_play_sfx(1.28, -4.0)
 	if _sprite != null:
-		_sprite.modulate.a = 1.0
+		# The body is 32 px on screen, so leaving it fading would cover the
+		# 1 px white burst drawn by this node.  The burst + shards are the
+		# death read; respawn() restores the sprite.
+		_sprite.visible = false
 	defeated.emit(self)
 	queue_redraw()
 
@@ -320,6 +328,14 @@ func get_phase_switch_count() -> int:
 	return _phase_switch_count
 
 
+## 1.0 on the killing frame, falling to 0 over the 0.14 s burst.  A read-only
+## hook for tests / visual capture; it does not drive the effect.
+func get_death_burst_strength() -> float:
+	if _alive:
+		return 0.0
+	return clampf(1.0 - _pop_time / 0.14, 0.0, 1.0)
+
+
 func get_pulse_time_left() -> float:
 	return _pulse_left
 
@@ -341,6 +357,27 @@ func get_sprite() -> Sprite2D:
 func _draw() -> void:
 	var color: Color = GOLD if _positive else CYAN
 	if not _alive:
+		# A short white burst (0.14 s) reads as "hit landed" before the six
+		# coloured shards drift out.  One 2x2 white core plus four 1 px arms:
+		# no new texture, nothing larger than the wisp's own body.
+		var burst: float = clampf(1.0 - _pop_time / 0.14, 0.0, 1.0)
+		if burst > 0.0:
+			var grow: float = 1.0 - burst
+			var arm: float = 3.0 + 4.0 * grow
+			draw_rect(Rect2(-1.0, -1.0, 2.0, 2.0),
+				Color(1.0, 1.0, 1.0, 0.95 * burst))
+			for direction: Vector2 in [
+				Vector2(1.0, 0.0), Vector2(-1.0, 0.0),
+				Vector2(0.0, 1.0), Vector2(0.0, -1.0),
+			]:
+				draw_rect(
+					Rect2(direction * arm - Vector2(0.5, 0.5), Vector2(1.0, 1.0)),
+					Color(1.0, 1.0, 1.0, 0.9 * burst)
+				)
+			draw_rect(
+				Rect2(-0.5, -0.5, 1.0, 1.0),
+				Color(color.lerp(Color.WHITE, 0.5), burst)
+			)
 		# Six shards flying out for 0.34 s: a clear death read without a
 		# separate sheet.
 		var t: float = clampf(_pop_time / 0.34, 0.0, 1.0)

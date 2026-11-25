@@ -34,11 +34,14 @@ PASS: solid bridge uses collision layer 1 [1]
 PASS: player stands on the matching bridge [y=280.00]
 PASS: bridge disappears on the other phase
 PASS: gone bridge uses collision layer 0 [0]
+PASS: gone bridge shows a short dissolve burst [0.54]
 PASS: falling lands on the safe lower shelf, no kill line [y=339.99]
 PASS: safe shelf needs no recovery fade
 PASS: player can walk on the safe shelf [x=745.93]
 PASS: re-materialising waits for the body to clear
 PASS: bridge solidifies after the body falls clear [solid]
+PASS: forming a deck plays the bridge cue [plays=10]
+PASS: dissolving a deck plays the bridge cue [plays=11]
 PASS: player can stand on the bridge again after retry [y=280.00]
 PASS: stepping on the marker records the checkpoint
 PASS: checkpoint art switches to active
@@ -50,10 +53,11 @@ PASS: wisp pulse period is 3.0 s [3.00]
 PASS: wisp pulses within its 3 s period
 PASS: same phase at the pulse becomes a pull [pull force=170.0]
 PASS: pulse reports a real force [170.0]
-PASS: pull velocity points toward the wisp [vx=90.0]
+PASS: pull velocity points toward the wisp [vx=97.0]
 PASS: opposite phase at the pulse becomes a push [push]
-PASS: push velocity points away from the wisp [vx=-62.5]
+PASS: push velocity points away from the wisp [vx=-16.9]
 PASS: one J hit dissolves the wisp
+PASS: kill shows a short white burst at the wisp [0.85]
 PASS: other wisps stay alive [wisp0 alive=true]
 PASS: R returns to the start [x=40.00]
 PASS: R restores 澜相
@@ -65,7 +69,9 @@ PASS: R clears completion
 PASS: R leaves no pause lock
 PASS: player can move after R [x=55.25]
 PASS: arena entry flag set
-PASS: both guards wake on arena entry
+PASS: both guards hover during the 0.8 s arena opening [intro=0.72]
+PASS: HUD announces the twin guards waking [双生守卫苏醒 · 金 / 青]
+PASS: both guards wake together after the opening hover [gold=ACTIVE cyan=ACTIVE]
 PASS: HUD objective switches to the twin guards [目标：击败双生守卫（0 / 2）]
 PASS: two accepted hits start the recovery transition
 PASS: combat recovery finishes without staying black
@@ -88,10 +94,10 @@ PASS: both guards defeated opens the finish
 PASS: finish point becomes bright after both defeats
 PASS: touching the finish completes the chapter [x=1550.00]
 PASS: completion page is visible
-PASS: completion text is 裂隙封闭 · 用时 mm:ss [裂隙封闭 · 用时 00:07]
-PASS: completion time is real [7.77 s]
+PASS: completion text is 裂隙封闭 · 用时 mm:ss [裂隙封闭 · 用时 00:08]
+PASS: completion time is real [8.55 s]
 PASS: E returns to level_01.tscn title [res://scenes/level_01.tscn]
 PASS: returned scene contains the title menu
 PASS: title shows the 裂隙工坊 entry while the DLC exists
 PASS: entry text is 裂隙工坊
-RIFT_MECHANICS_TEST checks=94 failures=0
+RIFT_MECHANICS_TEST checks=100 failures=0

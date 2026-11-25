@@ -1,0 +1,30 @@
+﻿Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: level_01 loads for keyboard test
+PASS: title menu is open
+PASS: menu exposes the 璇曠偧鍦?button
+PASS: button text is 璇曠偧鍦?[璇曠偧鍦篯
+PASS: button uses STONE variant [1]
+PASS: button is 112x20 [(112.0, 20.0)]
+PASS: button sits below the Quit row [y=238.0]
+PASS: button lies inside the 640x360 menu [[P: (264.0, 238.0), S: (112.0, 20.0)]]
+PASS: button is keyboard focusable
+PASS: button accepts mouse input
+PASS: start focus_next is settings
+PASS: settings focus_next is quit
+PASS: quit focus_next reaches the trial button
+PASS: trial focus_next reaches the next visible entry
+PASS: trial focus_previous is quit
+PASS: Down from quit reaches the trial button
+PASS: trial button can take keyboard focus
+PASS: Enter on the focused trial button opens the trial scene [current=res://dlc/trial_chambers/trial_chambers.tscn]
+PASS: level_01 loads again for mouse test
+PASS: title menu reopens
+PASS: mouse click on 璇曠偧鍦?opens the trial scene [current=res://dlc/trial_chambers/trial_chambers.tscn]
+PASS: existing 寮€濮嬫父鎴?row still triggers the opening
+PASS: start no longer leaves the menu idle [title_fade]
+PASS: existing 璁剧疆 row still opens settings
+PASS: Esc still closes settings
+TRIAL_TITLE_TEST checks=25 failures=0
+WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

@@ -78,8 +78,9 @@ func _run() -> void:
 	await _wait_process(30)
 	await _save("gate_gold_closed.png")
 
-	# Gold gate open: same position, player switches to 辉相.
-	await _place(player, 280.0, true)
+	# Gold gate open: same approach position, player switches to 辉相.  Stand
+	# beside the gate (not inside) so the three rising dashes stay visible.
+	await _place(player, 250.0, true)
 	await _wait_process(12)
 	await _save("gate_gold_open.png")
 

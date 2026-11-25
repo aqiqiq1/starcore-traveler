@@ -26,6 +26,13 @@ const DARK_EDGE: Color = Color(0.004, 0.012, 0.016, 0.96)
 const DARK_CAP: Color = Color(0.008, 0.022, 0.028, 0.92)
 const OPEN_FIELD_ALPHA: float = 0.26
 const CLOSED_FIELD_ALPHA: float = 0.66
+## Three 1 px rising dashes inside the 8 px band.  Only the open state animates,
+## so the curtain also reads as "alive / passable" by motion, not just by being
+## dimmer.  Reference: Celeste Core Block / Dream Block frames showed that a
+## pass-through read comes from motion clipped to the block's own interior, not
+## from a larger exterior glow (see REFERENCE_PASS_CUE.md).
+const OPEN_CUE_COUNT: int = 3
+const OPEN_CUE_PERIOD: float = 2.2
 
 @export var required_positive: bool = true:
 	set(value):
@@ -46,6 +53,7 @@ var _open: bool = false
 ## True only after the player has really entered the curtain while it was
 ## passable.  A blocked player pushing on the outside never sets this latch.
 var _anti_pinch_latched: bool = false
+var _time: float = 0.0
 
 
 func _ready() -> void:
@@ -57,7 +65,8 @@ func _ready() -> void:
 	queue_redraw()
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	_time += delta
 	if _player == null or not is_instance_valid(_player):
 		_resolve_player()
 	_update_anti_pinch_latch()
@@ -66,6 +75,9 @@ func _physics_process(_delta: float) -> void:
 		_open = open_now
 		queue_redraw()
 	_apply_collision()
+	if open_now:
+		# The rising dashes are the only continuously animated part.
+		queue_redraw()
 
 
 # --- public read API -------------------------------------------------------
@@ -233,12 +245,33 @@ func _draw() -> void:
 	draw_rect(Rect2(-half, -gate_height, 1.0, gate_height), Color(color, rail_alpha))
 	draw_rect(Rect2(half - 1.0, -gate_height, 1.0, gate_height), Color(color, rail_alpha))
 
-	# Closed field gets a few short horizontal spark ticks; open field stays
-	# almost empty so it visibly reads as passable.
+	# Closed field gets a few short horizontal spark ticks.  Open field keeps
+	# the dim body but adds three slow rising dashes: motion is the passable
+	# read, and it stays inside the 8 px band so it never looks like a new
+	# obstacle outside the gate.
 	if not open:
 		for tick_y: float in [-66.0, -58.0, -30.0, -22.0, -14.0]:
 			draw_rect(Rect2(-half + 1.0, tick_y, gate_width - 2.0, 1.0),
 				Color(color.lightened(0.25), 0.72))
+	else:
+		var span: float = gate_height - 18.0
+		for index: int in range(OPEN_CUE_COUNT):
+			var phase: float = fmod(
+				_time / OPEN_CUE_PERIOD + float(index) / float(OPEN_CUE_COUNT),
+				1.0
+			)
+			var cue_y: float = -8.0 - phase * span
+			var cue_alpha: float = 0.35 + 0.65 * sin(phase * PI)
+			# A 4 px near-white dash + a 3 px arrow head: unmistakably
+			# "flowing upwards" at 1x, still inside the 8 px curtain.
+			draw_rect(Rect2(-2.0, round(cue_y), 4.0, 1.0),
+				Color(1.0, 0.99, 0.94, cue_alpha))
+			draw_rect(Rect2(-1.0, round(cue_y) - 2.0, 1.0, 1.0),
+				Color(1.0, 1.0, 1.0, 0.8 * cue_alpha))
+			draw_rect(Rect2(1.0, round(cue_y) - 2.0, 1.0, 1.0),
+				Color(1.0, 1.0, 1.0, 0.8 * cue_alpha))
+			draw_rect(Rect2(0.0, round(cue_y) - 3.0, 1.0, 1.0),
+				Color(1.0, 1.0, 1.0, 0.8 * cue_alpha))
 
 	# Central bright diamond core, shared by both phases.
 	var core_y: float = -gate_height * 0.5

@@ -267,6 +267,9 @@ func _run() -> void:
 	_check(not bridge_a.is_solid(), "bridge disappears on the other phase")
 	_check(bridge_a.get_collision_layer() == 0, "gone bridge uses collision layer 0",
 		str(bridge_a.get_collision_layer()))
+	_check(bridge_a.get_dissolve_strength() > 0.0,
+		"gone bridge shows a short dissolve burst",
+		"%.2f" % bridge_a.get_dissolve_strength())
 	var landed: bool = await _wait_until(
 		func() -> bool: return _player.is_on_floor() and _player.global_position.y >= 330.0,
 		180
@@ -287,6 +290,25 @@ func _run() -> void:
 	await _wait_physics(12)
 	_check(bridge_a.is_solid(), "bridge solidifies after the body falls clear",
 		bridge_a.get_state_name())
+	# Both sides of the bridge cue must reach rift_audio.  The chapter coalesces
+	# same-tick chimes, so force one clean gone -> solid -> gone sequence with
+	# real wall-clock room between the two toggles.
+	var audio: Node = _rift.get_node("Audio")
+	await _place(710.0, 280.0, false)
+	await _wait_physics(8)
+	var plays_before: int = int(audio.call("get_bridge_play_count"))
+	OS.delay_msec(140)
+	await _place(710.0, 280.0, true)
+	await _wait_physics(6)
+	var plays_after_form: int = int(audio.call("get_bridge_play_count"))
+	_check(plays_after_form > plays_before, "forming a deck plays the bridge cue",
+		"plays=%d" % plays_after_form)
+	OS.delay_msec(140)
+	await _place(710.0, 280.0, false)
+	await _wait_physics(6)
+	var plays_after_gone: int = int(audio.call("get_bridge_play_count"))
+	_check(plays_after_gone > plays_after_form, "dissolving a deck plays the bridge cue",
+		"plays=%d" % plays_after_gone)
 	# Restore a clean, standable state.
 	await _place(710.0, 280.0, true)
 	await _wait_physics(20)
@@ -356,6 +378,9 @@ func _run() -> void:
 		func() -> bool: return not wisp.is_alive(), 40
 	)
 	_check(killed, "one J hit dissolves the wisp")
+	_check(wisp.get_death_burst_strength() > 0.0,
+		"kill shows a short white burst at the wisp",
+		"%.2f" % wisp.get_death_burst_strength())
 	_check(_rift.get_wisps()[0].is_alive(), "other wisps stay alive",
 		"wisp0 alive=%s" % str(_rift.get_wisps()[0].is_alive()))
 
@@ -380,12 +405,26 @@ func _run() -> void:
 		"x=%.2f" % _player.global_position.x)
 
 	# --- arena failure retry ---------------------------------------------
+	var gold: L3Guard = _rift.get_guard_gold()
+	var cyan: L3Guard = _rift.get_guard_cyan()
 	await _place(1095.0, 320.0, false)
-	await _wait_physics(6)
+	await _wait_physics(3)
 	_check(_rift.is_arena_entered(), "arena entry flag set")
-	_check(not _rift.get_guard_gold().is_suspended()
-		and not _rift.get_guard_cyan().is_suspended(),
-		"both guards wake on arena entry")
+	_check(gold.is_suspended() and cyan.is_suspended()
+		and _rift.is_arena_intro_active(),
+		"both guards hover during the 0.8 s arena opening",
+		"intro=%.2f" % _rift.get_arena_intro_left())
+	_check(_rift.get_hud().get_event_text().contains("双生守卫苏醒"),
+		"HUD announces the twin guards waking",
+		_rift.get_hud().get_event_text())
+	var woke: bool = await _wait_until(
+		func() -> bool:
+			return not _rift.is_arena_intro_active() \
+				and not gold.is_suspended() and not cyan.is_suspended(),
+		120
+	)
+	_check(woke, "both guards wake together after the opening hover",
+		"gold=%s cyan=%s" % [gold.get_state_name(), cyan.get_state_name()])
 	_check(_rift.get_hud().get_objective_text().begins_with("目标：击败双生守卫"),
 		"HUD objective switches to the twin guards",
 		_rift.get_hud().get_objective_text())
@@ -419,9 +458,8 @@ func _run() -> void:
 	await _tap_key(KEY_R)
 	await _wait_process(4)
 	await _place(1095.0, 320.0, false)
+	await _wait_until(func() -> bool: return not _rift.is_arena_intro_active(), 120)
 	await _wait_physics(6)
-	var gold: L3Guard = _rift.get_guard_gold()
-	var cyan: L3Guard = _rift.get_guard_cyan()
 	var gold_hits: bool = true
 	for _index: int in range(3):
 		gold_hits = await _force_true_hit(gold, cyan)

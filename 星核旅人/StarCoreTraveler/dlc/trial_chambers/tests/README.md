@@ -91,3 +91,16 @@ Godot：`D:/Godot/Godot_v4.7.2-stable_win64_console.exe`，工程目录：`D:/go
 - 守卫蓄力/下砸/重组复用现有 `scripts/level03/l3_audio.gd` 和既有音频文件；主角挥击/受击/碎裂/记录/完成/失败/复活沿用 `DemoAudio`。没有新增音频资源，也没有改动主线音频。
 - 未做真人整关节奏、手感、可读性终审；像素级呈现只按本项目 640×360 实际截图核看。
 - 本轮未执行 Git 提交/推送/导出。
+
+## 2026-11-25 打磨补充（门开启提示）
+
+- 只改 `dlc/trial_chambers/polarity_gate.gd` 的 `_draw` 与 `_physics_process` 计时段：
+  开启态在 8×88 轮廓内画 3 条 4×1 px 近白横线 + 3 px 箭头，2.2 s 自下而上循环；
+  关闭态保持原实体亮场与横向火花刻度。碰撞层、防夹 latch、`is_open()` 等 API 未改。
+- 参考：`dlc/rift_workshop/REFERENCE_PASS_CUE.md`（Celeste Core Block / Dream Block
+  逐帧核看；只借“状态先于细节 + 内部单向动效”的读序，不搬像素/造型/调色板）。
+- 重新跑四项测试仍为 **32 / 46 / 25 / 5，0 失败**，导入与三关 90 帧 0 ERROR/WARNING。
+- 640×360 截图已重出：`tests/out/gate_gold_closed.png`、`gate_gold_open.png`
+  （开启态站在门侧，箭头可见）、`gate_cyan_closed.png`、`arena.png`、`pause.png`、
+  `completion.png`、`title_trial_button.png`。
+- 局限：静态截图只证明两种状态和箭头存在，未做真人“远看/边走边看”的可读性终审。

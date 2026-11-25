@@ -199,10 +199,21 @@ def build_fog() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Audio: short original tones, 16-bit 44.1 kHz mono, restrained level.
+# Audio: short original tones, 16-bit 44.1 kHz mono.
+#
+# Every file is peak-normalised on write, so regenerating it can never drift
+# back to an inaudible level.  One-shots sit at -3 dBFS (comparable to the base
+# levels' -3..-6 dBFS cues); the looping wisp hum is deliberately quieter at
+# -9 dBFS because four of them can be audible at once.
 # ---------------------------------------------------------------------------
 
 RATE = 44100
+ONE_SHOT_PEAK_DB = -3.0
+HUM_PEAK_DB = -9.0
+
+
+def db_to_peak(db: float) -> float:
+    return math.pow(10.0, db / 20.0)
 
 
 def _env(i: int, n: int, attack: float = 0.01, release: float = 0.05) -> float:
@@ -213,13 +224,15 @@ def _env(i: int, n: int, attack: float = 0.01, release: float = 0.05) -> float:
     return a * r
 
 
-def _write_wav(name: str, samples: list[float], peak: float) -> None:
+def _write_wav(name: str, samples: list[float], peak_db: float) -> None:
     os.makedirs(AUDIO, exist_ok=True)
     top = max(1e-9, max(abs(s) for s in samples))
-    scale = peak / top
+    scale = db_to_peak(peak_db) / top
     frames = bytearray()
+    written_top = 0
     for s in samples:
         v = int(max(-1.0, min(1.0, s * scale)) * 32767.0)
+        written_top = max(written_top, abs(v))
         frames += struct.pack("<h", v)
     path = os.path.join(AUDIO, name)
     with wave.open(path, "wb") as handle:
@@ -227,7 +240,12 @@ def _write_wav(name: str, samples: list[float], peak: float) -> None:
         handle.setsampwidth(2)
         handle.setframerate(RATE)
         handle.writeframes(bytes(frames))
-    print("wrote", path, "%.3fs" % (len(samples) / float(RATE)))
+    actual_db = 20.0 * math.log10(max(written_top, 1) / 32767.0)
+    print(
+        "wrote", path,
+        "%.3fs" % (len(samples) / float(RATE)),
+        "peak=%.2f dBFS (target %.2f)" % (actual_db, peak_db),
+    )
 
 
 def build_inversion() -> None:
@@ -245,7 +263,7 @@ def build_inversion() -> None:
         s += 0.30 * math.sin(2.0 * math.pi * f2 * t)
         s += 0.06 * math.sin(2.0 * math.pi * (f1 * 2.02) * t)
         out.append(s * env)
-    _write_wav("sfx_inversion.wav", out, 0.15)
+    _write_wav("sfx_inversion.wav", out, ONE_SHOT_PEAK_DB)
 
 
 def build_bridge() -> None:
@@ -260,7 +278,7 @@ def build_bridge() -> None:
         s += 0.12 * math.sin(2.0 * math.pi * 1568.0 * rise * t)
         s += 0.05 * math.sin(2.0 * math.pi * 2093.0 * t)
         out.append(s * env)
-    _write_wav("sfx_bridge.wav", out, 0.13)
+    _write_wav("sfx_bridge.wav", out, ONE_SHOT_PEAK_DB)
 
 
 def build_wisp_hum() -> None:
@@ -275,7 +293,7 @@ def build_wisp_hum() -> None:
         s += 0.30 * math.sin(2.0 * math.pi * 222.0 * t + 0.7)
         s += 0.10 * math.sin(2.0 * math.pi * 296.0 * t + 1.9)
         out.append(s * tremolo)
-    _write_wav("sfx_wisp_hum.wav", out, 0.055)
+    _write_wav("sfx_wisp_hum.wav", out, HUM_PEAK_DB)
 
 
 def build_wisp_pop() -> None:
@@ -292,7 +310,7 @@ def build_wisp_pop() -> None:
         low += 0.24 * (rng.uniform(-1.0, 1.0) - low)
         s += 0.75 * low
         out.append(s * env)
-    _write_wav("sfx_wisp_pop.wav", out, 0.14)
+    _write_wav("sfx_wisp_pop.wav", out, ONE_SHOT_PEAK_DB)
 
 
 def build_complete() -> None:
@@ -313,7 +331,7 @@ def build_complete() -> None:
         s += 0.12 * math.sin(2.0 * math.pi * 196.0 * t) * max(0.0, 1.0 - t / 1.9)
         s *= _env(i, n, 0.02, 0.30)
         out.append(s)
-    _write_wav("sfx_complete.wav", out, 0.16)
+    _write_wav("sfx_complete.wav", out, ONE_SHOT_PEAK_DB)
 
 
 def main() -> None:
