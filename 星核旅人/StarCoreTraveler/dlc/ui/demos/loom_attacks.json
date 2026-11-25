@@ -1,0 +1,19 @@
+{
+	"camera": {
+		"wide_limits": true,
+		"zoom": 0.45
+	},
+	"crop": {
+		"h": 144,
+		"w": 256,
+		"x": 190,
+		"y": 82
+	},
+	"fps": 8.0,
+	"frame_height": 144,
+	"frame_width": 256,
+	"frames": 24,
+	"id": "loom_attacks",
+	"note": "Formal star_loom stage 3. Real warnings then hazards: slow homing bolts, the sweeping light band, and two summoned rift wisps, all inside one 3 s loop.",
+	"source": "formal star_loom scene, real input/state"
+}

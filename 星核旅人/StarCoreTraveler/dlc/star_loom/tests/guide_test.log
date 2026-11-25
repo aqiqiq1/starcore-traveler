@@ -1,0 +1,30 @@
+﻿Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: the chapter opens the shared guide on start
+PASS: the guide is configured for the loom chapter [loom]
+PASS: the guide has three pages [3]
+PASS: page 1 indicator is 1 / 3 [1 / 3]
+PASS: page 1 title is 织机与双节点 [织机与双节点]
+PASS: page 1 demo id is loom_nodes [loom_nodes]
+PASS: page 1 footer offers F next [F 下一页 · 长按空格 跳过]
+PASS: page 1 has a real 24-frame demo strip [frames=24 fps=8.0]
+PASS: demo runs at 8 fps [8.0]
+PASS: the 24-frame strip animates
+PASS: F advances to page 2
+PASS: page 2 demo id is loom_core [loom_core]
+PASS: page 2 title is 核心暴露与三段真伤 [核心暴露与三段真伤]
+PASS: F advances to page 3
+PASS: page 3 demo id is loom_attacks [loom_attacks]
+PASS: page 3 title is 三段攻击与失败重置 [三段攻击与失败重置]
+PASS: page 3 footer offers F close [F 关闭 · 长按空格 跳过]
+PASS: page 3 has a 24-frame demo strip [24]
+PASS: long Space hold closes the guide
+PASS: closing the guide unpauses the tree
+PASS: the chapter player still exists after the guide
+PASS: a loom guide opens for the missing-demo check
+PASS: missing demos do not remove the three pages [3]
+PASS: missing demo shows the 演示缺失 placeholder
+PASS: missing demo reports no demo
+PASS: missing demo keeps the page title readable [织机与双节点]
+PASS: closing the fallback guide unpauses the tree
+STAR_LOOM_GUIDE_TEST checks=27 failures=0

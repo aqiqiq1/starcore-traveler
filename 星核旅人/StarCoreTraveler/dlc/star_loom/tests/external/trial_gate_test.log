@@ -1,0 +1,35 @@
+﻿Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: trial scene loads [res://dlc/trial_chambers/trial_chambers.tscn]
+PASS: trial exposes player and both gates
+PASS: player starts in 婢滅浉 (cyan)
+PASS: gold gate requires 杈夌浉
+PASS: cyan gate requires 婢滅浉
+PASS: gold gate is solid for cyan player
+PASS: gold gate collision layer is 1 when blocked [1]
+PASS: gold gate reports blocked
+PASS: same phase opens the gold gate
+PASS: gold gate collision layer is 0 when open [0]
+PASS: gold gate reports open
+PASS: opposite phase re-blocks the gold gate
+PASS: gold gate returns to solid layer
+PASS: gate does not change player phase
+PASS: cyan player is stopped by the gold gate [x=269.93]
+PASS: gold gate stays closed while pushing into it
+PASS: Q toggled the player to 杈夌浉
+PASS: gold gate opens after Q
+PASS: 杈夌浉 player walks through the gold gate [x=342.47]
+PASS: 杈夌浉 player is stopped by the cyan gate [x=509.93]
+PASS: cyan gate is closed for 杈夌浉
+PASS: second Q returns the player to 婢滅浉
+PASS: 婢滅浉 player walks through the cyan gate [x=581.93]
+PASS: gold gate is open before entering for anti-pinch test
+PASS: player body detected inside the gate
+PASS: phase change inside the gate does not clamp (still open)
+PASS: gate stays pass-through while player is inside [0]
+PASS: player is still inside the gate band
+PASS: player really switched phase inside the gate
+PASS: player body left the gate band
+PASS: opposite-phase gate re-closes after the player leaves
+PASS: gate returns to solid layer after leaving [1]
+TRIAL_GATE_TEST checks=32 failures=0

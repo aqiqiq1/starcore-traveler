@@ -36,6 +36,10 @@ const TRIAL_SCENE_PATH: String = "res://dlc/trial_chambers/trial_chambers.tscn"
 ## present; with dlc/rift_workshop/ removed the base game shows the original
 ## three rows again (plus the trial entry if that DLC is present).
 const RIFT_SCENE_PATH: String = "res://dlc/rift_workshop/rift_workshop.tscn"
+## Optional DLC chapter 3.  Same rule as the other DLC rows: the entry is built
+## once and only shown / focused while its scene file exists, so removing
+## dlc/star_loom/ leaves the original menu untouched.
+const LOOM_SCENE_PATH: String = "res://dlc/star_loom/star_loom.tscn"
 
 const UI_BASE: Texture2D = preload("res://assets/menu/main_menu_ui_640.png")
 const UI_FOCUS_START: Texture2D = preload("res://assets/menu/main_menu_focus_start_640.png")
@@ -54,6 +58,12 @@ const TRIAL_RECT: Rect2 = Rect2(264.0, 238.0, 112.0, 20.0)
 ## Optional rift-workshop entry, directly below the trial row.  Same 112x20
 ## STONE style, same focus chain, hidden when the DLC scene is missing.
 const RIFT_RECT: Rect2 = Rect2(264.0, 262.0, 112.0, 20.0)
+## Optional star-loom entry, directly below the rift row (y = 286).
+const LOOM_RECT: Rect2 = Rect2(264.0, 286.0, 112.0, 20.0)
+## The three optional DLC rows sit one step below the base 开始游戏 row in the
+## visual hierarchy.  This is only a modulate tint: layout, focus chain,
+## hit areas and every start/settings/quit path stay untouched.
+const DLC_ROW_MODULATE: Color = Color(0.82, 0.86, 0.86, 1.0)
 const RETURN_RECT: Rect2 = Rect2(324.0, 262.0, 144.0, 24.0)
 const SLIDER_RECT: Rect2 = Rect2(172.0, 92.0, 296.0, 16.0)
 const PERCENT_RECT: Rect2 = Rect2(386.0, 74.0, 80.0, 14.0)
@@ -104,6 +114,7 @@ var _settings_button: Button = null
 var _quit_button: Button = null
 var _trial_button: PixelMenuButton = null
 var _rift_button: PixelMenuButton = null
+var _loom_button: PixelMenuButton = null
 
 var _settings_layer: Control = null
 var _settings_return_focus_rect: TextureRect = null
@@ -188,6 +199,8 @@ func activate(level: Node, menu_camera: Camera2D) -> void:
 	_trial_button.disabled = false
 	if _rift_button != null and _rift_button.visible:
 		_rift_button.disabled = false
+	if _loom_button != null and _loom_button.visible:
+		_loom_button.disabled = false
 	_settings_layer.visible = false
 	_pending_overlay.visible = false
 	_pause_overlay.visible = false
@@ -291,9 +304,17 @@ func get_rift_button() -> PixelMenuButton:
 	return _rift_button
 
 
+func get_loom_button() -> PixelMenuButton:
+	return _loom_button
+
+
 ## True when the DLC scene file exists on disk.  Used by the menu build and by
 ## the availability test; returning false hides the entry instead of crashing.
 static func is_rift_entry_available(path: String = RIFT_SCENE_PATH) -> bool:
+	return ResourceLoader.exists(path)
+
+
+static func is_loom_entry_available(path: String = LOOM_SCENE_PATH) -> bool:
 	return ResourceLoader.exists(path)
 
 
@@ -485,6 +506,27 @@ func _build_ui() -> void:
 	var rift_available: bool = FileAccess.file_exists(RIFT_SCENE_PATH)
 	_rift_button.visible = rift_available
 	_rift_button.disabled = not rift_available
+
+	# Optional DLC chapter 3 entry, below the rift row.  Same build-always /
+	# show-only-when-present rule; the focus ring skips the hidden row.
+	_loom_button = _menu_button(
+		"LoomButton", "星核织机", LOOM_RECT, PixelMenuButton.Variant.STONE
+	)
+	_fade_group.add_child(_loom_button)
+	_loom_button.pressed.connect(_on_loom_pressed)
+	_loom_button.focus_entered.connect(_deferred_refresh_focus)
+	_loom_button.focus_exited.connect(_deferred_refresh_focus)
+	_loom_button.mouse_entered.connect(_on_hover.bind("loom"))
+	_loom_button.mouse_exited.connect(_on_unhover.bind("loom"))
+	var loom_available: bool = FileAccess.file_exists(LOOM_SCENE_PATH)
+	_loom_button.visible = loom_available
+	_loom_button.disabled = not loom_available
+
+	# Keep the three DLC rows visually a step below the base title row without
+	# changing their geometry, focus or input handling.
+	for dlc_row: PixelMenuButton in [_trial_button, _rift_button, _loom_button]:
+		if dlc_row != null:
+			dlc_row.modulate = DLC_ROW_MODULATE
 	_refresh_menu_focus_chain()
 
 	_settings_layer = _build_settings_layer()
@@ -843,6 +885,8 @@ func _refresh_menu_focus_chain() -> void:
 		chain.append(_trial_button)
 	if _rift_button != null and _rift_button.visible:
 		chain.append(_rift_button)
+	if _loom_button != null and _loom_button.visible:
+		chain.append(_loom_button)
 	for index: int in range(chain.size()):
 		var current: Control = chain[index]
 		var next: Control = chain[(index + 1) % chain.size()]
@@ -880,12 +924,16 @@ func _on_start_pressed() -> void:
 	_trial_button.release_focus()
 	if _rift_button != null:
 		_rift_button.release_focus()
+	if _loom_button != null:
+		_loom_button.release_focus()
 	_start_button.disabled = true
 	_settings_button.disabled = true
 	_quit_button.disabled = true
 	_trial_button.disabled = true
 	if _rift_button != null:
 		_rift_button.disabled = true
+	if _loom_button != null:
+		_loom_button.disabled = true
 	_hover_kind = ""
 	_focus_start_rect.visible = false
 	_focus_settings_rect.visible = false
@@ -919,12 +967,16 @@ func _on_quit_pressed() -> void:
 	_trial_button.release_focus()
 	if _rift_button != null:
 		_rift_button.release_focus()
+	if _loom_button != null:
+		_loom_button.release_focus()
 	_start_button.disabled = true
 	_settings_button.disabled = true
 	_quit_button.disabled = true
 	_trial_button.disabled = true
 	if _rift_button != null:
 		_rift_button.disabled = true
+	if _loom_button != null:
+		_loom_button.disabled = true
 	_hover_kind = ""
 	_focus_start_rect.visible = false
 	_focus_settings_rect.visible = false
@@ -951,12 +1003,16 @@ func _on_trial_pressed() -> void:
 	_trial_button.release_focus()
 	if _rift_button != null:
 		_rift_button.release_focus()
+	if _loom_button != null:
+		_loom_button.release_focus()
 	_start_button.disabled = true
 	_settings_button.disabled = true
 	_quit_button.disabled = true
 	_trial_button.disabled = true
 	if _rift_button != null:
 		_rift_button.disabled = true
+	if _loom_button != null:
+		_loom_button.disabled = true
 	_hover_kind = ""
 	_focus_start_rect.visible = false
 	_focus_settings_rect.visible = false
@@ -981,6 +1037,8 @@ func _restore_after_failed_trial() -> void:
 	_trial_button.disabled = false
 	if _rift_button != null and _rift_button.visible:
 		_rift_button.disabled = false
+	if _loom_button != null and _loom_button.visible:
+		_loom_button.disabled = false
 	call_deferred("_focus_start")
 
 
@@ -1029,6 +1087,62 @@ func _restore_after_failed_rift() -> void:
 	_quit_button.disabled = false
 	_trial_button.disabled = false
 	_rift_button.disabled = false
+	if _loom_button != null and _loom_button.visible:
+		_loom_button.disabled = false
+	call_deferred("_focus_start")
+
+
+## Optional star-loom entry.  Same lock/release sequence as the other DLC rows:
+## every hot zone is disabled, focus is released and one-shot actions are
+## cleared before the scene swap, so the activating Enter/Space cannot become a
+## jump / Q / J press on the chapter's first frames.
+func _on_loom_pressed() -> void:
+	if _loom_button == null or not _loom_button.visible:
+		return
+	if _phase != Phase.MENU or _settings_open or _start_locked or _quit_locked:
+		return
+	if _display != null and _display.is_pending():
+		return
+	DemoAudio.play_ui_click()
+	_start_locked = true
+	_start_button.release_focus()
+	_settings_button.release_focus()
+	_quit_button.release_focus()
+	_trial_button.release_focus()
+	if _rift_button != null:
+		_rift_button.release_focus()
+	_loom_button.release_focus()
+	_start_button.disabled = true
+	_settings_button.disabled = true
+	_quit_button.disabled = true
+	_trial_button.disabled = true
+	if _rift_button != null:
+		_rift_button.disabled = true
+	_loom_button.disabled = true
+	_hover_kind = ""
+	_focus_start_rect.visible = false
+	_focus_settings_rect.visible = false
+	_focus_quit_rect.visible = false
+	LEVEL_FLOW.release_one_shot_actions()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
+	var error: Error = get_tree().change_scene_to_file(LOOM_SCENE_PATH)
+	if error != OK:
+		_restore_after_failed_loom()
+
+
+func _restore_after_failed_loom() -> void:
+	_start_locked = false
+	_phase = Phase.MENU
+	_start_button.disabled = false
+	_settings_button.disabled = false
+	_quit_button.disabled = false
+	_trial_button.disabled = false
+	if _rift_button != null and _rift_button.visible:
+		_rift_button.disabled = false
+	_loom_button.disabled = false
 	call_deferred("_focus_start")
 
 
@@ -1247,12 +1361,16 @@ func _open_settings() -> void:
 	_trial_button.disabled = true
 	if _rift_button != null:
 		_rift_button.disabled = true
+	if _loom_button != null:
+		_loom_button.disabled = true
 	_start_button.release_focus()
 	_settings_button.release_focus()
 	_quit_button.release_focus()
 	_trial_button.release_focus()
 	if _rift_button != null:
 		_rift_button.release_focus()
+	if _loom_button != null:
+		_loom_button.release_focus()
 	_hover_kind = ""
 	_focus_quit_rect.visible = false
 	_fade_group.visible = false
@@ -1295,6 +1413,8 @@ func _close_settings() -> void:
 	_trial_button.disabled = false
 	if _rift_button != null and _rift_button.visible:
 		_rift_button.disabled = false
+	if _loom_button != null and _loom_button.visible:
+		_loom_button.disabled = false
 	_settings_return_focus_rect.visible = false
 	call_deferred("_focus_settings")
 

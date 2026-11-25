@@ -1,0 +1,1220 @@
+class_name StarLoom
+extends Node2D
+
+## DLC chapter 3: 星核织机 (Star Loom), one 960 x 360 boss hall.
+##
+## The player enters from the left; the loom hangs in the middle/right.  Two
+## gold/cyan nodes orbit the core.  Q switches the player's phase; only an
+## opposite-phase J hit breaks a node or hurts the exposed core.  Both nodes
+## down -> core open -> three true hits -> next stage (three stages total).
+##
+## The boss has three attacks, introduced by stage:
+##   1. slow homing bolts      (warning 0.55 s)
+##   2. sweeping light band    (warning 0.65 s)
+##   3. summon 1-2 rift wisps  (warning 0.80 s)
+##
+## Two accepted hits -> black fade -> player back at the hall entrance and the
+## whole boss restored.  R restarts the chapter.  Completion shows
+## "织机停转 · 用时 mm:ss"; E / Enter returns to the title.
+##
+## Reused, never modified: L3Player (J / hurt / fall), the shared DS03
+## background, L3Terrain, CompactLevelHeader, the project font and palette, the
+## shared DLC guide scene.  All new art and audio live in dlc/star_loom/.
+
+signal level_completed
+
+@export var show_intro_guide: bool = true
+
+const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
+const DLC_GUIDE_SCENE: PackedScene = preload("res://dlc/ui/dlc_guide.tscn")
+const LOOM_GUIDE_SCRIPT: Script = preload("res://dlc/star_loom/loom_guide.gd")
+
+const WORLD_LEFT: float = 0.0
+const WORLD_RIGHT: float = 960.0
+const FLOOR_Y: float = 320.0
+const KILL_Y: float = 430.0
+const START_SPAWN: Vector2 = Vector2(40.0, 320.0)
+const ARENA_SPAWN: Vector2 = Vector2(420.0, 320.0)
+const ARENA_ENTER_X: float = 430.0
+const CORE_POSITION: Vector2 = Vector2(700.0, 258.0)
+const NODE_ORBIT_RADIUS: Vector2 = Vector2(100.0, 46.0)
+const SWEEP_START_X: float = 930.0
+const CORE_HITS_PER_STAGE: int = 3
+const MAX_STAGE: int = 3
+const PLAYER_HIT_LIMIT: int = 2
+const BODY_CENTER_OFFSET: Vector2 = Vector2(0.0, -15.0)
+const AUTO_FACE_RANGE: float = 240.0
+
+## Every warning is comfortably above the 0.3 s floor in the brief.
+const WINDUP_HOMING: float = 0.55
+const WINDUP_SWEEP: float = 0.65
+const WINDUP_SUMMON: float = 0.80
+const RECOVER_HOMING: float = 1.10
+const RECOVER_SWEEP: float = 1.00
+const RECOVER_SUMMON: float = 1.15
+const IDLE_TIME: float = 0.85
+const START_GRACE: float = 1.20
+const STAGE_GRACE: float = 1.50
+
+const RECOVERY_FADE_OUT_TIME: float = 0.25
+const RECOVERY_BLACK_HOLD_TIME: float = 0.10
+const RECOVERY_FADE_IN_TIME: float = 0.35
+
+enum AttackState { IDLE, TELEGRAPH, RECOVER }
+enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
+
+@onready var _player: L3Player = $Player
+@onready var _camera: Camera2D = $Player/Camera2D
+@onready var _core: LoomCore = $Boss/Core
+@onready var _node_a: LoomNode = $Boss/NodeA
+@onready var _node_b: LoomNode = $Boss/NodeB
+@onready var _hazards: Node2D = $Hazards
+@onready var _fx: LoomFx = $Fx
+@onready var _hud: LoomHUD = $HUD
+@onready var _audio: LoomAudio = $Audio
+
+var _nodes: Array[LoomNode] = []
+var _bullets: Array[LoomBullet] = []
+var _wisps: Array[LoomWisp] = []
+var _sweep: LoomSweep = null
+var _intro_guide: DlcGuide = null
+
+var _elapsed: float = 0.0
+var _completed: bool = false
+var _scene_leaving: bool = false
+var _boss_active: bool = false
+var _stage: int = 1
+var _core_hits: int = 0
+var _player_hits: int = 0
+var _boss_grace: float = 0.0
+var _objective_key: String = ""
+var _pause_open: bool = false
+var _attack_key_down: bool = false
+var _resolved_swings: Dictionary = {}
+var _input_ticks: int = 0
+var _stage_flash: float = 0.0
+var _last_polarity_toggles: int = 0
+
+var _attack_state: AttackState = AttackState.IDLE
+var _attack_kind: String = ""
+var _attack_left: float = 0.0
+var _telegraph_windup: float = 1.0
+var _attack_cursor: int = 0
+var _summon_serial: int = 0
+var _homing_points: Array[Vector2] = []
+var _homing_directions: Array[Vector2] = []
+var _summon_points: Array[Vector2] = []
+var _attacks_enabled: bool = true
+
+var _retry_pending: bool = false
+var _retry_pending_left: float = 0.0
+## Set when the third stage's last true hit lands.  The completion page waits
+## for the current J swing to finish before locking input: cancelling the swing
+## from inside its own hit-window callback would leave the shared player's
+## attack sprite applied for one more frame.
+var _pending_completion: bool = false
+
+var _recovery_active: bool = false
+var _recovery_phase: RecoveryPhase = RecoveryPhase.NONE
+var _recovery_alpha: float = 0.0
+var _recovery_elapsed: float = 0.0
+
+
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	process_physics_priority = -10
+	for node: Node in [
+		$Backdrop, $Terrain, $Boss, $Boss/Core, $Boss/NodeA, $Boss/NodeB,
+		$Hazards, $Player, $Fx,
+	]:
+		if node != null:
+			node.process_mode = Node.PROCESS_MODE_PAUSABLE
+	$HUD.process_mode = Node.PROCESS_MODE_ALWAYS
+
+	_nodes = [_node_a, _node_b]
+	_core.configure()
+	_node_a.broken.connect(_on_node_broken)
+	_node_b.broken.connect(_on_node_broken)
+	for node: LoomNode in _nodes:
+		node.configure(CORE_POSITION, 0.0, true, NODE_ORBIT_RADIUS)
+		node.set_active(false)
+	_core.set_active(false)
+	_fx.configure(self)
+
+	_player.allow_self_reset = false
+	_player.set_world_bounds(WORLD_LEFT, WORLD_RIGHT)
+	_player.set_kill_y(KILL_Y)
+	_player.set_spawn_point(START_SPAWN)
+	_player.set_recovery_intercept_enabled(true)
+	_player.reset_to_spawn("level_start", false)
+	_player.set_polarity_state(false)
+	_player.global_position = START_SPAWN
+	_player.velocity = Vector2.ZERO
+	_player.set_strike_source(_core)
+	_player.polarity_changed.connect(_on_player_polarity_changed)
+	_player.attack_started.connect(_on_player_attack_started)
+	_player.attack_hit_window.connect(_on_player_attack_hit_window)
+	_player.recovery_transition_requested.connect(_on_player_recovery_transition_requested)
+	_last_polarity_toggles = _player.get_polarity_toggle_count()
+
+	_hud.resume_requested.connect(_on_hud_resume_requested)
+	_hud.title_requested.connect(_on_hud_title_requested)
+	_hud.set_polarity(false)
+	_hud.set_objective("目标：向右进入织机厅")
+	_hud.set_boss_state(1, MAX_STAGE, 2, 0, CORE_HITS_PER_STAGE, false)
+	_hud.show_completion(false, 0.0)
+	_hud.show_pause(false)
+	_hud.set_recovery_alpha(0.0)
+
+	_camera.reset_smoothing()
+	_elapsed = 0.0
+	LEVEL_FLOW.release_one_shot_actions()
+	_player.begin_input_override()
+	_input_ticks = 3
+	if show_intro_guide:
+		call_deferred("_open_intro_guide")
+
+
+func _exit_tree() -> void:
+	if _audio != null:
+		_audio.stop_all()
+	if is_instance_valid(DemoAudio):
+		DemoAudio.stop_world()
+
+
+## Tests set show_intro_guide = false before add_child(), so their input routes
+## never meet a paused tree.
+func _open_intro_guide() -> void:
+	if not show_intro_guide or _completed or _scene_leaving:
+		return
+	if _intro_guide != null and is_instance_valid(_intro_guide):
+		return
+	var guide: DlcGuide = DLC_GUIDE_SCENE.instantiate() as DlcGuide
+	# The shared guide's page table is const, so this subclass supplies the
+	# third chapter's three pages through the existing virtual `_page_data()`.
+	guide.set_script(LOOM_GUIDE_SCRIPT)
+	add_child(guide)
+	_intro_guide = guide
+	guide.closed.connect(_on_intro_guide_closed)
+	guide.configure("loom", self)
+	guide.open_guide()
+
+
+func _on_intro_guide_closed(_kind: String) -> void:
+	_attack_key_down = false
+	_player.begin_input_override()
+	_input_ticks = 3
+
+
+# --- frame flow ------------------------------------------------------------
+
+func _physics_process(delta: float) -> void:
+	if get_tree().paused or _completed or _scene_leaving or _recovery_active:
+		return
+	if _retry_pending:
+		_retry_pending_left = maxf(_retry_pending_left - delta, 0.0)
+		if _retry_pending_left <= 0.0:
+			_retry_pending = false
+			_begin_recovery("combat")
+			return
+	if _input_ticks > 0:
+		_input_ticks -= 1
+		_player.begin_input_override()
+		if _input_ticks <= 0:
+			_player.end_input_override()
+		return
+
+	if _pending_completion:
+		# Do not cancel a swing from inside its own hit-window callback; wait
+		# for the shared player to finish the animation, then show the page.
+		if not _player.is_attacking():
+			_pending_completion = false
+			_complete_chapter()
+		return
+
+	if not _boss_active:
+		if _player.global_position.x >= ARENA_ENTER_X:
+			_start_boss()
+		_update_objective()
+		return
+
+	if _boss_grace > 0.0:
+		_boss_grace = maxf(_boss_grace - delta, 0.0)
+	else:
+		_tick_attack(delta)
+	_update_objective()
+
+
+func _process(delta: float) -> void:
+	if get_tree().paused or _scene_leaving:
+		return
+	if not _completed:
+		_elapsed += delta
+	_advance_recovery(delta)
+	_stage_flash = maxf(_stage_flash - delta / 0.7, 0.0)
+	_clean_hazard_lists()
+
+
+func _clean_hazard_lists() -> void:
+	for index: int in range(_bullets.size() - 1, -1, -1):
+		if not is_instance_valid(_bullets[index]):
+			_bullets.remove_at(index)
+	for index: int in range(_wisps.size() - 1, -1, -1):
+		if not is_instance_valid(_wisps[index]):
+			_wisps.remove_at(index)
+	if _sweep != null and not is_instance_valid(_sweep):
+		_sweep = null
+
+
+# --- boss start / stage flow ----------------------------------------------
+
+func _start_boss() -> void:
+	if _boss_active or _completed or _scene_leaving:
+		return
+	_boss_active = true
+	_stage = 1
+	_core_hits = 0
+	_player_hits = 0
+	_retry_pending = false
+	_core.configure()
+	_core.set_active(true)
+	_core.set_phase(true)
+	_core.set_exposed(false)
+	_respawn_nodes()
+	_attack_state = AttackState.IDLE
+	_attack_left = 1.4
+	_attack_cursor = 0
+	_summon_serial = 0
+	_boss_grace = START_GRACE
+	_audio.start_music()
+	_audio.play_core_exposed()
+	_hud.show_event("星核织机启动 · 异相 J 打节点", 2.2)
+	_hud.set_objective("目标：异相 J 打掉两个节点")
+	_update_hud_state()
+
+
+func _respawn_nodes() -> void:
+	var a_positive: bool = _stage % 2 == 1
+	var angle: float = 0.9 + 0.4 * float(_stage - 1)
+	_node_a.configure(CORE_POSITION, angle, a_positive, NODE_ORBIT_RADIUS)
+	_node_a.set_active(true)
+	_node_b.configure(CORE_POSITION, angle + PI, not a_positive, NODE_ORBIT_RADIUS)
+	_node_b.set_active(true)
+
+
+func _on_node_broken(_node: LoomNode) -> void:
+	_audio.play_node_break()
+	if _nodes_alive_count() == 0 and not _core.is_exposed():
+		_core.set_exposed(true)
+		_audio.play_core_exposed()
+		_hud.show_event("节点停转 · 核心暴露", 2.0)
+		_hud.set_objective("目标：核心暴露 · 异相 J 3 次")
+	_update_hud_state()
+
+
+func _resolve_core_hit(snapshot_positive: bool) -> void:
+	if snapshot_positive == _core.get_phase():
+		_core.flash_shield()
+		_audio.play_deny()
+		_hud.show_event("同相无效 · Q 切异相再打核心", 1.4)
+		return
+	_core_hits += 1
+	_core.flash_hit()
+	_audio.play_core_hit()
+	# The core changes phase after every accepted hit, so Q is always the next
+	# input the player must read.
+	_core.set_phase(not _core.get_phase())
+	if _core_hits >= CORE_HITS_PER_STAGE:
+		_advance_stage()
+	else:
+		_hud.show_event("核心真伤 %d / 3 · 核心已换相" % _core_hits, 1.6)
+	_update_hud_state()
+
+
+func _advance_stage() -> void:
+	if _stage >= MAX_STAGE:
+		_pending_completion = true
+		_boss_active = false
+		_clear_hazards()
+		_hud.show_event("织机停转", 2.0)
+		return
+	if _stage < MAX_STAGE:
+		_stage += 1
+	_core_hits = 0
+	_clear_hazards()
+	_core.set_exposed(false)
+	_core.set_phase(_stage % 2 == 1)
+	_respawn_nodes()
+	_attack_state = AttackState.IDLE
+	_attack_left = 1.5
+	_attack_cursor = 0
+	_boss_grace = STAGE_GRACE
+	_stage_flash = 1.0
+	_audio.play_stage()
+	_audio.play_core_exposed()
+	_hud.show_event("阶段 %d / %d · 节点重生" % [_stage, MAX_STAGE], 2.0)
+	_hud.set_objective("目标：异相 J 打掉两个节点")
+	_update_hud_state()
+
+
+func _update_hud_state() -> void:
+	if _hud == null:
+		return
+	_hud.set_boss_state(
+		_stage, MAX_STAGE, _nodes_alive_count(), _core_hits,
+		CORE_HITS_PER_STAGE, _core.is_exposed()
+	)
+
+
+func _update_objective(force: bool = false) -> void:
+	var text: String
+	var key: String
+	if _completed:
+		text = "目标：织机停转"
+		key = "done"
+	elif not _boss_active:
+		text = "目标：向右进入织机厅"
+		key = "enter"
+	elif _core.is_exposed():
+		text = "目标：核心暴露 · 异相 J %d / 3" % _core_hits
+		key = "core"
+	else:
+		text = "目标：异相 J 打掉两个节点"
+		key = "nodes"
+	if key == _objective_key and not force:
+		return
+	_objective_key = key
+	_hud.set_objective(text)
+
+
+# --- attacks ---------------------------------------------------------------
+
+func _tick_attack(delta: float) -> void:
+	if not _attacks_enabled:
+		return
+	match _attack_state:
+		AttackState.IDLE:
+			_attack_left = maxf(_attack_left - delta, 0.0)
+			if _attack_left <= 0.0:
+				_begin_telegraph(_next_attack_kind())
+		AttackState.TELEGRAPH:
+			_attack_left = maxf(_attack_left - delta, 0.0)
+			if _attack_left <= 0.0:
+				_execute_attack()
+				_attack_state = AttackState.RECOVER
+				_attack_left = _recover_time(_attack_kind)
+		AttackState.RECOVER:
+			_attack_left = maxf(_attack_left - delta, 0.0)
+			if _attack_left <= 0.0:
+				_attack_state = AttackState.IDLE
+				_attack_left = IDLE_TIME
+
+
+func _next_attack_kind() -> String:
+	var pool: Array = get_attack_pool()
+	var kind: String = String(pool[_attack_cursor % pool.size()])
+	_attack_cursor += 1
+	return kind
+
+
+func get_attack_pool() -> Array:
+	match _stage:
+		1:
+			return ["homing"]
+		2:
+			return ["homing", "sweep"]
+		_:
+			return ["homing", "sweep", "summon"]
+
+
+func _begin_telegraph(kind: String) -> void:
+	_attack_kind = kind
+	_attack_state = AttackState.TELEGRAPH
+	_telegraph_windup = get_attack_windup(kind)
+	_attack_left = _telegraph_windup
+	_prepare_telegraph_points(kind)
+	_audio.play_telegraph()
+	match kind:
+		"homing":
+			_hud.show_event("预警 · 慢速追踪弹", 1.1)
+		"sweep":
+			_hud.show_event("预警 · 横扫光带 · 跳起", 1.2)
+		"summon":
+			_hud.show_event("预警 · 召唤裂隙浮灵", 1.3)
+
+
+func _prepare_telegraph_points(kind: String) -> void:
+	_homing_points.clear()
+	_homing_directions.clear()
+	_summon_points.clear()
+	match kind:
+		"homing":
+			var player_center: Vector2 = _player.global_position + BODY_CENTER_OFFSET
+			var base: Vector2 = (player_center - CORE_POSITION)
+			if base.length_squared() < 1.0:
+				base = Vector2.LEFT
+			base = base.normalized()
+			var count: int = 2 + _stage
+			for index: int in range(count):
+				var spread: float = lerp(
+					-0.45, 0.45, float(index) / maxf(float(count - 1), 1.0)
+				)
+				var direction: Vector2 = base.rotated(spread)
+				_homing_directions.append(direction)
+				_homing_points.append(CORE_POSITION + direction * 52.0)
+		"summon":
+			_summon_points.append(Vector2(548.0, 262.0))
+			_summon_points.append(Vector2(852.0, 262.0))
+
+
+func _execute_attack() -> void:
+	match _attack_kind:
+		"homing":
+			_spawn_homing_bolts()
+		"sweep":
+			_spawn_sweep()
+		"summon":
+			_spawn_wisps()
+		_:
+			pass
+
+
+func _spawn_homing_bolts() -> void:
+	if _bullets.size() >= 6:
+		return
+	var available: int = 6 - _bullets.size()
+	var count: int = mini(_homing_points.size(), available)
+	for index: int in range(count):
+		var bullet: LoomBullet = LoomBullet.new()
+		bullet.name = "HomingBolt"
+		_hazards.add_child(bullet)
+		bullet.position = _homing_points[index]
+		bullet.setup(_player, self, _homing_directions[index])
+		_bullets.append(bullet)
+	_audio.play_bullet()
+
+
+func _spawn_sweep() -> void:
+	var sweep: LoomSweep = LoomSweep.new()
+	sweep.name = "SweepBand"
+	_hazards.add_child(sweep)
+	sweep.setup(_player, self, SWEEP_START_X, -1)
+	_sweep = sweep
+	_audio.play_sweep()
+
+
+func _spawn_wisps() -> void:
+	if _wisps.size() >= 3:
+		return
+	_summon_serial += 1
+	var count: int = 1 + (1 if _summon_serial % 2 == 0 else 0)
+	count = mini(count, mini(_summon_points.size(), 3 - _wisps.size()))
+	for index: int in range(count):
+		var wisp: LoomWisp = LoomWisp.new()
+		wisp.name = "RiftWisp"
+		_hazards.add_child(wisp)
+		wisp.position = _summon_points[index] + Vector2(0.0, -8.0 * float(index))
+		wisp.setup(_player, self)
+		_wisps.append(wisp)
+	_audio.play_summon()
+
+
+func get_attack_windup(kind: String) -> float:
+	match kind:
+		"homing":
+			return WINDUP_HOMING
+		"sweep":
+			return WINDUP_SWEEP
+		"summon":
+			return WINDUP_SUMMON
+	return 0.0
+
+
+func _recover_time(kind: String) -> float:
+	match kind:
+		"homing":
+			return RECOVER_HOMING
+		"sweep":
+			return RECOVER_SWEEP
+		"summon":
+			return RECOVER_SUMMON
+	return 1.0
+
+
+func _clear_hazards() -> void:
+	for bullet: LoomBullet in _bullets:
+		if bullet != null and is_instance_valid(bullet):
+			bullet.queue_free()
+	_bullets.clear()
+	for wisp: LoomWisp in _wisps:
+		if wisp != null and is_instance_valid(wisp):
+			wisp.queue_free()
+	_wisps.clear()
+	if _sweep != null and is_instance_valid(_sweep):
+		_sweep.queue_free()
+	_sweep = null
+
+
+# --- player attack / damage -----------------------------------------------
+
+func _on_player_attack_started(_swing_id: int, _facing: int, _positive: bool) -> void:
+	DemoAudio.play_swing()
+
+
+func _on_player_attack_hit_window(swing_id: int, facing: int, positive: bool) -> void:
+	if (
+		_completed or _scene_leaving or _recovery_active or _retry_pending
+		or not _boss_active
+	):
+		return
+	if _resolved_swings.has(swing_id):
+		return
+	_resolved_swings[swing_id] = true
+	# A real J swing may kill a summoned wisp first: it is the nearest target
+	# and the swing should not also hit the boss behind it.
+	if _try_kill_wisp(facing):
+		return
+	var attack_rect: Rect2 = _player_attack_rect(facing)
+	if _core.is_exposed() and attack_rect.intersects(_core.get_hit_rect()):
+		_resolve_core_hit(positive)
+		return
+	var best_node: LoomNode = null
+	var best_dx: float = INF
+	for node: LoomNode in _nodes:
+		if node == null or not is_instance_valid(node) or not node.is_alive():
+			continue
+		if not attack_rect.intersects(node.get_hit_rect()):
+			continue
+		var dx: float = absf(node.global_position.x - _player.global_position.x)
+		if dx < best_dx:
+			best_dx = dx
+			best_node = node
+	if best_node == null:
+		return
+	if positive == best_node.is_positive():
+		best_node.flash_deny()
+		_audio.play_deny()
+		_hud.show_event("同相弹开 · Q 切异相再按 J", 1.4)
+		return
+	_audio.play_node_hit()
+	best_node.break_node()
+	_hud.show_event("节点停转", 1.0)
+
+
+func _try_kill_wisp(facing: int) -> bool:
+	for wisp: LoomWisp in _wisps:
+		if wisp == null or not is_instance_valid(wisp) or not wisp.is_alive():
+			continue
+		if wisp.try_player_hit(_player, facing):
+			_audio.play_node_hit()
+			_hud.show_event("浮灵消散", 0.9)
+			return true
+	return false
+
+
+func _player_attack_rect(facing: int) -> Rect2:
+	var direction: float = 1.0 if facing >= 0 else -1.0
+	var origin_x: float = _player.global_position.x + (2.0 if direction > 0.0 else -40.0)
+	return Rect2(origin_x, _player.global_position.y - 38.0, 38.0, 40.0)
+
+
+## Single entry point for every hazard contact (bolt, band, wisp).  The shared
+## L3Player owns the 0.6 s protection and the real knockback; this only counts
+## accepted hits.
+func apply_enemy_hit(source_position: Vector2) -> bool:
+	if (
+		not _boss_active or _completed or _scene_leaving or _recovery_active
+		or _retry_pending or get_tree().paused
+	):
+		return false
+	var away: int = 1 if _player.global_position.x >= source_position.x else -1
+	if not _player.receive_enemy_strike(away):
+		return false
+	_player_hits += 1
+	if is_instance_valid(DemoAudio):
+		DemoAudio.play_player_hurt()
+	_hud.show_event("受击 %d / %d" % [_player_hits, PLAYER_HIT_LIMIT], 1.2)
+	if _player_hits >= PLAYER_HIT_LIMIT:
+		_retry_pending = true
+		_retry_pending_left = maxf(_player.get_hit_reaction_remaining(), 0.02)
+	return true
+
+
+func _on_player_polarity_changed(positive: bool) -> void:
+	# A reset also emits polarity_changed; only a real Q toggle should chime.
+	var toggles: int = _player.get_polarity_toggle_count()
+	if toggles > _last_polarity_toggles and is_instance_valid(DemoAudio):
+		DemoAudio.play_polarity_switch()
+	_last_polarity_toggles = toggles
+	if _hud != null:
+		_hud.set_polarity(positive)
+
+
+func _on_player_recovery_transition_requested(reason: String) -> void:
+	if reason != "fall" or _recovery_active or _completed or _scene_leaving:
+		return
+	_begin_recovery("fall")
+
+
+# --- recovery (same approved timing as the other DLC chapters) -------------
+
+func _begin_recovery(kind: String) -> void:
+	if _recovery_active or _completed or _scene_leaving:
+		return
+	_recovery_active = true
+	_recovery_phase = RecoveryPhase.FADE_OUT
+	_recovery_elapsed = 0.0
+	_recovery_alpha = 0.0
+	_attack_key_down = false
+	_retry_pending = false
+	_clear_hazards()
+	_attack_state = AttackState.IDLE
+	_attack_left = 1.2
+	if is_instance_valid(DemoAudio):
+		DemoAudio.play_failure()
+	_player.begin_input_override()
+	_player.set_input_override_axis(0.0, false)
+	_player.cancel_attack()
+	_player.begin_recovery_hold()
+	_player.clear_external_force()
+
+
+func _advance_recovery(delta: float) -> void:
+	if not _recovery_active:
+		return
+	_recovery_elapsed += delta
+	match _recovery_phase:
+		RecoveryPhase.FADE_OUT:
+			_recovery_alpha = clampf(_recovery_elapsed / RECOVERY_FADE_OUT_TIME, 0.0, 1.0)
+			_hud.set_recovery_alpha(_recovery_alpha)
+			if _recovery_alpha >= 1.0:
+				_recovery_phase = RecoveryPhase.BLACK_HOLD
+				_recovery_elapsed = 0.0
+				_apply_recovery_reset()
+		RecoveryPhase.BLACK_HOLD:
+			_recovery_alpha = 1.0
+			_hud.set_recovery_alpha(1.0)
+			if _recovery_elapsed >= RECOVERY_BLACK_HOLD_TIME:
+				_recovery_phase = RecoveryPhase.FADE_IN
+				_recovery_elapsed = 0.0
+				if is_instance_valid(DemoAudio):
+					DemoAudio.play_respawn()
+		RecoveryPhase.FADE_IN:
+			_recovery_alpha = clampf(
+				1.0 - _recovery_elapsed / RECOVERY_FADE_IN_TIME, 0.0, 1.0
+			)
+			_hud.set_recovery_alpha(_recovery_alpha)
+			if _recovery_alpha <= 0.0:
+				_finish_recovery()
+
+
+func _apply_recovery_reset() -> void:
+	_reset_boss_full()
+	_reset_player_at(ARENA_SPAWN)
+	_player.begin_recovery_hold()
+	_hud.show_event("失败 · 回织机入口 · 织机重置", 2.2)
+
+
+func _finish_recovery() -> void:
+	if not _recovery_active:
+		return
+	_recovery_active = false
+	_recovery_phase = RecoveryPhase.NONE
+	_recovery_elapsed = 0.0
+	_recovery_alpha = 0.0
+	_hud.set_recovery_alpha(0.0)
+	_player.end_recovery_hold()
+	_player.end_input_override()
+	_player.clear_input_buffers()
+	_player.clear_external_force()
+	_attack_key_down = false
+	LEVEL_FLOW.release_one_shot_actions()
+
+
+## A failure restores the complete boss, not just the current stage: two nodes,
+## stage 1, core shielded, no hazards, full grace.
+func _reset_boss_full() -> void:
+	_resolved_swings.clear()
+	_player_hits = 0
+	_retry_pending = false
+	_retry_pending_left = 0.0
+	_pending_completion = false
+	_stage = 1
+	_core_hits = 0
+	_boss_active = true
+	_boss_grace = START_GRACE
+	_attack_state = AttackState.IDLE
+	_attack_left = 1.2
+	_attack_cursor = 0
+	_summon_serial = 0
+	_stage_flash = 0.0
+	_clear_hazards()
+	_core.configure()
+	_core.set_active(true)
+	_core.set_exposed(false)
+	_respawn_nodes()
+	_hud.set_objective("目标：异相 J 打掉两个节点")
+	_update_hud_state()
+
+
+func _reset_player_at(point: Vector2) -> void:
+	_player.set_spawn_point(point)
+	_player.reset_to_spawn("combat_retry", true)
+	_player.set_polarity_state(false)
+	_player.global_position = point
+	_player.velocity = Vector2.ZERO
+	_player.clear_input_buffers()
+	_player.clear_external_force()
+	_player.face_direction(1)
+	_camera.reset_smoothing()
+	_hud.set_polarity(false)
+
+
+# --- input -----------------------------------------------------------------
+
+func _input(event: InputEvent) -> void:
+	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
+		return
+	if not (event is InputEventKey):
+		return
+	var key_event: InputEventKey = event as InputEventKey
+	var code: int = int(key_event.physical_keycode)
+	if code == 0:
+		code = int(key_event.keycode)
+	if key_event.pressed and not key_event.echo and code == int(KEY_R):
+		_restart_chapter()
+		get_viewport().set_input_as_handled()
+		return
+	if _scene_leaving:
+		return
+	if _completed:
+		if key_event.pressed and not key_event.echo and (
+			code == int(KEY_E) or code == int(KEY_ENTER) or code == int(KEY_KP_ENTER)
+		):
+			get_viewport().set_input_as_handled()
+			_return_to_title()
+		return
+	if _recovery_active or _pause_open:
+		return
+	_player.handle_key_event(key_event)
+	if key_event.echo:
+		return
+	if code == int(KEY_J):
+		if key_event.pressed:
+			if not _attack_key_down:
+				_attack_key_down = true
+				_face_nearest_target_on_attack()
+				_player.request_attack()
+				get_viewport().set_input_as_handled()
+		else:
+			_attack_key_down = false
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
+		return
+	if _scene_leaving or _completed or _recovery_active:
+		return
+	if event.is_action_pressed(&"pause"):
+		_set_paused(not _pause_open)
+		get_viewport().set_input_as_handled()
+
+
+## A real J turns toward the nearest live node (or the exposed core) within
+## reach, so a swing never snapshots the old facing while standing on a boss.
+func _face_nearest_target_on_attack() -> void:
+	if not _boss_active:
+		return
+	var nearest_x: float = INF
+	var target_x: float = NAN
+	if _core.is_exposed():
+		var core_dx: float = absf(_core.global_position.x - _player.global_position.x)
+		if core_dx <= AUTO_FACE_RANGE and core_dx < nearest_x:
+			nearest_x = core_dx
+			target_x = _core.global_position.x
+	for node: LoomNode in _nodes:
+		if node == null or not is_instance_valid(node) or not node.is_alive():
+			continue
+		var dx: float = absf(node.global_position.x - _player.global_position.x)
+		if dx <= AUTO_FACE_RANGE and dx < nearest_x:
+			nearest_x = dx
+			target_x = node.global_position.x
+	if not is_nan(target_x):
+		_player.face_direction(1 if target_x >= _player.global_position.x else -1)
+
+
+func _on_hud_resume_requested() -> void:
+	_set_paused(false)
+
+
+func _on_hud_title_requested() -> void:
+	_return_to_title()
+
+
+func _set_paused(value: bool) -> void:
+	if value == _pause_open:
+		return
+	_pause_open = value
+	_hud.show_pause(value)
+	_attack_key_down = false
+	_player.reset_movement_input_state()
+	_player.clear_input_buffers()
+	_player.clear_external_force()
+	if value:
+		get_tree().paused = true
+		return
+	get_tree().paused = false
+	LEVEL_FLOW.release_one_shot_actions()
+	_player.clear_input_buffers()
+
+
+# --- completion / restart --------------------------------------------------
+
+func _complete_chapter() -> void:
+	if _completed or _scene_leaving:
+		return
+	_completed = true
+	_boss_active = false
+	_pending_completion = false
+	_retry_pending = false
+	_player_hits = 0
+	_clear_hazards()
+	_core.set_active(false)
+	_core.set_exposed(false)
+	for node: LoomNode in _nodes:
+		node.set_active(false)
+	_player.clear_input_buffers()
+	_player.clear_external_force()
+	_player.lock_completion_input()
+	_hud.show_pause(false)
+	_hud.set_recovery_alpha(0.0)
+	_hud.show_completion(true, _elapsed)
+	_hud.set_objective("目标：织机停转")
+	# The completion row should read "核心 3 / 3", not the shielded wording.
+	_hud.set_boss_state(_stage, MAX_STAGE, 0, CORE_HITS_PER_STAGE, CORE_HITS_PER_STAGE, true)
+	_hud.show_event("织机停转", 3.0)
+	_audio.stop_music()
+	_audio.play_complete()
+	LEVEL_FLOW.release_one_shot_actions()
+	level_completed.emit()
+
+
+func _return_to_title() -> void:
+	if _scene_leaving:
+		return
+	get_tree().paused = false
+	_pause_open = false
+	_scene_leaving = true
+	_hud.show_pause(false)
+	_hud.show_completion(false, _elapsed)
+	_audio.stop_all()
+	if is_instance_valid(DemoAudio):
+		DemoAudio.stop_world()
+	_player.reset_movement_input_state()
+	_player.clear_input_buffers()
+	_player.clear_external_force()
+	LEVEL_FLOW.return_to_title(get_tree())
+
+
+func _restart_chapter() -> void:
+	if _scene_leaving:
+		return
+	get_tree().paused = false
+	_pause_open = false
+	_completed = false
+	_boss_active = false
+	_stage = 1
+	_core_hits = 0
+	_player_hits = 0
+	_elapsed = 0.0
+	_boss_grace = 0.0
+	_stage_flash = 0.0
+	_retry_pending = false
+	_retry_pending_left = 0.0
+	_pending_completion = false
+	_recovery_active = false
+	_recovery_phase = RecoveryPhase.NONE
+	_recovery_elapsed = 0.0
+	_recovery_alpha = 0.0
+	_resolved_swings.clear()
+	_attack_state = AttackState.IDLE
+	_attack_left = 0.0
+	_attack_cursor = 0
+	_summon_serial = 0
+	_attack_kind = ""
+	_telegraph_windup = 1.0
+	_attack_key_down = false
+	_objective_key = ""
+	_clear_hazards()
+	_core.configure()
+	_core.set_active(false)
+	for node: LoomNode in _nodes:
+		node.configure(CORE_POSITION, 0.0, true, NODE_ORBIT_RADIUS)
+		node.set_active(false)
+	_audio.stop_all()
+	_hud.set_recovery_alpha(0.0)
+	_hud.show_completion(false, 0.0)
+	_hud.show_pause(false)
+	_hud.set_boss_state(1, MAX_STAGE, 2, 0, CORE_HITS_PER_STAGE, false)
+	_hud.set_objective("目标：向右进入织机厅")
+	_hud.set_polarity(false)
+	_player.end_recovery_hold()
+	_player.unlock_completion_input()
+	_reset_player_at(START_SPAWN)
+	_last_polarity_toggles = _player.get_polarity_toggle_count()
+	LEVEL_FLOW.release_one_shot_actions()
+	_player.begin_input_override()
+	_input_ticks = 3
+	_hud.show_event("星核织机已重新开始", 1.5)
+
+
+# --- public read API -------------------------------------------------------
+
+func get_player() -> L3Player:
+	return _player
+
+
+func get_camera() -> Camera2D:
+	return _camera
+
+
+func get_core() -> LoomCore:
+	return _core
+
+
+func get_nodes() -> Array[LoomNode]:
+	return _nodes
+
+
+func get_node_a() -> LoomNode:
+	return _node_a
+
+
+func get_node_b() -> LoomNode:
+	return _node_b
+
+
+func get_hud() -> LoomHUD:
+	return _hud
+
+
+func get_audio() -> LoomAudio:
+	return _audio
+
+
+func get_fx() -> LoomFx:
+	return _fx
+
+
+func get_intro_guide() -> DlcGuide:
+	return _intro_guide
+
+
+func get_elapsed_seconds() -> float:
+	return _elapsed
+
+
+func get_stage() -> int:
+	return _stage
+
+
+func get_max_stage() -> int:
+	return MAX_STAGE
+
+
+func get_core_hits() -> int:
+	return _core_hits
+
+
+func get_core_hits_per_stage() -> int:
+	return CORE_HITS_PER_STAGE
+
+
+func get_player_hits() -> int:
+	return _player_hits
+
+
+func get_nodes_alive_count() -> int:
+	return _nodes_alive_count()
+
+
+func _nodes_alive_count() -> int:
+	var count: int = 0
+	for node: LoomNode in _nodes:
+		if node != null and is_instance_valid(node) and node.is_alive():
+			count += 1
+	return count
+
+
+func is_boss_active() -> bool:
+	return _boss_active
+
+
+func is_core_exposed() -> bool:
+	return _core != null and _core.is_exposed()
+
+
+func is_completed() -> bool:
+	return _completed
+
+
+func is_pause_open() -> bool:
+	return _pause_open
+
+
+func is_recovery_active() -> bool:
+	return _recovery_active
+
+
+func is_retry_pending() -> bool:
+	return _retry_pending
+
+
+func get_attack_state_name() -> String:
+	match _attack_state:
+		AttackState.TELEGRAPH:
+			return "telegraph"
+		AttackState.RECOVER:
+			return "recover"
+		_:
+			return "idle"
+
+
+func get_attack_kind() -> String:
+	return _attack_kind
+
+
+func get_telegraph_progress() -> float:
+	if _attack_state != AttackState.TELEGRAPH or _telegraph_windup <= 0.0:
+		return 0.0
+	return clampf(1.0 - _attack_left / _telegraph_windup, 0.0, 1.0)
+
+
+func get_telegraph_points() -> Array:
+	match _attack_kind:
+		"homing":
+			return _homing_points.duplicate()
+		"summon":
+			return _summon_points.duplicate()
+		_:
+			return [Vector2(SWEEP_START_X, FLOOR_Y)]
+
+
+func get_sweep_start_x() -> float:
+	return SWEEP_START_X
+
+
+func get_stage_flash() -> float:
+	return _stage_flash
+
+
+func get_active_bullets() -> int:
+	var count: int = 0
+	for bullet: LoomBullet in _bullets:
+		if bullet != null and is_instance_valid(bullet):
+			count += 1
+	return count
+
+
+func get_active_wisps() -> int:
+	var count: int = 0
+	for wisp: LoomWisp in _wisps:
+		if wisp != null and is_instance_valid(wisp):
+			count += 1
+	return count
+
+
+func is_sweep_active() -> bool:
+	return _sweep != null and is_instance_valid(_sweep)
+
+
+func get_start_spawn() -> Vector2:
+	return START_SPAWN
+
+
+func get_arena_spawn() -> Vector2:
+	return ARENA_SPAWN
+
+
+func get_arena_enter_x() -> float:
+	return ARENA_ENTER_X
+
+
+func get_core_position() -> Vector2:
+	return CORE_POSITION
+
+
+# --- debug / capture hooks (never bypass a hit rule) ------------------------
+
+func debug_set_stage(stage: int) -> void:
+	if stage < 1 or stage > MAX_STAGE:
+		return
+	_stage = stage
+	_core_hits = 0
+	_player_hits = 0
+	_boss_active = true
+	_boss_grace = 0.0
+	_attack_state = AttackState.IDLE
+	_attack_left = 1.0
+	_attack_cursor = 0
+	_summon_serial = 0
+	_clear_hazards()
+	_core.configure()
+	_core.set_active(true)
+	_core.set_exposed(false)
+	_core.set_phase(stage % 2 == 1)
+	_respawn_nodes()
+	_hud.set_objective("目标：异相 J 打掉两个节点")
+	_update_hud_state()
+
+
+func debug_force_attack(kind: String) -> bool:
+	if not _boss_active or _completed or _recovery_active:
+		return false
+	if not get_attack_pool().has(kind):
+		return false
+	_boss_grace = 0.0
+	_begin_telegraph(kind)
+	return true
+
+
+func debug_set_attacks_enabled(value: bool) -> void:
+	_attacks_enabled = value
+	if not value:
+		_attack_state = AttackState.IDLE
+		_attack_left = 9999.0
+
+
+func debug_set_node_angle(index: int, angle: float) -> void:
+	if index < 0 or index >= _nodes.size():
+		return
+	_nodes[index].debug_set_angle(angle)
+
+
+func debug_set_node_phase(index: int, positive: bool) -> void:
+	if index < 0 or index >= _nodes.size():
+		return
+	_nodes[index].debug_set_phase(positive)
+
+
+func debug_set_core_phase(positive: bool) -> void:
+	if _core != null:
+		_core.set_phase(positive)
+
+
+func debug_expose_core() -> void:
+	for node: LoomNode in _nodes:
+		if node != null and is_instance_valid(node) and node.is_alive():
+			node.break_node()
+
+
+func debug_apply_player_hit() -> bool:
+	return apply_enemy_hit(_core.global_position)
+
+
+func debug_clear_hazards() -> void:
+	_clear_hazards()
+
+
+func debug_set_boss_grace(seconds: float) -> void:
+	_boss_grace = maxf(seconds, 0.0)

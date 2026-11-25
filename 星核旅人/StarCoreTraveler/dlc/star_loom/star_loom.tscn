@@ -1,0 +1,95 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://dlc/star_loom/star_loom.gd" id="1_loom"]
+[ext_resource type="PackedScene" path="res://scenes/backgrounds/cloud_ruins_ds03.tscn" id="2_ds03"]
+[ext_resource type="Texture2D" path="res://dlc/star_loom/assets/loom_bg_overlay_960x360.png" id="3_overlay"]
+[ext_resource type="Script" path="res://scripts/level03/l3_terrain.gd" id="4_terrain"]
+[ext_resource type="Script" path="res://dlc/star_loom/loom_core.gd" id="5_core"]
+[ext_resource type="Script" path="res://dlc/star_loom/loom_node.gd" id="6_node"]
+[ext_resource type="PackedScene" path="res://scenes/level03/l3_player.tscn" id="7_player"]
+[ext_resource type="Script" path="res://dlc/star_loom/loom_fx.gd" id="8_fx"]
+[ext_resource type="Script" path="res://dlc/star_loom/loom_audio.gd" id="9_audio"]
+[ext_resource type="Script" path="res://dlc/star_loom/loom_hud.gd" id="10_hud"]
+
+[node name="StarLoom" type="Node2D"]
+process_mode = 3
+process_physics_priority = -10
+script = ExtResource("1_loom")
+
+[node name="Background" type="CanvasLayer" parent="."]
+process_mode = 1
+layer = -10
+
+[node name="CloudRuinsDS03" parent="Background" instance=ExtResource("2_ds03")]
+process_mode = 1
+depth_grade = "l3_depth"
+
+[node name="Backdrop" type="Sprite2D" parent="."]
+process_mode = 1
+z_index = -5
+texture_filter = 1
+position = Vector2(480, 180)
+texture = ExtResource("3_overlay")
+
+[node name="Terrain" type="Node2D" parent="."]
+process_mode = 1
+z_index = 2
+
+[node name="Floor" type="Node2D" parent="Terrain"]
+position = Vector2(0, 320)
+script = ExtResource("4_terrain")
+block_rect = Rect2(0, 0, 960, 40)
+
+[node name="Boss" type="Node2D" parent="."]
+process_mode = 1
+
+[node name="Core" type="Node2D" parent="Boss"]
+position = Vector2(700, 258)
+script = ExtResource("5_core")
+
+[node name="NodeA" type="Node2D" parent="Boss"]
+position = Vector2(800, 258)
+script = ExtResource("6_node")
+start_positive = true
+
+[node name="NodeB" type="Node2D" parent="Boss"]
+position = Vector2(600, 258)
+script = ExtResource("6_node")
+start_positive = false
+
+[node name="Hazards" type="Node2D" parent="."]
+process_mode = 1
+z_index = 6
+
+[node name="Player" parent="." instance=ExtResource("7_player")]
+process_mode = 1
+position = Vector2(40, 320)
+allow_self_reset = false
+show_head_polarity = false
+world_left = 0.0
+world_right = 960.0
+kill_y = 430.0
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0
+limit_left = 0
+limit_top = 0
+limit_right = 960
+limit_bottom = 360
+drag_horizontal_enabled = false
+drag_vertical_enabled = false
+
+[node name="Fx" type="Node2D" parent="."]
+process_mode = 1
+z_index = 9
+script = ExtResource("8_fx")
+
+[node name="Audio" type="Node" parent="."]
+process_mode = 1
+script = ExtResource("9_audio")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+process_mode = 3
+layer = 10
+script = ExtResource("10_hud")

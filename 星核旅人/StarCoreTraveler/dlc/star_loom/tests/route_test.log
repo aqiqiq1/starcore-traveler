@@ -1,0 +1,32 @@
+﻿Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: star_loom scene loads
+PASS: route has a real L3Player
+PASS: real walk reaches the entrance and starts the boss
+PASS: player crossed the entrance line [x=435.1]
+PASS: route reaches stage 1 [1]
+PASS: stage 1 starts at 0 core damage
+PASS: stage 1 both nodes break from real J
+PASS: stage 1 core is exposed
+PASS: stage 1 lands three real core true hits
+PASS: stage 1 advances after the third true hit [2]
+PASS: stage 2 respawns both nodes
+PASS: route reaches stage 2 [2]
+PASS: stage 2 starts at 0 core damage
+PASS: stage 2 both nodes break from real J
+PASS: stage 2 core is exposed
+PASS: stage 2 lands three real core true hits
+PASS: stage 2 advances after the third true hit [3]
+PASS: stage 3 respawns both nodes
+PASS: route reaches stage 3 [3]
+PASS: stage 3 starts at 0 core damage
+PASS: stage 3 both nodes break from real J
+PASS: stage 3 core is exposed
+PASS: stage 3 lands three real core true hits
+PASS: the full route completes all three stages
+PASS: completion page is visible
+PASS: completion title is correct [织机停转 · 用时 00:14]
+PASS: completion timer is a real fight time [15.0s]
+PASS: E returns to level_01 with the title menu
+PASS: the returned title menu is open
+STAR_LOOM_ROUTE_TEST checks=29 failures=0
