@@ -28,6 +28,35 @@ signal level_completed
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const DLC_GUIDE_SCENE: PackedScene = preload("res://dlc/ui/dlc_guide.tscn")
 const LOOM_GUIDE_SCRIPT: Script = preload("res://dlc/star_loom/loom_guide.gd")
+const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popup.tscn")
+
+## Copy source: dlc/UI_PARITY_SPEC.md section 2 (星核织机).  The body label is
+## 58 px tall, so each line stays within 21 full-width characters; three lines
+## are the maximum.  ASCII and digits count as half-width.  Spec lines that were
+## split/shortened for width are listed in tests/README.md.
+const LOOM_TIPS: Dictionary = {
+	"loom_entry_tip": {
+		"title": "星核织机",
+		"body": "城内织机以星核为梭，金线网护住紫色核心。\n异相 J 打停两只节点，再打核心。\n核心每次受创换相，追着颜色切相再打。",
+		"key": "异相 J 打节点 → 核心 ×3",
+		"demo": "loom_nodes",
+	},
+	"loom_fire_tip": {
+		"title": "地砖火道",
+		"body": "织机把城内火道接进地砖，喷焰前砖面先亮。\n看到亮砖就离开，横扫光带跳过去。",
+		"key": "离开发火砖 · 跳过光带",
+		"demo": "loom_fire",
+	},
+	"loom_core_tip": {
+		"title": "织口核心",
+		"body": "节点停转后金线网散开，紫色织结就是核心。\n每打中一次换相，追色切相再打，共 3 次。",
+		"key": "核心换相 · Q 追相再 J",
+		"demo": "loom_core",
+	},
+}
+const TIP_ENTRY: String = "loom_entry_tip"
+const TIP_FIRE: String = "loom_fire_tip"
+const TIP_CORE: String = "loom_core_tip"
 
 const WORLD_LEFT: float = 0.0
 const WORLD_RIGHT: float = 960.0
@@ -101,6 +130,10 @@ var _fire_points: Array[Vector2] = []
 var _gear_points: Array[Vector2] = []
 var _fire_serial: int = 0
 var _intro_guide: DlcGuide = null
+var _mechanic_popup: MechanicPopup = null
+var _entry_tip_pending: bool = false
+var _fire_tip_pending: bool = false
+var _core_tip_pending: bool = false
 
 var _elapsed: float = 0.0
 var _completed: bool = false
@@ -148,6 +181,9 @@ var _recovery_elapsed: float = 0.0
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	process_physics_priority = -10
+	# The shared popup table is static; registering is idempotent, so a chapter
+	# restart or a test reload uses the same three loom entries.
+	MechanicPopup.register_tips(LOOM_TIPS, "res://dlc/ui/demos")
 	for node: Node in [
 		$CityBack, $Terrain, $CityFloor, $Props, $Boss, $Boss/Core,
 		$Boss/NodeA, $Boss/NodeB, $Hazards, $Player, $Fx, $CityFore,
@@ -183,7 +219,10 @@ func _ready() -> void:
 	_last_polarity_toggles = _player.get_polarity_toggle_count()
 
 	_hud.resume_requested.connect(_on_hud_resume_requested)
+	_hud.restart_requested.connect(_on_hud_restart_requested)
 	_hud.title_requested.connect(_on_hud_title_requested)
+	_hud.quit_requested.connect(_on_hud_quit_requested)
+	_setup_mechanic_popup()
 	_hud.set_polarity(false)
 	_hud.set_objective("目标：向右进入织机厅")
 	_hud.set_boss_state(1, MAX_STAGE, 2, 0, CORE_HITS_PER_STAGE, false, 0, 3)
@@ -205,6 +244,58 @@ func _exit_tree() -> void:
 		_audio.stop_all()
 	if is_instance_valid(DemoAudio):
 		DemoAudio.stop_world()
+
+
+## Teaching layer only: the shared MechanicPopup pauses on first contact with
+## a real mechanism.  It owns no gameplay state and is never a gate.
+func _setup_mechanic_popup() -> void:
+	_mechanic_popup = MECHANIC_POPUP_SCENE.instantiate() as MechanicPopup
+	_mechanic_popup.name = "MechanicPopup"
+	_mechanic_popup.level_node = self
+	add_child(_mechanic_popup)
+
+
+## Retried every physics tick while a condition remains true; the popup itself
+## refuses while the guide, pause page, completion, recovery or a stage switch
+## owns the screen.  MechanicTips marks an id seen when it really opens, so a
+## blocked attempt is not lost and a shown one never repeats.
+func _tick_mechanic_popups() -> void:
+	if _mechanic_popup == null or not is_instance_valid(_mechanic_popup):
+		return
+	if _entry_tip_pending:
+		if MechanicTips.has_seen(TIP_ENTRY):
+			_entry_tip_pending = false
+		else:
+			_mechanic_popup.request(TIP_ENTRY)
+	if _fire_tip_pending:
+		if MechanicTips.has_seen(TIP_FIRE):
+			_fire_tip_pending = false
+		else:
+			_mechanic_popup.request(TIP_FIRE)
+	if _core_tip_pending:
+		if MechanicTips.has_seen(TIP_CORE):
+			_core_tip_pending = false
+		else:
+			_mechanic_popup.request(TIP_CORE)
+
+
+## Same contract as level_01/02/03: the popup may not appear over the intro
+## guide, the pause page, the completion page, a failure fade/retry, a stage
+## switch, or a leaving scene.
+func is_mechanic_popup_blocked() -> bool:
+	if get_tree() == null:
+		return true
+	if get_tree().paused:
+		return true
+	if _completed or _pending_completion or _scene_leaving:
+		return true
+	if _pause_open or _recovery_active or _retry_pending:
+		return true
+	if _stage_flash > 0.0:
+		return true
+	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
+		return true
+	return false
 
 
 ## Tests set show_intro_guide = false before add_child(), so their input routes
@@ -259,6 +350,10 @@ func _physics_process(delta: float) -> void:
 			_pending_completion = false
 			_complete_chapter()
 		return
+
+	# A blocked teaching request stays pending and retries once the guide,
+	# pause page, recovery or stage switch releases the screen.
+	_tick_mechanic_popups()
 
 	if not _boss_active:
 		if _player.global_position.x >= ARENA_ENTER_X:
@@ -330,6 +425,11 @@ func _start_boss() -> void:
 	_hud.show_event("星核织机启动 · 异相 J 打节点", 2.2)
 	_hud.set_objective("目标：异相 J 打掉两个节点")
 	_update_hud_state()
+	# Trigger 1: the first real entry into the loom hall (the same crossing that
+	# starts the boss).  Opening the popup pauses this frame's tree, so the
+	# start grace and attack timers resume from this exact point.
+	_entry_tip_pending = true
+	_tick_mechanic_popups()
 
 
 func _respawn_nodes() -> void:
@@ -348,6 +448,9 @@ func _on_node_broken(_node: LoomNode) -> void:
 		_audio.play_core_exposed()
 		_hud.show_event("节点停转 · 核心暴露", 2.0)
 		_hud.set_objective("目标：核心暴露 · 异相 J 3 次")
+		# Trigger 3: the core is exposed for the first time in this run.
+		_core_tip_pending = true
+		_tick_mechanic_popups()
 	_update_hud_state()
 
 
@@ -498,6 +601,12 @@ func _begin_telegraph(kind: String) -> void:
 			_hud.show_event("预警 · 地砖火柱 · 离开发光地砖", 1.4)
 		"gear":
 			_hud.show_event("预警 · 两侧齿轮 · 跳起", 1.3)
+	# Trigger 2: the first stage-2 floor-fire warning.  The popup pauses right
+	# at the telegraph start, so the 0.95 s warning is not consumed while the
+	# player reads it.
+	if kind == "fire" and _stage == 2 and not MechanicTips.has_seen(TIP_FIRE):
+		_fire_tip_pending = true
+		_tick_mechanic_popups()
 
 
 func _prepare_telegraph_points(kind: String) -> void:
@@ -714,7 +823,8 @@ func _on_player_attack_hit_window(swing_id: int, facing: int, positive: bool) ->
 		return
 	_audio.play_node_hit()
 	best_node.break_node()
-	_hud.show_event("节点停转", 1.0)
+	if not _core.is_exposed():
+		_hud.show_event("节点停转", 1.0)
 
 
 func _try_kill_wisp(facing: int) -> bool:
@@ -833,7 +943,7 @@ func _apply_recovery_reset() -> void:
 	_reset_current_stage()
 	_reset_player_at(ARENA_SPAWN)
 	_player.begin_recovery_hold()
-	_hud.show_event("失败 · 回阶段入口 · 阶段 %d 重开" % _stage, 2.2)
+	_hud.show_event("失败 · 织机把你抛回阶段入口", 2.2)
 
 
 func _finish_recovery() -> void:
@@ -899,12 +1009,17 @@ func _reset_player_at(point: Vector2) -> void:
 func _input(event: InputEvent) -> void:
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
 		return
+	if _mechanic_popup != null and is_instance_valid(_mechanic_popup) and _mechanic_popup.is_open():
+		return
 	if not (event is InputEventKey):
 		return
 	var key_event: InputEventKey = event as InputEventKey
 	var code: int = int(key_event.physical_keycode)
 	if code == 0:
 		code = int(key_event.keycode)
+	if _pause_open:
+		# The pause page owns Enter/Space/arrows and its own buttons while open.
+		return
 	if key_event.pressed and not key_event.echo and code == int(KEY_R):
 		_restart_chapter()
 		get_viewport().set_input_as_handled()
@@ -912,13 +1027,21 @@ func _input(event: InputEvent) -> void:
 	if _scene_leaving:
 		return
 	if _completed:
-		if key_event.pressed and not key_event.echo and (
-			code == int(KEY_E) or code == int(KEY_ENTER) or code == int(KEY_KP_ENTER)
-		):
-			get_viewport().set_input_as_handled()
-			_return_to_title()
+		if key_event.pressed and not key_event.echo:
+			if code == int(KEY_E):
+				get_viewport().set_input_as_handled()
+				_return_to_title()
+			elif (
+				(code == int(KEY_ENTER) or code == int(KEY_KP_ENTER))
+				and not _hud.is_completion_button_focused()
+			):
+				# Default state focuses 返回主界面, so Enter still returns to the
+				# title.  Once focus moves to 重玩本章, Enter activates that
+				# button instead of being stolen here.
+				get_viewport().set_input_as_handled()
+				_return_to_title()
 		return
-	if _recovery_active or _pause_open:
+	if _recovery_active:
 		return
 	_player.handle_key_event(key_event)
 	if key_event.echo:
@@ -937,7 +1060,13 @@ func _input(event: InputEvent) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
 		return
-	if _scene_leaving or _completed or _recovery_active:
+	if _mechanic_popup != null and is_instance_valid(_mechanic_popup) and _mechanic_popup.is_open():
+		return
+	if _scene_leaving:
+		return
+	# The completion page's footnote promises Esc can open the pause page, so
+	# Esc is live there too; only the failure fade/retry owns no pause.
+	if not _completed and _recovery_active:
 		return
 	if event.is_action_pressed(&"pause"):
 		_set_paused(not _pause_open)
@@ -971,8 +1100,17 @@ func _on_hud_resume_requested() -> void:
 	_set_paused(false)
 
 
+func _on_hud_restart_requested() -> void:
+	_restart_chapter()
+
+
 func _on_hud_title_requested() -> void:
 	_return_to_title()
+
+
+func _on_hud_quit_requested() -> void:
+	# Same direct quit as the base game's pause page; no export/git side effect.
+	get_tree().quit()
 
 
 func _set_paused(value: bool) -> void:
@@ -1003,6 +1141,9 @@ func _complete_chapter() -> void:
 	_boss_active = false
 	_pending_completion = false
 	_retry_pending = false
+	_entry_tip_pending = false
+	_fire_tip_pending = false
+	_core_tip_pending = false
 	_player_hits = 0
 	_clear_hazards()
 	_core.set_active(false)
@@ -1077,6 +1218,9 @@ func _restart_chapter() -> void:
 	_telegraph_windup = 1.0
 	_attack_key_down = false
 	_objective_key = ""
+	_entry_tip_pending = false
+	_fire_tip_pending = false
+	_core_tip_pending = false
 	_clear_hazards()
 	_hud.set_gear_warning(false, 0.0)
 	_core.configure()
@@ -1141,6 +1285,18 @@ func get_fx() -> LoomFx:
 
 func get_intro_guide() -> DlcGuide:
 	return _intro_guide
+
+
+func get_mechanic_popup() -> MechanicPopup:
+	return _mechanic_popup
+
+
+func get_attack_time_left() -> float:
+	return _attack_left
+
+
+func get_boss_grace_left() -> float:
+	return _boss_grace
 
 
 func get_elapsed_seconds() -> float:

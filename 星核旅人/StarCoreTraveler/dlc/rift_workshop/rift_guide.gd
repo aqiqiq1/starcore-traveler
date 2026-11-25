@@ -8,30 +8,35 @@ extends DlcGuide
 ## this subclass supplies the rift's four pages (the three route pages plus the
 ## "元素含义" page) while reusing the approved panel, 24-frame demo player, F
 ## paging, long-Space skip and tree pause exactly as they are.
+##
+## Copy follows dlc/UI_PARITY_SPEC.md section 3: the first sentence is the
+## in-world reason, the following sentences are controls.  Two spec lines were
+## shortened only because they exceeded the shared 21-character line width;
+## see the implementation report for the exact substitutions.
 
 const RIFT_PAGES: Array = [
 	{
-		"title": "路线：回廊 → 光桥 → 守卫",
-		"body": "穿过紫色光幕与极性门，按相性跨过三座光桥。\n高台尽头记录检查点，然后进入双生守卫竞技场。",
-		"key": "Q 换相 · 紫色光幕会自动翻转相性",
+		"title": "裂隙回廊",
+		"body": "工坊紫幕是星核裂开时的反转场。\n穿过光幕换相；同相桥实体化，异相坠落。",
+		"key": "Q 换相 · 紫幕反转一次",
 		"demo": "rift_inversion",
 	},
 	{
-		"title": "反转场与相性桥",
-		"body": "紫色光幕进入即反转一次，停在幕内不重复翻转。\n光桥同相才实体化；异相消失会落到下层。",
-		"key": "Q 换相 · 与桥同色才能站上去",
+		"title": "相性光桥",
+		"body": "光桥只与同相脚步实体化，是工坊唯一的过道。\n按 Q 追上桥的颜色再走；异相时桥会消失。",
+		"key": "同相过桥 · Q 切换",
 		"demo": "rift_bridge",
 	},
 	{
 		"title": "双生守卫：先金后青",
-		"body": "金守卫先苏醒；先击败它，青守卫才解除待机。\n蓄力时异相 J 打弱点，每次 1 格共 3 格。\n倒后再打青守卫；失败/坠落两只满血重生。",
-		"key": "两只都倒才开核心 · 蓄力时异相 J",
+		"body": "两只守卫守着裂隙核心，金色先醒，青色待机。\n蓄力时切异相、被吸近后 J 打胸口。\n金倒后青才醒；两只都倒才开核心。",
+		"key": "先金后青 · 蓄力时异相 J",
 		"demo": "rift_twins",
 	},
 	{
-		"title": "元素含义",
-		"body": "金/青=相性：同相过桥，异相打弱点。\n紫幕=反转场换相；引力光环=吸附。\n菱形=弱点：蓄力时异相贴近 J 扣 1 格。",
-		"key": "普通命中只碎壳 · 等蓄力、切相、靠近再 J",
+		"title": "星核留下的四道痕迹",
+		"body": "紫幕=裂痕换相，引力光环=吸附。\n菱形=弱点，金/青=相性。\n普通命中只碎壳；等蓄力、切相、靠近再 J。",
+		"key": "看光环 · 切异相 · 贴近 J",
 		"demo": "rift_elements",
 	},
 ]

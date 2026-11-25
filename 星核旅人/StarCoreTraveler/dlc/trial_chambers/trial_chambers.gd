@@ -17,15 +17,46 @@ extends Node2D
 signal level_completed
 
 @export var show_intro_guide: bool = true
+## Automated routes that teleport through the chapter can turn the teaching
+## popups off; a normal entry keeps this true.
+@export var show_mechanic_tips: bool = true
 
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const DLC_GUIDE_SCENE: PackedScene = preload("res://dlc/ui/dlc_guide.tscn")
+const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popup.tscn")
+const MECHANIC_DEMO_DIR: String = "res://dlc/ui/demos"
+
+## Section 2 of dlc/UI_PARITY_SPEC.md.  The body starts with the world/why
+## sentence and only then states keys and judgement.  Each line is at most 21
+## CJK cells (ASCII half-width); the shared popup body is 62 px / 3 lines.
+const MECHANIC_TIPS: Dictionary = {
+	"trial_gate_tip": {
+		"title": "极性门",
+		"body": "试炼场的门由星核的辉、澜两面铸成。\n只放同相的人通过。\n按 Q 换相，与门同色再走进去。",
+		"key": "Q 换相 · 同相过门",
+		"demo": "trial_gate",
+	},
+	"trial_guard_deny": {
+		"title": "只碎壳的一击",
+		"body": "守卫的壳由星核余烬凝成。\n同相或未蓄力的 J 只碎壳。\n等它蓄力、切异相、贴近再打，才会留下真伤。",
+		"key": "普通命中不计伤害 · 等蓄力",
+		"demo": "trial_guard_hit",
+	},
+	"trial_guard_hit": {
+		"title": "守卫的胸口余烬",
+		"body": "守卫胸口锁着星核余烬。\n蓄力时用引力把你拖近；切异相。\n被吸近后 J 打弱点；每次真伤后换相。",
+		"key": "蓄力时异相 J · 共 3 次",
+		"demo": "trial_guard_hit",
+	},
+}
 
 const START_SPAWN: Vector2 = Vector2(40.0, 320.0)
 const ARENA_SPAWN: Vector2 = Vector2(850.0, 320.0)
 const GUARD_SPAWN: Vector2 = Vector2(1060.0, 320.0)
 const FINISH_POSITION: Vector2 = Vector2(1218.0, 320.0)
 const ARENA_ENTER_X: float = 820.0
+const GATE_TIP_RANGE: float = 90.0
+const GATE_CROSS_MARGIN: float = 6.0
 const FINISH_RANGE: float = 18.0
 const KILL_Y: float = 430.0
 const WORLD_RIGHT: float = 1268.0
@@ -75,6 +106,12 @@ var _recovery_alpha: float = 0.0
 var _recovery_elapsed: float = 0.0
 var _recovery_applying: bool = false
 var _intro_guide: DlcGuide = null
+var _mechanic_popup: MechanicPopup = null
+var _gate_gold_passed: bool = false
+var _gate_cyan_passed: bool = false
+var _prev_player_x: float = START_SPAWN.x
+var _shell_shatter_pending: bool = false
+var _true_damage_pending: bool = false
 
 
 func _ready() -> void:
@@ -115,7 +152,9 @@ func _ready() -> void:
 	_connect_guard()
 
 	_hud.resume_requested.connect(_on_hud_resume_requested)
+	_hud.restart_requested.connect(_on_hud_restart_requested)
 	_hud.title_requested.connect(_on_hud_title_requested)
+	_hud.quit_requested.connect(_on_hud_quit_requested)
 	_hud.set_polarity(false)
 	_hud.set_objective("目标：Q 换相，穿过金门")
 	_hud.show_completion(false, 0.0)
@@ -123,6 +162,15 @@ func _ready() -> void:
 	_hud.set_recovery_alpha(0.0)
 	_update_finish_marker()
 
+	# Shared base popup (never a second implementation).  Registration is a
+	# run-scoped static table; the base TIPS stay untouched.
+	MechanicPopup.register_tips(MECHANIC_TIPS, MECHANIC_DEMO_DIR)
+	_mechanic_popup = MECHANIC_POPUP_SCENE.instantiate() as MechanicPopup
+	_mechanic_popup.name = "MechanicPopup"
+	_mechanic_popup.level_node = self
+	add_child(_mechanic_popup)
+
+	_prev_player_x = _player.global_position.x
 	_camera.reset_smoothing()
 	_elapsed = 0.0
 	LEVEL_FLOW.release_one_shot_actions()
@@ -194,6 +242,7 @@ func _physics_process(delta: float) -> void:
 			_retry_pending = false
 			_begin_recovery("combat")
 			return
+	_track_gate_progress()
 	if _guard_ticks > 0:
 		_guard_ticks -= 1
 		_player.begin_input_override()
@@ -218,9 +267,78 @@ func _process(delta: float) -> void:
 	if not _completed:
 		_elapsed += delta
 	_advance_recovery(delta)
+	_tick_mechanic_popups()
 	if _finish_core != null:
 		_finish_time += delta
 		_finish_core.frame = int(_finish_time * 10.0) % 12
+
+
+## A real crossing of an OPEN gate is remembered.  The guard tips are only for
+## a run that actually walked the route, so a test/debug teleport into the arena
+## cannot pause another test with a teaching popup.
+func _track_gate_progress() -> void:
+	if _player == null:
+		return
+	var x: float = _player.global_position.x
+	var gold_x: float = _gate_gold.global_position.x
+	if (
+		not _gate_gold_passed
+		and _prev_player_x <= gold_x + GATE_CROSS_MARGIN
+		and x > gold_x + GATE_CROSS_MARGIN
+		and _gate_gold.is_open()
+	):
+		_gate_gold_passed = true
+	var cyan_x: float = _gate_cyan.global_position.x
+	if (
+		not _gate_cyan_passed
+		and _prev_player_x <= cyan_x + GATE_CROSS_MARGIN
+		and x > cyan_x + GATE_CROSS_MARGIN
+		and _gate_cyan.is_open()
+	):
+		_gate_cyan_passed = true
+	_prev_player_x = x
+
+
+## One teaching popup at a time.  The conditions are the chapter's real state:
+## the first gate approach, the first shell-only hit and the first true hit.
+func _tick_mechanic_popups() -> void:
+	if not show_mechanic_tips:
+		return
+	if _mechanic_popup == null or not is_instance_valid(_mechanic_popup):
+		return
+	if _mechanic_popup.is_open() or is_mechanic_popup_blocked():
+		return
+	var gate_x: float = _gate_gold.global_position.x
+	var near_gate: bool = (
+		_player.global_position.x >= gate_x - GATE_TIP_RANGE
+		and _player.global_position.x <= gate_x + GATE_CROSS_MARGIN
+	)
+	if near_gate and not MechanicTips.has_seen("trial_gate_tip"):
+		_mechanic_popup.request("trial_gate_tip")
+		return
+	if _shell_shatter_pending and _gate_gold_passed and _gate_cyan_passed:
+		if not MechanicTips.has_seen("trial_guard_deny"):
+			_mechanic_popup.request("trial_guard_deny")
+		_shell_shatter_pending = false
+		return
+	if _true_damage_pending and _gate_gold_passed and _gate_cyan_passed:
+		if not MechanicTips.has_seen("trial_guard_hit"):
+			_mechanic_popup.request("trial_guard_hit")
+		_true_damage_pending = false
+
+
+## The base popup calls this before it opens.  The guide, pause page, completion
+## page, failure recovery and scene change all own the screen.
+func is_mechanic_popup_blocked() -> bool:
+	if get_tree().paused:
+		return true
+	if _completed or _scene_leaving or _recovery_active or _retry_pending:
+		return true
+	if _pause_open:
+		return true
+	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
+		return true
+	return false
 
 
 ## The approved level-03 guard is a force provider: opposite phase is pulled in,
@@ -281,6 +399,8 @@ func _update_objective() -> void:
 # --- input -----------------------------------------------------------------
 
 func _input(event: InputEvent) -> void:
+	if _mechanic_popup != null and is_instance_valid(_mechanic_popup) and _mechanic_popup.is_open():
+		return
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
 		return
 	if not (event is InputEventKey):
@@ -323,9 +443,11 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _mechanic_popup != null and is_instance_valid(_mechanic_popup) and _mechanic_popup.is_open():
+		return
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
 		return
-	if _scene_leaving or _completed or _recovery_active:
+	if _scene_leaving or _recovery_active:
 		return
 	if event.is_action_pressed(&"pause"):
 		_set_paused(not _pause_open)
@@ -336,8 +458,16 @@ func _on_hud_resume_requested() -> void:
 	_set_paused(false)
 
 
+func _on_hud_restart_requested() -> void:
+	_restart_trial()
+
+
 func _on_hud_title_requested() -> void:
 	_return_to_title()
+
+
+func _on_hud_quit_requested() -> void:
+	get_tree().quit()
 
 
 func _set_paused(value: bool) -> void:
@@ -398,6 +528,7 @@ func _show_attack_result_hint(result: Dictionary) -> void:
 		return
 	match String(result.get("code", "")):
 		"SHELL_SHATTER":
+			_shell_shatter_pending = true
 			_hud.show_event("仅碎壳 · 蓄力时异相 J 才掉血", 1.4)
 		"SAME_PHASE":
 			_hud.show_event("同相无效 · Q 切异相再按 J", 1.4)
@@ -423,6 +554,7 @@ func _on_guard_player_struck(_facing: int) -> void:
 
 
 func _on_guard_true_damage(_taken: int, remaining: int) -> void:
+	_true_damage_pending = true
 	_hud.show_event("守卫星核外露 · 剩余 %d" % remaining, 1.2)
 
 
@@ -558,7 +690,7 @@ func _retry_combat() -> void:
 	_guard.set_player_target(_player)
 	_guard.set_suspended(true)
 	_reset_player_at(ARENA_SPAWN)
-	_hud.show_event("失败 · 回竞技场入口", 1.8)
+	_hud.show_event("失败 · 试炼场送你回入口 · 守卫重新凝聚", 1.8)
 
 
 func _reset_player_at(point: Vector2) -> void:
@@ -656,6 +788,11 @@ func _restart_trial() -> void:
 	_objective_key = ""
 	_attack_key_down = false
 	_last_polarity_toggles = 0
+	_gate_gold_passed = false
+	_gate_cyan_passed = false
+	_prev_player_x = START_SPAWN.x
+	_shell_shatter_pending = false
+	_true_damage_pending = false
 	_audio.stop_all()
 	_ambience.play(true)
 	_hud.set_recovery_alpha(0.0)
@@ -696,6 +833,18 @@ func get_ambience() -> DlcChapterAmbience:
 
 func get_intro_guide() -> DlcGuide:
 	return _intro_guide
+
+
+func get_mechanic_popup() -> MechanicPopup:
+	return _mechanic_popup
+
+
+func has_gate_gold_passed() -> bool:
+	return _gate_gold_passed
+
+
+func has_gate_cyan_passed() -> bool:
+	return _gate_cyan_passed
 
 
 func get_camera() -> Camera2D:

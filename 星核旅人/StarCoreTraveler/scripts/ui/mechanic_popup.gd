@@ -83,6 +83,51 @@ const TIPS: Dictionary = {
 	},
 }
 
+## DLC chapters register their own tips once per launch. The base table above is
+## never edited; ids are global, so a chapter may also reuse a base tip. The
+## optional demo directory applies to the registered ids only, which keeps
+## res://assets/mechanic_demos for the base three levels.
+static var _extra_tips: Dictionary = {}
+static var _extra_demo_dirs: Dictionary = {}
+
+
+static func register_tips(entries: Dictionary, demo_dir_override: String = "") -> void:
+	for raw_id: Variant in entries.keys():
+		var id: String = String(raw_id)
+		var data: Variant = entries[raw_id]
+		if id.is_empty() or not (data is Dictionary):
+			continue
+		_extra_tips[id] = data
+		if not demo_dir_override.is_empty():
+			_extra_demo_dirs[id] = demo_dir_override
+
+
+static func get_registered_tip_ids() -> Array[String]:
+	var ids: Array[String] = []
+	for key: Variant in _extra_tips.keys():
+		ids.append(String(key))
+	ids.sort()
+	return ids
+
+
+## Test-only; a normal run never clears the registered table.
+static func reset_registered_tips_for_test() -> void:
+	_extra_tips.clear()
+	_extra_demo_dirs.clear()
+
+
+func _has_tip(id: String) -> bool:
+	return TIPS.has(id) or _extra_tips.has(id)
+
+
+func _tip(id: String) -> Dictionary:
+	if TIPS.has(id):
+		return TIPS[id] as Dictionary
+	if _extra_tips.has(id):
+		return _extra_tips[id] as Dictionary
+	return {}
+
+
 ## Set by the owning level before add_child().
 var level_node: Node = null
 ## Overridable only so the acceptance harness can exercise the real missing-file
@@ -211,7 +256,7 @@ func get_queued_ids() -> Array[String]:
 ## made while another popup is open is queued; a blocked request is retried by
 ## the level on later ticks.
 func request(id: String) -> void:
-	if not TIPS.has(id) or MechanicTips.has_seen(id):
+	if not _has_tip(id) or MechanicTips.has_seen(id):
 		return
 	if _open:
 		if id != _current_id and not _queue.has(id):
@@ -233,7 +278,7 @@ func open_for_test(id: String) -> bool:
 func _open_internal(id: String, ignore_seen: bool) -> bool:
 	if _open:
 		return false
-	if not TIPS.has(id):
+	if not _has_tip(id):
 		return false
 	if not ignore_seen and MechanicTips.has_seen(id):
 		return false
@@ -319,7 +364,7 @@ func _advance_page() -> void:
 
 
 func _page_count_for(id: String) -> int:
-	var tip: Dictionary = TIPS.get(id, {}) as Dictionary
+	var tip: Dictionary = _tip(id)
 	if tip.has("pages"):
 		var pages: Array = tip["pages"] as Array
 		return maxi(pages.size(), 1)
@@ -327,7 +372,7 @@ func _page_count_for(id: String) -> int:
 
 
 func _page_data(id: String, index: int) -> Dictionary:
-	var tip: Dictionary = TIPS.get(id, {}) as Dictionary
+	var tip: Dictionary = _tip(id)
 	if tip.has("pages"):
 		var pages: Array = tip["pages"] as Array
 		if index >= 0 and index < pages.size():
@@ -438,8 +483,9 @@ func _load_demo(_id: String, demo_id: String) -> void:
 	_demo_rect.texture = null
 	_set_full_width_layout(true)
 
-	var json_path: String = "%s/%s.json" % [demo_dir, demo_id]
-	var png_path: String = "%s/%s.png" % [demo_dir, demo_id]
+	var resolved_demo_dir: String = String(_extra_demo_dirs.get(_id, demo_dir))
+	var json_path: String = "%s/%s.json" % [resolved_demo_dir, demo_id]
+	var png_path: String = "%s/%s.png" % [resolved_demo_dir, demo_id]
 	var fps: float = DEFAULT_DEMO_FPS
 	var frame_width: int = DEFAULT_DEMO_FRAME_WIDTH
 	var frame_height: int = 0

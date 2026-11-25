@@ -4,18 +4,21 @@ extends CanvasLayer
 ## Small trial-only HUD.
 ##
 ## Only three permanent reads (title / one short objective / current phase) use
-## the shared compact header.  The completion page and the two-item pause page
-## are the only modal panels; the full settings page is deliberately not copied
-## here.  Every colour is from the existing project palette.
+## the shared compact header.  The completion page (two entries) and the
+## four-item pause page are the only modal panels; the full settings page is
+## deliberately not copied here.  Every colour is from the existing palette.
 
 signal resume_requested
 signal title_requested
+signal restart_requested
+signal quit_requested
 
 const VIEW_SIZE: Vector2 = Vector2(640.0, 360.0)
 const GOLD: Color = Color("#f4cd63")
 const CYAN: Color = Color("#5fe1e6")
 const TEXT: Color = Color("#e7eceb")
 const MUTED: Color = Color("#a4b3be")
+const DIM: Color = Color("#728889")
 const PANEL_BG: Color = Color(0.014, 0.032, 0.040, 0.97)
 const PANEL_BORDER: Color = Color(0.45, 0.66, 0.63, 0.9)
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
@@ -31,13 +34,20 @@ var _completion_panel: Panel
 var _completion_panel_base: Vector2 = Vector2.ZERO
 var _completion_tween: Tween
 var _completion_title: Label
-var _completion_hint: Label
+var _completion_subtitle: Label
+var _completion_note: Label
+var _completion_primary: PixelMenuButton
+var _completion_replay: PixelMenuButton
 var _pause_overlay: ColorRect
 var _pause_panel: Panel
 var _pause_panel_base: Vector2 = Vector2.ZERO
 var _pause_tween: Tween
+var _pause_subtitle: Label
+var _pause_note: Label
 var _pause_continue: PixelMenuButton
-var _pause_title: PixelMenuButton
+var _pause_restart: PixelMenuButton
+var _pause_return: PixelMenuButton
+var _pause_quit: PixelMenuButton
 var _font: Font
 var _subtitle: String = ""
 var _completion_visible: bool = false
@@ -66,7 +76,7 @@ func _ready() -> void:
 
 ## Pause-page keyboard fallback.  The PixelMenuButton controls already handle
 ## Enter/Space when the viewport delivers GUI input; while the tree is paused
-## this unhandled path makes the two entries work even if GUI key delivery is
+## this unhandled path makes all four entries work even if GUI key delivery is
 ## skipped.  It never runs when the pause page is hidden.
 func _unhandled_input(event: InputEvent) -> void:
 	if not _pause_visible or not (event is InputEventKey):
@@ -77,18 +87,19 @@ func _unhandled_input(event: InputEvent) -> void:
 	var code: int = int(key_event.physical_keycode)
 	if code == 0:
 		code = int(key_event.keycode)
+	var chain: Array[PixelMenuButton] = _pause_chain()
+	var focused: Control = get_viewport().gui_get_focus_owner()
+	var index: int = chain.find(focused as PixelMenuButton)
 	if code == int(KEY_ENTER) or code == int(KEY_KP_ENTER) or code == int(KEY_SPACE):
-		var focused: Control = get_viewport().gui_get_focus_owner()
 		get_viewport().set_input_as_handled()
-		if focused == _pause_title:
-			title_requested.emit()
-		else:
-			resume_requested.emit()
+		_activate_pause_entry(focused as PixelMenuButton)
 	elif code == int(KEY_DOWN) or code == int(KEY_TAB):
-		_pause_title.grab_focus()
+		index = 0 if index < 0 else (index + 1) % chain.size()
+		chain[index].grab_focus()
 		get_viewport().set_input_as_handled()
 	elif code == int(KEY_UP):
-		_pause_continue.grab_focus()
+		index = chain.size() - 1 if index < 0 else (index - 1 + chain.size()) % chain.size()
+		chain[index].grab_focus()
 		get_viewport().set_input_as_handled()
 
 
@@ -188,9 +199,9 @@ func _build_completion() -> void:
 
 	var panel: Panel = Panel.new()
 	panel.name = "CompletionPanel"
-	panel.position = Vector2(140.0, 108.0)
-	panel.size = Vector2(360.0, 144.0)
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.position = Vector2(120.0, 75.0)
+	panel.size = Vector2(400.0, 210.0)
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = PANEL_BG
 	style.border_width_left = 2
@@ -206,25 +217,59 @@ func _build_completion() -> void:
 	_completion_panel_base = panel.position
 
 	_completion_title = _label(
-		"试炼完成 · 用时 00:00", Vector2(0.0, 28.0), Vector2(360.0, 24.0), 18, GOLD
+		"试炼完成 · 用时 00:00", Vector2(0.0, 12.0), Vector2(400.0, 34.0), 24, GOLD
 	)
 	_completion_title.name = "CompletionTitle"
 	_completion_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(_completion_title)
 
+	_completion_subtitle = _label(
+		"试炼场的门重新合拢，星核记住了你的相性。",
+		Vector2(0.0, 50.0), Vector2(400.0, 18.0), 12, TEXT
+	)
+	_completion_subtitle.name = "CompletionSubtitle"
+	_completion_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	panel.add_child(_completion_subtitle)
+
 	var divider: ColorRect = ColorRect.new()
-	divider.position = Vector2(60.0, 66.0)
-	divider.size = Vector2(240.0, 1.0)
-	divider.color = Color(0.45, 0.66, 0.63, 0.55)
+	divider.position = Vector2(70.0, 74.0)
+	divider.size = Vector2(260.0, 1.0)
+	divider.color = Color(0.45, 0.66, 0.63, 0.5)
 	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(divider)
 
-	_completion_hint = _label(
-		"E / Enter 返回标题", Vector2(0.0, 88.0), Vector2(360.0, 18.0), 12, TEXT
+	_completion_primary = _menu_button(
+		"返回主界面", Vector2(110.0, 86.0), Vector2(180.0, 28.0),
+		PixelMenuButton.Variant.STONE
 	)
-	_completion_hint.name = "CompletionHint"
-	_completion_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	panel.add_child(_completion_hint)
+	_completion_primary.name = "CompletionReturn"
+	_completion_primary.pressed.connect(func() -> void: title_requested.emit())
+	panel.add_child(_completion_primary)
+
+	_completion_replay = _menu_button(
+		"重玩本章", Vector2(110.0, 126.0), Vector2(180.0, 24.0),
+		PixelMenuButton.Variant.OPTION
+	)
+	_completion_replay.name = "CompletionReplay"
+	_completion_replay.pressed.connect(func() -> void: restart_requested.emit())
+	panel.add_child(_completion_replay)
+
+	_completion_note = _label(
+		"本章结算 · Esc 可打开暂停菜单",
+		Vector2(0.0, 158.0), Vector2(400.0, 16.0), 12, DIM
+	)
+	_completion_note.name = "CompletionNote"
+	_completion_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	panel.add_child(_completion_note)
+
+	_completion_primary.focus_next = _completion_primary.get_path_to(_completion_replay)
+	_completion_primary.focus_previous = _completion_primary.get_path_to(_completion_replay)
+	_completion_primary.focus_neighbor_bottom = _completion_primary.get_path_to(_completion_replay)
+	_completion_primary.focus_neighbor_top = _completion_primary.get_path_to(_completion_replay)
+	_completion_replay.focus_next = _completion_replay.get_path_to(_completion_primary)
+	_completion_replay.focus_previous = _completion_replay.get_path_to(_completion_primary)
+	_completion_replay.focus_neighbor_bottom = _completion_replay.get_path_to(_completion_primary)
+	_completion_replay.focus_neighbor_top = _completion_replay.get_path_to(_completion_primary)
 
 
 func _build_pause() -> void:
@@ -239,8 +284,8 @@ func _build_pause() -> void:
 
 	var panel: Panel = Panel.new()
 	panel.name = "PausePanel"
-	panel.position = Vector2(196.0, 116.0)
-	panel.size = Vector2(248.0, 128.0)
+	panel.position = Vector2(140.0, 56.0)
+	panel.size = Vector2(360.0, 236.0)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = PANEL_BG
@@ -256,28 +301,84 @@ func _build_pause() -> void:
 	_pause_panel = panel
 	_pause_panel_base = panel.position
 
-	var title: Label = _label("已暂停", Vector2(0.0, 14.0), Vector2(248.0, 24.0), 18, GOLD)
+	var title: Label = _label("已暂停", Vector2(0.0, 6.0), Vector2(360.0, 30.0), 24, GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(title)
 
+	_pause_subtitle = _label(
+		"星核试炼场 · 支线试炼", Vector2(0.0, 36.0), Vector2(360.0, 16.0), 12, MUTED
+	)
+	_pause_subtitle.name = "PauseSubtitle"
+	_pause_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	panel.add_child(_pause_subtitle)
+
 	_pause_continue = _menu_button(
-		"继续", Vector2(40.0, 52.0), Vector2(168.0, 24.0), PixelMenuButton.Variant.STONE
+		"继续游戏", Vector2(76.0, 56.0), Vector2(208.0, 24.0),
+		PixelMenuButton.Variant.STONE
 	)
 	_pause_continue.name = "ContinueButton"
 	_pause_continue.pressed.connect(func() -> void: resume_requested.emit())
 	panel.add_child(_pause_continue)
 
-	_pause_title = _menu_button(
-		"返回标题", Vector2(40.0, 84.0), Vector2(168.0, 24.0), PixelMenuButton.Variant.OPTION
+	_pause_restart = _menu_button(
+		"重新开始本章", Vector2(76.0, 90.0), Vector2(208.0, 24.0),
+		PixelMenuButton.Variant.OPTION
 	)
-	_pause_title.name = "TitleButton"
-	_pause_title.pressed.connect(func() -> void: title_requested.emit())
-	panel.add_child(_pause_title)
+	_pause_restart.name = "RestartButton"
+	_pause_restart.pressed.connect(func() -> void: restart_requested.emit())
+	panel.add_child(_pause_restart)
 
-	_pause_continue.focus_next = _pause_continue.get_path_to(_pause_title)
-	_pause_continue.focus_previous = _pause_continue.get_path_to(_pause_title)
-	_pause_title.focus_next = _pause_title.get_path_to(_pause_continue)
-	_pause_title.focus_previous = _pause_title.get_path_to(_pause_continue)
+	_pause_return = _menu_button(
+		"返回主界面", Vector2(76.0, 124.0), Vector2(208.0, 24.0),
+		PixelMenuButton.Variant.OPTION
+	)
+	_pause_return.name = "ReturnButton"
+	_pause_return.pressed.connect(func() -> void: title_requested.emit())
+	panel.add_child(_pause_return)
+
+	_pause_quit = _menu_button(
+		"退出游戏", Vector2(76.0, 158.0), Vector2(208.0, 24.0),
+		PixelMenuButton.Variant.OPTION
+	)
+	_pause_quit.name = "QuitButton"
+	_pause_quit.pressed.connect(func() -> void: quit_requested.emit())
+	panel.add_child(_pause_quit)
+
+	_pause_note = _label(
+		"返回主界面不保存本章进度",
+		Vector2(0.0, 190.0), Vector2(360.0, 16.0), 12, DIM
+	)
+	_pause_note.name = "PauseNote"
+	_pause_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	panel.add_child(_pause_note)
+
+	var chain: Array[PixelMenuButton] = _pause_chain()
+	for index: int in range(chain.size()):
+		var current: PixelMenuButton = chain[index]
+		var next: PixelMenuButton = chain[(index + 1) % chain.size()]
+		var previous: PixelMenuButton = chain[(index - 1 + chain.size()) % chain.size()]
+		current.focus_next = current.get_path_to(next)
+		current.focus_previous = current.get_path_to(previous)
+		current.focus_neighbor_bottom = current.get_path_to(next)
+		current.focus_neighbor_top = current.get_path_to(previous)
+
+
+func _pause_chain() -> Array[PixelMenuButton]:
+	var chain: Array[PixelMenuButton] = [
+		_pause_continue, _pause_restart, _pause_return, _pause_quit
+	]
+	return chain
+
+
+func _activate_pause_entry(focused: PixelMenuButton) -> void:
+	if focused == _pause_restart:
+		restart_requested.emit()
+	elif focused == _pause_return:
+		title_requested.emit()
+	elif focused == _pause_quit:
+		quit_requested.emit()
+	else:
+		resume_requested.emit()
 
 
 # --- public state ----------------------------------------------------------
@@ -319,9 +420,11 @@ func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 		_completion_tween = _play_reveal(
 			_completion_tween, _completion_overlay, _completion_panel, _completion_panel_base
 		)
+		call_deferred("_focus_completion_primary")
 	else:
 		_snap_reveal(_completion_tween, _completion_overlay, _completion_panel, _completion_panel_base)
 		_completion_tween = null
+		_release_completion_focus()
 
 
 func show_pause(value: bool) -> void:
@@ -330,13 +433,16 @@ func show_pause(value: bool) -> void:
 		return
 	_pause_overlay.visible = value
 	if value:
+		_release_completion_focus()
 		_pause_tween = _play_reveal(_pause_tween, _pause_overlay, _pause_panel, _pause_panel_base)
 		call_deferred("_focus_pause")
 	else:
 		_snap_reveal(_pause_tween, _pause_overlay, _pause_panel, _pause_panel_base)
 		_pause_tween = null
-		_pause_continue.release_focus()
-		_pause_title.release_focus()
+		for button: PixelMenuButton in _pause_chain():
+			button.release_focus()
+		if _completion_visible:
+			call_deferred("_focus_completion_primary")
 
 
 ## Same-frame overlay with a 0.18 s alpha/scale/slide entrance (see UiReveal).
@@ -360,6 +466,18 @@ func _snap_reveal(
 func _focus_pause() -> void:
 	if _pause_visible and _pause_continue != null:
 		_pause_continue.grab_focus()
+
+
+func _focus_completion_primary() -> void:
+	if _completion_visible and not _pause_visible and _completion_primary != null:
+		_completion_primary.grab_focus()
+
+
+func _release_completion_focus() -> void:
+	if _completion_primary != null:
+		_completion_primary.release_focus()
+	if _completion_replay != null:
+		_completion_replay.release_focus()
 
 
 func _format_time(seconds: float) -> String:
@@ -401,8 +519,56 @@ func get_continue_button() -> PixelMenuButton:
 	return _pause_continue
 
 
+## Kept for the existing pause test name; this is the 返回主界面 row.
 func get_title_button() -> PixelMenuButton:
-	return _pause_title
+	return _pause_return
+
+
+func get_restart_button() -> PixelMenuButton:
+	return _pause_restart
+
+
+func get_pause_return_button() -> PixelMenuButton:
+	return _pause_return
+
+
+func get_quit_button() -> PixelMenuButton:
+	return _pause_quit
+
+
+func get_pause_subtitle_text() -> String:
+	return _pause_subtitle.text if _pause_subtitle != null else ""
+
+
+func get_pause_note_text() -> String:
+	return _pause_note.text if _pause_note != null else ""
+
+
+func get_pause_panel_rect() -> Rect2:
+	return Rect2(_pause_panel_base, _pause_panel.size if _pause_panel != null else Vector2.ZERO)
+
+
+func get_completion_primary_button() -> PixelMenuButton:
+	return _completion_primary
+
+
+func get_completion_replay_button() -> PixelMenuButton:
+	return _completion_replay
+
+
+func get_completion_subtitle_text() -> String:
+	return _completion_subtitle.text if _completion_subtitle != null else ""
+
+
+func get_completion_note_text() -> String:
+	return _completion_note.text if _completion_note != null else ""
+
+
+func get_completion_panel_rect() -> Rect2:
+	return Rect2(
+		_completion_panel_base,
+		_completion_panel.size if _completion_panel != null else Vector2.ZERO
+	)
 
 
 func get_recovery_cover() -> ColorRect:

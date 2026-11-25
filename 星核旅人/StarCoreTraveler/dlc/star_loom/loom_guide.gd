@@ -9,28 +9,32 @@ extends DlcGuide
 ## the matching `open_guide()` gate.  The four demo ids are real 24-frame
 ## captures recorded from the formal star_loom scene into dlc/ui/demos/.
 
+## Copy source: dlc/UI_PARITY_SPEC.md section 3 (星核织机, 4 pages).
+## Every body line stays within 21 full-width characters; ASCII and digits
+## count as half-width.  Several spec lines were shortened/reflowed for width;
+## each change is listed in tests/README.md.
 const LOOM_PAGES: Array = [
 	{
 		"title": "织机与双节点",
-		"body": "Q 换相。只有异相 J 才能打停环绕节点；\n同相命中被弹开，节点不掉血。",
+		"body": "织机以星核为梭，把全城命脉织进经线。\n两只节点替它守线；异相 J 打停，同相弹开。",
 		"key": "Q 切异相 · J 打节点",
 		"demo": "loom_nodes",
 	},
 	{
 		"title": "核心暴露与阶段补给",
-		"body": "两个节点都停转，中央核心才会打开。\n核心受创换相：Q 追相，异相 J 共 3 次。\n阶段 1 结束补给：受击数清零。",
+		"body": "节点停转，核心的金线网散开，露出紫色织结。\n核心每次真伤换相；阶段 1 结束补一次受击。",
 		"key": "异相 J ×3 · 核心换相要追",
 		"demo": "loom_core",
 	},
 	{
 		"title": "地砖火柱与横扫",
-		"body": "地砖先亮约 0.95 秒，再喷出火柱；横扫光带约 0.8 秒预警。\n离开亮起的地砖，跳过横扫光带。",
-		"key": "看预警 · 离开火柱 / 跳过光带",
+		"body": "织机把城内火道接进地砖，又用横梁扫出光带。\n砖先亮起再喷火，光带会先给出预警。\n离开亮起的砖，跳过横扫光带。",
+		"key": "离开发火砖 · 跳过光带",
 		"demo": "loom_fire",
 	},
 	{
 		"title": "三受击、齿轮与浮灵",
-		"body": "被击中 3 次才失败，受击后约 1 秒保护。\n失败从当前阶段重开。\n齿轮跳过，浮灵用 J 清掉。",
+		"body": "织机用滚齿和浮灵补近身，城内星核护你三次。\n3 次受击才失败；失败从当前阶段重开。\n齿轮跳过，浮灵用 J 清。",
 		"key": "3 次受击 · 齿轮跳过 · J 清浮灵",
 		"demo": "loom_gear",
 	},

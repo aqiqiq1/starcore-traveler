@@ -23,6 +23,26 @@ signal level_completed
 
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const RIFT_GUIDE_SCRIPT: Script = preload("res://dlc/rift_workshop/rift_guide.gd")
+const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popup.tscn")
+const MECHANIC_DEMO_DIR: String = "res://dlc/ui/demos"
+
+## DLC copy registered through the shared MechanicPopup table.  Every body
+## starts with the in-world cause and only then explains the keys.  Lines stay
+## within the shared 62 px label (<= 21 full-width characters per line).
+const RIFT_TIPS: Dictionary = {
+	"rift_charge_tip": {
+		"title": "引力锁核",
+		"body": "星核余烬锁在守卫胸甲，蓄力时引力场拖近人。\n等蓄力、Q 切异相、被吸近后 J 打胸口菱形。",
+		"key": "蓄力时异相 J · 只碎壳不算伤害",
+		"demo": "rift_elements",
+	},
+	"rift_core_tip": {
+		"title": "裂隙核心",
+		"body": "双生守卫倒下，裂隙核心失去引力护持。\n核心处就是出口，走近触碰即可封闭裂隙。",
+		"key": "走近核心 · 触碰封闭",
+		"demo": "rift_core",
+	},
+}
 
 const START_SPAWN: Vector2 = Vector2(40.0, 320.0)
 const ARENA_SPAWN: Vector2 = Vector2(1100.0, 320.0)
@@ -103,6 +123,9 @@ var _recovery_alpha: float = 0.0
 var _recovery_elapsed: float = 0.0
 var _recovery_applying: bool = false
 var _intro_guide: DlcGuide = null
+var _mechanic_popup: MechanicPopup = null
+var _charge_tip_pending: bool = false
+var _core_tip_pending: bool = false
 
 
 func _ready() -> void:
@@ -166,13 +189,18 @@ func _ready() -> void:
 	_checkpoint.checkpoint_entered.connect(_on_checkpoint_entered)
 
 	_hud.resume_requested.connect(_on_hud_resume_requested)
+	_hud.restart_requested.connect(_restart_chapter)
 	_hud.title_requested.connect(_on_hud_title_requested)
+	_hud.quit_requested.connect(_on_hud_quit_requested)
 	_hud.set_polarity(false)
 	_hud.set_objective("目标：穿过反转回廊")
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
 	_hud.set_recovery_alpha(0.0)
 	_update_finish_marker()
+
+	MechanicPopup.register_tips(RIFT_TIPS, MECHANIC_DEMO_DIR)
+	_setup_mechanic_popup()
 
 	_camera.reset_smoothing()
 	_elapsed = 0.0
@@ -208,6 +236,58 @@ func _on_intro_guide_closed(_kind: String) -> void:
 	_guard_ticks = 3
 	# Held back while the guide covered the screen; starts with play.
 	_ambience.play(true)
+
+
+## Teaching layer only: one shared popup, same scene and input behaviour as the
+## base levels.  It owns no gameplay state and is never a gate.
+func _setup_mechanic_popup() -> void:
+	_mechanic_popup = MECHANIC_POPUP_SCENE.instantiate() as MechanicPopup
+	_mechanic_popup.name = "MechanicPopup"
+	_mechanic_popup.level_node = self
+	add_child(_mechanic_popup)
+
+
+## A request is retried on later physics ticks while the chapter is in a state
+## that must not be interrupted (guide, pause, recovery, opening, leaving).
+func _tick_mechanic_popups() -> void:
+	if _mechanic_popup == null:
+		return
+	if _charge_tip_pending:
+		if MechanicTips.has_seen("rift_charge_tip"):
+			_charge_tip_pending = false
+		elif _request_mechanic_tip("rift_charge_tip"):
+			_charge_tip_pending = false
+	if _core_tip_pending:
+		if MechanicTips.has_seen("rift_core_tip"):
+			_core_tip_pending = false
+		elif _request_mechanic_tip("rift_core_tip"):
+			_core_tip_pending = false
+
+
+func _request_mechanic_tip(id: String) -> bool:
+	if _mechanic_popup == null or _mechanic_popup.is_open():
+		return false
+	if is_mechanic_popup_blocked():
+		return false
+	_mechanic_popup.request(id)
+	return _mechanic_popup.is_open() or MechanicTips.has_seen(id)
+
+
+## The shared popup must never open over the guide, the pause page, the
+## completion page, a failure fade, the arena opening or a scene hand-off.
+func is_mechanic_popup_blocked() -> bool:
+	if get_tree().paused:
+		return true
+	if _completed or _scene_leaving or _recovery_active or _retry_pending:
+		return true
+	if _pause_open:
+		return true
+	if _guard_ticks > 0 or _arena_intro_left > 0.0:
+		return true
+	if _intro_guide != null and is_instance_valid(_intro_guide):
+		if _intro_guide.is_open():
+			return true
+	return false
 
 
 func _exit_tree() -> void:
@@ -273,6 +353,9 @@ func _physics_process(delta: float) -> void:
 	_update_objective()
 	if _guards_defeated >= 2 and not _completed:
 		_check_finish()
+	# Open at the end of the tick so the popup freezes a settled frame rather
+	# than interrupting the guard force sample already in progress.
+	_tick_mechanic_popups()
 
 
 func _process(delta: float) -> void:
@@ -407,11 +490,18 @@ func _input(event: InputEvent) -> void:
 	if _pause_open:
 		return
 	if _completed:
-		if key_event.pressed and not key_event.echo and (
-			code == int(KEY_E) or code == int(KEY_ENTER) or code == int(KEY_KP_ENTER)
-		):
-			get_viewport().set_input_as_handled()
-			_return_to_title()
+		if key_event.pressed and not key_event.echo:
+			if code == int(KEY_E):
+				get_viewport().set_input_as_handled()
+				_return_to_title()
+			elif code == int(KEY_ENTER) or code == int(KEY_KP_ENTER):
+				# The focused row wins: Down to 重玩本章 + Enter replays the
+				# chapter.  With either no focus or 返回主界面 focused, Enter is
+				# the retained shortcut back to the title.
+				if get_viewport().gui_get_focus_owner() == _hud.get_completion_replay_button():
+					return
+				get_viewport().set_input_as_handled()
+				_return_to_title()
 		return
 	if _recovery_active:
 		return
@@ -432,9 +522,11 @@ func _input(event: InputEvent) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
 		return
-	if _scene_leaving or _completed or _recovery_active:
+	if _scene_leaving or _recovery_active:
 		return
 	if event.is_action_pressed(&"pause"):
+		# Esc also opens the pause page over the completion page, matching its
+		# own footnote; resume returns to the completion page unchanged.
 		_set_paused(not _pause_open)
 		get_viewport().set_input_as_handled()
 
@@ -445,6 +537,17 @@ func _on_hud_resume_requested() -> void:
 
 func _on_hud_title_requested() -> void:
 	_return_to_title()
+
+
+func _on_hud_quit_requested() -> void:
+	if _scene_leaving:
+		return
+	_scene_leaving = true
+	get_tree().paused = false
+	_ambience.stop(0.0)
+	if is_instance_valid(DemoAudio):
+		DemoAudio.stop_world()
+	get_tree().quit()
 
 
 func _set_paused(value: bool) -> void:
@@ -591,6 +694,7 @@ func _wake_gold_guard() -> void:
 		return
 	_guard_gold.set_suspended(false)
 	_gold_teaching_pending = true
+	_charge_tip_pending = true
 
 
 func _wake_cyan_guard() -> void:
@@ -657,6 +761,10 @@ func _on_guard_shattered(guard: L3Guard) -> void:
 
 func _on_guard_charge_started(_positive: bool, guard: L3Guard) -> void:
 	_hud.show_event("%s蓄力中 · 异相 J 打弱点" % _guard_label(guard), 1.4)
+	# Fallback for the gold guard's very first charge if the opening-end
+	# request could not open (for example the player paused on that frame).
+	if guard == _guard_gold and not MechanicTips.has_seen("rift_charge_tip"):
+		_charge_tip_pending = true
 
 
 func _on_guard_slam_contact(_facing: int, _guard: L3Guard) -> void:
@@ -697,6 +805,7 @@ func _on_guard_defeated(guard: L3Guard) -> void:
 		# replaced it with the core line, so the final count was never readable.
 		_hud.show_event("双生守卫已倒下 · 2 / 2 · 裂隙核心开启", 2.4)
 		_audio.play_bridge(true)
+		_core_tip_pending = true
 	elif guard == _guard_gold:
 		# Gold first: its fall is what releases the cyan guard.
 		_gold_teaching_pending = false
@@ -732,6 +841,8 @@ func _begin_recovery(kind: String) -> void:
 	_recovery_alpha = 0.0
 	_attack_key_down = false
 	_gold_teaching_pending = false
+	_charge_tip_pending = false
+	_core_tip_pending = false
 	DemoAudio.play_failure()
 	_hud.set_recovery_alpha(0.0)
 	_player.begin_input_override()
@@ -830,6 +941,8 @@ func _retry_combat() -> void:
 	_gold_defeated = false
 	_cyan_defeated = false
 	_guards_defeated = 0
+	_charge_tip_pending = false
+	_core_tip_pending = false
 	_guard_gold.reset_state(GUARD_GOLD_SPAWN, true, true)
 	_guard_gold.set_player_target(_player)
 	_guard_gold.set_suspended(true)
@@ -844,7 +957,7 @@ func _retry_combat() -> void:
 	_reset_player_at(ARENA_SPAWN)
 	_update_finish_marker()
 	_update_objective(true)
-	_hud.show_event("失败 · 回竞技场入口 · 先打金守卫", 2.0)
+	_hud.show_event("失败 · 引力把你甩回入口 · 先打金守卫", 2.0)
 
 
 func _reset_player_at(point: Vector2) -> void:
@@ -889,6 +1002,8 @@ func _complete_chapter() -> void:
 	_retry_pending = false
 	_arena_intro_left = 0.0
 	_gold_teaching_pending = false
+	_charge_tip_pending = false
+	_core_tip_pending = false
 	_player_hits = 0
 	_player.clear_input_buffers()
 	_player.clear_external_force()
@@ -913,6 +1028,8 @@ func _return_to_title() -> void:
 	get_tree().paused = false
 	_pause_open = false
 	_scene_leaving = true
+	_charge_tip_pending = false
+	_core_tip_pending = false
 	_hud.show_pause(false)
 	_hud.show_completion(false, _elapsed)
 	_ambience.stop(0.0)
@@ -947,6 +1064,8 @@ func _restart_chapter() -> void:
 	_recovery_kind = ""
 	_resolved_swings.clear()
 	_player_hits = 0
+	_charge_tip_pending = false
+	_core_tip_pending = false
 	_elapsed = 0.0
 	_finish_time = 0.0
 	_objective_key = ""
@@ -984,6 +1103,10 @@ func _restart_chapter() -> void:
 
 func get_player() -> L3Player:
 	return _player
+
+
+func get_mechanic_popup() -> MechanicPopup:
+	return _mechanic_popup
 
 
 func get_guard_gold() -> L3Guard:

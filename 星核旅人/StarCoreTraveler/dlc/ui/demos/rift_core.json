@@ -1,0 +1,19 @@
+{
+	"camera": {
+		"wide_limits": true,
+		"zoom": 0.4
+	},
+	"crop": {
+		"h": 144,
+		"w": 256,
+		"x": 188,
+		"y": 80
+	},
+	"fps": 8.0,
+	"frame_height": 144,
+	"frame_width": 256,
+	"frames": 24,
+	"id": "rift_core",
+	"note": "Formal rift core. Both guards use their real defeated/rubble state; the chapter's two-defeat handler lights the core. The player walks with the player's own cinematic-walk API from 40 px to 22 px from the core (outside the 18 px completion radius), then stops. No J input is sent. The core's own 12-frame animation runs.",
+	"source": "formal DLC scene, real defeated state, real cinematic walk"
+}
