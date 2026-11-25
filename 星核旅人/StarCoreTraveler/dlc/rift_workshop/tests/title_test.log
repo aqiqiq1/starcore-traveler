@@ -20,11 +20,11 @@ PASS: start focus_next is settings
 PASS: settings focus_next is quit
 PASS: quit focus_next reaches the trial button
 PASS: trial focus_next reaches the rift button
-PASS: rift focus_next loops back to start
+PASS: rift focus_next reaches the next visible entry
 PASS: rift focus_previous is the trial button
 PASS: Down from quit reaches the trial button
 PASS: Down from trial reaches the rift button
-PASS: Down from rift loops to start
+PASS: Down from rift reaches the next visible entry
 PASS: rift button can take keyboard focus
 PASS: Enter on the focused rift button opens the chapter [current=res://dlc/rift_workshop/rift_workshop.tscn]
 PASS: level_01 loads again for the mouse test

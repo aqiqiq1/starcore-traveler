@@ -53,11 +53,11 @@ PASS: wisp pulse period is 3.0 s [3.00]
 PASS: wisp pulses within its 3 s period
 PASS: same phase at the pulse becomes a pull [pull force=170.0]
 PASS: pulse reports a real force [170.0]
-PASS: pull velocity points toward the wisp [vx=96.8]
+PASS: pull velocity points toward the wisp [vx=97.0]
 PASS: opposite phase at the pulse becomes a push [push]
-PASS: push velocity points away from the wisp [vx=-17.1]
+PASS: push velocity points away from the wisp [vx=-16.8]
 PASS: one J hit dissolves the wisp
-PASS: kill shows a short white burst at the wisp [0.85]
+PASS: kill shows a short white burst at the wisp [0.90]
 PASS: other wisps stay alive [wisp0 alive=true]
 PASS: R returns to the start [x=40.00]
 PASS: R restores 婢滅浉
@@ -116,7 +116,7 @@ PASS: finish point becomes bright after both defeats
 PASS: touching the finish completes the chapter [x=1550.00]
 PASS: completion page is visible
 PASS: completion text is 瑁傞殭灏侀棴 路 鐢ㄦ椂 mm:ss [瑁傞殭灏侀棴 路 鐢ㄦ椂 00:08]
-PASS: completion time is real [8.55 s]
+PASS: completion time is real [8.54 s]
 PASS: E returns to level_01.tscn title [res://scenes/level_01.tscn]
 PASS: returned scene contains the title menu
 PASS: title shows the 瑁傞殭宸ュ潑 entry while the DLC exists

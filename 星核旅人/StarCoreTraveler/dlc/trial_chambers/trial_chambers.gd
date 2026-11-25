@@ -50,6 +50,7 @@ enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 @onready var _hud: TrialHUD = $HUD
 @onready var _finish_core: Sprite2D = $FinishPoint/Core
 @onready var _audio = $Audio
+@onready var _ambience: DlcChapterAmbience = $Ambience
 
 var _elapsed: float = 0.0
 var _completed: bool = false
@@ -129,6 +130,9 @@ func _ready() -> void:
 	_guard_ticks = 3
 	if show_intro_guide:
 		call_deferred("_open_intro_guide")
+	else:
+		# No guide (auto tests / a re-entry): the ambience starts with play.
+		_ambience.play(true)
 
 
 ## Called once per scene load.  Tests set show_intro_guide = false before
@@ -139,6 +143,9 @@ func _open_intro_guide() -> void:
 	if _intro_guide != null and is_instance_valid(_intro_guide):
 		return
 	_intro_guide = DLC_GUIDE_SCENE.instantiate() as DlcGuide
+	if _intro_guide == null:
+		_ambience.play(true)
+		return
 	add_child(_intro_guide)
 	_intro_guide.closed.connect(_on_intro_guide_closed)
 	_intro_guide.configure("trial", self)
@@ -151,9 +158,14 @@ func _on_intro_guide_closed(_kind: String) -> void:
 	_attack_key_down = false
 	_player.begin_input_override()
 	_guard_ticks = 3
+	# The ambience was held back while the guide covered the screen so the
+	# chapter proper starts with its music.
+	_ambience.play(true)
 
 
 func _exit_tree() -> void:
+	if _ambience != null:
+		_ambience.stop(0.0)
 	if _audio != null:
 		_audio.stop_all()
 	if is_instance_valid(DemoAudio):
@@ -340,9 +352,11 @@ func _set_paused(value: bool) -> void:
 	if value:
 		if _arena_entered and not _guard_defeated:
 			_guard.set_suspended(true)
+		_ambience.set_paused(true)
 		get_tree().paused = true
 		return
 	get_tree().paused = false
+	_ambience.set_paused(false)
 	LEVEL_FLOW.release_one_shot_actions()
 	_player.clear_input_buffers()
 	if _arena_entered and not _guard_defeated and not _completed:
@@ -594,6 +608,7 @@ func _complete_trial() -> void:
 	_hud.show_pause(false)
 	_hud.show_completion(true, _elapsed)
 	_hud.set_objective("目标：试炼完成")
+	_ambience.stop(DlcChapterAmbience.STOP_FADE_SECONDS)
 	DemoAudio.play_complete()
 	LEVEL_FLOW.release_one_shot_actions()
 	level_completed.emit()
@@ -607,6 +622,7 @@ func _return_to_title() -> void:
 	_scene_leaving = true
 	_hud.show_pause(false)
 	_hud.show_completion(false, _elapsed)
+	_ambience.stop(0.0)
 	if is_instance_valid(DemoAudio):
 		DemoAudio.stop_world()
 	_player.reset_movement_input_state()
@@ -641,6 +657,7 @@ func _restart_trial() -> void:
 	_attack_key_down = false
 	_last_polarity_toggles = 0
 	_audio.stop_all()
+	_ambience.play(true)
 	_hud.set_recovery_alpha(0.0)
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
@@ -671,6 +688,10 @@ func get_guard() -> L3Guard:
 
 func get_hud() -> TrialHUD:
 	return _hud
+
+
+func get_ambience() -> DlcChapterAmbience:
+	return _ambience
 
 
 func get_intro_guide() -> DlcGuide:

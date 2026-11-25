@@ -23,9 +23,17 @@ func _ready() -> void:
 	Input.action_release(&"move_right")
 	Input.action_release(&"move_left")
 	Input.action_release(&"polarity")
-	if _trial != null:
+	if _trial != null and is_instance_valid(_trial):
+		# The trial's ambience is still playing here; stop it and give the audio
+		# thread a couple of frames before quitting so the exit report stays
+		# clean (an Ogg playback cut off at process exit is reported as leaked).
+		var ambience: DlcChapterAmbience = _trial.get_ambience()
+		if ambience != null:
+			ambience.stop(0.0)
 		_trial.queue_free()
 		await _wait_process(2)
+		for _index: int in range(20):
+			await get_tree().process_frame
 	print("TRIAL_GATE_TEST checks=%d failures=%d" % [_checks, _failures.size()])
 	for failure: String in _failures:
 		printerr("FAIL: " + failure)

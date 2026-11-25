@@ -1,0 +1,18 @@
+﻿Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: gold guard slam plays the impact cue [0 -> 1]
+PASS: two guards slamming together play one thud [1]
+PASS: a later impact cue plays again
+PASS: first guard defeat shows 1 / 2 [閲戝畧鍗凡鍊掍笅 路 1 / 2]
+PASS: both guards are registered as defeated
+PASS: final line keeps 2 / 2 and the core opening [鍙岀敓瀹堝崼宸插€掍笅 路 2 / 2 路 瑁傞殭鏍稿績寮€鍚痌
+PASS: finish core lights up after both defeats
+PASS: checkpoint records before the fall test
+PASS: near wisp hum is audible while playing
+PASS: falling starts the recovery fade
+PASS: wisp hum stays off during the recovery fade
+PASS: wisp hum is still off later in the fade
+PASS: recovery fade finishes
+PASS: player is back on the checkpoint [x=1030.00]
+PASS: near wisp hum returns after the recovery
+RIFT_POLISH_TEST checks=15 failures=0

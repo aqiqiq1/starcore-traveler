@@ -260,3 +260,77 @@ $godot = "D:/Godot/Godot_v4.7.2-stable_win64_console.exe"
   但攻击是真实物理 J 事件，命中由守卫自己的 `receive_player_hit()` 结算。
 - 未做真人整关节奏/可读性终审；说明页只核看 Celeste 两张静态画面，未核看其翻页动画。
 - 标题菜单两个 DLC 入口的视觉层级未改：需要动 `scripts/start_menu.gd`，按约束先报告。
+
+---
+
+## 2026-11-26 环境音乐接入 + 反馈打磨（本轮）
+
+分支 `dlc`；未切分支、未提交、未推送、未导出。只改 `dlc/rift_workshop/`（含测试）
+与共用的 `dlc/trial_chambers/chapter_ambience.gd`。`scripts/start_menu.gd`、`dlc/ui`、
+`dlc/audio` 源文件、`dlc/star_loom` 和基础三关均未改。
+
+### 音乐
+
+- `Ambience` 节点（`track_name = rift_ambience`，`autoplay = false`）复用
+  `dlc/trial_chambers/chapter_ambience.gd`：`.ogg` → `.wav` → 静音，运行时解析，
+  不 preload；在流副本上设 `AudioStreamOggVorbis.loop = true`；音量 **-20 dB**；
+  暂停页 `stream_paused`，完成页 0.7 s 淡出，回标题停止，R 从第 1 帧重开；
+  说明页打开期间不播。
+- 文件：`dlc/audio/music/rift_ambience.ogg`，80.000 s，解码峰值 -7.72 dBFS，
+  最终峰值约 -27.7 dBFS；首尾样本差 -27.9 dBFS（经 -20 dB 增益约 -48 dBFS）。
+  共享音乐测试覆盖真实播放/循环/暂停（见 trial 侧 `ambience_test.log`，52 / 0）。
+
+### 反馈修正（三处客观问题）
+
+1. **最终 “2 / 2” 被覆盖**：原代码先写“青守卫已倒下 · 2 / 2”，下一行立刻被
+   “双生守卫已倒下 · 裂隙核心开启”替换，玩家看不到最终计数。现合并为
+   “双生守卫已倒下 · 2 / 2 · 裂隙核心开启”（2.4 s），截图
+   `out/completion.png` 左上可见。
+2. **双守卫下砸完全无声**：`slam_contact` / `gravity_release` 原本是 `pass`，
+   而试炼章和基础第三关都有下砸音。现由 DLC 内 `rift_audio.gd` 运行时只读加载
+   已批准的 `assets/level03_prototype/audio_slam.ogg`（-4 dB，60 ms 内两只守卫
+   合并成一次），不改 DemoAudio/基础音频。
+3. **恢复黑幕期间光灵嗡鸣又响**：`_begin_recovery()` 关了 hum，但 `_process()`
+   下一帧又按距离重新打开。现在 `_recovery_active` 期间保持关闭，恢复结束后
+   再按距离恢复。
+
+另新增 `RiftPolarityWisp.is_hum_playing()` 只读访问器供测试使用。
+
+### 本轮测试结果（全部 exit 0）
+
+| 项目 | 结果 | 证据 |
+| --- | --- | --- |
+| 导入 | exit 0，0 ERROR/WARNING | `import.log` |
+| 机制测试 | **121 / 0** | `mechanics_test.log` |
+| 真实输入路线 | **37 / 0** | `route_test.log` |
+| 标题入口（存在） | **34 / 0** | `title_test.log` |
+| 标题入口（缺失） | **14 / 0** | `title_missing_test.log` |
+| 新反馈测试 | **15 / 0** | `polish_test.log` |
+| 新章 90 帧 | exit 0，0 ERROR/WARNING | `rift_90.log` |
+| 基础三关 90 帧 | 三关 exit 0，0 ERROR/WARNING | `level_0*_90.log` |
+| 移走 trial+rift 两章后 level_01 90 帧 | exit 0，0 ERROR/WARNING | `level_01_deleted_90.log` |
+
+`polish_test.tscn` 覆盖：首次击败显示 “金守卫已倒下 · 1 / 2”、最终行保留
+“2 / 2”、完成核心点亮、下砸音真实播放且 60 ms 合并、靠近光灵有 hum、
+坠落黑幕期间 hum 保持关闭、检查点复活后 hum 恢复。
+
+### 截图（均 640×360，`out/`）
+
+新增/更新：`ambience_state.png`（测试脚本读取真实播放器值：`rift_ambience.ogg |
+80.00 s | vol -20.0 dB | loop on | playing yes | pos 0.19 s`）、
+`failure_retry.png`（两次 `player_struck` → 黑幕 → 回竞技场入口，两只守卫满血、
+事件行“失败 · 回竞技场入口”）、`completion.png`（最终 2 / 2 + 核心开启）。
+其余 10 张门/桥/浮灵/双守卫截图同前，均 error=0。
+
+### 跨任务协同
+
+- 标题菜单第三行 `星核织机` 由另一个任务加入。本目录的 `title_test.gd` 与
+  `title_missing_test.gd` 已改为“下一个可见入口”断言，不再硬编码
+  rift → start；本关仍为 34 / 14 项 0 失败，未改 `scripts/start_menu.gd`。
+
+### 未做 / 局限
+
+- 未做真人听感；音乐循环接缝只有数值 + 引擎状态证据。
+- 基础三关只读审计：标题 + 三关 640×360 截图在 `out/audit_*.png`，
+  基础脚本/场景 diff 为 0；标题的 DLC 行视觉层级与第三入口属于另一个任务。
+

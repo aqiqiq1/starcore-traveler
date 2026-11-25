@@ -11,7 +11,7 @@ PASS: hidden button cannot take focus [0]
 PASS: start focus_next is still settings
 PASS: settings focus_next is still quit
 PASS: quit focus_next still reaches the trial button
-PASS: trial focus_next loops back to start, skipping the hidden entry
+PASS: trial focus_next skips the hidden rift entry
 PASS: existing 寮€濮嬫父鎴?row stays visible and enabled
 PASS: existing start row still takes focus
 RIFT_TITLE_MISSING_TEST checks=14 failures=0

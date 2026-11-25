@@ -4,9 +4,11 @@ extends Node
 ##   Godot_v4.7.2-stable_win64_console.exe --path . \
 ##     res://dlc/trial_chambers/tests/capture_visuals.tscn
 ##
-## Saves to tests/trial_20261125/out/:
+## Saves to res://dlc/trial_chambers/tests/out/:
+##   ambience_state.png (test-only strip with the live ambience player state),
 ##   gate_gold_closed.png, gate_gold_open.png, gate_cyan_closed.png,
-##   arena.png, pause.png, completion.png, title_trial_button.png
+##   arena.png, failure_retry.png, pause.png, completion.png,
+##   title_trial_button.png
 ##
 ## The completion shot uses guard.debug_force_death() only to reach the page for
 ## a picture; the real three-hit route is verified separately in route_test.
@@ -64,6 +66,38 @@ func _place(player: L3Player, x: float, positive: bool) -> void:
 	await _wait_physics(2)
 
 
+## Evidence shot for the ambience integration.  The strip is drawn by this test
+## harness only (not by the game) and reads the live AudioStreamPlayer state.
+func _save_ambience_state(ambience: DlcChapterAmbience) -> void:
+	var layer: CanvasLayer = CanvasLayer.new()
+	layer.layer = 20
+	add_child(layer)
+	var background: ColorRect = ColorRect.new()
+	background.position = Vector2(8.0, 334.0)
+	background.size = Vector2(624.0, 20.0)
+	background.color = Color(0.008, 0.02, 0.026, 0.86)
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(background)
+	var label: Label = Label.new()
+	label.position = Vector2(12.0, 337.0)
+	label.size = Vector2(616.0, 16.0)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_font_size_override("font_size", 10)
+	label.add_theme_color_override("font_color", Color(0.92, 0.97, 0.94))
+	label.text = "%s | %.2f s | vol %.1f dB | loop %s | playing %s | pos %.2f s" % [
+		ambience.get_stream_path().get_file(),
+		ambience.get_stream_length(),
+		ambience.get_volume_db(),
+		"on" if ambience.is_stream_looping() else "off",
+		"yes" if ambience.is_playing() else "no",
+		ambience.get_playback_position(),
+	]
+	layer.add_child(label)
+	await _save("ambience_state.png")
+	layer.queue_free()
+	await _wait_process(2)
+
+
 func _run() -> void:
 	var packed: PackedScene = load(TRIAL_SCENE) as PackedScene
 	_trial = packed.instantiate() as TrialChambers
@@ -72,6 +106,10 @@ func _run() -> void:
 	await _wait_process(4)
 	await _wait_physics(10)
 	var player: L3Player = _trial.get_player()
+
+	# Ambience state evidence (live AudioStreamPlayer values drawn by the test
+	# harness only).
+	await _save_ambience_state(_trial.get_ambience())
 
 	# Gold gate closed: cyan player, gold requirement.
 	await _place(player, 235.0, false)
@@ -96,6 +134,23 @@ func _run() -> void:
 	_trial.get_guard().set_suspended(false)
 	await _wait_process(40)
 	await _save("arena.png")
+
+	# Failure restart: two accepted hits (the guard's own signal) must fade to
+	# black, rebuild the guard and put the player back at the arena entrance
+	# instead of leaving the scene stuck.  Wait on the real state, not a frame
+	# count: the windowed build is not locked to 60 fps.
+	_trial.get_guard().player_struck.emit(1)
+	await _wait_physics(4)
+	_trial.get_guard().player_struck.emit(1)
+	var seen_recovery: bool = false
+	for _index: int in range(3000):
+		if _trial.is_recovery_active():
+			seen_recovery = true
+		elif seen_recovery:
+			break
+		await get_tree().process_frame
+	await _wait_process(6)
+	await _save("failure_retry.png")
 
 	# Simple two-item pause page.
 	_push_key(KEY_ESCAPE, true)

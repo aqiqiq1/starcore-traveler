@@ -308,6 +308,11 @@ func is_alive() -> bool:
 	return _alive
 
 
+## True while the proximity hum is actually playing (audio/feedback tests).
+func is_hum_playing() -> bool:
+	return _hum != null and _hum.playing
+
+
 func is_positive() -> bool:
 	return _positive
 

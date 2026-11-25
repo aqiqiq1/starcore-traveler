@@ -156,3 +156,82 @@ Godot：`D:/Godot/Godot_v4.7.2-stable_win64_console.exe`，工程目录：`D:/go
   （开启态站在门侧，箭头可见）、`gate_cyan_closed.png`、`arena.png`、`pause.png`、
   `completion.png`、`title_trial_button.png`。
 - 局限：静态截图只证明两种状态和箭头存在，未做真人“远看/边走边看”的可读性终审。
+
+## 2026-11-26 DLC 环境音乐接入 + 协同回归
+
+分支 `dlc`；未切分支、未提交、未推送、未导出。只改 `dlc/trial_chambers/` 与
+`dlc/rift_workshop/`（两个 DLC 章节的脚本/场景/测试），基础三关、`scripts/start_menu.gd`、
+`dlc/ui`、`dlc/audio` 源文件、`dlc/star_loom` 均未改。
+
+### 音乐接入（trial / rift 共用 `chapter_ambience.gd`）
+
+- 新增 `dlc/trial_chambers/chapter_ambience.gd`（`class_name DlcChapterAmbience`），
+  trial 与 rift 场景各加一个 `Ambience` 节点（`track_name = trial_ambience` /
+  `rift_ambience`，`autoplay = false`）。
+- 解析顺序：`res://dlc/audio/music/<track>.ogg` → `.wav` → 都没有则静音；
+  全部 `ResourceLoader.exists()` + 运行时 `load(CACHE_MODE_IGNORE)`，**没有 preload
+  不存在的文件**。0 字节/解码长度 < 0.25 s 的文件按缺失处理。
+- 循环：在 `duplicate()` 出来的流上设 `AudioStreamOggVorbis.loop = true`（WAV 则
+  `loop_mode = LOOP_FORWARD`，`loop_begin = 0`，`loop_end` 按帧数），
+  不依赖、也不修改 `.import` 里的 `loop=false`。
+- 音量 `-20.0 dB`（要求 -18～-22 dB）。OGG 峰值 -7.72 dBFS，所以最终峰值约
+  -27.7 dBFS；如需更响，只改 `TARGET_VOLUME_DB` 一处。
+- 暂停：节点 `PROCESS_MODE_PAUSABLE`（说明页暂停树时自动冻结），暂停页另设
+  `AudioStreamPlayer.stream_paused`，测试可确定地断言“冻结/继续”。
+- 完成页 0.7 s 淡出后停止；返回标题立即停止；R 从第 1 帧重开。
+- 说明页打开期间不播（`show_intro_guide = false` 的自动测试直接开播；
+  正常入口在说明页关闭后开播，`_on_intro_guide_closed` 里启动）。
+  这样 90 帧冒烟跑（说明页仍开着）不会在进程退出时留下被截断的 Ogg playback。
+
+音乐文件（另一个音乐任务产出，只读引用）：
+
+| 文件 | 时长 | 解码峰值 | 循环 |
+| --- | --- | --- | --- |
+| `dlc/audio/music/trial_ambience.ogg` | 64.000 s | -7.72 dBFS | 整文件循环（生成器整数小节 + 环绕混响） |
+| `dlc/audio/music/rift_ambience.ogg` | 80.000 s | -7.72 dBFS | 同上 |
+
+循环点数值核对（`soundfile` 读解码样本，首尾样本最大差）：
+trial -53.3 dBFS、rift -27.9 dBFS（再经 -20 dB 播放增益约 -73 / -48 dBFS）；
+两者均为精确 64.000 / 80.000 s，无编码器补静音。未做真人听感接缝测试。
+
+### 新增测试与证据
+
+- `tests/ambience_test.tscn`：**52 / 0**（`ambience_test.log`）。真实场景 +
+  真实 `AudioStreamPlayer`，覆盖：解析到 `.ogg`、真实长度、-20 dB、`loop=true`、
+  播放位置前进、**seek 到结尾后跨越循环点继续播放并回到开头**、Esc 暂停时
+  `stream_paused` 且位置冻结、继续后从同一点恢复、完成页停止、R 从头重开、
+  返回标题停止、说明页期间静音/关闭后开播、缺失文件静音降级。
+- `tests/out/ambience_state.png`：640×360 实机截图，底部状态条由测试脚本读取
+  真实播放器值（`trial_ambience.ogg | 64.00 s | vol -20.0 dB | loop on |
+  playing yes | pos 0.18 s`），不是游戏内 HUD。
+- `tests/out/failure_retry.png`：两次 `guard.player_struck`（守卫自己的信号）→
+  黑幕 → 玩家回到竞技场入口、守卫满 3 格、“失败 · 回竞技场入口”；证明失败重启
+  不卡死。真实移动/重开仍由 `route_test.tscn` 覆盖。
+- 截图清单：`ambience_state.png`、`gate_gold_closed.png`、`gate_gold_open.png`、
+  `gate_cyan_closed.png`、`arena.png`、`failure_retry.png`、`pause.png`、
+  `completion.png`、`title_trial_button.png`，均 640×360、`error=0`。
+
+### 回归结果（本轮实际跑）
+
+| 项目 | 结果 | 证据 |
+| --- | --- | --- |
+| 极性门 | **32 / 0** | `gate_test.log` |
+| 试炼路线 | **46 / 0** | `route_test.log` |
+| 标题入口 | **25 / 0** | `title_test.log` |
+| 暂停返回标题 | **5 / 0** | `pause_title_test.log` |
+| 环境音乐 | **52 / 0** | `ambience_test.log` |
+| 试炼 90 帧 | exit 0，0 ERROR/WARNING | `trial_90.log` |
+| 基础三关 90 帧 | 三关 exit 0，0 ERROR/WARNING | `../rift_workshop/tests/level_0*_90.log` |
+
+说明页共享测试 `../ui/tests/guide_test.log` 仍为 **81 / 0**，真实 J 共享测试
+`../ui/tests/real_j_damage_test.log` 仍为 **23 / 0**（只读运行）。
+标题测试现在要兼容另一个任务的第三行 DLC 入口；`rift_workshop/tests/title_test.gd`
+与 `title_missing_test.gd` 已改成“下一个可见入口”，本关仍是 **34 / 14**。
+
+### 未做 / 局限
+
+- 未做真人听感（音量与循环接缝只做了数值 + 引擎状态断言）。
+- 音乐文件内容、峰值、循环设计属于音乐任务；本章只读引用，不改 `dlc/audio`。
+- 标题第三入口/视觉层级、`dlc/star_loom`、`dlc/ui` 说明页视觉不在本章改动范围；
+  本轮只按只读方式跑过它们的测试。
+

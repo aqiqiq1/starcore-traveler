@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://dlc/trial_chambers/trial_chambers.gd" id="1_trial"]
 [ext_resource type="Script" path="res://dlc/trial_chambers/trial_hud.gd" id="2_hud"]
@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://scenes/level03/guard.tscn" id="9_guard"]
 [ext_resource type="Texture2D" path="res://assets/level03_prototype/key_core_12f.png" id="10_core"]
 [ext_resource type="Script" path="res://scripts/level03/l3_audio.gd" id="11_audio"]
+[ext_resource type="Script" path="res://dlc/trial_chambers/chapter_ambience.gd" id="12_ambience"]
 
 [node name="TrialChambers" type="Node2D"]
 process_mode = 3
@@ -120,6 +121,12 @@ start_positive = true
 [node name="Audio" type="Node" parent="."]
 process_mode = 1
 script = ExtResource("11_audio")
+
+[node name="Ambience" type="Node" parent="."]
+process_mode = 1
+script = ExtResource("12_ambience")
+track_name = "trial_ambience"
+autoplay = false
 
 [node name="HUD" type="CanvasLayer" parent="."]
 process_mode = 3

@@ -64,6 +64,7 @@ enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 @onready var _hud: RiftWorkshopHUD = $HUD
 @onready var _finish_core: Sprite2D = $FinishPoint/Core
 @onready var _audio = $Audio
+@onready var _ambience: DlcChapterAmbience = $Ambience
 
 var _wisps: Array[RiftPolarityWisp] = []
 
@@ -169,6 +170,8 @@ func _ready() -> void:
 	_guard_ticks = 3
 	if show_intro_guide:
 		call_deferred("_open_intro_guide")
+	else:
+		_ambience.play(true)
 
 
 ## Called once per scene load.  Tests set show_intro_guide = false before
@@ -179,6 +182,9 @@ func _open_intro_guide() -> void:
 	if _intro_guide != null and is_instance_valid(_intro_guide):
 		return
 	_intro_guide = DLC_GUIDE_SCENE.instantiate() as DlcGuide
+	if _intro_guide == null:
+		_ambience.play(true)
+		return
 	add_child(_intro_guide)
 	_intro_guide.closed.connect(_on_intro_guide_closed)
 	_intro_guide.configure("rift", self)
@@ -189,9 +195,13 @@ func _on_intro_guide_closed(_kind: String) -> void:
 	_attack_key_down = false
 	_player.begin_input_override()
 	_guard_ticks = 3
+	# Held back while the guide covered the screen; starts with play.
+	_ambience.play(true)
 
 
 func _exit_tree() -> void:
+	if _ambience != null:
+		_ambience.stop(0.0)
 	if _audio != null:
 		_audio.stop_all()
 	for wisp: RiftPolarityWisp in _wisps:
@@ -261,11 +271,15 @@ func _process(delta: float) -> void:
 		_finish_time += delta
 		_finish_core.frame = int(_finish_time * 10.0) % 12
 	# The four hums only run close to the player, so an idle room is quiet.
+	# They also stay off during the recovery black-out (the old code re-enabled
+	# them on the very next frame) and on the completion page.
 	for wisp: RiftPolarityWisp in _wisps:
 		if wisp == null or not is_instance_valid(wisp):
 			continue
 		var near: bool = absf(wisp.global_position.x - _player.global_position.x) < 250.0
-		wisp.set_hum_enabled(near and wisp.is_alive() and not _completed)
+		wisp.set_hum_enabled(
+			near and wisp.is_alive() and not _completed and not _recovery_active
+		)
 
 
 ## Both guards are fixed-field providers exactly like level 03.  Before this
@@ -428,9 +442,11 @@ func _set_paused(value: bool) -> void:
 		if _arena_entered:
 			_guard_gold.set_suspended(true)
 			_guard_cyan.set_suspended(true)
+		_ambience.set_paused(true)
 		get_tree().paused = true
 		return
 	get_tree().paused = false
+	_ambience.set_paused(false)
 	LEVEL_FLOW.release_one_shot_actions()
 	_player.clear_input_buffers()
 	# A pause during the 0.8 s intro must not shorten or skip it; the intro
@@ -581,11 +597,13 @@ func _on_guard_charge_started(_positive: bool, guard: L3Guard) -> void:
 
 
 func _on_guard_slam_contact(_facing: int, _guard: L3Guard) -> void:
-	pass
+	# The twin room had no impact cue at all; the approved level-03 slam sound
+	# now plays through the DLC-local player (coalesced across both guards).
+	_audio.play_slam()
 
 
 func _on_guard_gravity_release(_positive: bool, _guard: L3Guard) -> void:
-	pass
+	_audio.play_slam()
 
 
 func _on_guard_reassembly_started(_guard: L3Guard) -> void:
@@ -610,13 +628,16 @@ func _on_guard_defeated(guard: L3Guard) -> void:
 	_guards_defeated += 1
 	_player_hits = 0
 	_retry_pending = false
-	_hud.show_event(
-		"%s已倒下 · %d / 2" % [_guard_label(guard), _guards_defeated], 2.0
-	)
 	DemoAudio.play_record_save()
 	if _guards_defeated >= 2:
+		# One merged line: the old code wrote "已倒下 · 2 / 2" and immediately
+		# replaced it with the core line, so the final count was never readable.
+		_hud.show_event("双生守卫已倒下 · 2 / 2 · 裂隙核心开启", 2.4)
 		_audio.play_bridge(true)
-		_hud.show_event("双生守卫已倒下 · 裂隙核心开启", 2.4)
+	else:
+		_hud.show_event(
+			"%s已倒下 · %d / 2" % [_guard_label(guard), _guards_defeated], 2.0
+		)
 	_update_finish_marker()
 	_update_objective(true)
 
@@ -805,6 +826,7 @@ func _complete_chapter() -> void:
 	_hud.show_pause(false)
 	_hud.show_completion(true, _elapsed)
 	_hud.set_objective("目标：裂隙封闭")
+	_ambience.stop(DlcChapterAmbience.STOP_FADE_SECONDS)
 	_audio.play_complete()
 	LEVEL_FLOW.release_one_shot_actions()
 	level_completed.emit()
@@ -818,6 +840,7 @@ func _return_to_title() -> void:
 	_scene_leaving = true
 	_hud.show_pause(false)
 	_hud.show_completion(false, _elapsed)
+	_ambience.stop(0.0)
 	if is_instance_valid(DemoAudio):
 		DemoAudio.stop_world()
 	_player.reset_movement_input_state()
@@ -855,6 +878,7 @@ func _restart_chapter() -> void:
 	_attack_key_down = false
 	_last_polarity_toggles = _player.get_polarity_toggle_count()
 	_audio.stop_all()
+	_ambience.play(true)
 	_hud.set_recovery_alpha(0.0)
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
@@ -920,6 +944,10 @@ func get_wisps() -> Array[RiftPolarityWisp]:
 
 func get_hud() -> RiftWorkshopHUD:
 	return _hud
+
+
+func get_ambience() -> DlcChapterAmbience:
+	return _ambience
 
 
 func get_intro_guide() -> DlcGuide:

@@ -3,7 +3,7 @@
 PASS: rift scene loads
 PASS: chapter exposes an L3Player
 PASS: spawn is 婢滅浉
-PASS: real walk reaches the terrace start [x=633.32 y=279.93]
+PASS: real walk reaches the terrace start [x=633.31 y=279.93]
 PASS: first curtain fired while walking [triggers=1]
 PASS: second curtain fired while walking [triggers=1]
 PASS: corridor ends in 婢滅浉 (cyan gate passed)
@@ -12,10 +12,10 @@ PASS: gold bridge is not solid for the arriving 婢滅浉 player
 PASS: HUD asks for the bridges [鐩爣锛歈 鎹㈢浉锛岃鍏夋ˉ瀹炰綋鍖朷
 PASS: Q turns the player 杈夌浉 for the gold bridge
 PASS: gold bridge materialised
-PASS: walked across gold bridge 1 to landing A [x=773.22 y=279.93]
+PASS: walked across gold bridge 1 to landing A [x=773.21 y=279.93]
 PASS: Q turns the player 婢滅浉 for the cyan bridge
 PASS: cyan bridge materialised
-PASS: walked across cyan bridge 2 to landing B [x=883.33 y=279.93]
+PASS: walked across cyan bridge 2 to landing B [x=883.32 y=279.93]
 PASS: Q turns the player 杈夌浉 for the second gold bridge
 PASS: second gold bridge materialised
 PASS: walked across gold bridge 3 to the end terrace [x=1003.66 y=279.93]
@@ -34,7 +34,7 @@ PASS: finish core becomes bright
 PASS: walking into the finish closes the rift [x=1543.57]
 PASS: completion page is visible
 PASS: completion text is 瑁傞殭灏侀棴 路 鐢ㄦ椂 mm:ss [瑁傞殭灏侀棴 路 鐢ㄦ椂 00:24]
-PASS: completion time is real [24.30 s]
+PASS: completion time is real [24.29 s]
 RIFT_ROUTE_COMPLETION_TEXT 瑁傞殭灏侀棴 路 鐢ㄦ椂 00:24
 PASS: E returns to level_01.tscn title [res://scenes/level_01.tscn]
 PASS: returned scene contains the title menu

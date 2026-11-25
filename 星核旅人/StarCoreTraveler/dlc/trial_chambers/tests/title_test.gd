@@ -106,6 +106,10 @@ func _cleanup() -> void:
 	Input.action_release(&"move_left")
 	await _drop_current_scene()
 	await _wait_process(2)
+	# Let the last UI click / scene sound finish before quitting so the exit
+	# report does not list a cut-off audio playback.
+	for _index: int in range(24):
+		await get_tree().process_frame
 
 
 func _run() -> void:

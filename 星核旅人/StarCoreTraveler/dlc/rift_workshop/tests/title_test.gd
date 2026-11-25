@@ -155,6 +155,12 @@ func _run() -> void:
 	var start_button: Button = menu.get_start_button()
 	var settings_button: Button = menu.get_settings_button()
 	var quit_button: Button = menu.get_quit_button()
+	# Optional third DLC row (star_loom) is owned by another pass; if it is
+	# present and visible it is the next entry after the rift row.
+	var next_after_rift: Control = start_button
+	var loom_row: Node = menu.find_child("LoomButton", true, false)
+	if loom_row is Control and (loom_row as Control).visible:
+		next_after_rift = loom_row as Control
 	_check(start_button.get_node(start_button.focus_next) == settings_button,
 		"start focus_next is settings")
 	_check(settings_button.get_node(settings_button.focus_next) == quit_button,
@@ -163,8 +169,8 @@ func _run() -> void:
 		"quit focus_next reaches the trial button")
 	_check(trial_button.get_node(trial_button.focus_next) == rift_button,
 		"trial focus_next reaches the rift button")
-	_check(rift_button.get_node(rift_button.focus_next) == start_button,
-		"rift focus_next loops back to start")
+	_check(rift_button.get_node(rift_button.focus_next) == next_after_rift,
+		"rift focus_next reaches the next visible entry")
 	_check(rift_button.get_node(rift_button.focus_previous) == trial_button,
 		"rift focus_previous is the trial button")
 	_check(quit_button.focus_neighbor_bottom != NodePath()
@@ -172,8 +178,8 @@ func _run() -> void:
 		"Down from quit reaches the trial button")
 	_check(trial_button.get_node(trial_button.focus_neighbor_bottom) == rift_button,
 		"Down from trial reaches the rift button")
-	_check(rift_button.get_node(rift_button.focus_neighbor_bottom) == start_button,
-		"Down from rift loops to start")
+	_check(rift_button.get_node(rift_button.focus_neighbor_bottom) == next_after_rift,
+		"Down from rift reaches the next visible entry")
 
 	rift_button.grab_focus()
 	await _wait_process(3)

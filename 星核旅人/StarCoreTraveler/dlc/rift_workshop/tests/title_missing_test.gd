@@ -101,8 +101,14 @@ func _run() -> void:
 	if trial_button != null and trial_button.visible:
 		_check(quit_button.get_node(quit_button.focus_next) == trial_button,
 			"quit focus_next still reaches the trial button")
-		_check(trial_button.get_node(trial_button.focus_next) == start_button,
-			"trial focus_next loops back to start, skipping the hidden entry")
+		# Any further visible DLC row (e.g. the optional star-loom entry from a
+		# separate pass) comes after trial; the hidden rift row must be skipped.
+		var after_trial: Control = start_button
+		var other_row: Node = menu.find_child("LoomButton", true, false)
+		if other_row is Control and (other_row as Control).visible:
+			after_trial = other_row as Control
+		_check(trial_button.get_node(trial_button.focus_next) == after_trial,
+			"trial focus_next skips the hidden rift entry")
 	else:
 		_check(quit_button.get_node(quit_button.focus_next) == start_button,
 			"quit focus_next loops to start")

@@ -17,6 +17,11 @@ const BRIDGE_STREAM: AudioStreamWAV = preload(
 const COMPLETE_STREAM: AudioStreamWAV = preload(
 	"res://dlc/rift_workshop/assets/audio/sfx_complete.wav"
 )
+## The twin guards reuse the already approved level-03 slam cue, because the
+## chapter had no impact sound at all while the trial has one.  Loaded at
+## runtime (not preloaded) exactly like scripts/level03/l3_audio.gd, so the Ogg
+## packet sequence is not kept alive past teardown.  The base file is read only.
+const SLAM_PATH: String = "res://assets/level03_prototype/audio_slam.ogg"
 
 # The WAVs are peak-normalised to -3 dBFS (hum -9 dBFS), so these player gains
 # are the real final peaks: inversion / complete -3 dBFS, bridge -5 dBFS when it
@@ -26,17 +31,29 @@ const INVERSION_DB: float = 0.0
 const BRIDGE_SOLID_DB: float = -2.0
 const BRIDGE_GONE_DB: float = -4.0
 const COMPLETE_DB: float = 0.0
+## -4 dB on a -3 dBFS peak cue leaves headroom when both guards slam.
+const SLAM_DB: float = -4.0
+## Two guards can reach the ground in the same frame; one thud is enough.
+const SLAM_COALESCE_MS: int = 60
 
 var _inversion: AudioStreamPlayer
 var _bridge: AudioStreamPlayer
 var _complete: AudioStreamPlayer
+var _slam: AudioStreamPlayer
 var _bridge_plays: int = 0
+var _slam_plays: int = 0
+var _last_slam_ms: int = -1000
 
 
 func _ready() -> void:
 	_inversion = _make_player("Inversion", INVERSION_STREAM, INVERSION_DB)
 	_bridge = _make_player("Bridge", BRIDGE_STREAM, BRIDGE_SOLID_DB)
 	_complete = _make_player("Complete", COMPLETE_STREAM, COMPLETE_DB)
+	_slam = _make_player("Slam", null, SLAM_DB)
+	if _slam != null:
+		_slam.stream = ResourceLoader.load(
+			SLAM_PATH, "", ResourceLoader.CACHE_MODE_IGNORE
+		) as AudioStream
 
 
 func _make_player(
@@ -77,6 +94,23 @@ func get_bridge_play_count() -> int:
 	return _bridge_plays
 
 
+## Real impact cue for the twin guards.  Coalesced so both guards landing in the
+## same 60 ms window produce one thud instead of a doubled hit.
+func play_slam() -> void:
+	if _slam == null or _slam.stream == null:
+		return
+	var now_ms: int = Time.get_ticks_msec()
+	if now_ms - _last_slam_ms < SLAM_COALESCE_MS:
+		return
+	_last_slam_ms = now_ms
+	_slam.play()
+	_slam_plays += 1
+
+
+func get_slam_play_count() -> int:
+	return _slam_plays
+
+
 func play_complete() -> void:
 	if _complete == null:
 		return
@@ -84,6 +118,6 @@ func play_complete() -> void:
 
 
 func stop_all() -> void:
-	for player: AudioStreamPlayer in [_inversion, _bridge, _complete]:
+	for player: AudioStreamPlayer in [_inversion, _bridge, _complete, _slam]:
 		if player != null:
 			player.stop()

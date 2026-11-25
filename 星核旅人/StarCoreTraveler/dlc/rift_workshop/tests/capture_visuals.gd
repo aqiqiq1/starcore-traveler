@@ -5,6 +5,7 @@ extends Node
 ##     res://dlc/rift_workshop/tests/capture_visuals.tscn
 ##
 ## Saves to res://dlc/rift_workshop/tests/out/:
+##   ambience_state.png  test-only strip with the live ambience player state
 ##   inversion.png        real walk into InversionA, flip flash + event line
 ##   gate_closed.png      gold polarity gate closed (澜相 player outside)
 ##   gate_open.png        gold polarity gate open, 3 rising dashes visible
@@ -16,6 +17,7 @@ extends Node
 ##                        real J kill is covered by mechanics/route tests)
 ##   twins_intro.png      0.8 s opening hover, both guards suspended, HUD line
 ##   twins.png            both guards live after the intro
+##   failure_retry.png    two accepted hits -> black fade -> arena entrance
 ##   completion.png       "裂隙封闭 · 用时 mm:ss" (visual state only; the real
 ##                        three-hit + three-hit route is route_test.tscn)
 ##   title_rift_button.png  title menu with 裂隙工坊 focused
@@ -80,6 +82,38 @@ func _press_right_until(target: float, max_frames: int) -> void:
 	Input.action_release(&"move_right")
 
 
+## Evidence shot for the ambience integration.  The strip is drawn by this test
+## harness only (not by the game) and reads the live AudioStreamPlayer state.
+func _save_ambience_state(ambience: DlcChapterAmbience) -> void:
+	var layer: CanvasLayer = CanvasLayer.new()
+	layer.layer = 20
+	add_child(layer)
+	var background: ColorRect = ColorRect.new()
+	background.position = Vector2(8.0, 334.0)
+	background.size = Vector2(624.0, 20.0)
+	background.color = Color(0.008, 0.02, 0.026, 0.86)
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(background)
+	var label: Label = Label.new()
+	label.position = Vector2(12.0, 337.0)
+	label.size = Vector2(616.0, 16.0)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_font_size_override("font_size", 10)
+	label.add_theme_color_override("font_color", Color(0.92, 0.97, 0.94))
+	label.text = "%s | %.2f s | vol %.1f dB | loop %s | playing %s | pos %.2f s" % [
+		ambience.get_stream_path().get_file(),
+		ambience.get_stream_length(),
+		ambience.get_volume_db(),
+		"on" if ambience.is_stream_looping() else "off",
+		"yes" if ambience.is_playing() else "no",
+		ambience.get_playback_position(),
+	]
+	layer.add_child(label)
+	await _save("ambience_state.png")
+	layer.queue_free()
+	await _wait_process(2)
+
+
 func _wait_until_intro_done() -> void:
 	for _index: int in range(180):
 		if not _rift.is_arena_intro_active():
@@ -98,6 +132,10 @@ func _run() -> void:
 	await _wait_process(6)
 	await _wait_physics(10)
 	_player = _rift.get_player()
+
+	# Ambience state evidence (live AudioStreamPlayer values drawn by the test
+	# harness only).
+	await _save_ambience_state(_rift.get_ambience())
 
 	# 1. Inversion: a real walk into the curtain, captured during the flash.
 	await _place(118.0, 320.0, false)
@@ -156,6 +194,22 @@ func _run() -> void:
 	await _wait_physics(12)
 	await _wait_process(6)
 	await _save("twins.png")
+
+	# Failure restart with both guards: two accepted hits fade to black, then
+	# both guards are rebuilt at their spawns with the 0.8 s intro again and the
+	# player is back at the arena entrance (no stuck black screen).
+	_rift.get_guard_gold().player_struck.emit(1)
+	await _wait_physics(4)
+	_rift.get_guard_gold().player_struck.emit(1)
+	var seen_recovery: bool = false
+	for _index: int in range(3000):
+		if _rift.is_recovery_active():
+			seen_recovery = true
+		elif seen_recovery:
+			break
+		await get_tree().process_frame
+	await _wait_process(6)
+	await _save("failure_retry.png")
 
 	# 6. Completion page.  Visual state only: debug_force_death() + the same
 	# defeated signal the real death path emits.  route_test.tscn proves the
