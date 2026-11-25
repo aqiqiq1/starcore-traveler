@@ -30,6 +30,9 @@ const PANEL_BG: Color = Color(0.014, 0.032, 0.040, 0.96)
 const PANEL_BORDER: Color = Color(0.45, 0.66, 0.63, 0.9)
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 
+const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
+const TRIAL_SCENE_PATH: String = "res://dlc/trial_chambers/trial_chambers.tscn"
+
 const UI_BASE: Texture2D = preload("res://assets/menu/main_menu_ui_640.png")
 const UI_FOCUS_START: Texture2D = preload("res://assets/menu/main_menu_focus_start_640.png")
 const UI_FOCUS_SETTINGS: Texture2D = preload("res://assets/menu/main_menu_focus_settings_640.png")
@@ -41,6 +44,9 @@ const UI_SETTINGS_RETURN_FOCUS: Texture2D = preload("res://assets/menu/settings_
 const START_RECT: Rect2 = Rect2(256.0, 138.0, 128.0, 36.0)
 const SETTINGS_RECT: Rect2 = Rect2(294.0, 184.0, 52.0, 20.0)
 const QUIT_RECT: Rect2 = Rect2(284.0, 212.0, 72.0, 20.0)
+## Optional trial entry, directly below the existing Quit row.  112x20 is the
+## same small STONE button style used by the settings page.
+const TRIAL_RECT: Rect2 = Rect2(264.0, 238.0, 112.0, 20.0)
 const RETURN_RECT: Rect2 = Rect2(324.0, 262.0, 144.0, 24.0)
 const SLIDER_RECT: Rect2 = Rect2(172.0, 92.0, 296.0, 16.0)
 const PERCENT_RECT: Rect2 = Rect2(386.0, 74.0, 80.0, 14.0)
@@ -89,6 +95,7 @@ var _focus_quit_rect: TextureRect = null
 var _start_button: Button = null
 var _settings_button: Button = null
 var _quit_button: Button = null
+var _trial_button: PixelMenuButton = null
 
 var _settings_layer: Control = null
 var _settings_return_focus_rect: TextureRect = null
@@ -170,6 +177,7 @@ func activate(level: Node, menu_camera: Camera2D) -> void:
 	_start_button.disabled = false
 	_settings_button.disabled = false
 	_quit_button.disabled = false
+	_trial_button.disabled = false
 	_settings_layer.visible = false
 	_pending_overlay.visible = false
 	_pause_overlay.visible = false
@@ -263,6 +271,10 @@ func get_settings_button() -> Button:
 
 func get_quit_button() -> Button:
 	return _quit_button
+
+
+func get_trial_button() -> PixelMenuButton:
+	return _trial_button
 
 
 func get_slider() -> PixelVolumeSlider:
@@ -421,6 +433,22 @@ func _build_ui() -> void:
 	_quit_button.focus_exited.connect(_deferred_refresh_focus)
 	_quit_button.mouse_entered.connect(_on_hover.bind("quit"))
 	_quit_button.mouse_exited.connect(_on_unhover.bind("quit"))
+
+	# Optional trial entry, below Quit.  It is a real PixelMenuButton, so focus,
+	# hover and Enter/Space work through the same Control system as the other
+	# rows; the existing start/settings/quit paths are untouched.
+	_trial_button = _menu_button(
+		"TrialButton", "试炼场", TRIAL_RECT, PixelMenuButton.Variant.STONE
+	)
+	_fade_group.add_child(_trial_button)
+	_trial_button.pressed.connect(_on_trial_pressed)
+	_trial_button.focus_entered.connect(_deferred_refresh_focus)
+	_trial_button.focus_exited.connect(_deferred_refresh_focus)
+	_trial_button.mouse_entered.connect(_on_hover.bind("trial"))
+	_trial_button.mouse_exited.connect(_on_unhover.bind("trial"))
+	var trial_available: bool = ResourceLoader.exists(TRIAL_SCENE_PATH)
+	_trial_button.visible = trial_available
+	_trial_button.disabled = not trial_available
 	_refresh_menu_focus_chain()
 
 	_settings_layer = _build_settings_layer()
@@ -768,9 +796,14 @@ func _refresh_focus_overlays() -> void:
 
 
 func _refresh_menu_focus_chain() -> void:
-	if _start_button == null or _settings_button == null or _quit_button == null:
+	if (
+		_start_button == null or _settings_button == null or _quit_button == null
+		or _trial_button == null
+	):
 		return
-	var chain: Array[Control] = [_start_button, _settings_button, _quit_button]
+	var chain: Array[Control] = [
+		_start_button, _settings_button, _quit_button, _trial_button
+	]
 	for index: int in range(chain.size()):
 		var current: Control = chain[index]
 		var next: Control = chain[(index + 1) % chain.size()]
@@ -805,9 +838,11 @@ func _on_start_pressed() -> void:
 	_start_button.release_focus()
 	_settings_button.release_focus()
 	_quit_button.release_focus()
+	_trial_button.release_focus()
 	_start_button.disabled = true
 	_settings_button.disabled = true
 	_quit_button.disabled = true
+	_trial_button.disabled = true
 	_hover_kind = ""
 	_focus_start_rect.visible = false
 	_focus_settings_rect.visible = false
@@ -838,15 +873,62 @@ func _on_quit_pressed() -> void:
 	_start_button.release_focus()
 	_settings_button.release_focus()
 	_quit_button.release_focus()
+	_trial_button.release_focus()
 	_start_button.disabled = true
 	_settings_button.disabled = true
 	_quit_button.disabled = true
+	_trial_button.disabled = true
 	_hover_kind = ""
 	_focus_start_rect.visible = false
 	_focus_settings_rect.visible = false
 	_focus_quit_rect.visible = false
 	quit_requested.emit()
 	get_tree().quit(0)
+
+
+## Optional trial entry.  The handler mirrors the Quit/Start lock: every menu
+## hot zone is disabled and focus released before the scene change, so a held
+## Enter/Space cannot become a jump in the trial's first frames.
+func _on_trial_pressed() -> void:
+	if _trial_button == null or not _trial_button.visible:
+		return
+	if _phase != Phase.MENU or _settings_open or _start_locked or _quit_locked:
+		return
+	if _display != null and _display.is_pending():
+		return
+	DemoAudio.play_ui_click()
+	_start_locked = true
+	_start_button.release_focus()
+	_settings_button.release_focus()
+	_quit_button.release_focus()
+	_trial_button.release_focus()
+	_start_button.disabled = true
+	_settings_button.disabled = true
+	_quit_button.disabled = true
+	_trial_button.disabled = true
+	_hover_kind = ""
+	_focus_start_rect.visible = false
+	_focus_settings_rect.visible = false
+	_focus_quit_rect.visible = false
+	LEVEL_FLOW.release_one_shot_actions()
+	# Let the activating key/click finish its dispatch before the scene swap.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
+	var error: Error = get_tree().change_scene_to_file(TRIAL_SCENE_PATH)
+	if error != OK:
+		_restore_after_failed_trial()
+
+
+func _restore_after_failed_trial() -> void:
+	_start_locked = false
+	_phase = Phase.MENU
+	_start_button.disabled = false
+	_settings_button.disabled = false
+	_quit_button.disabled = false
+	_trial_button.disabled = false
+	call_deferred("_focus_start")
 
 
 ## Settings "返回" is a real Button. Confirm it only when it will actually
@@ -1061,9 +1143,11 @@ func _open_settings() -> void:
 	_start_button.disabled = true
 	_settings_button.disabled = true
 	_quit_button.disabled = true
+	_trial_button.disabled = true
 	_start_button.release_focus()
 	_settings_button.release_focus()
 	_quit_button.release_focus()
+	_trial_button.release_focus()
 	_hover_kind = ""
 	_focus_quit_rect.visible = false
 	_fade_group.visible = false
@@ -1103,6 +1187,7 @@ func _close_settings() -> void:
 	_start_button.disabled = false
 	_settings_button.disabled = false
 	_quit_button.disabled = false
+	_trial_button.disabled = false
 	_settings_return_focus_rect.visible = false
 	call_deferred("_focus_settings")
 

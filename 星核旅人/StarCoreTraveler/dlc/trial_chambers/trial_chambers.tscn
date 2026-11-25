@@ -1,0 +1,127 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://dlc/trial_chambers/trial_chambers.gd" id="1_trial"]
+[ext_resource type="Script" path="res://dlc/trial_chambers/trial_hud.gd" id="2_hud"]
+[ext_resource type="PackedScene" path="res://scenes/backgrounds/cloud_ruins_ds03.tscn" id="3_ds03"]
+[ext_resource type="Script" path="res://scripts/level03/l3_terrain.gd" id="4_terrain"]
+[ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_tall.tscn" id="5_col_tall"]
+[ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_broken.tscn" id="6_col_broken"]
+[ext_resource type="PackedScene" path="res://scenes/level03/l3_player.tscn" id="7_player"]
+[ext_resource type="PackedScene" path="res://dlc/trial_chambers/polarity_gate.tscn" id="8_gate"]
+[ext_resource type="PackedScene" path="res://scenes/level03/guard.tscn" id="9_guard"]
+[ext_resource type="Texture2D" path="res://assets/level03_prototype/key_core_12f.png" id="10_core"]
+[ext_resource type="Script" path="res://scripts/level03/l3_audio.gd" id="11_audio"]
+
+[node name="TrialChambers" type="Node2D"]
+process_mode = 3
+process_physics_priority = -10
+script = ExtResource("1_trial")
+
+[node name="Background" type="CanvasLayer" parent="."]
+process_mode = 1
+layer = -10
+
+[node name="CloudRuinsDS03" parent="Background" instance=ExtResource("3_ds03")]
+process_mode = 1
+depth_grade = "l3_depth"
+
+[node name="Terrain" type="Node2D" parent="."]
+process_mode = 1
+z_index = 2
+
+[node name="Ground" type="Node2D" parent="Terrain"]
+position = Vector2(0, 320)
+script = ExtResource("4_terrain")
+block_rect = Rect2(0, 0, 1280, 40)
+
+[node name="StepA" type="Node2D" parent="Terrain"]
+position = Vector2(588, 304)
+script = ExtResource("4_terrain")
+block_rect = Rect2(0, 0, 64, 16)
+
+[node name="StepB" type="Node2D" parent="Terrain"]
+position = Vector2(668, 288)
+script = ExtResource("4_terrain")
+block_rect = Rect2(0, 0, 56, 32)
+
+[node name="StepC" type="Node2D" parent="Terrain"]
+position = Vector2(740, 296)
+script = ExtResource("4_terrain")
+block_rect = Rect2(0, 0, 56, 24)
+
+[node name="Decorations" type="Node2D" parent="."]
+process_mode = 1
+z_index = 1
+
+[node name="ColumnEntry" parent="Decorations" instance=ExtResource("5_col_tall")]
+position = Vector2(380, 320)
+
+[node name="ColumnBroken" parent="Decorations" instance=ExtResource("6_col_broken")]
+position = Vector2(470, 320)
+
+[node name="ColumnArena" parent="Decorations" instance=ExtResource("5_col_tall")]
+position = Vector2(850, 320)
+
+[node name="ColumnFinish" parent="Decorations" instance=ExtResource("6_col_broken")]
+position = Vector2(1176, 320)
+
+[node name="FinishPoint" type="Node2D" parent="."]
+process_mode = 1
+position = Vector2(1218, 320)
+z_index = 4
+
+[node name="Core" type="Sprite2D" parent="FinishPoint"]
+z_index = 4
+texture_filter = 1
+position = Vector2(0, -34)
+scale = Vector2(2, 2)
+texture = ExtResource("10_core")
+hframes = 12
+
+[node name="GateGold" parent="." instance=ExtResource("8_gate")]
+process_mode = 1
+position = Vector2(280, 320)
+required_positive = true
+player_path = NodePath("../Player")
+
+[node name="GateCyan" parent="." instance=ExtResource("8_gate")]
+process_mode = 1
+position = Vector2(520, 320)
+required_positive = false
+player_path = NodePath("../Player")
+
+[node name="Player" parent="." instance=ExtResource("7_player")]
+process_mode = 1
+position = Vector2(40, 320)
+allow_self_reset = false
+show_head_polarity = false
+world_left = 0.0
+world_right = 1268.0
+kill_y = 430.0
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0
+limit_left = 0
+limit_top = 0
+limit_right = 1280
+limit_bottom = 360
+
+[node name="Guard" parent="." instance=ExtResource("9_guard")]
+process_mode = 1
+position = Vector2(1060, 320)
+floor_y = 320.0
+patrol_left = 880.0
+patrol_right = 1170.0
+pursuit_left = 830.0
+pursuit_right = 1220.0
+start_positive = true
+
+[node name="Audio" type="Node" parent="."]
+process_mode = 1
+script = ExtResource("11_audio")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+process_mode = 3
+layer = 10
+script = ExtResource("2_hud")
