@@ -36,22 +36,40 @@ const KILL_Y: float = 430.0
 const START_SPAWN: Vector2 = Vector2(40.0, 320.0)
 const ARENA_SPAWN: Vector2 = Vector2(420.0, 320.0)
 const ARENA_ENTER_X: float = 430.0
-const CORE_POSITION: Vector2 = Vector2(700.0, 258.0)
-const NODE_ORBIT_RADIUS: Vector2 = Vector2(100.0, 46.0)
+const CORE_POSITION: Vector2 = Vector2(700.0, 244.0)
+const NODE_ORBIT_RADIUS: Vector2 = Vector2(120.0, 54.0)
 const SWEEP_START_X: float = 930.0
+const FIRE_VENTS: Array[Vector2] = [
+	Vector2(500.0, 320.0), Vector2(640.0, 320.0), Vector2(820.0, 320.0),
+]
+const GEAR_WARNING_POINTS: Array[Vector2] = [
+	Vector2(8.0, 302.0), Vector2(952.0, 302.0),
+]
+const GEAR_SPAWN_LEFT: float = -28.0
+const GEAR_SPAWN_RIGHT: float = 988.0
+const GEAR_Y: float = 302.0
 const CORE_HITS_PER_STAGE: int = 3
 const MAX_STAGE: int = 3
-const PLAYER_HIT_LIMIT: int = 2
+const PLAYER_HIT_LIMIT: int = 3
+## Chapter-level grace after an accepted hit.  The shared L3Player owns 0.6 s;
+## this covers the 0.6-0.95 s window the brief asked for.
+const DAMAGE_IMMUNITY_TIME: float = 0.95
 const BODY_CENTER_OFFSET: Vector2 = Vector2(0.0, -15.0)
 const AUTO_FACE_RANGE: float = 240.0
 
-## Every warning is comfortably above the 0.3 s floor in the brief.
-const WINDUP_HOMING: float = 0.55
-const WINDUP_SWEEP: float = 0.65
-const WINDUP_SUMMON: float = 0.80
+## Warnings are 0.15-0.20 s wider than the first pass and far above the 0.3 s
+## floor.  Stage 1 only uses homing; stage 2 adds sweep + floor fire; stage 3
+## adds wisps + rolling gears.
+const WINDUP_HOMING: float = 0.70
+const WINDUP_SWEEP: float = 0.80
+const WINDUP_FIRE: float = 0.95
+const WINDUP_SUMMON: float = 1.00
+const WINDUP_GEAR: float = 0.90
 const RECOVER_HOMING: float = 1.10
 const RECOVER_SWEEP: float = 1.00
+const RECOVER_FIRE: float = 1.10
 const RECOVER_SUMMON: float = 1.15
+const RECOVER_GEAR: float = 1.00
 const IDLE_TIME: float = 0.85
 const START_GRACE: float = 1.20
 const STAGE_GRACE: float = 1.50
@@ -77,6 +95,11 @@ var _nodes: Array[LoomNode] = []
 var _bullets: Array[LoomBullet] = []
 var _wisps: Array[LoomWisp] = []
 var _sweep: LoomSweep = null
+var _fires: Array[LoomFire] = []
+var _gears: Array[LoomGear] = []
+var _fire_points: Array[Vector2] = []
+var _gear_points: Array[Vector2] = []
+var _fire_serial: int = 0
 var _intro_guide: DlcGuide = null
 
 var _elapsed: float = 0.0
@@ -86,6 +109,8 @@ var _boss_active: bool = false
 var _stage: int = 1
 var _core_hits: int = 0
 var _player_hits: int = 0
+var _damage_immunity_left: float = 0.0
+var _stage_supply_used: bool = false
 var _boss_grace: float = 0.0
 var _objective_key: String = ""
 var _pause_open: bool = false
@@ -124,8 +149,8 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	process_physics_priority = -10
 	for node: Node in [
-		$Backdrop, $Terrain, $Boss, $Boss/Core, $Boss/NodeA, $Boss/NodeB,
-		$Hazards, $Player, $Fx,
+		$CityBack, $Terrain, $CityFloor, $Props, $Boss, $Boss/Core,
+		$Boss/NodeA, $Boss/NodeB, $Hazards, $Player, $Fx, $CityFore,
 	]:
 		if node != null:
 			node.process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -161,7 +186,7 @@ func _ready() -> void:
 	_hud.title_requested.connect(_on_hud_title_requested)
 	_hud.set_polarity(false)
 	_hud.set_objective("目标：向右进入织机厅")
-	_hud.set_boss_state(1, MAX_STAGE, 2, 0, CORE_HITS_PER_STAGE, false)
+	_hud.set_boss_state(1, MAX_STAGE, 2, 0, CORE_HITS_PER_STAGE, false, 0, 3)
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
 	_hud.set_recovery_alpha(0.0)
@@ -209,7 +234,10 @@ func _on_intro_guide_closed(_kind: String) -> void:
 # --- frame flow ------------------------------------------------------------
 
 func _physics_process(delta: float) -> void:
-	if get_tree().paused or _completed or _scene_leaving or _recovery_active:
+	if get_tree().paused or _completed or _scene_leaving:
+		return
+	_damage_immunity_left = maxf(_damage_immunity_left - delta, 0.0)
+	if _recovery_active:
 		return
 	if _retry_pending:
 		_retry_pending_left = maxf(_retry_pending_left - delta, 0.0)
@@ -242,6 +270,7 @@ func _physics_process(delta: float) -> void:
 		_boss_grace = maxf(_boss_grace - delta, 0.0)
 	else:
 		_tick_attack(delta)
+	_sync_gear_warning()
 	_update_objective()
 
 
@@ -262,6 +291,12 @@ func _clean_hazard_lists() -> void:
 	for index: int in range(_wisps.size() - 1, -1, -1):
 		if not is_instance_valid(_wisps[index]):
 			_wisps.remove_at(index)
+	for index: int in range(_fires.size() - 1, -1, -1):
+		if not is_instance_valid(_fires[index]):
+			_fires.remove_at(index)
+	for index: int in range(_gears.size() - 1, -1, -1):
+		if not is_instance_valid(_gears[index]):
+			_gears.remove_at(index)
 	if _sweep != null and not is_instance_valid(_sweep):
 		_sweep = null
 
@@ -275,6 +310,9 @@ func _start_boss() -> void:
 	_stage = 1
 	_core_hits = 0
 	_player_hits = 0
+	_damage_immunity_left = 0.0
+	_stage_supply_used = false
+	_fire_serial = 0
 	_retry_pending = false
 	_core.configure()
 	_core.set_active(true)
@@ -288,6 +326,7 @@ func _start_boss() -> void:
 	_boss_grace = START_GRACE
 	_audio.start_music()
 	_audio.play_core_exposed()
+	_hud.set_gear_warning(false, 0.0)
 	_hud.show_event("星核织机启动 · 异相 J 打节点", 2.2)
 	_hud.set_objective("目标：异相 J 打掉两个节点")
 	_update_hud_state()
@@ -295,7 +334,7 @@ func _start_boss() -> void:
 
 func _respawn_nodes() -> void:
 	var a_positive: bool = _stage % 2 == 1
-	var angle: float = 0.9 + 0.4 * float(_stage - 1)
+	var angle: float = 0.25 + 0.20 * float(_stage - 1)
 	_node_a.configure(CORE_POSITION, angle, a_positive, NODE_ORBIT_RADIUS)
 	_node_a.set_active(true)
 	_node_b.configure(CORE_POSITION, angle + PI, not a_positive, NODE_ORBIT_RADIUS)
@@ -352,7 +391,14 @@ func _advance_stage() -> void:
 	_stage_flash = 1.0
 	_audio.play_stage()
 	_audio.play_core_exposed()
-	_hud.show_event("阶段 %d / %d · 节点重生" % [_stage, MAX_STAGE], 2.0)
+	# One-time city supply: the stage-1 clear clears the hit counter.  A later
+	# death retries the current stage, so this never becomes an infinite heal.
+	if _stage == 2 and not _stage_supply_used:
+		_stage_supply_used = true
+		_player_hits = 0
+		_hud.show_event("阶段 2 · 城垣补给：受击数清零", 2.4)
+	else:
+		_hud.show_event("阶段 %d / %d · 节点重生" % [_stage, MAX_STAGE], 2.0)
 	_hud.set_objective("目标：异相 J 打掉两个节点")
 	_update_hud_state()
 
@@ -362,8 +408,15 @@ func _update_hud_state() -> void:
 		return
 	_hud.set_boss_state(
 		_stage, MAX_STAGE, _nodes_alive_count(), _core_hits,
-		CORE_HITS_PER_STAGE, _core.is_exposed()
+		CORE_HITS_PER_STAGE, _core.is_exposed(), _player_hits, PLAYER_HIT_LIMIT
 	)
+
+
+func _sync_gear_warning() -> void:
+	if _hud == null:
+		return
+	var active: bool = _attack_state == AttackState.TELEGRAPH and _attack_kind == "gear"
+	_hud.set_gear_warning(active, get_telegraph_progress() if active else 0.0)
 
 
 func _update_objective(force: bool = false) -> void:
@@ -422,9 +475,9 @@ func get_attack_pool() -> Array:
 		1:
 			return ["homing"]
 		2:
-			return ["homing", "sweep"]
+			return ["homing", "sweep", "fire"]
 		_:
-			return ["homing", "sweep", "summon"]
+			return ["homing", "sweep", "fire", "summon", "gear"]
 
 
 func _begin_telegraph(kind: String) -> void:
@@ -440,13 +493,19 @@ func _begin_telegraph(kind: String) -> void:
 		"sweep":
 			_hud.show_event("预警 · 横扫光带 · 跳起", 1.2)
 		"summon":
-			_hud.show_event("预警 · 召唤裂隙浮灵", 1.3)
+			_hud.show_event("预警 · 召唤裂隙浮灵", 1.4)
+		"fire":
+			_hud.show_event("预警 · 地砖火柱 · 离开发光地砖", 1.4)
+		"gear":
+			_hud.show_event("预警 · 两侧齿轮 · 跳起", 1.3)
 
 
 func _prepare_telegraph_points(kind: String) -> void:
 	_homing_points.clear()
 	_homing_directions.clear()
 	_summon_points.clear()
+	_fire_points.clear()
+	_gear_points.clear()
 	match kind:
 		"homing":
 			var player_center: Vector2 = _player.global_position + BODY_CENTER_OFFSET
@@ -465,6 +524,18 @@ func _prepare_telegraph_points(kind: String) -> void:
 		"summon":
 			_summon_points.append(Vector2(548.0, 262.0))
 			_summon_points.append(Vector2(852.0, 262.0))
+		"fire":
+			# Two of the three vents alternate, so a safe gap always remains.
+			var first: int = _fire_serial % 3
+			var second: int = (first + 1 + _fire_serial % 2) % 3
+			if first == second:
+				second = (second + 1) % 3
+			_fire_points.append(FIRE_VENTS[first])
+			_fire_points.append(FIRE_VENTS[second])
+			_fire_serial += 1
+		"gear":
+			_gear_points.append(GEAR_WARNING_POINTS[0])
+			_gear_points.append(GEAR_WARNING_POINTS[1])
 
 
 func _execute_attack() -> void:
@@ -475,6 +546,10 @@ func _execute_attack() -> void:
 			_spawn_sweep()
 		"summon":
 			_spawn_wisps()
+		"fire":
+			_spawn_fire()
+		"gear":
+			_spawn_gears()
 		_:
 			pass
 
@@ -519,14 +594,43 @@ func _spawn_wisps() -> void:
 	_audio.play_summon()
 
 
+func _spawn_fire() -> void:
+	var fire: LoomFire = LoomFire.new()
+	fire.name = "FloorFire"
+	_hazards.add_child(fire)
+	fire.setup(_player, self, _fire_points)
+	_fires.append(fire)
+	_audio.play_fire()
+
+
+func _spawn_gears() -> void:
+	if _gears.size() >= 4:
+		return
+	var left: LoomGear = LoomGear.new()
+	left.name = "GearLeft"
+	_hazards.add_child(left)
+	left.setup(_player, self, GEAR_SPAWN_LEFT, 1)
+	_gears.append(left)
+	var right: LoomGear = LoomGear.new()
+	right.name = "GearRight"
+	_hazards.add_child(right)
+	right.setup(_player, self, GEAR_SPAWN_RIGHT, -1)
+	_gears.append(right)
+	_audio.play_gear()
+
+
 func get_attack_windup(kind: String) -> float:
 	match kind:
 		"homing":
 			return WINDUP_HOMING
 		"sweep":
 			return WINDUP_SWEEP
+		"fire":
+			return WINDUP_FIRE
 		"summon":
 			return WINDUP_SUMMON
+		"gear":
+			return WINDUP_GEAR
 	return 0.0
 
 
@@ -536,8 +640,12 @@ func _recover_time(kind: String) -> float:
 			return RECOVER_HOMING
 		"sweep":
 			return RECOVER_SWEEP
+		"fire":
+			return RECOVER_FIRE
 		"summon":
 			return RECOVER_SUMMON
+		"gear":
+			return RECOVER_GEAR
 	return 1.0
 
 
@@ -550,6 +658,14 @@ func _clear_hazards() -> void:
 		if wisp != null and is_instance_valid(wisp):
 			wisp.queue_free()
 	_wisps.clear()
+	for fire: LoomFire in _fires:
+		if fire != null and is_instance_valid(fire):
+			fire.queue_free()
+	_fires.clear()
+	for gear: LoomGear in _gears:
+		if gear != null and is_instance_valid(gear):
+			gear.queue_free()
+	_gears.clear()
 	if _sweep != null and is_instance_valid(_sweep):
 		_sweep.queue_free()
 	_sweep = null
@@ -618,22 +734,26 @@ func _player_attack_rect(facing: int) -> Rect2:
 	return Rect2(origin_x, _player.global_position.y - 38.0, 38.0, 40.0)
 
 
-## Single entry point for every hazard contact (bolt, band, wisp).  The shared
-## L3Player owns the 0.6 s protection and the real knockback; this only counts
-## accepted hits.
+## Single entry point for every hazard contact (bolt, band, fire, wisp, gear).
+## The shared L3Player owns its 0.6 s protection and the real knockback; this
+## adds a chapter-level 0.95 s grace and counts accepted hits against 3.
 func apply_enemy_hit(source_position: Vector2) -> bool:
 	if (
 		not _boss_active or _completed or _scene_leaving or _recovery_active
 		or _retry_pending or get_tree().paused
 	):
 		return false
+	if _damage_immunity_left > 0.0:
+		return false
 	var away: int = 1 if _player.global_position.x >= source_position.x else -1
 	if not _player.receive_enemy_strike(away):
 		return false
+	_damage_immunity_left = DAMAGE_IMMUNITY_TIME
 	_player_hits += 1
 	if is_instance_valid(DemoAudio):
 		DemoAudio.play_player_hurt()
 	_hud.show_event("受击 %d / %d" % [_player_hits, PLAYER_HIT_LIMIT], 1.2)
+	_update_hud_state()
 	if _player_hits >= PLAYER_HIT_LIMIT:
 		_retry_pending = true
 		_retry_pending_left = maxf(_player.get_hit_reaction_remaining(), 0.02)
@@ -670,6 +790,7 @@ func _begin_recovery(kind: String) -> void:
 	_clear_hazards()
 	_attack_state = AttackState.IDLE
 	_attack_left = 1.2
+	_hud.set_gear_warning(false, 0.0)
 	if is_instance_valid(DemoAudio):
 		DemoAudio.play_failure()
 	_player.begin_input_override()
@@ -709,10 +830,10 @@ func _advance_recovery(delta: float) -> void:
 
 
 func _apply_recovery_reset() -> void:
-	_reset_boss_full()
+	_reset_current_stage()
 	_reset_player_at(ARENA_SPAWN)
 	_player.begin_recovery_hold()
-	_hud.show_event("失败 · 回织机入口 · 织机重置", 2.2)
+	_hud.show_event("失败 · 回阶段入口 · 阶段 %d 重开" % _stage, 2.2)
 
 
 func _finish_recovery() -> void:
@@ -731,15 +852,16 @@ func _finish_recovery() -> void:
 	LEVEL_FLOW.release_one_shot_actions()
 
 
-## A failure restores the complete boss, not just the current stage: two nodes,
-## stage 1, core shielded, no hazards, full grace.
-func _reset_boss_full() -> void:
+## A failure retries the CURRENT stage at its entrance: stage is preserved,
+## both nodes and the shielded core return, hazards clear, hits and immunity
+## reset.  R still restarts the whole chapter from stage 1 (see _restart_chapter).
+func _reset_current_stage() -> void:
 	_resolved_swings.clear()
 	_player_hits = 0
+	_damage_immunity_left = 0.8
 	_retry_pending = false
 	_retry_pending_left = 0.0
 	_pending_completion = false
-	_stage = 1
 	_core_hits = 0
 	_boss_active = true
 	_boss_grace = START_GRACE
@@ -747,11 +869,13 @@ func _reset_boss_full() -> void:
 	_attack_left = 1.2
 	_attack_cursor = 0
 	_summon_serial = 0
+	_fire_serial = 0
 	_stage_flash = 0.0
 	_clear_hazards()
-	_core.configure()
+	_hud.set_gear_warning(false, 0.0)
 	_core.set_active(true)
 	_core.set_exposed(false)
+	_core.set_phase(_stage % 2 == 1)
 	_respawn_nodes()
 	_hud.set_objective("目标：异相 J 打掉两个节点")
 	_update_hud_state()
@@ -856,6 +980,8 @@ func _set_paused(value: bool) -> void:
 		return
 	_pause_open = value
 	_hud.show_pause(value)
+	if value:
+		_hud.set_gear_warning(false, 0.0)
 	_attack_key_down = false
 	_player.reset_movement_input_state()
 	_player.clear_input_buffers()
@@ -888,10 +1014,13 @@ func _complete_chapter() -> void:
 	_player.lock_completion_input()
 	_hud.show_pause(false)
 	_hud.set_recovery_alpha(0.0)
+	_hud.set_gear_warning(false, 0.0)
 	_hud.show_completion(true, _elapsed)
 	_hud.set_objective("目标：织机停转")
 	# The completion row should read "核心 3 / 3", not the shielded wording.
-	_hud.set_boss_state(_stage, MAX_STAGE, 0, CORE_HITS_PER_STAGE, CORE_HITS_PER_STAGE, true)
+	_hud.set_boss_state(
+		_stage, MAX_STAGE, 0, CORE_HITS_PER_STAGE, CORE_HITS_PER_STAGE, true, 0, PLAYER_HIT_LIMIT
+	)
 	_hud.show_event("织机停转", 3.0)
 	_audio.stop_music()
 	_audio.play_complete()
@@ -926,6 +1055,9 @@ func _restart_chapter() -> void:
 	_stage = 1
 	_core_hits = 0
 	_player_hits = 0
+	_damage_immunity_left = 0.0
+	_stage_supply_used = false
+	_fire_serial = 0
 	_elapsed = 0.0
 	_boss_grace = 0.0
 	_stage_flash = 0.0
@@ -946,6 +1078,7 @@ func _restart_chapter() -> void:
 	_attack_key_down = false
 	_objective_key = ""
 	_clear_hazards()
+	_hud.set_gear_warning(false, 0.0)
 	_core.configure()
 	_core.set_active(false)
 	for node: LoomNode in _nodes:
@@ -955,7 +1088,7 @@ func _restart_chapter() -> void:
 	_hud.set_recovery_alpha(0.0)
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
-	_hud.set_boss_state(1, MAX_STAGE, 2, 0, CORE_HITS_PER_STAGE, false)
+	_hud.set_boss_state(1, MAX_STAGE, 2, 0, CORE_HITS_PER_STAGE, false, 0, PLAYER_HIT_LIMIT)
 	_hud.set_objective("目标：向右进入织机厅")
 	_hud.set_polarity(false)
 	_player.end_recovery_hold()
@@ -1096,8 +1229,20 @@ func get_telegraph_points() -> Array:
 			return _homing_points.duplicate()
 		"summon":
 			return _summon_points.duplicate()
+		"fire":
+			return _fire_points.duplicate()
+		"gear":
+			return _gear_points.duplicate()
 		_:
 			return [Vector2(SWEEP_START_X, FLOOR_Y)]
+
+
+func get_gear_points() -> Array:
+	return GEAR_WARNING_POINTS.duplicate()
+
+
+func get_fire_points() -> Array:
+	return _fire_points.duplicate()
 
 
 func get_sweep_start_x() -> float:
@@ -1124,8 +1269,44 @@ func get_active_wisps() -> int:
 	return count
 
 
+func get_active_fires() -> int:
+	var count: int = 0
+	for fire: LoomFire in _fires:
+		if fire != null and is_instance_valid(fire):
+			count += 1
+	return count
+
+
+func get_active_gears() -> int:
+	var count: int = 0
+	for gear: LoomGear in _gears:
+		if gear != null and is_instance_valid(gear):
+			count += 1
+	return count
+
+
+func get_last_fire_points() -> Array:
+	return _fire_points.duplicate()
+
+
 func is_sweep_active() -> bool:
 	return _sweep != null and is_instance_valid(_sweep)
+
+
+func get_player_hit_limit() -> int:
+	return PLAYER_HIT_LIMIT
+
+
+func get_damage_immunity_left() -> float:
+	return _damage_immunity_left
+
+
+func get_damage_immunity_time() -> float:
+	return DAMAGE_IMMUNITY_TIME
+
+
+func is_stage_supply_used() -> bool:
+	return _stage_supply_used
 
 
 func get_start_spawn() -> Vector2:
@@ -1152,6 +1333,8 @@ func debug_set_stage(stage: int) -> void:
 	_stage = stage
 	_core_hits = 0
 	_player_hits = 0
+	_damage_immunity_left = 0.0
+	_stage_supply_used = stage > 1
 	_boss_active = true
 	_boss_grace = 0.0
 	_attack_state = AttackState.IDLE

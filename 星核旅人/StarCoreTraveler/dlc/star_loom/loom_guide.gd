@@ -1,32 +1,38 @@
 class_name LoomGuide
 extends DlcGuide
 
-## Three-page intro guide for 星核织机.
+## Four-page intro guide for the city 星核织机 prototype.
 ##
 ## The shared guide (dlc/ui/dlc_guide.tscn/.gd) is used unchanged.  Its page
 ## table is a const keyed by chapter kind, so this small subclass supplies the
 ## third chapter's pages through the existing virtual `_page_data()` and adds
-## the matching `open_guide()` gate.  The three demo ids are real 24-frame
+## the matching `open_guide()` gate.  The four demo ids are real 24-frame
 ## captures recorded from the formal star_loom scene into dlc/ui/demos/.
 
 const LOOM_PAGES: Array = [
 	{
 		"title": "织机与双节点",
-		"body": "Q 切换辉相 / 澜相。只有异相 J 才能打停环绕节点；\n同相命中会被弹开，节点不会掉血。",
+		"body": "Q 换相。只有异相 J 才能打停环绕节点；\n同相命中被弹开，节点不掉血。",
 		"key": "Q 切异相 · J 打节点",
 		"demo": "loom_nodes",
 	},
 	{
-		"title": "核心暴露与三段真伤",
-		"body": "两个节点都停转，中央核心才会打开。\n核心每次受创都会换相：Q 追相，异相 J 共 3 次进入下一阶段。",
+		"title": "核心暴露与阶段补给",
+		"body": "两个节点都停转，中央核心才会打开。\n核心受创换相：Q 追相，异相 J 共 3 次。\n阶段 1 结束补给：受击数清零。",
 		"key": "异相 J ×3 · 核心换相要追",
 		"demo": "loom_core",
 	},
 	{
-		"title": "三段攻击与失败重置",
-		"body": "织机会用慢速追踪弹、横扫光带和召唤裂隙浮灵。\n每次攻击前有 0.5 秒以上预警；两次受击回到入口，织机完整重置。",
-		"key": "跳起躲光带 · J 清浮灵",
-		"demo": "loom_attacks",
+		"title": "地砖火柱与横扫",
+		"body": "地砖先亮约 0.95 秒，再喷出火柱；横扫光带约 0.8 秒预警。\n离开亮起的地砖，跳过横扫光带。",
+		"key": "看预警 · 离开火柱 / 跳过光带",
+		"demo": "loom_fire",
+	},
+	{
+		"title": "三受击、齿轮与浮灵",
+		"body": "被击中 3 次才失败，受击后约 1 秒保护。\n失败从当前阶段重开。\n齿轮跳过，浮灵用 J 清掉。",
+		"key": "3 次受击 · 齿轮跳过 · J 清浮灵",
+		"demo": "loom_gear",
 	},
 ]
 

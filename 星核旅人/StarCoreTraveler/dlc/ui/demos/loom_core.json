@@ -1,19 +1,19 @@
 {
 	"camera": {
-		"wide_limits": false,
-		"zoom": 1.0
+		"wide_limits": true,
+		"zoom": 0.75
 	},
 	"crop": {
 		"h": 144,
 		"w": 256,
 		"x": 190,
-		"y": 190
+		"y": 120
 	},
 	"fps": 8.0,
 	"frame_height": 144,
 	"frame_width": 256,
 	"frames": 24,
 	"id": "loom_core",
-	"note": "Formal star_loom hall. Both nodes removed and the core exposed; three real opposite-phase J hits each flip the core phase, and the third starts stage 2 with both nodes back.",
+	"note": "Formal city star_loom hall. Both nodes removed and the core exposed; three real opposite-phase J hits each flip the core phase, and the third starts stage 2 with both nodes back and the stage-1 supply.",
 	"source": "formal star_loom scene, real input/state"
 }

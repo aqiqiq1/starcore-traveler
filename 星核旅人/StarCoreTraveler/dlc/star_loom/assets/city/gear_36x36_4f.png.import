@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://wylwvikayoot"
-path="res://.godot/imported/loom_boss_96x96_2f.png-d9fc52ff74deda6bc50872674c60f055.ctex"
+uid="uid://fqgj56rkdkdj"
+path="res://.godot/imported/gear_36x36_4f.png-259d2350d9c6a9bc6743735f4e0988c0.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://dlc/star_loom/assets/sprites/loom_boss_96x96_2f.png"
-dest_files=["res://.godot/imported/loom_boss_96x96_2f.png-d9fc52ff74deda6bc50872674c60f055.ctex"]
+source_file="res://dlc/star_loom/assets/city/gear_36x36_4f.png"
+dest_files=["res://.godot/imported/gear_36x36_4f.png-259d2350d9c6a9bc6743735f4e0988c0.ctex"]
 
 [params]
 

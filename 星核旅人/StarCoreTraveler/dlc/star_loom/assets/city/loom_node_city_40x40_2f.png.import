@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c5id4sdxmwik2"
-path="res://.godot/imported/loom_node_24x24_2f.png-c3ce4827c0f64ce29545da4bcc4a9ef8.ctex"
+uid="uid://pcu4qamp0d7w"
+path="res://.godot/imported/loom_node_city_40x40_2f.png-3a514259ec92311b698674657e208b84.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://dlc/star_loom/assets/sprites/loom_node_24x24_2f.png"
-dest_files=["res://.godot/imported/loom_node_24x24_2f.png-c3ce4827c0f64ce29545da4bcc4a9ef8.ctex"]
+source_file="res://dlc/star_loom/assets/city/loom_node_city_40x40_2f.png"
+dest_files=["res://.godot/imported/loom_node_city_40x40_2f.png-3a514259ec92311b698674657e208b84.ctex"]
 
 [params]
 

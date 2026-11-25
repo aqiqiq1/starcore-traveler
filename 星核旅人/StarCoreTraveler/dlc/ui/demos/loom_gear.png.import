@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c37pbry4njyoj"
-path="res://.godot/imported/loom_bg_overlay_960x360.png-1a1b331d7da6af1b29f54050bb645d50.ctex"
+uid="uid://b65n8y73a1g5u"
+path="res://.godot/imported/loom_gear.png-178ac85f6af0433a64a18a3b8f8ed8ea.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://dlc/star_loom/assets/loom_bg_overlay_960x360.png"
-dest_files=["res://.godot/imported/loom_bg_overlay_960x360.png-1a1b331d7da6af1b29f54050bb645d50.ctex"]
+source_file="res://dlc/ui/demos/loom_gear.png"
+dest_files=["res://.godot/imported/loom_gear.png-178ac85f6af0433a64a18a3b8f8ed8ea.ctex"]
 
 [params]
 

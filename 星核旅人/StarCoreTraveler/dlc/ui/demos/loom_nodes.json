@@ -1,19 +1,19 @@
 {
 	"camera": {
-		"wide_limits": false,
-		"zoom": 1.0
+		"wide_limits": true,
+		"zoom": 0.75
 	},
 	"crop": {
 		"h": 144,
 		"w": 256,
 		"x": 190,
-		"y": 190
+		"y": 120
 	},
 	"fps": 8.0,
 	"frame_height": 144,
 	"frame_width": 256,
 	"frames": 24,
 	"id": "loom_nodes",
-	"note": "Formal star_loom hall. The gold bottom node bounces a same-phase real J; a real Q switches to cyan and the next real J breaks the node.",
+	"note": "Formal city star_loom hall. The gold bottom node bounces a same-phase real J; a real Q switches to cyan and the next real J breaks the node.",
 	"source": "formal star_loom scene, real input/state"
 }

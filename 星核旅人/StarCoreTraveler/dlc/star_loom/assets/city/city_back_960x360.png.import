@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bi584r8gn3xcf"
-path="res://.godot/imported/loom_bullet_8x8_2f.png-ed4a4d614a9934a911b5011d02b313bd.ctex"
+uid="uid://dytb4dq6x5qw5"
+path="res://.godot/imported/city_back_960x360.png-a37bd4bac79c222caf08b30e2c51f23d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://dlc/star_loom/assets/sprites/loom_bullet_8x8_2f.png"
-dest_files=["res://.godot/imported/loom_bullet_8x8_2f.png-ed4a4d614a9934a911b5011d02b313bd.ctex"]
+source_file="res://dlc/star_loom/assets/city/city_back_960x360.png"
+dest_files=["res://.godot/imported/city_back_960x360.png-a37bd4bac79c222caf08b30e2c51f23d.ctex"]
 
 [params]
 

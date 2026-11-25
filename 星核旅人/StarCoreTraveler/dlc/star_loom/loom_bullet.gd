@@ -5,16 +5,16 @@ extends Node2D
 ##
 ## The chapter shows a >=0.55 s warning at the muzzle before the bolt exists.
 ## The bolt then chases the player's body centre with a capped turn rate, so it
-## can be outrun or circled, and disappears on contact or after 9 s.  It never
-## uses a screen-wide effect: one 8x8 generated sprite, a three-pixel trail and
-## one dark outline.
+## can be outrun or circled, and disappears on contact or after 10 s.  It never
+## uses a screen-wide effect: one 12x12 generated iron-cased bolt, a three-pixel
+## trail and one dark outline.
 
 const SPRITE: Texture2D = preload(
-	"res://dlc/star_loom/assets/sprites/loom_bullet_8x8_2f.png"
+	"res://dlc/star_loom/assets/city/loom_bolt_city_12x12_2f.png"
 )
-const SPEED: float = 74.0
-const TURN_RATE: float = 0.9
-const LIFETIME: float = 9.0
+const SPEED: float = 70.0
+const TURN_RATE: float = 0.85
+const LIFETIME: float = 10.0
 const PURPLE: Color = Color("#a874ff")
 
 var _sprite: Sprite2D = null
@@ -87,7 +87,7 @@ func _check_contact() -> void:
 
 
 func get_hit_rect() -> Rect2:
-	return Rect2(global_position - Vector2(4.0, 4.0), Vector2(8.0, 8.0))
+	return Rect2(global_position - Vector2(4.5, 4.5), Vector2(9.0, 9.0))
 
 
 func get_velocity() -> Vector2:

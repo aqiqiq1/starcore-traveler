@@ -5,9 +5,12 @@ extends CanvasLayer
 ##
 ## Same approved header as the other DLC chapters (title / one objective /
 ## current phase), plus one small boss-state row (stage, live nodes, core
-## damage), a one-line event ticker, the recovery cover, the completion page
-## ("织机停转 · 用时 mm:ss") and a two-item pause page.  Every colour, the 12 px
-## project font and the 112x20 STONE buttons are the existing project ones.
+## damage, accepted hits / 3), a one-line event ticker, the recovery cover, the
+## completion page ("织机停转 · 用时 mm:ss") and a two-item pause page.
+## The pause and completion panels fade and slide in over 0.16 s.  The pause
+## animation runs in _process on this ALWAYS node, so it is safe while the tree
+## itself is paused.  Every colour, the 12 px project font and the 112x20 STONE
+## buttons are the existing project ones.
 
 signal resume_requested
 signal title_requested
@@ -22,25 +25,37 @@ const PANEL_BORDER: Color = Color(0.45, 0.66, 0.63, 0.9)
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 const TITLE: String = "星核织机"
 const DEFAULT_OBJECTIVE: String = "目标：向右进入织机厅"
+const COMPLETION_PANEL_POSITION: Vector2 = Vector2(140.0, 108.0)
+const PAUSE_PANEL_POSITION: Vector2 = Vector2(196.0, 116.0)
+const PANEL_ANIM_TIME: float = 0.16
+const PANEL_SLIDE: float = 8.0
 
 var _root: Control
 var _header: CompactLevelHeader
 var _stage_label: Label
 var _node_label: Label
 var _core_label: Label
+var _hit_label: Label
 var _event_label: Label
+var _gear_edge: LoomEdgeWarning
 var _event_left: float = 0.0
 var _recovery_cover: ColorRect
 var _completion_overlay: ColorRect
+var _completion_panel: Panel
 var _completion_title: Label
 var _completion_hint: Label
 var _pause_overlay: ColorRect
+var _pause_panel: Panel
 var _pause_continue: PixelMenuButton
 var _pause_title: PixelMenuButton
 var _font: Font
 var _subtitle: String = ""
 var _completion_visible: bool = false
 var _pause_visible: bool = false
+var _completion_alpha: float = 0.0
+var _completion_target: float = 0.0
+var _pause_alpha: float = 0.0
+var _pause_target: float = 0.0
 
 
 func _ready() -> void:
@@ -55,12 +70,13 @@ func _ready() -> void:
 	_build_header()
 	_build_status()
 	_build_event()
+	_build_gear_edge()
 	_build_recovery_cover()
 	_build_completion()
 	_build_pause()
 	set_polarity(false)
 	set_objective(DEFAULT_OBJECTIVE)
-	set_boss_state(1, 3, 2, 0, 3, false)
+	set_boss_state(1, 3, 2, 0, 3, false, 0, 3)
 	show_completion(false, 0.0)
 	show_pause(false)
 
@@ -91,6 +107,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
+	# Panel fades must also run while the tree is paused (the pause page).
+	_animate_panels(delta)
 	if get_tree().paused:
 		return
 	if _event_left <= 0.0:
@@ -98,6 +116,31 @@ func _process(delta: float) -> void:
 	_event_left = maxf(_event_left - delta, 0.0)
 	if _event_left <= 0.0:
 		_event_label.visible = false
+
+
+func _animate_panels(delta: float) -> void:
+	var step: float = delta / PANEL_ANIM_TIME
+	_pause_alpha = move_toward(_pause_alpha, _pause_target, step)
+	_completion_alpha = move_toward(_completion_alpha, _completion_target, step)
+	_apply_panel_anim(
+		_pause_panel, PAUSE_PANEL_POSITION, _pause_alpha, _pause_overlay, not _pause_visible
+	)
+	_apply_panel_anim(
+		_completion_panel, COMPLETION_PANEL_POSITION, _completion_alpha,
+		_completion_overlay, not _completion_visible
+	)
+
+
+func _apply_panel_anim(
+	panel: Panel, base: Vector2, alpha: float, overlay: ColorRect, hide_when_done: bool
+) -> void:
+	if panel == null or overlay == null:
+		return
+	var eased: float = alpha * alpha * (3.0 - 2.0 * alpha)
+	panel.modulate = Color(1.0, 1.0, 1.0, eased)
+	panel.position = base + Vector2(0.0, (1.0 - eased) * PANEL_SLIDE)
+	if hide_when_done and alpha <= 0.001:
+		overlay.visible = false
 
 
 func _load_font() -> Font:
@@ -165,9 +208,13 @@ func _build_status() -> void:
 	_node_label.name = "NodeLabel"
 	_root.add_child(_node_label)
 
-	_core_label = _label("核心 0 / 3", Vector2(214.0, 40.0), Vector2(120.0, 14.0), 12, MUTED)
+	_core_label = _label("核心 0 / 3", Vector2(214.0, 40.0), Vector2(110.0, 14.0), 12, MUTED)
 	_core_label.name = "CoreLabel"
 	_root.add_child(_core_label)
+
+	_hit_label = _label("受击 0 / 3", Vector2(330.0, 40.0), Vector2(96.0, 14.0), 12, TEXT)
+	_hit_label.name = "HitLabel"
+	_root.add_child(_hit_label)
 
 
 func _build_event() -> void:
@@ -175,6 +222,11 @@ func _build_event() -> void:
 	_event_label.name = "EventLine"
 	_event_label.visible = false
 	_root.add_child(_event_label)
+
+
+func _build_gear_edge() -> void:
+	_gear_edge = LoomEdgeWarning.new()
+	_root.add_child(_gear_edge)
 
 
 func _build_recovery_cover() -> void:
@@ -200,7 +252,8 @@ func _build_completion() -> void:
 
 	var panel: Panel = Panel.new()
 	panel.name = "CompletionPanel"
-	panel.position = Vector2(140.0, 108.0)
+	panel.position = COMPLETION_PANEL_POSITION + Vector2(0.0, PANEL_SLIDE)
+	panel.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	panel.size = Vector2(360.0, 144.0)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style: StyleBoxFlat = StyleBoxFlat.new()
@@ -214,6 +267,7 @@ func _build_completion() -> void:
 	style.anti_aliasing = false
 	panel.add_theme_stylebox_override("panel", style)
 	_completion_overlay.add_child(panel)
+	_completion_panel = panel
 
 	_completion_title = _label(
 		"织机停转 · 用时 00:00", Vector2(0.0, 28.0), Vector2(360.0, 24.0), 18, GOLD
@@ -249,7 +303,8 @@ func _build_pause() -> void:
 
 	var panel: Panel = Panel.new()
 	panel.name = "PausePanel"
-	panel.position = Vector2(196.0, 116.0)
+	panel.position = PAUSE_PANEL_POSITION + Vector2(0.0, PANEL_SLIDE)
+	panel.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	panel.size = Vector2(248.0, 128.0)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style: StyleBoxFlat = StyleBoxFlat.new()
@@ -263,6 +318,7 @@ func _build_pause() -> void:
 	style.anti_aliasing = false
 	panel.add_theme_stylebox_override("panel", style)
 	_pause_overlay.add_child(panel)
+	_pause_panel = panel
 
 	var title: Label = _label("已暂停", Vector2(0.0, 14.0), Vector2(248.0, 24.0), 18, GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -303,7 +359,8 @@ func set_objective(text_value: String) -> void:
 
 func set_boss_state(
 	stage: int, stage_max: int, nodes_alive: int,
-	core_hits: int, core_needed: int, exposed: bool
+	core_hits: int, core_needed: int, exposed: bool,
+	player_hits: int = 0, hit_limit: int = 3
 ) -> void:
 	if _stage_label != null:
 		_stage_label.text = "阶段 %d / %d" % [stage, stage_max]
@@ -321,6 +378,21 @@ func set_boss_state(
 		_core_label.add_theme_color_override(
 			"font_color", GOLD if exposed else MUTED
 		)
+	if _hit_label != null:
+		_hit_label.text = "受击 %d / %d" % [player_hits, hit_limit]
+		var color: Color = TEXT
+		if player_hits >= hit_limit - 1:
+			color = GOLD
+		_hit_label.add_theme_color_override("font_color", color)
+
+
+func set_gear_warning(active: bool, progress: float = 0.0) -> void:
+	if _gear_edge != null:
+		_gear_edge.set_warning(active, progress)
+
+
+func is_gear_warning_visible() -> bool:
+	return _gear_edge != null and _gear_edge.is_active()
 
 
 func show_event(text_value: String, seconds: float = 1.5) -> void:
@@ -343,18 +415,35 @@ func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 	_completion_visible = value
 	if _completion_overlay == null:
 		return
-	_completion_overlay.visible = value
 	_completion_title.text = "织机停转 · 用时 %s" % _format_time(elapsed_seconds)
+	if value:
+		_completion_overlay.visible = true
+		_completion_alpha = 0.0
+		_completion_target = 1.0
+		_completion_panel.modulate = Color(1.0, 1.0, 1.0, 0.0)
+		_completion_panel.position = COMPLETION_PANEL_POSITION + Vector2(0.0, PANEL_SLIDE)
+	else:
+		_completion_target = 0.0
+		if _completion_alpha <= 0.001:
+			_completion_overlay.visible = false
 
 
 func show_pause(value: bool) -> void:
 	_pause_visible = value
 	if _pause_overlay == null:
 		return
-	_pause_overlay.visible = value
 	if value:
+		_pause_overlay.visible = true
+		_pause_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+		_pause_alpha = 0.0
+		_pause_target = 1.0
+		_pause_panel.modulate = Color(1.0, 1.0, 1.0, 0.0)
+		_pause_panel.position = PAUSE_PANEL_POSITION + Vector2(0.0, PANEL_SLIDE)
 		call_deferred("_focus_pause")
 	else:
+		_pause_target = 0.0
+		# Do not keep swallowing clicks while the panel fades out after resume.
+		_pause_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_pause_continue.release_focus()
 		_pause_title.release_focus()
 
@@ -397,6 +486,28 @@ func get_node_text() -> String:
 
 func get_core_text() -> String:
 	return _core_label.text if _core_label != null else ""
+
+
+func get_hit_text() -> String:
+	return _hit_label.text if _hit_label != null else ""
+
+
+func get_pause_panel_alpha() -> float:
+	return _pause_alpha
+
+
+func get_pause_panel_offset() -> float:
+	return _pause_panel.position.y - PAUSE_PANEL_POSITION.y if _pause_panel != null else 0.0
+
+
+func get_completion_panel_alpha() -> float:
+	return _completion_alpha
+
+
+func get_completion_panel_offset() -> float:
+	if _completion_panel == null:
+		return 0.0
+	return _completion_panel.position.y - COMPLETION_PANEL_POSITION.y
 
 
 func is_completion_visible() -> bool:

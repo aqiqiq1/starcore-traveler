@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b5f4t62tjt3cf"
-path="res://.godot/imported/loom_attacks.png-3de3d54b01508a6ae0dfdcb0d713fd24.ctex"
+uid="uid://cbafml7dlt4kg"
+path="res://.godot/imported/city_fore_960x360.png-c086b9ff6eec0e2c572abb52b981bfa8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://dlc/ui/demos/loom_attacks.png"
-dest_files=["res://.godot/imported/loom_attacks.png-3de3d54b01508a6ae0dfdcb0d713fd24.ctex"]
+source_file="res://dlc/star_loom/assets/city/city_fore_960x360.png"
+dest_files=["res://.godot/imported/city_fore_960x360.png-c086b9ff6eec0e2c572abb52b981bfa8.ctex"]
 
 [params]
 

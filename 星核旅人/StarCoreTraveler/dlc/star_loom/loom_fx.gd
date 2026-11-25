@@ -1,17 +1,20 @@
-﻿class_name LoomFx
+class_name LoomFx
 extends Node2D
 
-## World-space telegraphs and connective threads for 鏄熸牳缁囨満.
+## World-space telegraphs and connective threads for the city star loom.
 ##
-## Every warning is at least 0.5 s long and is drawn with 1 px lines, integer
+## Every warning is 0.70-1.00 s long and is drawn with 1 px lines, integer
 ## rects and small rings.  There is no additive glow or full-screen flash; the
 ## goal is to show *where* the next hazard will be, not to wash the arena.
 
 const GOLD: Color = Color("#f4cd63")
 const CYAN: Color = Color("#5fe1e6")
 const PURPLE: Color = Color("#a874ff")
+const AMBER: Color = Color("#ffb347")
+const AMBER_HOT: Color = Color("#ffd27a")
+const AMBER_DARK: Color = Color(0.16, 0.08, 0.02, 0.95)
 const FLOOR_Y: float = 320.0
-const CORE_POS: Vector2 = Vector2(700.0, 258.0)
+const CORE_POS: Vector2 = Vector2(700.0, 244.0)
 
 var _chapter: Node = null
 var _time: float = 0.0
@@ -49,22 +52,26 @@ func _draw() -> void:
 			_draw_sweep_warning(progress)
 		"summon":
 			_draw_summon_warning(progress)
+		"fire":
+			_draw_fire_warning(progress)
+		"gear":
+			_draw_gear_warning(progress)
 		_:
 			pass
 
 
 func _draw_core_threads() -> void:
-	# Three loose threads from the bottom of the loom frame to the floor, so the
-	# floating 96x96 body is visibly anchored to the hall.
+	# Three loose threads from the bottom of the 208x152 loom frame to the floor,
+	# so the body is visibly anchored to the hall.
 	var palette: Array[Color] = [GOLD, PURPLE, CYAN]
 	for index: int in range(3):
-		var x: float = CORE_POS.x - 22.0 + 22.0 * float(index)
+		var x: float = CORE_POS.x - 30.0 + 30.0 * float(index)
 		var sway: float = sin(_time * 0.9 + float(index) * 1.7) * 2.0
 		var color: Color = palette[index]
-		var y: float = CORE_POS.y + 48.0
+		var y: float = CORE_POS.y + 64.0
 		while y < FLOOR_Y:
 			draw_rect(
-				Rect2(round(x + sway * ((y - CORE_POS.y) / 62.0)), y, 1.0, 1.0),
+				Rect2(round(x + sway * ((y - CORE_POS.y) / 64.0)), y, 1.0, 1.0),
 				Color(color, 0.22)
 			)
 			y += 4.0
@@ -139,6 +146,74 @@ func _draw_summon_warning(progress: float) -> void:
 				Rect2(point.x - 0.5, point.y + 13.0 - rise, 2.0, 2.0),
 				Color(1.0, 0.92, 1.0, 0.80)
 			)
+
+
+func _draw_fire_warning(progress: float) -> void:
+	var points: Array = _chapter.call("get_telegraph_points")
+	var pulse: float = 0.5 + 0.5 * sin(progress * PI * 6.0)
+	for point_value: Variant in points:
+		var point: Vector2 = point_value
+		# Amber/heat only: a hot grate, a 3 px heat column on each side and
+		# rising sparks.  No purple here, so fire never reads as polarity.
+		draw_rect(Rect2(point.x - 15.0, point.y - 4.0, 30.0, 4.0), Color(AMBER_DARK, 0.9))
+		draw_rect(
+			Rect2(point.x - 14.0, point.y - 3.0, 28.0, 2.0),
+			Color(AMBER, 0.55 + 0.40 * pulse)
+		)
+		draw_rect(
+			Rect2(point.x - 12.0, point.y - 3.0, 24.0, 1.0),
+			Color(AMBER_HOT, 0.60 + 0.35 * pulse)
+		)
+		for y in range(248, 318, 6):
+			var flick: float = 0.65 + 0.35 * sin(_time * 18.0 + float(y) * 0.15)
+			for side in [-1.0, 1.0]:
+				var x: float = point.x + side * 10.0
+				# Dark 1 px bed + a 3 px amber body + a hot 1 px core.
+				draw_rect(Rect2(x - 2.5, float(y), 6.0, 3.0), Color(AMBER_DARK, 0.55))
+				draw_rect(Rect2(x - 1.5, float(y), 4.0, 3.0), Color(AMBER, 0.80 * flick))
+				draw_rect(Rect2(x - 0.5, float(y) + 1.0, 2.0, 1.0), Color(AMBER_HOT, 0.85))
+		# Rising sparks.
+		for index in range(5):
+			var rise: float = fmod(_time * 30.0 + float(index) * 11.0, 44.0)
+			draw_rect(
+				Rect2(point.x - 8.0 + float(index) * 4.0, point.y - 12.0 - rise, 2.0, 2.0),
+				Color(AMBER_HOT, 0.85)
+			)
+		# A short hot bar right at the grate.
+		draw_rect(Rect2(point.x - 9.0, point.y - 7.0, 18.0, 2.0), Color(AMBER, 0.9))
+
+
+func _draw_gear_warning(progress: float) -> void:
+	var points: Array = _chapter.call("get_gear_points")
+	var pulse: float = 0.5 + 0.5 * sin(progress * PI * 5.0)
+	for point_value: Variant in points:
+		var point: Vector2 = point_value
+		var inward: int = 1 if point.x < 480.0 else -1
+		var cx: float = point.x
+		var cy: float = 298.0
+		# Amber ghost gear with a dark bed, 2 px thick.
+		_ring(Vector2(cx, cy), 17.0, Color(AMBER_DARK, 0.75), 26)
+		_ring(Vector2(cx, cy), 16.0, Color(AMBER, 0.55 + 0.40 * pulse), 26)
+		_ring(Vector2(cx, cy), 8.0, Color(AMBER_DARK, 0.65), 18)
+		_ring(Vector2(cx, cy), 7.0, Color(AMBER, 0.45 + 0.35 * pulse), 18)
+		for index in range(8):
+			var angle: float = float(index) * TAU / 8.0 + _time * 1.2
+			var tx: float = cx + cos(angle) * 20.0
+			var ty: float = cy + sin(angle) * 20.0
+			draw_rect(
+				Rect2(round(tx) - 2.0, round(ty) - 2.0, 4.0, 4.0),
+				Color(AMBER_HOT, 0.65 + 0.30 * pulse)
+			)
+		# Inward 3 px chevrons on the floor.
+		var ax: float = cx + float(inward) * 24.0
+		for index in range(3):
+			var x: float = ax + float(inward) * float(index) * 9.0
+			draw_rect(Rect2(x - 2.0, 288.0, 5.0, 3.0), Color(AMBER_DARK, 0.8))
+			draw_rect(Rect2(x - 1.0, 289.0, 3.0, 3.0), Color(AMBER, 0.85))
+			draw_rect(Rect2(x - 4.0, 292.0, 3.0, 3.0), Color(AMBER, 0.70))
+		# Dust/drag line.
+		draw_rect(Rect2(cx - 22.0, 314.0, 44.0, 3.0), Color(AMBER_DARK, 0.45))
+		draw_rect(Rect2(cx - 18.0, 315.0, 36.0, 1.0), Color(AMBER, 0.55))
 
 
 func _ring(center: Vector2, radius: float, color: Color, segments: int) -> void:

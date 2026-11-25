@@ -1,0 +1,19 @@
+{
+	"camera": {
+		"wide_limits": true,
+		"zoom": 0.55
+	},
+	"crop": {
+		"h": 144,
+		"w": 256,
+		"x": 190,
+		"y": 100
+	},
+	"fps": 8.0,
+	"frame_height": 144,
+	"frame_width": 256,
+	"frames": 24,
+	"id": "loom_fire",
+	"note": "Formal city star_loom stage 2. Real floor-fire warning at two lit vents, then flame columns; a sweep warning follows at the right edge.",
+	"source": "formal star_loom scene, real input/state"
+}

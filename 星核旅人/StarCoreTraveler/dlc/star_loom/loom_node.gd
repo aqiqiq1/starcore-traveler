@@ -7,20 +7,20 @@ extends Node2D
 ## ellipse, flips polarity on its own timer, and only an opposite-phase J hit
 ## breaks it (the chapter resolves the swing; same phase is a bounce).
 ##
-## Art: assets/sprites/loom_node_24x24_2f.png, a neutral two-frame disc that is
-## modulated gold / cyan.  The drawn 1 px ring and the small glyph above it add
-## a second, colour-independent phase cue.  The design read ("one bright core,
-## strong outer outline, low background value") comes from the recorded
-## references in REFERENCE.md; no external sprite or palette is used.
+## Art: assets/city/loom_node_city_40x40_2f.png, a dark-outlined ivory disc
+## modulated to bright gold / cyan, with a code-drawn white heart, a polarity
+## ring and four short orbit arcs.  The draw order keeps the heart white when
+## the body is tinted, so both nodes read at 1x over the dark weave face.
 
 signal broken(node: LoomNode)
 signal phase_flipped(node: LoomNode, positive: bool)
 
 const SPRITE: Texture2D = preload(
-	"res://dlc/star_loom/assets/sprites/loom_node_24x24_2f.png"
+	"res://dlc/star_loom/assets/city/loom_node_city_40x40_2f.png"
 )
-const GOLD: Color = Color("#f4cd63")
-const CYAN: Color = Color("#5fe1e6")
+const GOLD: Color = Color("#ffdf8a")
+const CYAN: Color = Color("#7ff3ef")
+const WHITE: Color = Color(1.0, 1.0, 1.0, 1.0)
 const OUTLINE: Color = Color(0.02, 0.015, 0.05, 0.9)
 
 @export var start_positive: bool = true
@@ -28,8 +28,8 @@ const OUTLINE: Color = Color(0.02, 0.015, 0.05, 0.9)
 @export var phase_period: float = 2.6
 
 var _sprite: Sprite2D = null
-var _center: Vector2 = Vector2(700.0, 258.0)
-var _radius: Vector2 = Vector2(100.0, 46.0)
+var _center: Vector2 = Vector2(700.0, 240.0)
+var _radius: Vector2 = Vector2(120.0, 50.0)
 var _angle: float = 0.0
 var _positive: bool = true
 var _alive: bool = true
@@ -41,7 +41,7 @@ var _deny_flash: float = 0.0
 var _flip_flash: float = 0.0
 var _orbit_enabled: bool = true
 var _phase_timer_enabled: bool = true
-var _core_global: Vector2 = Vector2(700.0, 258.0)
+var _core_global: Vector2 = Vector2(700.0, 240.0)
 
 
 func _ready() -> void:
@@ -53,6 +53,9 @@ func _ready() -> void:
 	_sprite.vframes = 1
 	_sprite.centered = true
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	# The code-drawn white heart, polarity ring and orbit arcs stay over the
+	# tinted body.
+	_sprite.show_behind_parent = true
 	add_child(_sprite)
 	_positive = start_positive
 	_phase_left = phase_period
@@ -62,7 +65,7 @@ func _ready() -> void:
 
 func configure(
 	center: Vector2, angle: float, positive: bool,
-	radius: Vector2 = Vector2(100.0, 46.0)
+	radius: Vector2 = Vector2(120.0, 50.0)
 ) -> void:
 	_center = center
 	_core_global = center
@@ -157,10 +160,10 @@ func get_core_position() -> Vector2:
 	return _core_global
 
 
-## Generous 36x36 target box: the approved J arc is 38x40, so a node passing low
+## Generous 40x40 target box: the approved J arc is 38x40, so a node passing low
 ## in its orbit is hittable without pixel-perfect standing.
 func get_hit_rect() -> Rect2:
-	return Rect2(global_position - Vector2(18.0, 18.0), Vector2(36.0, 36.0))
+	return Rect2(global_position - Vector2(20.0, 20.0), Vector2(40.0, 40.0))
 
 
 func flash_deny() -> void:
@@ -228,7 +231,7 @@ func _draw() -> void:
 	var tether_length: float = core_local.length()
 	if tether_length > 20.0:
 		var direction: Vector2 = core_local / tether_length
-		var travelled: float = 22.0
+		var travelled: float = 26.0
 		while travelled < tether_length - 48.0:
 			draw_rect(
 				Rect2(direction * travelled - Vector2(0.5, 0.5), Vector2(1.0, 1.0)),
@@ -243,7 +246,7 @@ func _draw() -> void:
 		draw_rect(Rect2(-1.0, -1.0, 2.0, 2.0), Color(1.0, 1.0, 1.0, burst))
 		for index: int in range(8):
 			var angle: float = float(index) * TAU / 8.0 + 0.3
-			var radius: float = 4.0 + 22.0 * t
+			var radius: float = 4.0 + 26.0 * t
 			var size: float = 3.0 - 2.0 * t
 			draw_rect(
 				Rect2(
@@ -254,19 +257,23 @@ func _draw() -> void:
 			)
 		return
 
-	# Outer phase ring + four orbit ticks.  This is the colour-independent cue.
-	_ring(13.0, Color(phase_color, 0.55))
+	# White heart, polarity ring and four short orbit arcs.  The heart stays
+	# white while the body is gold/cyan, so the target is readable on the dark
+	# weave face.
+	_ring(22.0, Color(phase_color, 0.65))
+	for index in range(4):
+		var mid: float = float(index) * TAU / 4.0 + _time * 0.45
+		_arc(25.0, mid - 0.16, mid + 0.16, Color(phase_color, 0.80), 8)
+	draw_rect(Rect2(-4.0, -4.0, 8.0, 8.0), WHITE)
+	draw_rect(Rect2(-1.0, -1.0, 2.0, 2.0), Color(0.14, 0.11, 0.09, 1.0))
+	draw_rect(Rect2(-3.0, -4.0, 1.0, 1.0), WHITE)
 	if _flip_flash > 0.0:
-		_ring(15.0 + 3.0 * (1.0 - _flip_flash), Color(1.0, 1.0, 1.0, 0.85 * _flip_flash))
+		_ring(24.0 + 3.0 * (1.0 - _flip_flash), Color(1.0, 1.0, 1.0, 0.85 * _flip_flash))
 	if _deny_flash > 0.0:
-		_ring(18.0 + 4.0 * (1.0 - _deny_flash), Color(1.0, 1.0, 1.0, 0.9 * _deny_flash))
-	for index: int in range(4):
-		var angle: float = float(index) * TAU / 4.0 + _time * 0.6
-		var tick: Vector2 = Vector2(cos(angle), sin(angle)) * 16.0
-		draw_rect(Rect2(tick - Vector2(0.5, 0.5), Vector2(1.0, 1.0)), Color(phase_color, 0.7))
+		_ring(27.0 + 5.0 * (1.0 - _deny_flash), Color(1.0, 1.0, 1.0, 0.9 * _deny_flash))
 
 	# Glyph above the node: gold diamond / cyan double bar.
-	var glyph_y: float = -22.0
+	var glyph_y: float = -34.0
 	if _positive:
 		for offset: Vector2 in [
 			Vector2(0.0, -2.0), Vector2(-1.0, -1.0), Vector2(1.0, -1.0),
@@ -276,6 +283,15 @@ func _draw() -> void:
 	else:
 		draw_rect(Rect2(-3.0, glyph_y - 1.0, 6.0, 1.0), phase_color)
 		draw_rect(Rect2(-3.0, glyph_y + 1.0, 6.0, 1.0), phase_color)
+
+
+func _arc(radius: float, start: float, end: float, color: Color, steps: int) -> void:
+	for index in range(steps + 1):
+		var angle: float = lerpf(start, end, float(index) / float(maxi(steps, 1)))
+		draw_rect(
+			Rect2(round(cos(angle) * radius), round(sin(angle) * radius), 1.0, 1.0),
+			color
+		)
 
 
 func _ring(radius: float, color: Color) -> void:

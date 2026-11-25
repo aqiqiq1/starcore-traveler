@@ -43,6 +43,12 @@ const SWEEP: AudioStreamWAV = preload(
 const SUMMON: AudioStreamWAV = preload(
 	"res://dlc/star_loom/assets/audio/sfx_summon.wav"
 )
+const FIRE: AudioStreamWAV = preload(
+	"res://dlc/star_loom/assets/audio/sfx_fire.wav"
+)
+const GEAR: AudioStreamWAV = preload(
+	"res://dlc/star_loom/assets/audio/sfx_gear.wav"
+)
 const STAGE: AudioStreamWAV = preload(
 	"res://dlc/star_loom/assets/audio/sfx_stage.wav"
 )
@@ -59,6 +65,8 @@ var _deny: AudioStreamPlayer
 var _telegraph: AudioStreamPlayer
 var _sweep: AudioStreamPlayer
 var _summon: AudioStreamPlayer
+var _fire: AudioStreamPlayer
+var _gear: AudioStreamPlayer
 var _stage: AudioStreamPlayer
 var _complete: AudioStreamPlayer
 var _music: AudioStreamPlayer = null
@@ -77,6 +85,8 @@ func _ready() -> void:
 	_telegraph = _make_player("Telegraph", TELEGRAPH, -2.0)
 	_sweep = _make_player("Sweep", SWEEP, 0.0)
 	_summon = _make_player("Summon", SUMMON, 0.0)
+	_fire = _make_player("Fire", FIRE, 0.0)
+	_gear = _make_player("Gear", GEAR, 0.0)
 	_stage = _make_player("Stage", STAGE, 0.0)
 	_complete = _make_player("Complete", COMPLETE, 0.0)
 	_setup_music()
@@ -213,6 +223,16 @@ func play_summon() -> void:
 		_summon.play()
 
 
+func play_fire() -> void:
+	if _fire != null:
+		_fire.play()
+
+
+func play_gear() -> void:
+	if _gear != null:
+		_gear.play()
+
+
 func play_stage() -> void:
 	if _stage != null:
 		_stage.play()
@@ -227,7 +247,7 @@ func stop_all() -> void:
 	stop_music()
 	for player: AudioStreamPlayer in [
 		_node_hit, _bullet, _node_break, _core_hit, _core_exposed, _deny,
-		_telegraph, _sweep, _summon, _stage, _complete,
+		_telegraph, _sweep, _summon, _fire, _gear, _stage, _complete,
 	]:
 		if player != null:
 			player.stop()
