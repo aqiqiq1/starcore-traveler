@@ -219,6 +219,7 @@ func _run() -> void:
 	if packed == null:
 		return
 	_trial = packed.instantiate() as TrialChambers
+	_trial.show_intro_guide = false
 	get_tree().root.add_child(_trial)
 	# Keep this runner alive when the trial changes scenes at the end.
 	get_tree().current_scene = _trial

@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://dlc/ui/dlc_guide.gd" id="1_guide"]
+
+[node name="DlcGuide" type="CanvasLayer"]
+process_mode = 3
+layer = 15
+script = ExtResource("1_guide")

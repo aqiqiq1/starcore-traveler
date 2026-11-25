@@ -19,7 +19,10 @@ extends Node2D
 
 signal level_completed
 
+@export var show_intro_guide: bool = true
+
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
+const DLC_GUIDE_SCENE: PackedScene = preload("res://dlc/ui/dlc_guide.tscn")
 
 const START_SPAWN: Vector2 = Vector2(40.0, 320.0)
 const ARENA_SPAWN: Vector2 = Vector2(1100.0, 320.0)
@@ -40,6 +43,11 @@ const RIFT_SCENE: String = "res://dlc/rift_workshop/rift_workshop.tscn"
 const RECOVERY_FADE_OUT_TIME: float = 0.25
 const RECOVERY_BLACK_HOLD_TIME: float = 0.10
 const RECOVERY_FADE_IN_TIME: float = 0.35
+## Same body centre the shared level-03 force providers use.  Both guards feed
+## their already-approved gravity field through this one player call per tick.
+const BODY_CENTER_OFFSET: Vector2 = Vector2(0.0, -15.0)
+## Facing assist range while a real J is pressed inside the arena.
+const AUTO_FACE_RANGE: float = 140.0
 
 enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 
@@ -86,6 +94,7 @@ var _recovery_kind: String = ""
 var _recovery_alpha: float = 0.0
 var _recovery_elapsed: float = 0.0
 var _recovery_applying: bool = false
+var _intro_guide: DlcGuide = null
 
 
 func _ready() -> void:
@@ -158,6 +167,28 @@ func _ready() -> void:
 	LEVEL_FLOW.release_one_shot_actions()
 	_player.begin_input_override()
 	_guard_ticks = 3
+	if show_intro_guide:
+		call_deferred("_open_intro_guide")
+
+
+## Called once per scene load.  Tests set show_intro_guide = false before
+## add_child(), so their input routes never meet a paused tree.
+func _open_intro_guide() -> void:
+	if not show_intro_guide or _completed or _scene_leaving:
+		return
+	if _intro_guide != null and is_instance_valid(_intro_guide):
+		return
+	_intro_guide = DLC_GUIDE_SCENE.instantiate() as DlcGuide
+	add_child(_intro_guide)
+	_intro_guide.closed.connect(_on_intro_guide_closed)
+	_intro_guide.configure("rift", self)
+	_intro_guide.open_guide()
+
+
+func _on_intro_guide_closed(_kind: String) -> void:
+	_attack_key_down = false
+	_player.begin_input_override()
+	_guard_ticks = 3
 
 
 func _exit_tree() -> void:
@@ -204,6 +235,7 @@ func _physics_process(delta: float) -> void:
 		if _arena_intro_left <= 0.0:
 			_wake_twin_guards()
 
+	_apply_guard_force()
 	_update_strike_source()
 
 	if not _arena_entered and _player.global_position.x >= ARENA_ENTER_X:
@@ -234,6 +266,48 @@ func _process(delta: float) -> void:
 			continue
 		var near: bool = absf(wisp.global_position.x - _player.global_position.x) < 250.0
 		wisp.set_hum_enabled(near and wisp.is_alive() and not _completed)
+
+
+## Both guards are fixed-field providers exactly like level 03.  Before this
+## the chapter drew the charge field but never fed it to the player, so an
+## opposite-phase body was not pulled into the 36 px J reach and a same-phase
+## body was not pushed away.  This only reads the guard's existing contract.
+func _apply_guard_force() -> void:
+	if _player == null:
+		return
+	var player_center: Vector2 = _player.global_position + BODY_CENTER_OFFSET
+	var total: Vector2 = Vector2.ZERO
+	for guard: L3Guard in [_guard_gold, _guard_cyan]:
+		if guard == null or not is_instance_valid(guard):
+			continue
+		var sample: Dictionary = guard.sample_player_force(
+			player_center, _player.is_positive(), _player.get_rid()
+		)
+		var acceleration: Vector2 = sample.get("acceleration", Vector2.ZERO)
+		total += acceleration
+	if total.is_zero_approx():
+		_player.clear_external_force()
+	else:
+		_player.apply_external_force(total)
+
+
+## Real J presses turn toward the nearest live guard in the arena.  With two
+## targets a player who just stepped away can still face the old direction and
+## snapshot a miss; only facing changes here.
+func _face_nearest_guard_on_attack() -> void:
+	if not _arena_entered:
+		return
+	var nearest: L3Guard = null
+	var best_dx: float = INF
+	for guard: L3Guard in [_guard_gold, _guard_cyan]:
+		if guard == null or not is_instance_valid(guard) or guard.is_defeated():
+			continue
+		var dx: float = guard.global_position.x - _player.global_position.x
+		if absf(dx) < best_dx:
+			best_dx = absf(dx)
+			nearest = guard
+	if nearest != null and best_dx <= AUTO_FACE_RANGE:
+		_player.face_direction(1 if nearest.global_position.x >= _player.global_position.x else -1)
 
 
 func _update_strike_source() -> void:
@@ -284,6 +358,8 @@ func _update_objective(force: bool = false) -> void:
 # --- input -----------------------------------------------------------------
 
 func _input(event: InputEvent) -> void:
+	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
+		return
 	if not (event is InputEventKey):
 		return
 	var key_event: InputEventKey = event as InputEventKey
@@ -314,6 +390,7 @@ func _input(event: InputEvent) -> void:
 		if key_event.pressed:
 			if not _attack_key_down:
 				_attack_key_down = true
+				_face_nearest_guard_on_attack()
 				_player.request_attack()
 				get_viewport().set_input_as_handled()
 		else:
@@ -321,6 +398,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
+		return
 	if _scene_leaving or _completed or _recovery_active:
 		return
 	if event.is_action_pressed(&"pause"):
@@ -392,8 +471,42 @@ func _on_player_attack_hit_window(swing_id: int, facing: int, positive: bool) ->
 		if wisp != null and is_instance_valid(wisp) and wisp.is_alive():
 			if wisp.try_player_hit(_player, facing, positive, swing_id):
 				_hud.show_event("光灵熄灭", 1.0)
-	_guard_gold.receive_player_hit(_player, facing, positive, swing_id)
-	_guard_cyan.receive_player_hit(_player, facing, positive, swing_id)
+	var gold_result: Dictionary = _guard_gold.receive_player_hit(
+		_player, facing, positive, swing_id
+	)
+	var cyan_result: Dictionary = _guard_cyan.receive_player_hit(
+		_player, facing, positive, swing_id
+	)
+	_show_attack_result_hint(gold_result, cyan_result)
+
+
+## Pick the nearest live guard's non-lethal result and explain it in one short
+## event line.  A real true-damage hit keeps the guard's own "剩余 N" line.
+func _show_attack_result_hint(gold_result: Dictionary, cyan_result: Dictionary) -> void:
+	if (
+		bool(gold_result.get("true_damage", false))
+		or bool(cyan_result.get("true_damage", false))
+	):
+		return
+	var gold_dx: float = absf(_guard_gold.global_position.x - _player.global_position.x)
+	var cyan_dx: float = absf(_guard_cyan.global_position.x - _player.global_position.x)
+	var result: Dictionary = gold_result if gold_dx <= cyan_dx else cyan_result
+	var dx: float = minf(gold_dx, cyan_dx)
+	if dx > 220.0:
+		return
+	match String(result.get("code", "")):
+		"SHELL_SHATTER":
+			_hud.show_event("仅碎壳 · 蓄力时异相 J 才掉血", 1.4)
+		"SAME_PHASE":
+			_hud.show_event("同相无效 · Q 切异相再按 J", 1.4)
+		"MISS_RANGE":
+			_hud.show_event("距离不够 · 贴近守卫再按 J", 1.4)
+		"MISS_BEHIND":
+			_hud.show_event("转身面向守卫再按 J", 1.4)
+		"BLOCKED":
+			_hud.show_event("守卫被石柱挡住 · 换个角度", 1.4)
+		_:
+			pass
 
 
 func _on_wisp_defeated(_wisp: RiftPolarityWisp) -> void:
@@ -535,6 +648,7 @@ func _begin_recovery(kind: String) -> void:
 	_player.set_input_override_axis(0.0, false)
 	_player.cancel_attack()
 	_player.begin_recovery_hold()
+	_player.clear_external_force()
 	_arena_intro_left = 0.0
 	_guard_gold.set_suspended(true)
 	_guard_cyan.set_suspended(true)
@@ -602,25 +716,39 @@ func _finish_recovery() -> void:
 	_player.clear_external_force()
 	_attack_key_down = false
 	LEVEL_FLOW.release_one_shot_actions()
-	if _arena_entered and not _completed and not _scene_leaving:
+	# A retry always restarts the approved 0.8 s arena opening.  The timer was
+	# written at the black frame; physics stays blocked while recovery is active,
+	# so this frame must not wake the guards early.
+	if (
+		_arena_entered and not _completed and not _scene_leaving
+		and _arena_intro_left <= 0.0
+	):
 		_wake_twin_guards()
 
 
+## A failure or a fall inside the arena returns the whole twin fight to its
+## opening state: both guards are rebuilt at full cells at their own spawns,
+## even when one had already been defeated.  R remains the full chapter restart.
 func _retry_combat() -> void:
 	_resolved_swings.clear()
 	_player_hits = 0
 	_retry_pending = false
 	_retry_pending_left = 0.0
-	_arena_intro_left = 0.0
-	if not _gold_defeated:
-		_guard_gold.reset_state(GUARD_GOLD_SPAWN, true, false)
-		_guard_gold.set_player_target(_player)
-		_guard_gold.set_suspended(true)
-	if not _cyan_defeated:
-		_guard_cyan.reset_state(GUARD_CYAN_SPAWN, false, false)
-		_guard_cyan.set_player_target(_player)
-		_guard_cyan.set_suspended(true)
+	_gold_defeated = false
+	_cyan_defeated = false
+	_guards_defeated = 0
+	_guard_gold.reset_state(GUARD_GOLD_SPAWN, true, false)
+	_guard_gold.set_player_target(_player)
+	_guard_gold.set_suspended(true)
+	_guard_cyan.reset_state(GUARD_CYAN_SPAWN, false, false)
+	_guard_cyan.set_player_target(_player)
+	_guard_cyan.set_suspended(true)
+	# Written at black; the first physics tick after the fade finishes starts
+	# counting it down, then both guards wake on the same tick.
+	_arena_intro_left = ARENA_INTRO_TIME
 	_reset_player_at(ARENA_SPAWN)
+	_update_finish_marker()
+	_update_objective(true)
 	_hud.show_event("失败 · 回竞技场入口", 1.8)
 
 
@@ -792,6 +920,10 @@ func get_wisps() -> Array[RiftPolarityWisp]:
 
 func get_hud() -> RiftWorkshopHUD:
 	return _hud
+
+
+func get_intro_guide() -> DlcGuide:
+	return _intro_guide
 
 
 func get_camera() -> Camera2D:

@@ -92,6 +92,57 @@ Godot：`D:/Godot/Godot_v4.7.2-stable_win64_console.exe`，工程目录：`D:/go
 - 未做真人整关节奏、手感、可读性终审；像素级呈现只按本项目 640×360 实际截图核看。
 - 本轮未执行 Git 提交/推送/导出。
 
+## 2026-11-25 真实 J 伤害修复 + 开场说明页
+
+### 实际失败点（复现记录）
+
+- 真实 J（`Input.parse_input_event`，物理键 J）在 **正确条件**（异相、GRAVITY_CHARGE、
+  正面 2–36 px）下本来就能掉血：`attack_started` / `attack_hit_window` 各 1 次，
+  `receive_player_hit()` 返回 `TRUE_HIT`，真伤标记 0→1。
+- 实战中打不出伤害的三个原因：
+  1. 试炼场没有把守卫既有的 `sample_player_force()` 接到玩家外力。原关卡 03
+     靠异相引力把玩家吸进 36 px 的 J 射程；DLC 只画了引力场，没施加力，
+     玩家在 38/42/48/56/70 px 按 J 全部是 `MISS_RANGE`。
+  2. 玩家朝向取的是“最后一次移动方向”。后退或换目标后立刻按 J 会朝反方向
+     `MISS_BEHIND`（实测 -22 px、朝左时）。
+  3. 规则本身（必须异相 + 蓄力）只在 mechanic popup/基础关讲过，DLC 的 HUD
+     在无效命中时没有反馈。
+
+### 修复（只改 DLC）
+
+- `trial_chambers.gd`：每物理帧把 `_guard.sample_player_force()` 的结果通过
+  `_player.apply_external_force()` 施加；异相被吸近、同相被弹开，和关卡 03 的
+  provider 契约一致。未改守卫射程、伤害、状态机。
+- 真实 J 按下时，若竞技场内 140 px 内有存活守卫，先把玩家转向最近守卫（只改
+  facing，不改位置/相性/射程）。修复旧朝向造成 `MISS_BEHIND`。
+- `attack_hit_window` 里读取 `receive_player_hit()` 的返回：`SHELL_SHATTER` /
+  `SAME_PHASE` / `MISS_RANGE` / `MISS_BEHIND` / `BLOCKED` 各给一行短提示；
+  真实真伤仍显示“剩余 N”。规则不变，只把规则讲清。
+- `trial_hud.gd`：补 `get_event_text()` / `is_event_visible()` 测试访问器。
+- 新增共享 `dlc/ui/dlc_guide.tscn/.gd`：关卡开始自动弹一次 3 页说明
+  （目标 / Q 与门内安全 / 守卫战），`F` 翻页、长按空格 0.5 s 跳过、Esc 吞掉。
+  `TrialChambers.show_intro_guide = true`；自动测试在 `add_child` 前设 false。
+  说明页内容/示意图/截图见 `dlc/ui/tests/README.md`。
+
+### 本轮测试结果
+
+| 项目 | 结果 | 证据 |
+| --- | --- | --- |
+| 极性门 | **32 / 0** | `gate_test.log` |
+| 试炼路线 | **46 / 0** | `route_test.log` |
+| 标题入口 | **25 / 0** | `title_test.log` |
+| 暂停返回标题 | **5 / 0** | `pause_title_test.log` |
+| 真实 J（共享测试，含 trial） | **23 / 0** | `../ui/tests/real_j_damage_test.log` |
+| 开场说明页（共享测试） | **38 / 0** | `../ui/tests/guide_test.log` |
+
+真实 J 实测（修复后）：
+
+- trial：异相 70 px 蓄力 24 物理帧被拉近 `dx=+4.39`、`force_x=496.8`；
+  22 px 背对守卫按 J，自动转正后 `TRUE_HIT`，真伤 0→1。
+- 同相按 J：`SAME_PHASE`，真伤不变，HUD 显示“同相无效 · Q 切异相再按 J”。
+- 所有 J 攻击都通过 `Input.parse_input_event` 的真实物理键事件，没有直接调用
+  `request_attack()`。
+
 ## 2026-11-25 打磨补充（门开启提示）
 
 - 只改 `dlc/trial_chambers/polarity_gate.gd` 的 `_draw` 与 `_physics_process` 计时段：

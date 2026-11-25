@@ -67,6 +67,7 @@ func _cleanup() -> void:
 
 func _run() -> void:
 	var trial: TrialChambers = (load(TRIAL_SCENE) as PackedScene).instantiate() as TrialChambers
+	trial.show_intro_guide = false
 	get_tree().root.add_child(trial)
 	get_tree().current_scene = trial
 	await _wait_process(3)

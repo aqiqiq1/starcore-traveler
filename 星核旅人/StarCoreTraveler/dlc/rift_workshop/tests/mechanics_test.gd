@@ -170,6 +170,7 @@ func _run() -> void:
 	if packed == null:
 		return
 	_rift = packed.instantiate() as RiftWorkshop
+	_rift.show_intro_guide = false
 	get_tree().root.add_child(_rift)
 	get_tree().current_scene = _rift
 	await _wait_process(3)
@@ -439,8 +440,18 @@ func _run() -> void:
 	var retry_done: bool = await _wait_until(
 		func() -> bool: return not _rift.is_recovery_active(), 240
 	)
-	await _wait_physics(6)
 	_check(retry_done, "combat recovery finishes without staying black")
+	_check(_rift.is_arena_intro_active(),
+		"failure restarts the 0.8 s arena opening",
+		"intro=%.2f" % _rift.get_arena_intro_left())
+	var retry_woke: bool = await _wait_until(
+		func() -> bool:
+			return not _rift.is_arena_intro_active() \
+				and not gold.is_suspended() and not cyan.is_suspended(),
+		180
+	)
+	await _wait_physics(4)
+	_check(retry_woke, "both guards wake together after the retry opening")
 	_check(absf(_player.global_position.x - _rift.get_arena_spawn().x) < 2.0,
 		"failure returns the player to the arena entrance",
 		"x=%.2f" % _player.global_position.x)
@@ -453,6 +464,99 @@ func _run() -> void:
 	Input.action_release(&"move_right")
 	_check(_player.global_position.x > _rift.get_arena_spawn().x + 4.0,
 		"player can move after the arena failure", "x=%.2f" % _player.global_position.x)
+
+	# --- one guard down, then failure: both must come back full ----------
+	await _tap_key(KEY_R)
+	await _wait_process(4)
+	await _place(1095.0, 320.0, false)
+	await _wait_until(func() -> bool: return not _rift.is_arena_intro_active(), 120)
+	await _wait_physics(6)
+	for _index: int in range(3):
+		var gold_hit: bool = await _force_true_hit(gold, cyan)
+		if not gold_hit:
+			break
+	await _wait_until(func() -> bool: return _rift.is_gold_defeated(), 400)
+	_check(gold.is_defeated() and _rift.is_gold_defeated(),
+		"gold guard is down before the cyan hits")
+	cyan.set_suspended(false)
+	cyan.player_struck.emit(1)
+	await _wait_physics(3)
+	cyan.player_struck.emit(1)
+	await _wait_physics(3)
+	var one_down_retry: bool = await _wait_until(
+		func() -> bool: return _rift.is_recovery_active(), 40
+	)
+	_check(one_down_retry, "cyan's two hits start the recovery after a gold defeat")
+	var one_down_done: bool = await _wait_until(
+		func() -> bool: return not _rift.is_recovery_active(), 240
+	)
+	_check(one_down_done, "one-down combat recovery finishes")
+	var one_down_woke: bool = await _wait_until(
+		func() -> bool:
+			return not _rift.is_arena_intro_active() \
+				and not gold.is_suspended() and not cyan.is_suspended(),
+		180
+	)
+	await _wait_physics(4)
+	_check(one_down_woke, "both guards wake after the one-down retry opening")
+	_check(gold.get_state_name() == "ACTIVE" and cyan.get_state_name() == "ACTIVE",
+		"both guards are ACTIVE after a one-down failure",
+		"gold=%s cyan=%s" % [gold.get_state_name(), cyan.get_state_name()])
+	_check(gold.get_remaining_marks() == 3 and cyan.get_remaining_marks() == 3,
+		"both guards return with full cells",
+		"gold=%d cyan=%d" % [gold.get_remaining_marks(), cyan.get_remaining_marks()])
+	_check(not _rift.is_gold_defeated() and not _rift.is_cyan_defeated()
+		and _rift.get_guards_defeated() == 0,
+		"one-down failure clears both defeat flags and the 0 / 2 count")
+	_check(_rift.get_hud().get_objective_text() == "目标：击败双生守卫（0 / 2）",
+		"HUD objective is back to 0 / 2", _rift.get_hud().get_objective_text())
+	_check(_rift.get_finish_sprite().modulate.r < 0.9,
+		"finish core is dark again after the one-down failure")
+	Input.action_press(&"move_right")
+	await _wait_physics(12)
+	Input.action_release(&"move_right")
+	_check(_player.global_position.x > _rift.get_arena_spawn().x + 4.0,
+		"player can move after the one-down failure",
+		"x=%.2f" % _player.global_position.x)
+
+	# --- one guard down, then a fall: both must also come back full ------
+	for _index: int in range(3):
+		var fall_gold_hit: bool = await _force_true_hit(gold, cyan)
+		if not fall_gold_hit:
+			break
+	await _wait_until(func() -> bool: return _rift.is_gold_defeated(), 400)
+	_check(_rift.is_gold_defeated(), "gold guard is down again before the fall")
+	_player.global_position = Vector2(1200.0, 500.0)
+	_player.velocity = Vector2.ZERO
+	var fall_retry: bool = await _wait_until(
+		func() -> bool: return _rift.is_recovery_active(), 60
+	)
+	_check(fall_retry, "falling below the kill line starts the arena recovery")
+	var fall_done: bool = await _wait_until(
+		func() -> bool: return not _rift.is_recovery_active(), 240
+	)
+	_check(fall_done, "fall recovery finishes")
+	var fall_woke: bool = await _wait_until(
+		func() -> bool:
+			return not _rift.is_arena_intro_active() \
+				and not gold.is_suspended() and not cyan.is_suspended(),
+		180
+	)
+	await _wait_physics(4)
+	_check(fall_woke, "both guards wake after the fall retry opening")
+	_check(gold.get_state_name() == "ACTIVE" and cyan.get_state_name() == "ACTIVE",
+		"both guards are ACTIVE after a fall with one down",
+		"gold=%s cyan=%s" % [gold.get_state_name(), cyan.get_state_name()])
+	_check(gold.get_remaining_marks() == 3 and cyan.get_remaining_marks() == 3,
+		"both guards return with full cells after a fall",
+		"gold=%d cyan=%d" % [gold.get_remaining_marks(), cyan.get_remaining_marks()])
+	_check(not _rift.is_gold_defeated() and not _rift.is_cyan_defeated()
+		and _rift.get_guards_defeated() == 0,
+		"fall retry clears both defeat flags and the 0 / 2 count")
+	_check(_rift.get_hud().get_objective_text() == "目标：击败双生守卫（0 / 2）",
+		"HUD objective is 0 / 2 after the fall", _rift.get_hud().get_objective_text())
+	_check(_rift.get_finish_sprite().modulate.r < 0.9,
+		"finish core stays dark after the fall retry")
 
 	# --- both guards defeated by real hit resolution ---------------------
 	await _tap_key(KEY_R)

@@ -67,6 +67,7 @@ func _place(player: L3Player, x: float, positive: bool) -> void:
 func _run() -> void:
 	var packed: PackedScene = load(TRIAL_SCENE) as PackedScene
 	_trial = packed.instantiate() as TrialChambers
+	_trial.show_intro_guide = false
 	add_child(_trial)
 	await _wait_process(4)
 	await _wait_physics(10)

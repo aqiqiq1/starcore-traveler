@@ -16,7 +16,10 @@ extends Node2D
 
 signal level_completed
 
+@export var show_intro_guide: bool = true
+
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
+const DLC_GUIDE_SCENE: PackedScene = preload("res://dlc/ui/dlc_guide.tscn")
 
 const START_SPAWN: Vector2 = Vector2(40.0, 320.0)
 const ARENA_SPAWN: Vector2 = Vector2(850.0, 320.0)
@@ -31,6 +34,11 @@ const TRIAL_PATH: String = "res://dlc/trial_chambers/trial_chambers.tscn"
 const RECOVERY_FADE_OUT_TIME: float = 0.25
 const RECOVERY_BLACK_HOLD_TIME: float = 0.10
 const RECOVERY_FADE_IN_TIME: float = 0.35
+## Same body centre the shared level-03 force providers use.  The guard's
+## gravity field was already approved; this chapter must feed it to the player.
+const BODY_CENTER_OFFSET: Vector2 = Vector2(0.0, -15.0)
+## Facing assist only inside the arena and only when a live guard is this close.
+const AUTO_FACE_RANGE: float = 140.0
 
 enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 
@@ -65,6 +73,7 @@ var _recovery_kind: String = ""
 var _recovery_alpha: float = 0.0
 var _recovery_elapsed: float = 0.0
 var _recovery_applying: bool = false
+var _intro_guide: DlcGuide = null
 
 
 func _ready() -> void:
@@ -118,6 +127,30 @@ func _ready() -> void:
 	LEVEL_FLOW.release_one_shot_actions()
 	_player.begin_input_override()
 	_guard_ticks = 3
+	if show_intro_guide:
+		call_deferred("_open_intro_guide")
+
+
+## Called once per scene load.  Tests set show_intro_guide = false before
+## add_child(), so their input routes never meet a paused tree.
+func _open_intro_guide() -> void:
+	if not show_intro_guide or _completed or _scene_leaving:
+		return
+	if _intro_guide != null and is_instance_valid(_intro_guide):
+		return
+	_intro_guide = DLC_GUIDE_SCENE.instantiate() as DlcGuide
+	add_child(_intro_guide)
+	_intro_guide.closed.connect(_on_intro_guide_closed)
+	_intro_guide.configure("trial", self)
+	_intro_guide.open_guide()
+
+
+func _on_intro_guide_closed(_kind: String) -> void:
+	# Closing the guide must not let its F/Space key become a jump or a Q
+	# press.  Re-arm the same three-tick opening hold the scene starts with.
+	_attack_key_down = false
+	_player.begin_input_override()
+	_guard_ticks = 3
 
 
 func _exit_tree() -> void:
@@ -161,6 +194,7 @@ func _physics_process(delta: float) -> void:
 		_guard.set_suspended(false)
 		_hud.show_event("守卫苏醒", 1.8)
 		DemoAudio.play_record_save()
+	_apply_guard_force()
 	_update_objective()
 	if _guard_defeated and not _completed:
 		_check_finish()
@@ -175,6 +209,37 @@ func _process(delta: float) -> void:
 	if _finish_core != null:
 		_finish_time += delta
 		_finish_core.frame = int(_finish_time * 10.0) % 12
+
+
+## The approved level-03 guard is a force provider: opposite phase is pulled in,
+## same phase is pushed away during GRAVITY_CHARGE.  The trial omitted that
+## feed, so the weakpoint stayed outside the 36 px J reach in real play even
+## though the guard drew its field.  This is the existing guard contract, not a
+## new rule or a damage change.
+func _apply_guard_force() -> void:
+	if _player == null or _guard == null:
+		return
+	var player_center: Vector2 = _player.global_position + BODY_CENTER_OFFSET
+	var sample: Dictionary = _guard.sample_player_force(
+		player_center, _player.is_positive(), _player.get_rid()
+	)
+	var acceleration: Vector2 = sample.get("acceleration", Vector2.ZERO)
+	if acceleration.is_zero_approx():
+		_player.clear_external_force()
+	else:
+		_player.apply_external_force(acceleration)
+
+
+## A real J press turns toward the nearest live guard inside the arena.  The
+## shared player faces its last movement direction, so after stepping back or
+## between two targets a swing could snapshot the old facing and miss behind.
+## Only facing changes here; reach, phase, charge and damage rules are untouched.
+func _face_nearest_guard_on_attack() -> void:
+	if not _arena_entered or _guard == null or _guard.is_defeated():
+		return
+	var dx: float = _guard.global_position.x - _player.global_position.x
+	if absf(dx) <= AUTO_FACE_RANGE:
+		_player.face_direction(1 if dx >= 0.0 else -1)
 
 
 func _update_objective() -> void:
@@ -204,6 +269,8 @@ func _update_objective() -> void:
 # --- input -----------------------------------------------------------------
 
 func _input(event: InputEvent) -> void:
+	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
+		return
 	if not (event is InputEventKey):
 		return
 	var key_event: InputEventKey = event as InputEventKey
@@ -236,6 +303,7 @@ func _input(event: InputEvent) -> void:
 		if key_event.pressed:
 			if not _attack_key_down:
 				_attack_key_down = true
+				_face_nearest_guard_on_attack()
 				_player.request_attack()
 				get_viewport().set_input_as_handled()
 		else:
@@ -243,6 +311,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
+		return
 	if _scene_leaving or _completed or _recovery_active:
 		return
 	if event.is_action_pressed(&"pause"):
@@ -300,7 +370,31 @@ func _on_player_attack_hit_window(swing_id: int, facing: int, positive: bool) ->
 	if _resolved_swings.has(swing_id):
 		return
 	_resolved_swings[swing_id] = true
-	_guard.receive_player_hit(_player, facing, positive, swing_id)
+	var result: Dictionary = _guard.receive_player_hit(
+		_player, facing, positive, swing_id
+	)
+	_show_attack_result_hint(result)
+
+
+## One short, non-blocking line that explains why a J did not remove a cell.
+## Successful true damage keeps the existing "剩余 N" event from the guard
+## signal, so this helper never overwrites a real hit.
+func _show_attack_result_hint(result: Dictionary) -> void:
+	if bool(result.get("true_damage", false)):
+		return
+	match String(result.get("code", "")):
+		"SHELL_SHATTER":
+			_hud.show_event("仅碎壳 · 蓄力时异相 J 才掉血", 1.4)
+		"SAME_PHASE":
+			_hud.show_event("同相无效 · Q 切异相再按 J", 1.4)
+		"MISS_RANGE":
+			_hud.show_event("距离不够 · 贴近守卫再按 J", 1.4)
+		"MISS_BEHIND":
+			_hud.show_event("转身面向守卫再按 J", 1.4)
+		"BLOCKED":
+			_hud.show_event("守卫被石柱挡住 · 换个角度", 1.4)
+		_:
+			pass
 
 
 func _on_guard_player_struck(_facing: int) -> void:
@@ -378,6 +472,7 @@ func _begin_recovery(kind: String) -> void:
 	_player.set_input_override_axis(0.0, false)
 	_player.cancel_attack()
 	_player.begin_recovery_hold()
+	_player.clear_external_force()
 	_guard.set_suspended(true)
 
 
@@ -576,6 +671,10 @@ func get_guard() -> L3Guard:
 
 func get_hud() -> TrialHUD:
 	return _hud
+
+
+func get_intro_guide() -> DlcGuide:
+	return _intro_guide
 
 
 func get_camera() -> Camera2D:

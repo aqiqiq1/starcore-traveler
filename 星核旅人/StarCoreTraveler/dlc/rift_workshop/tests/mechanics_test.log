@@ -53,11 +53,11 @@ PASS: wisp pulse period is 3.0 s [3.00]
 PASS: wisp pulses within its 3 s period
 PASS: same phase at the pulse becomes a pull [pull force=170.0]
 PASS: pulse reports a real force [170.0]
-PASS: pull velocity points toward the wisp [vx=97.0]
+PASS: pull velocity points toward the wisp [vx=97.1]
 PASS: opposite phase at the pulse becomes a push [push]
-PASS: push velocity points away from the wisp [vx=-16.9]
+PASS: push velocity points away from the wisp [vx=-16.7]
 PASS: one J hit dissolves the wisp
-PASS: kill shows a short white burst at the wisp [0.85]
+PASS: kill shows a short white burst at the wisp [0.90]
 PASS: other wisps stay alive [wisp0 alive=true]
 PASS: R returns to the start [x=40.00]
 PASS: R restores 澜相
@@ -75,10 +75,31 @@ PASS: both guards wake together after the opening hover [gold=ACTIVE cyan=ACTIVE
 PASS: HUD objective switches to the twin guards [目标：击败双生守卫（0 / 2）]
 PASS: two accepted hits start the recovery transition
 PASS: combat recovery finishes without staying black
+PASS: failure restarts the 0.8 s arena opening [intro=0.80]
+PASS: both guards wake together after the retry opening
 PASS: failure returns the player to the arena entrance [x=1100.00]
 PASS: failure clears the hit count
 PASS: both guards reset to ACTIVE after failure
 PASS: player can move after the arena failure [x=1115.25]
+PASS: gold guard is down before the cyan hits
+PASS: cyan's two hits start the recovery after a gold defeat
+PASS: one-down combat recovery finishes
+PASS: both guards wake after the one-down retry opening
+PASS: both guards are ACTIVE after a one-down failure [gold=ACTIVE cyan=ACTIVE]
+PASS: both guards return with full cells [gold=3 cyan=3]
+PASS: one-down failure clears both defeat flags and the 0 / 2 count
+PASS: HUD objective is back to 0 / 2 [目标：击败双生守卫（0 / 2）]
+PASS: finish core is dark again after the one-down failure
+PASS: player can move after the one-down failure [x=1115.25]
+PASS: gold guard is down again before the fall
+PASS: falling below the kill line starts the arena recovery
+PASS: fall recovery finishes
+PASS: both guards wake after the fall retry opening
+PASS: both guards are ACTIVE after a fall with one down [gold=ACTIVE cyan=ACTIVE]
+PASS: both guards return with full cells after a fall [gold=3 cyan=3]
+PASS: fall retry clears both defeat flags and the 0 / 2 count
+PASS: HUD objective is 0 / 2 after the fall [目标：击败双生守卫（0 / 2）]
+PASS: finish core stays dark after the fall retry
 PASS: gold guard true hit 1 resolved [marks=1]
 PASS: gold guard true hit 2 resolved [marks=2]
 PASS: gold guard true hit 3 resolved [marks=3]
@@ -100,4 +121,4 @@ PASS: E returns to level_01.tscn title [res://scenes/level_01.tscn]
 PASS: returned scene contains the title menu
 PASS: title shows the 裂隙工坊 entry while the DLC exists
 PASS: entry text is 裂隙工坊
-RIFT_MECHANICS_TEST checks=100 failures=0
+RIFT_MECHANICS_TEST checks=121 failures=0

@@ -3,7 +3,7 @@
 PASS: rift scene loads
 PASS: chapter exposes an L3Player
 PASS: spawn is 澜相
-PASS: real walk reaches the terrace start [x=633.31 y=279.93]
+PASS: real walk reaches the terrace start [x=633.30 y=279.93]
 PASS: first curtain fired while walking [triggers=1]
 PASS: second curtain fired while walking [triggers=1]
 PASS: corridor ends in 澜相 (cyan gate passed)
@@ -12,10 +12,10 @@ PASS: gold bridge is not solid for the arriving 澜相 player
 PASS: HUD asks for the bridges [目标：Q 换相，让光桥实体化]
 PASS: Q turns the player 辉相 for the gold bridge
 PASS: gold bridge materialised
-PASS: walked across gold bridge 1 to landing A [x=773.22 y=279.93]
+PASS: walked across gold bridge 1 to landing A [x=773.20 y=279.93]
 PASS: Q turns the player 澜相 for the cyan bridge
 PASS: cyan bridge materialised
-PASS: walked across cyan bridge 2 to landing B [x=883.33 y=279.93]
+PASS: walked across cyan bridge 2 to landing B [x=883.31 y=279.93]
 PASS: Q turns the player 辉相 for the second gold bridge
 PASS: second gold bridge materialised
 PASS: walked across gold bridge 3 to the end terrace [x=1003.66 y=279.93]

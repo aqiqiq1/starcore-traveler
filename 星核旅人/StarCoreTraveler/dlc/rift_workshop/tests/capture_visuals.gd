@@ -93,6 +93,7 @@ func _run() -> void:
 		print("RIFT_CAPTURE missing scene")
 		return
 	_rift = packed.instantiate() as RiftWorkshop
+	_rift.show_intro_guide = false
 	add_child(_rift)
 	await _wait_process(6)
 	await _wait_physics(10)

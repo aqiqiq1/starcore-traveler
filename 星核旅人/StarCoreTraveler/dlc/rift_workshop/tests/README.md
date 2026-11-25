@@ -197,3 +197,65 @@ $godot = "D:/Godot/Godot_v4.7.2-stable_win64_console.exe"
   “E 交谈”、第三关“送核入符石台”可读；第一关开场是黑边过场、HUD 暂隐。
   这些均属既有基础设计，本轮未改；未发现需要立即修的客观 bug。
 - 局限：未做正作整关手感/节奏人工试玩，只覆盖出生点/开场与既有测试路线。
+
+---
+
+## 2026-11-25 真实 J / 双守卫完整重生 / 开场说明
+
+### 真实 J 伤害：实际失败点
+
+- 先用 `Input.parse_input_event` 真实物理键 J 复现：在异相、GRAVITY_CHARGE、
+  正面 22 px 时，`attack_started` / `attack_hit_window` 各 1 次，
+  `receive_player_hit()` 返回 `TRUE_HIT`，真伤 0→1。**输入与 hit 分发本身没有断。**
+- 实战失败点有三个，均已复现：
+  1. **守卫引力场没有接到玩家外力**：原关卡 03 通过 `add_player_force_provider(_guard)`
+     把 `sample_player_force()` 接到 `apply_external_force()`；试炼场和裂隙工坊都漏了
+     这一步。异相蓄力时不会被吸进 36 px 的 J 射程，38/42/48/56/70 px 全是 `MISS_RANGE`。
+  2. **朝向是旧的**：背对守卫按 J 时 `forward_gap` 变成负值，返回 `MISS_BEHIND`。
+  3. **规则没有在 DLC 内讲清**：必须异相 + 蓄力 + 36 px 内；无效命中只在 mechanic popup
+     里讲过，DLC HUD 没有反馈。
+- 双守卫分发实测正常：同一真实 J 近处金守卫 `TRUE_HIT`、远处青守卫 `MISS_RANGE`；
+  单测青守卫时摇杆也返回 `TRUE_HIT`，不是只结算金守卫。
+
+### 修复
+
+- `rift_workshop.gd`：每物理帧把两只守卫的 `sample_player_force()` 求和后
+  `apply_external_force()`，异相吸近、同相弹开；不改守卫射程/伤害/状态机。
+- 真实 J 按下时，竞技场内 140 px 内自动面向最近存活守卫（只改 facing）。
+- `attack_hit_window` 读取两只守卫的 `receive_player_hit()` 返回；非真伤结果给出
+  `SHELL_SHATTER / SAME_PHASE / MISS_RANGE / MISS_BEHIND / BLOCKED` 短提示。
+- `_retry_combat()` 改为**两只都完整重生**：各自出生点、满 3 格、`0/2`、完成核心熄灭；
+  恢复结束后重新计 0.8 s 开场悬浮，再同时唤醒。即使先击败一只，另一只造成的失败/
+  坠落也让两只一起回来。R 仍是整章重开。
+- 新增共享 `dlc/ui/dlc_guide.tscn/.gd` 3 页说明；`RiftWorkshop.show_intro_guide`
+  默认 true，现有自动测试在 `add_child` 前设 false。
+
+### 本轮测试结果（`run_all.ps1`，全部 exit 0，0 ERROR/WARNING）
+
+| 项目 | 结果 | 证据 |
+| --- | --- | --- |
+| 导入 | exit 0，0 错误 | `import.log` |
+| 机制测试 | **121 / 0** | `mechanics_test.log` |
+| 真实输入路线 | **37 / 0** | `route_test.log` |
+| 标题入口（存在） | **34 / 0** | `title_test.log` |
+| 标题入口（缺失） | **14 / 0** | `title_missing_test.log` |
+| 新章 90 帧 | exit 0，0 错误 | `rift_90.log` |
+| 基础三关 90 帧 | 三关均 exit 0，0 错误 | `level_01_90.log` 等 |
+| 移走 `dlc/rift_workshop` 后 level_01 90 帧 | exit 0，0 错误 | `level_01_deleted_90.log` |
+| 真实 J（共享 `dlc/ui/tests`） | **23 / 0** | `../ui/tests/real_j_damage_test.log` |
+| 开场说明页（共享） | **38 / 0** | `../ui/tests/guide_test.log` |
+| 640×360 说明页 | 两关各 3 页，均 640×360 | `../ui/tests/out/*_guide_*.png` |
+
+机制测试新增覆盖：
+
+- 先击败金守卫，再让青守卫造成两次受击 → 恢复结束 0.8 s 悬浮 → 两只 ACTIVE、
+  各 3 格、`0/2`、完成核心暗、玩家可移动；
+- 先击败金守卫，再坠落 → 同样两只完整回来；
+- 原有失败/R/双守卫真伤路线继续通过（121 项 0 失败）。
+
+### 未做 / 局限
+
+- 真实 J 测试仍用 `debug_force_gravity()` 把守卫推进既有蓄力态（避开 3 s AI 周期），
+  但攻击是真实物理 J 事件，命中由守卫自己的 `receive_player_hit()` 结算。
+- 未做真人整关节奏/可读性终审；说明页只核看 Celeste 两张静态画面，未核看其翻页动画。
+- 标题菜单两个 DLC 入口的视觉层级未改：需要动 `scripts/start_menu.gd`，按约束先报告。

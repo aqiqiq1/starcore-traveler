@@ -77,6 +77,7 @@ func _run() -> void:
 	if packed == null:
 		return
 	_trial = packed.instantiate() as TrialChambers
+	_trial.show_intro_guide = false
 	add_child(_trial)
 	await _wait_process(3)
 	await _wait_physics(6)
