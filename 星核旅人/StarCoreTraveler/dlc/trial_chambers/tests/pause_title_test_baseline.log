@@ -1,8 +1,0 @@
-﻿Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
-
-PASS: Esc opens the pause page
-PASS: 缁х画 starts focused
-PASS: Down moves focus to 杩斿洖鏍囬
-PASS: pause 杩斿洖鏍囬 returns to level_01.tscn [res://scenes/level_01.tscn]
-PASS: returning clears the tree pause
-TRIAL_PAUSE_TITLE_TEST checks=5 failures=0
