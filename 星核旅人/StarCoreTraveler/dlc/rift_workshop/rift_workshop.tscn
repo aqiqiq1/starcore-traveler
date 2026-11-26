@@ -12,13 +12,13 @@
 [ext_resource type="PackedScene" path="res://dlc/rift_workshop/rift_inversion_field.tscn" id="10_field"]
 [ext_resource type="PackedScene" path="res://dlc/rift_workshop/rift_phase_bridge.tscn" id="11_bridge"]
 [ext_resource type="PackedScene" path="res://dlc/rift_workshop/rift_polarity_wisp.tscn" id="12_wisp"]
-[ext_resource type="PackedScene" path="res://scenes/level03/guard.tscn" id="13_guard"]
-[ext_resource type="Texture2D" path="res://assets/level03_prototype/key_core_12f.png" id="14_core"]
-[ext_resource type="Script" path="res://scripts/level_checkpoint.gd" id="15_checkpoint"]
-[ext_resource type="Script" path="res://dlc/rift_workshop/rift_audio.gd" id="16_audio"]
-[ext_resource type="Script" path="res://dlc/trial_chambers/chapter_ambience.gd" id="17_ambience"]
-[ext_resource type="Script" path="res://dlc/rift_workshop/rift_guard_cue.gd" id="18_cue"]
-[ext_resource type="Script" path="res://dlc/rift_workshop/rift_low_beams.gd" id="19_beams"]
+[ext_resource type="Texture2D" path="res://assets/level03_prototype/key_core_12f.png" id="13_core"]
+[ext_resource type="Script" path="res://scripts/level_checkpoint.gd" id="14_checkpoint"]
+[ext_resource type="Script" path="res://dlc/rift_workshop/rift_audio.gd" id="15_audio"]
+[ext_resource type="Script" path="res://dlc/trial_chambers/chapter_ambience.gd" id="16_ambience"]
+[ext_resource type="Script" path="res://dlc/rift_workshop/rift_low_beams.gd" id="17_beams"]
+[ext_resource type="Script" path="res://dlc/rift_workshop/rift_mirror_boss.gd" id="18_boss"]
+[ext_resource type="Script" path="res://dlc/rift_workshop/rift_inversion_crystal.gd" id="19_crystal"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_checkpoint"]
 size = Vector2(40, 72)
@@ -69,10 +69,15 @@ position = Vector2(976, 280)
 script = ExtResource("5_terrain")
 block_rect = Rect2(0, 0, 104, 80)
 
-[node name="ArenaGround" type="Node2D" parent="Terrain"]
+[node name="ApproachGround" type="Node2D" parent="Terrain"]
 position = Vector2(1080, 320)
 script = ExtResource("5_terrain")
-block_rect = Rect2(0, 0, 520, 40)
+block_rect = Rect2(0, 0, 160, 40)
+
+[node name="ArenaGround" type="Node2D" parent="Terrain"]
+position = Vector2(1240, 320)
+script = ExtResource("5_terrain")
+block_rect = Rect2(0, 0, 640, 40)
 
 [node name="Decorations" type="Node2D" parent="."]
 process_mode = 1
@@ -90,30 +95,30 @@ position = Vector2(470, 320)
 [node name="ColumnTerrace" parent="Decorations" instance=ExtResource("7_col_broken")]
 position = Vector2(1000, 280)
 
-[node name="ColumnArena" parent="Decorations" instance=ExtResource("6_col_tall")]
-position = Vector2(1130, 320)
+[node name="ColumnApproach" parent="Decorations" instance=ExtResource("6_col_tall")]
+position = Vector2(1140, 320)
 
-[node name="ColumnTwin" parent="Decorations" instance=ExtResource("6_col_tall")]
-position = Vector2(1345, 320)
+[node name="ColumnMirror" parent="Decorations" instance=ExtResource("6_col_tall")]
+position = Vector2(1270, 320)
 
 [node name="ColumnFinish" parent="Decorations" instance=ExtResource("7_col_broken")]
-position = Vector2(1520, 320)
+position = Vector2(1820, 320)
 
 [node name="InversionA" parent="." instance=ExtResource("10_field")]
 process_mode = 1
 position = Vector2(160, 320)
 player_path = NodePath("../Player")
 
-[node name="GateGold" parent="." instance=ExtResource("9_gate")]
+[node name="GateMoon" parent="." instance=ExtResource("9_gate")]
 process_mode = 1
 position = Vector2(270, 320)
-required_positive = true
+required_positive = false
 player_path = NodePath("../Player")
 
 [node name="LowBeams" type="Node2D" parent="."]
 process_mode = 1
 z_index = 3
-script = ExtResource("19_beams")
+script = ExtResource("17_beams")
 
 [node name="BridgeA" parent="." instance=ExtResource("11_bridge")]
 process_mode = 1
@@ -179,7 +184,7 @@ position = Vector2(40, 320)
 allow_self_reset = false
 show_head_polarity = false
 world_left = 0.0
-world_right = 1600.0
+world_right = 1880.0
 kill_y = 430.0
 
 [node name="Camera2D" type="Camera2D" parent="Player"]
@@ -187,7 +192,7 @@ position_smoothing_enabled = true
 position_smoothing_speed = 6.0
 limit_left = 0
 limit_top = 0
-limit_right = 1600
+limit_right = 1880
 limit_bottom = 360
 drag_horizontal_enabled = false
 drag_vertical_enabled = false
@@ -195,40 +200,34 @@ drag_vertical_enabled = false
 [node name="RiftCheckpoint" type="Area2D" parent="."]
 process_mode = 1
 position = Vector2(1030, 280)
-script = ExtResource("15_checkpoint")
+script = ExtResource("14_checkpoint")
 trigger_size = Vector2(40, 72)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="RiftCheckpoint"]
 position = Vector2(0, -36)
 shape = SubResource("RectangleShape2D_checkpoint")
 
-[node name="GuardGold" parent="." instance=ExtResource("13_guard")]
+[node name="MirrorBoss" type="Node2D" parent="."]
 process_mode = 1
-position = Vector2(1240, 320)
-floor_y = 320.0
-patrol_left = 1150.0
-patrol_right = 1320.0
-pursuit_left = 1120.0
-pursuit_right = 1335.0
-start_positive = true
+position = Vector2(1540, 260)
+script = ExtResource("18_boss")
+player_path = NodePath("../Player")
 
-[node name="GuardCyan" parent="." instance=ExtResource("13_guard")]
+[node name="CrystalLeft" type="Node2D" parent="."]
 process_mode = 1
-position = Vector2(1450, 320)
-floor_y = 320.0
-patrol_left = 1370.0
-patrol_right = 1530.0
-pursuit_left = 1355.0
-pursuit_right = 1560.0
-start_positive = false
+position = Vector2(1320, 320)
+script = ExtResource("19_crystal")
+player_path = NodePath("../Player")
 
-[node name="GuardCue" type="Node2D" parent="."]
+[node name="CrystalRight" type="Node2D" parent="."]
 process_mode = 1
-script = ExtResource("18_cue")
+position = Vector2(1760, 320)
+script = ExtResource("19_crystal")
+player_path = NodePath("../Player")
 
 [node name="FinishPoint" type="Node2D" parent="."]
 process_mode = 1
-position = Vector2(1560, 320)
+position = Vector2(1850, 320)
 z_index = 4
 
 [node name="Core" type="Sprite2D" parent="FinishPoint"]
@@ -236,16 +235,16 @@ z_index = 4
 texture_filter = 1
 position = Vector2(0, -34)
 scale = Vector2(2, 2)
-texture = ExtResource("14_core")
+texture = ExtResource("13_core")
 hframes = 12
 
 [node name="Audio" type="Node" parent="."]
 process_mode = 1
-script = ExtResource("16_audio")
+script = ExtResource("15_audio")
 
 [node name="Ambience" type="Node" parent="."]
 process_mode = 1
-script = ExtResource("17_ambience")
+script = ExtResource("16_ambience")
 track_name = "rift_ambience"
 autoplay = false
 

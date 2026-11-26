@@ -22,6 +22,7 @@
 [ext_resource type="Texture2D" uid="uid://cycc8x0d8si04" path="res://assets/level02_conductive_stone/conductive_roof_256x32.png" id="23_roof"]
 [ext_resource type="Texture2D" uid="uid://b8r7n3xn8hk87" path="res://assets/level02_conductive_stone/return_platform_48x12.png" id="24_return"]
 [ext_resource type="Script" path="res://scripts/l2_edge_decor.gd" id="25_edge_decor"]
+[ext_resource type="Script" path="res://scripts/audio/base_level_music.gd" id="26_music"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ground"]
 size = Vector2(1792, 40)
@@ -260,3 +261,8 @@ position = Vector2(800, 320)
 [node name="BaseColumn" parent="." unique_id=1654148243 instance=ExtResource("20_col_base")]
 z_index = -1
 position = Vector2(1320, 320)
+
+[node name="BaseLevelMusic" type="Node" parent="."]
+script = ExtResource("26_music")
+track_name = "level_02_silent_corridor"
+autoplay = true

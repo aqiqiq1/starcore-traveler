@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://eins5xhxcdh3"
-path="res://.godot/imported/rift_elements.png-ed6e47a52529996179d8acb7b4d6f0a6.ctex"
+uid="uid://dn1toibkdu233"
+path="res://.godot/imported/key_f.png-0839b282bfc5c78cc742fed9eb27edd5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://dlc/ui/demos/rift_elements.png"
-dest_files=["res://.godot/imported/rift_elements.png-ed6e47a52529996179d8acb7b4d6f0a6.ctex"]
+source_file="res://assets/ui/keycaps/key_f.png"
+dest_files=["res://.godot/imported/key_f.png-0839b282bfc5c78cc742fed9eb27edd5.ctex"]
 
 [params]
 

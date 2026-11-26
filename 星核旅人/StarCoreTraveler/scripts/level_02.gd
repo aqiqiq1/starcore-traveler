@@ -44,6 +44,7 @@ const STABLE_SPAWN_LINKED: Vector2 = Vector2(830.0, 320.0)
 @onready var _stele: GuideEcho = $StartStele
 @onready var _relay_checkpoint: LevelCheckpoint = $RelayCheckpoint
 @onready var _linked_checkpoint: LevelCheckpoint = $LinkedCheckpoint
+@onready var _music: BaseLevelMusic = $BaseLevelMusic
 
 var _all_bays: Array[StarCoreBayInteractable] = []
 var _pause_menu = null
@@ -318,14 +319,14 @@ func _setup_pause_menu() -> void:
 	_pause_menu.display_settings_path = pause_display_settings_path
 	_pause_menu.controls_rows = [
 		["移动", "A / D · ← / →"],
-		["奔跑", "左Shift"],
-		["跳跃", "空格"],
-		["切换相性", "Q"],
-		["释放 / 入仓", "E"],
-		["阅读 / 翻页", "F（未显完先补全文）"],
+		["奔跑", "{SHIFT}"],
+		["跳跃", "{SPACE}"],
+		["切换相性", "{Q}"],
+		["释放 / 入仓", "{E}"],
+		["阅读 / 翻页", "{F}"],
 		["失败恢复", "最近稳定仓"],
-		["整关重来", "R"],
-		["暂停菜单", "Esc"],
+		["整关重来", "{R}"],
+		["暂停菜单", "{ESC}"],
 	]
 	add_child(_pause_menu)
 	_pause_menu.restart_requested.connect(_restart_level)
@@ -382,6 +383,7 @@ func get_mechanic_popup() -> MechanicPopup:
 
 
 func _on_pause_opened() -> void:
+	_music.set_paused(true)
 	if _player != null:
 		_player.reset_movement_input_state()
 		_player.clear_input_buffers()
@@ -392,6 +394,7 @@ func _on_pause_opened() -> void:
 
 
 func _on_pause_resumed() -> void:
+	_music.set_paused(false)
 	_hud02.set_pause_visible(false)
 	_player.clear_input_buffers()
 	_player.clear_external_force()
@@ -820,6 +823,7 @@ func _restart_level() -> void:
 		_hud02.set_polarity(_player.is_positive())
 		_hud02.show_toast("本关已重新开始", 1.2)
 	_update_level_hud()
+	_music.play(true)
 
 
 ## Completion page: "进入第三关". One accepted request per completion; the
@@ -831,6 +835,7 @@ func _on_next_level_requested() -> void:
 		return
 	_next_level_started = true
 	_footstep_stop()
+	_music.stop(0.0)
 	if _pause_menu != null:
 		_pause_menu.prepare_scene_change()
 	if _hud02 != null:
@@ -848,6 +853,7 @@ func _return_to_main_menu() -> void:
 		return
 	_scene_leaving = true
 	_footstep_stop()
+	_music.stop(0.0)
 	if _pause_menu != null:
 		_pause_menu.prepare_scene_change()
 	if _hud02 != null:
@@ -888,6 +894,7 @@ func _try_complete_at_exit() -> void:
 	_footstep_stop()
 	_completion_count += 1
 	DemoAudio.play_complete()
+	_music.stop(BaseLevelMusic.STOP_FADE_SECONDS)
 	_exit.set_gate_available(false)
 	_exit.set_completed(true)
 	_player.clear_input_buffers()
@@ -1038,6 +1045,10 @@ func get_hud() -> Level02HUD:
 
 func get_footstep_audio() -> Node:
 	return _footsteps
+
+
+func get_music() -> BaseLevelMusic:
+	return _music
 
 
 func get_bays() -> Array[StarCoreBayInteractable]:

@@ -13,6 +13,8 @@ extends CharacterBody2D
 
 signal state_changed(anim: StringName, frame: int, frame_count: int)
 signal polarity_changed(positive: bool)
+## Emitted when a chapter locks the toggle and the player still presses Q.
+signal polarity_toggle_denied
 signal reset_performed(reason: String, count: int)
 
 const STATE_IDLE: StringName = &"idle"
@@ -58,6 +60,9 @@ const RUN_ANIM_THRESHOLD: float = 12.0
 
 ## Formal levels hide the debug +/- glyph above the head; the color talisman
 ## remains. Default true keeps every existing prototype unchanged.
+## Chapter-level lock; DLC2 disables the free toggle so fields/wisps are the
+## only phase changes. The base three levels keep the default true.
+@export var allow_polarity_toggle: bool = true
 @export var show_head_polarity: bool = true:
 	set(value):
 		show_head_polarity = value
@@ -217,7 +222,10 @@ func _physics_process(delta: float) -> void:
 		_update_movement_intent()
 
 	if not _input_override_active and Input.is_action_just_pressed(&"polarity"):
-		_toggle_polarity()
+		if allow_polarity_toggle:
+			_toggle_polarity()
+		else:
+			polarity_toggle_denied.emit()
 
 	if absf(_move_input_axis) > 0.01:
 		_set_facing(1 if _move_input_axis > 0.0 else -1)
@@ -534,6 +542,9 @@ func get_kill_y() -> float:
 
 
 func _toggle_polarity() -> void:
+	# Each owning chapter already plays the shared DemoAudio switch cue from its
+	# polarity_changed handler (gated by the real toggle counter). Keeping the
+	# cue here as well would double-play it on every Q press.
 	_positive = not _positive
 	_polarity_toggle_count += 1
 	_ring_time = 0.0

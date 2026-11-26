@@ -47,36 +47,36 @@ const DEFAULT_DEMO_FPS: float = 8.0
 const TIPS: Dictionary = {
 	"polarity": {
 		"title": "相性 / 符石",
-		"body": "同相推开，异相拉近。\n按 Q 换相，借符石之力上高台、越坑。",
-		"key": "Q 切换相性 · 靠近符石生效",
+		"body": "同相推开，异相拉近。\n换相借力，用符石之力上高台、越坑。",
+		"key": "站在符石旁按 {Q} 换相，就能借力。",
 	},
 	"core_carry": {
 		"title": "运核入仓",
-		"body": "按 E 取核，核会变成与你相反的相性。\n用 Q 调节距离，把核领进空仓再按 E。",
-		"key": "E 取核 / 入仓 · Q 换相性",
+		"body": "取核后，核会变成与你相反的相性。\n借换相调节距离，把核送进空仓。",
+		"key": "按 {E} 取核或入仓，换相能调节距离。",
 	},
 	"relay_link": {
 		"title": "联动仓解锁",
 		"body": "中继仓入仓后，力线可以穿过石墙。\n把核送入联动仓，符石会记住它的颜色。",
-		"key": "E 入仓 · 借力符石上高台",
+		"key": "按 {E} 把核送入联动仓，再借符石之力上高台。",
 	},
 	"float_platform": {
 		"title": "浮地装置",
-		"body": "按 E 启动装置，石板升起并限时支撑。\n踩上后约 1 秒开始松动，别停太久。",
-		"key": "E 启动 / 重建浮地",
+		"body": "启动装置后，石板升起并限时支撑。\n踩上后约 1 秒开始松动，别停太久。",
+		"key": "按 {E} 启动装置，让它重新浮起。",
 	},
 	"guard_field": {
 		"pages": [
 			{
 				"title": "守卫吸附 · 无效伤害",
 				"body": "蓄力时异相被吸近、同相被弹开。\n异相普通攻击只碎壳、立刻重组，不计伤害。",
-				"key": "Q 换相性 · 被吸近 / 被弹开",
+				"key": "被吸近还是被弹开，取决于相性是否相反。",
 				"demo": "guard_invalid",
 			},
 			{
 				"title": "守卫 · 有效伤害",
-				"body": "趁蓄力被吸近，按 J 命中胸口弱点。\n命中 1 点真伤后守卫换相。\n再按 Q 切回异相；累计 3 点。",
-				"key": "J 命中弱点 · 命中后 Q 再切异相",
+				"body": "趁蓄力被吸近，用攻击命中胸口弱点。\n命中 1 点真伤后守卫换相。\n再换成异相；累计 3 点。",
+				"key": "贴身后按 {J} 命中弱点，命中后换回异相。",
 				"demo": "guard_valid",
 			},
 		],
@@ -142,10 +142,14 @@ var _demo_rect: TextureRect = null
 var _demo_atlas: AtlasTexture = null
 var _title_label: Label = null
 var _body_label: Label = null
-var _key_label: Label = null
+## Key/footer rows render inline keycaps, so they are RichTextLabel while the
+## title/body stay plain Labels.  Tests read plain copy.
+var _key_label: RichTextLabel = null
 var _divider: ColorRect = null
 var _page_indicator: Label = null
-var _footer_label: Label = null
+var _footer_label: RichTextLabel = null
+var _key_raw: String = ""
+var _footer_raw: String = ""
 var _skip_bar: SkipHoldBar = null
 var _font: Font = null
 var _reveal: UiReveal = null
@@ -234,11 +238,21 @@ func get_body_text() -> String:
 	return _body_label.text if _body_label != null else ""
 
 
+## Plain copy for tests/logs: {Q}/{J}/{E}/{F} become Q/J/E/F, never [img].
 func get_key_text() -> String:
-	return _key_label.text if _key_label != null else ""
+	return KeyGlyph.plain(_key_raw)
 
 
 func get_footer_text() -> String:
+	return KeyGlyph.plain(_footer_raw)
+
+
+## Rendered BBCode; harnesses can assert the inline keycap is really present.
+func get_key_rich_text() -> String:
+	return _key_label.text if _key_label != null else ""
+
+
+func get_footer_rich_text() -> String:
 	return _footer_label.text if _footer_label != null else ""
 
 
@@ -390,14 +404,16 @@ func _apply_page() -> void:
 	var data: Dictionary = _page_data(_current_id, _page_index)
 	_title_label.text = String(data.get("title", ""))
 	_body_label.text = String(data.get("body", ""))
-	_key_label.text = String(data.get("key", ""))
+	_key_raw = String(data.get("key", ""))
+	_key_label.text = KeyGlyph.decorate(_key_raw)
 	if _footer_label != null:
 		if _page_count <= 1:
-			_footer_label.text = "F 继续 · 长按空格 跳过"
+			_footer_raw = "{F} 继续 · 长按空格 跳过"
 		elif _page_index + 1 < _page_count:
-			_footer_label.text = "F 下一页 · 长按空格 跳过"
+			_footer_raw = "{F} 下一页 · 长按空格 跳过"
 		else:
-			_footer_label.text = "F 关闭 · 长按空格 跳过"
+			_footer_raw = "{F} 关闭 · 长按空格 跳过"
+		_footer_label.text = KeyGlyph.decorate(_footer_raw)
 	if _page_indicator != null:
 		_page_indicator.visible = _page_count > 1
 		_page_indicator.text = "%d / %d" % [_page_index + 1, _page_count]
@@ -661,17 +677,18 @@ func _build_ui() -> void:
 	_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_panel.add_child(_body_label)
 
-	_key_label = _label("", Vector2(RIGHT_X, 108.0), Vector2(RIGHT_WIDTH, 42.0), 12, CYAN)
-	_key_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_key_label = _rich_label(
+		Vector2(RIGHT_X, 108.0), Vector2(RIGHT_WIDTH, 42.0), 12, CYAN
+	)
+	_key_label.name = "Key"
 	_panel.add_child(_key_label)
 
-	_footer_label = _label(
-		"F 继续 · 长按空格 跳过",
-		Vector2(16.0, 210.0),
-		Vector2(400.0, 18.0),
-		12,
-		DIM
+	_footer_label = _rich_label(
+		Vector2(16.0, 210.0), Vector2(400.0, 18.0), 12, DIM
 	)
+	_footer_label.name = "Footer"
+	_footer_raw = "{F} 继续 · 长按空格 跳过"
+	_footer_label.text = KeyGlyph.decorate(_footer_raw)
 	_panel.add_child(_footer_label)
 
 	# Shared hold-to-skip feedback (same 96x6 track, gold fill and 12 px label
@@ -701,4 +718,28 @@ func _label(
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
 	label.add_theme_constant_override("outline_size", 0)
+	return label
+
+
+## Key/footer row: same 12 px pixel font/colour, BBCode on so {Q}/{J}/{E}/{F}
+## become inline 16x16 caps.  Fixed height, no scrolling, no fit-to-content.
+func _rich_label(
+	position_value: Vector2, size_value: Vector2, font_size: int, color: Color
+) -> RichTextLabel:
+	var label: RichTextLabel = RichTextLabel.new()
+	label.position = position_value
+	label.size = size_value
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.bbcode_enabled = true
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.scroll_active = false
+	label.fit_content = false
+	label.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	if _font != null:
+		label.add_theme_font_override("normal_font", _font)
+	label.add_theme_font_size_override("normal_font_size", font_size)
+	label.add_theme_color_override("default_color", color)
+	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
+	label.add_theme_constant_override("outline_size", 0)
+	label.add_theme_constant_override("line_separation", 3)
 	return label

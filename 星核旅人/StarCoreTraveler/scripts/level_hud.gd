@@ -271,7 +271,7 @@ func show_toast(text_value: String, duration: float = 1.6) -> void:
 		if not _opening_active and not _completion_active:
 			_objective.text = _objective_base
 		return
-	var event_duration: float = clampf(duration, 0.2, 1.4)
+	var event_duration: float = clampf(duration, 0.2, 2.6)
 	if _opening_active:
 		_pending_event_text = text_value
 		_pending_event_left = event_duration
@@ -299,6 +299,8 @@ func show_completion(value: bool, completion_count: int = 0) -> void:
 		return
 	_completion_overlay.visible = value
 	_completion_active = value
+	if _header != null:
+		_header.visible = not value
 	if value:
 		_play_completion_reveal()
 		_event_left = 0.0
@@ -422,5 +424,6 @@ func get_completion_text() -> String:
 	return _completion_title.text if _completion_title != null else ""
 
 
+## The old permanent bottom controls legend is gone; pause shows the bindings.
 func get_controls_text() -> String:
-	return "A/D 移动   左Shift 奔跑   空格 跳跃   Q 切换   F 交谈   R 重来   Esc 暂停"
+	return "移动、奔跑、跳跃与换相都在暂停页。"

@@ -37,14 +37,14 @@ const MECHANIC_DEMO_DIR: String = "res://dlc/ui/demos"
 const MECHANIC_TIPS: Dictionary = {
 	"trial_guard_deny": {
 		"title": "只碎壳的一击",
-		"body": "守卫的壳由星核余烬凝成。\n同相或未蓄力的 J 只碎壳。\n等它蓄力、切异相、贴近再打，才会留下真伤。",
-		"key": "普通命中不计伤害 · 等蓄力",
+		"body": "守卫的壳由星核余烬凝成。\n同相或未蓄力的攻击只碎壳。\n等它蓄力、切异相、贴近再打，才会留下真伤。",
+		"key": "等它蓄力、换成异相再打，才会留下真伤。",
 		"demo": "trial_guard_hit",
 	},
 	"trial_guard_hit": {
 		"title": "守卫的胸口余烬",
-		"body": "守卫胸口锁着星核余烬。\n蓄力时用引力把你拖近；切异相。\n被吸近后 J 打弱点；每次真伤后换相。",
-		"key": "蓄力时异相 J · 共 3 次",
+		"body": "守卫胸口锁着星核余烬。\n蓄力时用引力把你拖近；切异相。\n被吸近后攻击弱点；每次真伤后换相。",
+		"key": "蓄力时换成异相，被吸近后按 {J} 打弱点。",
 		"demo": "trial_guard_hit",
 	},
 }
@@ -423,13 +423,13 @@ func _update_objective() -> void:
 		text = "目标：触碰完成点"
 		key = "finish"
 	elif _arena_entered:
-		text = "目标：击败守卫（异相 J 有效）"
+		text = "目标：击败守卫（异相攻击有效）"
 		key = "arena"
 	elif _player.global_position.x >= 540.0:
 		text = "目标：前往守卫竞技场"
 		key = "approach"
 	elif _player.global_position.x >= 300.0:
-		text = "目标：再按 Q 回澜相，穿过青门"
+		text = "目标：换相回澜相，穿过青门"
 		key = "cyan_gate"
 	else:
 		text = "目标：触碰晶体，换辉相过金门"
@@ -575,13 +575,13 @@ func _show_attack_result_hint(result: Dictionary) -> void:
 	match String(result.get("code", "")):
 		"SHELL_SHATTER":
 			_shell_shatter_pending = true
-			_hud.show_event("仅碎壳 · 蓄力时异相 J 才掉血", 1.4)
+			_hud.show_event("仅碎壳 · 蓄力时异相攻击才掉血", 1.4)
 		"SAME_PHASE":
-			_hud.show_event("同相无效 · Q 切异相再按 J", 1.4)
+			_hud.show_event("同相无效 · 换成异相再攻击", 1.4)
 		"MISS_RANGE":
-			_hud.show_event("距离不够 · 贴近守卫再按 J", 1.4)
+			_hud.show_event("距离不够 · 贴近守卫再攻击", 1.4)
 		"MISS_BEHIND":
-			_hud.show_event("转身面向守卫再按 J", 1.4)
+			_hud.show_event("转身面向守卫再攻击", 1.4)
 		"BLOCKED":
 			_hud.show_event("守卫被石柱挡住 · 换个角度", 1.4)
 		_:
@@ -614,7 +614,7 @@ func _on_guard_shattered() -> void:
 
 func _on_guard_charge_started(_positive: bool) -> void:
 	_audio.play_charge()
-	_hud.show_event("引力蓄力 · 异相 J 有效", 1.2)
+	_hud.show_event("引力蓄力 · 异相攻击有效", 1.2)
 
 
 func _on_guard_slam_contact(_facing: int) -> void:

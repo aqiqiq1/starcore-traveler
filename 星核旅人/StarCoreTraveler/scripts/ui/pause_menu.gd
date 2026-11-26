@@ -49,7 +49,8 @@ var _restart_button: PixelMenuButton = null
 var _return_button: PixelMenuButton = null
 var _quit_button: PixelMenuButton = null
 var _controls_header: Label = null
-var _controls_labels: Array[Label] = []
+## Key-column rows are RichTextLabel (inline keycaps); action names stay Label.
+var _controls_labels: Array[Control] = []
 var _font: Font = null
 var _reveal: UiReveal = null
 
@@ -133,7 +134,10 @@ func get_controls_text() -> String:
 	var lines: Array[String] = []
 	for row: Variant in controls_rows:
 		if row is Array and (row as Array).size() >= 2:
-			lines.append("%s  %s" % [String((row as Array)[0]), String((row as Array)[1])])
+			lines.append("%s  %s" % [
+				String((row as Array)[0]),
+				KeyGlyph.plain(String((row as Array)[1])),
+			])
 	return "\n".join(lines)
 
 
@@ -145,9 +149,15 @@ func has_controls_section() -> bool:
 ## settings host, whose approved menu typography is intentionally separate).
 func get_control_label_font_sizes() -> Array[int]:
 	var sizes: Array[int] = []
-	for label: Label in _controls_labels:
-		if label != null:
-			sizes.append(label.get_theme_font_size("font_size"))
+	for control: Control in _controls_labels:
+		if control == null:
+			continue
+		if control is RichTextLabel:
+			sizes.append(
+				(control as RichTextLabel).get_theme_font_size("normal_font_size")
+			)
+		else:
+			sizes.append(control.get_theme_font_size("font_size"))
 	return sizes
 
 
@@ -508,12 +518,10 @@ func _build_ui() -> void:
 	for row: Variant in controls_rows:
 		if not (row is Array) or (row as Array).size() < 2:
 			continue
-		var keys_label: Label = _label(
+		var keys_label: RichTextLabel = _keys_label(
 			String((row as Array)[1]),
 			Vector2(262.0, row_y),
-			Vector2(130.0, 16.0),
-			12,
-			TEXT
+			Vector2(130.0, 16.0)
 		)
 		_panel.add_child(keys_label)
 		_controls_labels.append(keys_label)
@@ -530,7 +538,7 @@ func _build_ui() -> void:
 		row_y += row_step
 
 	var route_hint: Label = _label(
-		"Esc 逐层返回 · 设置与显示确认仍会暂停游戏",
+		"逐层返回 · 设置与显示确认仍会暂停游戏",
 		Vector2(262.0, 260.0 if controls_rows.size() > 9 else 246.0),
 		Vector2(236.0, 32.0),
 		12,
@@ -572,6 +580,28 @@ func _label(
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
 	label.add_theme_constant_override("outline_size", 2)
+	return label
+
+
+## Key column: {Q}/{J}/{E}/{F} become inline 16x16 caps.  Same 12 px pixel font
+## as the rest of the pause page, fixed height, no scroll/fit.
+func _keys_label(text_value: String, position_value: Vector2, size_value: Vector2) -> RichTextLabel:
+	var label: RichTextLabel = RichTextLabel.new()
+	label.bbcode_enabled = true
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.scroll_active = false
+	label.fit_content = false
+	label.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	label.position = position_value
+	label.size = size_value
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if _font != null:
+		label.add_theme_font_override("normal_font", _font)
+	label.add_theme_font_size_override("normal_font_size", 12)
+	label.add_theme_color_override("default_color", TEXT)
+	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
+	label.add_theme_constant_override("outline_size", 2)
+	label.text = KeyGlyph.decorate(text_value)
 	return label
 
 

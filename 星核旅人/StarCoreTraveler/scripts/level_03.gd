@@ -59,6 +59,7 @@ const KEY_CORE_SHEET: Texture2D = preload("res://assets/level03_prototype/key_co
 @onready var _checkpoint: LevelCheckpoint = $BufferCheckpoint
 @onready var _link: BayRuneLink = $LinkController
 @onready var _rune_field: RuneStoneField = $RuneField
+@onready var _music: BaseLevelMusic = $BaseLevelMusic
 
 var _pause_menu = null
 var _completed: bool = false
@@ -295,15 +296,15 @@ func _setup_pause_menu() -> void:
 	_pause_menu.display_settings_path = pause_display_settings_path
 	_pause_menu.controls_rows = [
 		["移动", "A / D · ← / →"],
-		["奔跑", "左Shift"],
-		["跳跃", "空格"],
-		["切换相性", "Q"],
-		["挥击", "J（异相有效）"],
-		["操作 / 取核 / 嵌核", "E"],
-		["对白 / 跳过", "F继续 · 长按空格跳过整段"],
+		["奔跑", "{SHIFT}"],
+		["跳跃", "{SPACE}"],
+		["切换相性", "{Q}"],
+		["挥击（异相）", "{J}"],
+		["操作 / 取核", "{E}"],
+		["对白 / 翻页", "{F}"],
 		["失败恢复", "最近稳定点"],
-		["整关重来", "R"],
-		["暂停菜单", "Esc"],
+		["整关重来", "{R}"],
+		["暂停菜单", "{ESC}"],
 	]
 	add_child(_pause_menu)
 	_pause_menu.restart_requested.connect(_restart_level)
@@ -931,6 +932,7 @@ func before_pause_opened() -> void:
 
 
 func _on_pause_opened() -> void:
+	_music.set_paused(true)
 	# A decided second-hit retry is NOT cancelled by opening pause. Its 0.15 s
 	# countdown is frozen by the tree pause and resumes into one recovery.
 	# Only the visible red/reaction/knockback is cleared here.
@@ -951,6 +953,7 @@ func _on_pause_opened() -> void:
 
 
 func _on_pause_resumed() -> void:
+	_music.set_paused(false)
 	_hud03.set_pause_visible(false)
 	_player.clear_input_buffers()
 	_player.clear_external_force()
@@ -1033,6 +1036,7 @@ func _complete_city() -> void:
 	_clear_retry_pending()
 	DemoAudio.play_complete()
 	_audio.stop_all()
+	_music.stop(BaseLevelMusic.STOP_FADE_SECONDS)
 	if _cine.is_active():
 		_cine.abort()
 	_guard.set_suspended(true)
@@ -1320,6 +1324,7 @@ func _restart_level() -> void:
 	_hud03.show_event("本关已重新开始", 1.4)
 	_hud03.show_control_hint(3.0)
 	_update_level_hud()
+	_music.play(true)
 
 
 ## Demo-end page: "重玩本关". The page's own button signal is the only source.
@@ -1370,6 +1375,7 @@ func _return_to_main_menu() -> void:
 		return
 	_scene_leaving = true
 	_hud03.set_completion_buttons_enabled(false)
+	_music.stop(0.0)
 	_hud03.release_completion_focus()
 	_hud03.set_pause_visible(false)
 	if _cine.is_active():
@@ -1511,6 +1517,10 @@ func get_hud() -> L3HUD:
 
 func get_footstep_audio() -> Node:
 	return _footsteps
+
+
+func get_music() -> BaseLevelMusic:
+	return _music
 
 
 func get_camera() -> Camera2D:

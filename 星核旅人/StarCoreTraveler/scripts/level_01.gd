@@ -57,6 +57,7 @@ const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popu
 @onready var _hud: Level01HUD = $HUD
 @onready var _menu: StartMenu = $StartMenu
 @onready var _menu_camera: Camera2D = $MenuCamera
+@onready var _music: BaseLevelMusic = $BaseLevelMusic
 
 var _pause_menu = null
 var _start_position: Vector2 = Vector2.ZERO
@@ -190,13 +191,13 @@ func _setup_pause_menu() -> void:
 		_pause_menu.display_settings_path = pause_display_settings_path
 	_pause_menu.controls_rows = [
 		["移动", "A / D · ← / →"],
-		["奔跑", "左Shift"],
-		["跳跃", "空格"],
-		["切换相性", "Q"],
-		["交谈 / 翻页", "F（未显完先补全文）"],
-		["开场对白", "F继续 · 长按空格跳过整段"],
-		["重来本关", "R"],
-		["暂停菜单", "Esc"],
+		["奔跑", "{SHIFT}"],
+		["跳跃", "{SPACE}"],
+		["切换相性", "{Q}"],
+		["交谈 / 取核", "{E}"],
+		["阅读 / 翻页", "{F}"],
+		["重来本关", "{R}"],
+		["暂停菜单", "{ESC}"],
 	]
 	add_child(_pause_menu)
 	_pause_menu.restart_requested.connect(_restart_level)
@@ -287,6 +288,10 @@ func _footstep_stop() -> void:
 func _begin_intro(reset_player: bool) -> void:
 	_completed = false
 	_footstep_stop()
+	# Music belongs to actual gameplay, not the integrated title page.  Both
+	# entering from the menu and R pass through here, so each run starts the
+	# whole-loop track from its first frame.
+	_music.play(true)
 	if _opening != null:
 		_opening.abort()
 	_intro_active = true
@@ -415,6 +420,7 @@ func _restart_level() -> void:
 
 
 func _on_pause_opened() -> void:
+	_music.set_paused(true)
 	if _intro_active and _opening != null and _opening.is_active():
 		# Freeze in place: do not finish the run or close the page. The tree
 		# pause stops the opening's own timers; re-assert the movement lock and
@@ -432,6 +438,7 @@ func _on_pause_opened() -> void:
 
 
 func _on_pause_resumed() -> void:
+	_music.set_paused(false)
 	_hud.set_pause_visible(false)
 	_player.clear_input_buffers()
 	_player.clear_external_force()
@@ -466,6 +473,7 @@ func _on_next_level_requested() -> void:
 		return
 	_next_level_started = true
 	_footstep_stop()
+	_music.stop(0.0)
 	if _opening != null:
 		_opening.abort()
 	_refresh_exit_gate_available()
@@ -481,6 +489,7 @@ func _return_to_main_menu() -> void:
 		return
 	_scene_leaving = true
 	_footstep_stop()
+	_music.stop(0.0)
 	if _opening != null:
 		_opening.abort()
 	_refresh_exit_gate_available()
@@ -543,6 +552,7 @@ func _on_exit_reached() -> void:
 	_footstep_stop()
 	_completion_count += 1
 	DemoAudio.play_complete()
+	_music.stop(BaseLevelMusic.STOP_FADE_SECONDS)
 	_exit.set_completed(true)
 	_refresh_exit_gate_available()
 	_set_guides_suspended(true)
@@ -615,6 +625,10 @@ func get_hud() -> Level01HUD:
 
 func get_footstep_audio() -> Node:
 	return _footsteps
+
+
+func get_music() -> BaseLevelMusic:
+	return _music
 
 
 func get_camera() -> Camera2D:

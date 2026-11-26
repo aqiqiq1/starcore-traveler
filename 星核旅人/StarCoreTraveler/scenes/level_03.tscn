@@ -1,6 +1,7 @@
-[gd_scene load_steps=27 format=3]
+[gd_scene load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://scripts/level_03.gd" id="1_level"]
+[ext_resource type="Script" path="res://scripts/audio/base_level_music.gd" id="26_music"]
 [ext_resource type="Script" path="res://scripts/level03/l3_hud.gd" id="2_hud"]
 [ext_resource type="PackedScene" path="res://scenes/level03/l3_player.tscn" id="3_player"]
 [ext_resource type="PackedScene" path="res://scenes/level02_bay.tscn" id="4_bay"]
@@ -253,3 +254,8 @@ script = ExtResource("16_audio")
 process_mode = 3
 layer = 10
 script = ExtResource("2_hud")
+
+[node name="BaseLevelMusic" type="Node" parent="."]
+script = ExtResource("26_music")
+track_name = "level_03_broken_bridge"
+autoplay = true

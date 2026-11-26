@@ -12,7 +12,8 @@ extends Node2D
 ##     player stands inside its zone it charges for 1.5 s, draws a tether and a
 ##     pulsing ring, then dives and flips the player's phase.  On a matching
 ##     light bridge that removes the deck under the player, so the threat is a
-##     real fall unless they Q back or clear the wisp first;
+##     real fall unless they retreat, use an arena crystal, or clear the wisp
+##     first.  Q is locked in this chapter;
 ##   - outside hazard_mode it keeps the original 3.0 s push/pull pulse;
 ##   - one J hit destroys it (no true-damage requirement, no phase requirement).
 ##     The hit is resolved by the chapter from the player's real attack hit

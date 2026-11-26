@@ -1,6 +1,7 @@
-[gd_scene load_steps=31 format=3]
+[gd_scene load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://scripts/level_01.gd" id="1_level"]
+[ext_resource type="Script" path="res://scripts/audio/base_level_music.gd" id="30_music"]
 [ext_resource type="Script" path="res://scripts/level_hud.gd" id="2_hud"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="3_player"]
 [ext_resource type="PackedScene" path="res://scenes/narrative/guide_echo.tscn" id="4_guide"]
@@ -313,3 +314,8 @@ position = Vector2(320, -180)
 enabled = false
 
 [node name="StartMenu" parent="." instance=ExtResource("18_menu")]
+
+[node name="BaseLevelMusic" type="Node" parent="."]
+script = ExtResource("30_music")
+track_name = "level_01_cloud_ruins"
+autoplay = false

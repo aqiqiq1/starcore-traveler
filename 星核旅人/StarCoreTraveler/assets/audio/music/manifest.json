@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "project": "Star Core Traveler",
+  "purpose": "Base campaign level BGM (level_01..03), whole-loop OGG.",
+  "generated_at_utc": "2026-11-26T09:49:33Z",
+  "generator": {
+    "path": "res://tools/generate_base_music.py",
+    "version": "1.0",
+    "sample_rate": 48000,
+    "channels": 2,
+    "target_peak_dbfs": -8.0,
+    "loop_seconds_range": [
+      55.0,
+      70.0
+    ],
+    "dependencies": [
+      "numpy",
+      "scipy",
+      "soundfile"
+    ]
+  },
+  "tracks": [
+    {
+      "level": "level_01",
+      "scene": "res://scenes/level_01.tscn",
+      "track_name": "level_01_cloud_ruins",
+      "title_zh": "云海遗迹",
+      "file": "assets/audio/music/level_01_cloud_ruins.ogg",
+      "format": "OGG Vorbis",
+      "loop": true,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bpm": 64.0,
+      "bars": 16,
+      "key": "D major add9 / B minor colour",
+      "duration_seconds": 60.0,
+      "peak_dbfs": -8.045,
+      "rms_dbfs": -23.024,
+      "loop_seam": {
+        "step": 0.00165592,
+        "p999_ratio": 0.101,
+        "first_0p5s_rms_dbfs": -24.82,
+        "last_0p5s_rms_dbfs": -25.05
+      },
+      "sha256": "7880dc8bc1d7f036879667b15ec4e0ff940061932caceca967f51ca7c2094efc",
+      "file_size_bytes": 1104354,
+      "generator": "res://tools/generate_base_music.py",
+      "generator_version": "1.0",
+      "seed": 6401,
+      "license": "Original procedural synthesis by this script; no third-party samples."
+    },
+    {
+      "level": "level_02",
+      "scene": "res://scenes/level_02.tscn",
+      "track_name": "level_02_silent_corridor",
+      "title_zh": "沉寂回廊",
+      "file": "assets/audio/music/level_02_silent_corridor.ogg",
+      "format": "OGG Vorbis",
+      "loop": true,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bpm": 72.0,
+      "bars": 20,
+      "key": "C minor (Phrygian b2 colour)",
+      "duration_seconds": 66.666667,
+      "peak_dbfs": -8.082,
+      "rms_dbfs": -24.638,
+      "loop_seam": {
+        "step": 0.00262238,
+        "p999_ratio": 0.171,
+        "first_0p5s_rms_dbfs": -23.09,
+        "last_0p5s_rms_dbfs": -23.98
+      },
+      "sha256": "f155c40d59dabcf1602b01fd5abd20581c2017c66acd6f2c2ce9d22106ccda52",
+      "file_size_bytes": 1258704,
+      "generator": "res://tools/generate_base_music.py",
+      "generator_version": "1.0",
+      "seed": 7202,
+      "license": "Original procedural synthesis by this script; no third-party samples."
+    },
+    {
+      "level": "level_03",
+      "scene": "res://scenes/level_03.tscn",
+      "track_name": "level_03_broken_bridge",
+      "title_zh": "断桥外郭",
+      "file": "assets/audio/music/level_03_broken_bridge.ogg",
+      "format": "OGG Vorbis",
+      "loop": true,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bpm": 84.0,
+      "bars": 24,
+      "key": "E minor (b2 / tritone tension)",
+      "duration_seconds": 68.571438,
+      "peak_dbfs": -8.06,
+      "rms_dbfs": -23.931,
+      "loop_seam": {
+        "step": 0.00068737,
+        "p999_ratio": 0.02,
+        "first_0p5s_rms_dbfs": -26.31,
+        "last_0p5s_rms_dbfs": -26.34
+      },
+      "sha256": "95467df62f743d3f73c05e5c53a93245e8b8c8fe111dc0e58dfda2fcce63c07c",
+      "file_size_bytes": 1289477,
+      "generator": "res://tools/generate_base_music.py",
+      "generator_version": "1.0",
+      "seed": 8403,
+      "license": "Original procedural synthesis by this script; no third-party samples."
+    }
+  ]
+}

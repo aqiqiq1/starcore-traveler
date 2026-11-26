@@ -10,9 +10,9 @@ extends Node2D
 ## Anti-crush rule: the deck never re-materialises inside the player's body.
 ## If the owner switches phase back while the body still overlaps the 10 px
 ## slab, solid collision waits until the body is clear (above or below), so a
-## quick Q press can never clamp, push or teleport the player.  The chapter
-## always places a safe lower shelf under the bridges; falling is a retry, not
-## a soft lock.
+## quick phase change can never clamp, push or teleport the player.  The
+## chapter has no PitFloor under the gaps; falling is a retry, not a soft
+## lock, because the bridge head is the reset point.
 ##
 ## Stabilised deck: killing the wisp assigned to this bridge sets a permanent
 ## "stable" flag.  The deck then stays solid for either phase (a pale locked
@@ -48,7 +48,8 @@ var _shape: CollisionShape2D = null
 var _solid: bool = false
 var _stabilized: bool = false
 ## A wisp flip holds the deck solid for a short reaction window, so the HUD's
-## "Q 换回" instruction is a real, playable save rather than a 0.14 s fall.
+## "retreat to the landing" instruction is a real, playable save rather than a
+## 0.14 s fall.  Q is locked in this chapter.
 var _hold_solid_left: float = 0.0
 var _flash: float = 0.0
 var _dissolve: float = 0.0
@@ -97,7 +98,7 @@ func _physics_process(delta: float) -> void:
 		_solid = solid_now
 		_apply_collision()
 		# Both directions get 0.15-0.22 s of feedback; collision is applied
-		# first, so pressing Q still removes the deck on the same tick.
+		# first, so a wisp flip still removes the deck on the same tick.
 		if _solid:
 			_flash = 1.0
 		else:
@@ -192,7 +193,7 @@ func set_stabilized(value: bool) -> void:
 
 ## Called by the chapter when its assigned wisp flips the player.  The deck
 ## stays solid for `seconds` even though the phase no longer matches, so the
-## player can see the HUD line and press Q to recover.  If they do not, the
+## player can see the HUD line and retreat to the landing.  If they do not, the
 ## normal phase check resumes and the deck dissolves at the end of the window.
 func hold_solid(seconds: float) -> void:
 	if _stabilized:
@@ -370,8 +371,8 @@ func _draw() -> void:
 		draw_rect(Rect2(tick_x, h - 2.0, 1.0, 1.0), Color(0.0, 0.0, 0.0, 0.35))
 		tick_x += 8.0
 	if _hold_solid_left > 0.0:
-		# Short grace after a wisp flip: a white pulse says "still standing, Q
-		# now" without changing the phase colour of the deck.
+		# Short grace after a wisp flip: a white pulse says "still standing,
+		# retreat now" without changing the phase colour of the deck.
 		var grace: float = 0.5 + 0.5 * sin(_time * 18.0)
 		draw_rect(Rect2(0.0, 0.0, w, h), Color(1.0, 1.0, 1.0, 0.12 + 0.14 * grace))
 	if _flash > 0.0:

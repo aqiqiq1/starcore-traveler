@@ -13,12 +13,12 @@ extends Node2D
 ##   2. sweeping light band    (0.80 s warning)
 ##   3. summon 1-2 rift wisps  (1.00 s warning)
 ##
-## Three accepted hits = one death: the current stage is restored at its
-## entrance and one of the run's three hearts is spent.  At zero hearts a game
-## over page offers 重试本章 / 返回标题; R restarts the chapter and resets the
-## hearts.  Completion shows "织机停转 · 用时 mm:ss"; E / Enter returns to the
-## title.  The exposed core is a 40x40 solid phase diamond and can only be hit
-## from a jump.
+## Three accepted hits spend one of the run's three lives: the health meter
+## empties, the current stage is restored at its entrance, and the life row
+## drops by one.  At zero lives a game over page offers 重试本章 / 返回标题; R
+## restarts the chapter and resets both lives and health.  Completion shows
+## "织机停转 · 用时 mm:ss"; E / Enter returns to the title.  The exposed core is
+## a 40x40 solid phase diamond and can only be hit from a jump.
 ##
 ## Reused, never modified: L3Player (J / hurt / fall), the shared DS03
 ## background, L3Terrain, CompactLevelHeader, the project font and palette, the
@@ -44,7 +44,7 @@ const LOOM_TIPS: Dictionary = {
 	"loom_fire_tip": {
 		"title": "地砖火道",
 		"body": "织机把城内火道接进地砖，喷焰前砖面先亮。\n看到亮砖就离开，横扫光带跳过去。",
-		"key": "离开发火砖 · 跳过光带",
+		"key": "先离开亮起的砖，再跳过横扫光带。",
 		"demo": "loom_fire",
 	},
 }
@@ -72,8 +72,10 @@ const GEAR_Y: float = 302.0
 const CORE_HITS_PER_STAGE: int = 3
 const MAX_STAGE: int = 3
 const PLAYER_HIT_LIMIT: int = 3
-## Three hearts for the whole run.  A death (three accepted hits, or a fall)
+## Three lives for the whole run.  A death (three accepted hits, or a fall)
 ## removes one and retries the current stage; the third death opens game over.
+## Health is a separate three-cell meter: hits empty it, and clearing stage 1
+## refills it once.
 const PLAYER_LIVES: int = 3
 ## Chapter-level grace after an accepted hit.  The shared L3Player owns 0.6 s;
 ## this covers the 0.6-0.95 s window the brief asked for.
@@ -273,8 +275,8 @@ func _setup_footsteps() -> void:
 	_footsteps.set_enabled_check(Callable(self, "_footsteps_allowed"))
 
 
-## The damage hearts above the player's head are only part of normal boss
-## gameplay.  They hide for every modal/transition state, including the tree
+## The health meter above the player's head is only part of normal boss
+## gameplay.  It hides for every modal/transition state, including the tree
 ## pauses owned by the guide and teaching popup.
 func _overhead_hits_suppressed() -> bool:
 	if not _boss_active:
@@ -483,8 +485,8 @@ func _start_boss() -> void:
 	_audio.start_music()
 	_audio.play_core_exposed()
 	_hud.set_gear_warning(false, 0.0)
-	_hud.show_event("星核织机启动 · 异相 J 打节点", 2.2)
-	_hud.set_objective("目标：异相 J 打掉两个节点")
+	_hud.show_event("星核织机启动 · 异相攻击打节点", 2.2)
+	_hud.set_objective("目标：用异相攻击打掉两个节点")
 	_update_hud_state()
 	_core_burst_played = false
 
@@ -504,7 +506,7 @@ func _on_node_broken(_node: LoomNode) -> void:
 		_core.set_exposed(true)
 		_audio.play_core_exposed()
 		_hud.show_event("节点停转 · 核心暴露", 2.0)
-		_hud.set_objective("目标：核心暴露 · 异相 J 打核心")
+		_hud.set_objective("目标：核心暴露 · 异相攻击打核心")
 		# The first exposure gets one 0.3 s white flash and a few sparks; the
 		# core then reads from its solid phase diamond and opened net only.
 		if not _core_burst_played:
@@ -517,7 +519,7 @@ func _resolve_core_hit(snapshot_positive: bool) -> void:
 	if snapshot_positive == _core.get_phase():
 		_core.flash_shield()
 		_audio.play_deny()
-		_hud.show_event("同相无效 · Q 切异相再打核心", 1.4)
+		_hud.show_event("同相无效 · 换相成异相再打核心", 1.4)
 		return
 	_core_hits += 1
 	_core.flash_hit()
@@ -553,15 +555,16 @@ func _advance_stage() -> void:
 	_stage_flash = 1.0
 	_audio.play_stage()
 	_audio.play_core_exposed()
-	# One-time city supply: the stage-1 clear clears the hit counter.  A later
-	# death retries the current stage, so this never becomes an infinite heal.
+	# One-time city supply: the stage-1 clear refills the three-cell health
+	# meter.  A later death retries the current stage, so this never becomes an
+	# infinite mid-fight heal.
 	if _stage == 2 and not _stage_supply_used:
 		_stage_supply_used = true
 		_player_hits = 0
-		_hud.show_event("阶段推进 · 城垣补给：受击清零", 2.4)
+		_hud.show_event("阶段推进 · 城垣补给：生命值补满", 2.4)
 	else:
 		_hud.show_event("阶段推进 · 节点重生", 2.0)
-	_hud.set_objective("目标：异相 J 打掉两个节点")
+	_hud.set_objective("目标：用异相攻击打掉两个节点")
 	_update_hud_state()
 
 
@@ -592,10 +595,10 @@ func _update_objective(force: bool = false) -> void:
 		text = "目标：向右进入织机厅"
 		key = "enter"
 	elif _core.is_exposed():
-		text = "目标：核心暴露 · 异相 J 打核心"
+		text = "目标：核心暴露 · 异相攻击打核心"
 		key = "core"
 	else:
-		text = "目标：异相 J 打掉两个节点"
+		text = "目标：用异相攻击打掉两个节点"
 		key = "nodes"
 	if key == _objective_key and not force:
 		return
@@ -879,7 +882,7 @@ func _on_player_attack_hit_window(swing_id: int, facing: int, positive: bool) ->
 	if positive == best_node.is_positive():
 		best_node.flash_deny()
 		_audio.play_deny()
-		_hud.show_event("同相弹开 · Q 切异相再按 J", 1.4)
+		_hud.show_event("同相弹开 · 换成异相再攻击", 1.4)
 		return
 	_audio.play_node_hit()
 	best_node.break_node()
@@ -922,7 +925,7 @@ func apply_enemy_hit(source_position: Vector2) -> bool:
 	_player_hits += 1
 	if is_instance_valid(DemoAudio):
 		DemoAudio.play_player_hurt()
-	_hud.show_event("受击 · 保护已启动", 1.2)
+	_hud.show_event("受击 · 生命值 -1", 1.2)
 	_update_hud_state()
 	if _player_hits >= PLAYER_HIT_LIMIT:
 		_retry_pending = true
@@ -951,7 +954,7 @@ func _on_player_recovery_transition_requested(reason: String) -> void:
 func _begin_recovery(kind: String) -> void:
 	if _recovery_active or _completed or _scene_leaving or _game_over:
 		return
-	# One recovery == one death.  The heart row is the only read of the new
+	# One recovery == one death.  The life row is the only read of the new
 	# count; stage progress and the one-time stage-1 supply are not restored.
 	_lives = maxi(_lives - 1, 0)
 	_update_hud_state()
@@ -1087,7 +1090,7 @@ func _reset_current_stage() -> void:
 	_core.set_exposed(false)
 	_core.set_phase(_stage % 2 == 1)
 	_respawn_nodes()
-	_hud.set_objective("目标：异相 J 打掉两个节点")
+	_hud.set_objective("目标：用异相攻击打掉两个节点")
 	_update_hud_state()
 
 
@@ -1640,7 +1643,7 @@ func debug_set_stage(stage: int) -> void:
 	_core.set_exposed(false)
 	_core.set_phase(stage % 2 == 1)
 	_respawn_nodes()
-	_hud.set_objective("目标：异相 J 打掉两个节点")
+	_hud.set_objective("目标：用异相攻击打掉两个节点")
 	_update_hud_state()
 
 

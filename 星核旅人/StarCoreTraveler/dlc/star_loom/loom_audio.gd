@@ -13,6 +13,15 @@ extends Node
 ## the file is absent the chapter is simply silent; no warning, no error.
 
 const MUSIC_PATH: String = "res://dlc/audio/music/loom_boss.ogg"
+## Light city-hall reverb.  Every local music/SFX player is routed to this bus;
+## the shared DemoAudio cues stay on their approved Master routing.
+const REVERB_BUS_NAME: String = "LoomReverb"
+const REVERB_ROOM: float = 0.60
+const REVERB_WET: float = 0.20
+const REVERB_DRY: float = 0.85
+const REVERB_DAMPING: float = 0.45
+const REVERB_SPREAD: float = 0.35
+const REVERB_PREDELAY_MSEC: float = 35.0
 ## The generated track peaks at -8.05 dBFS.  A -6 dB player gain leaves the
 ## final peak at about -14.05 dBFS: audible under the fight cues, without
 ## pushing the Master bus.  The .import sidecar is left at loop=false; looping
@@ -75,6 +84,7 @@ var _hit_plays: int = 0
 
 
 func _ready() -> void:
+	_ensure_reverb_bus()
 	_node_hit = _make_player("NodeHit", NODE_HIT, 0.0)
 	_bullet = _make_player("Bullet", NODE_HIT, -8.0)
 	_bullet.pitch_scale = 0.74
@@ -92,6 +102,35 @@ func _ready() -> void:
 	_setup_music()
 
 
+## Idempotent: a chapter restart or a second scene in one process reuses the
+## same bus and only repairs a missing/wrong reverb effect.
+func _ensure_reverb_bus() -> void:
+	var index: int = AudioServer.get_bus_index(REVERB_BUS_NAME)
+	if index < 0:
+		AudioServer.add_bus()
+		index = AudioServer.bus_count - 1
+		AudioServer.set_bus_name(index, REVERB_BUS_NAME)
+		AudioServer.set_bus_send(index, "Master")
+	var effect: AudioEffectReverb = _find_reverb(index)
+	if effect == null:
+		effect = AudioEffectReverb.new()
+		AudioServer.add_bus_effect(index, effect)
+	effect.room_size = REVERB_ROOM
+	effect.wet = REVERB_WET
+	effect.dry = REVERB_DRY
+	effect.damping = REVERB_DAMPING
+	effect.spread = REVERB_SPREAD
+	effect.predelay_msec = REVERB_PREDELAY_MSEC
+
+
+func _find_reverb(index: int) -> AudioEffectReverb:
+	for effect_index: int in range(AudioServer.get_bus_effect_count(index)):
+		var effect: AudioEffect = AudioServer.get_bus_effect(index, effect_index)
+		if effect is AudioEffectReverb:
+			return effect as AudioEffectReverb
+	return null
+
+
 func _make_player(
 	player_name: String, stream: AudioStream, volume_db: float
 ) -> AudioStreamPlayer:
@@ -99,6 +138,7 @@ func _make_player(
 	player.name = player_name
 	player.stream = stream
 	player.volume_db = volume_db
+	player.bus = REVERB_BUS_NAME
 	add_child(player)
 	return player
 
@@ -118,6 +158,7 @@ func _setup_music() -> void:
 	_music.name = "Music"
 	_music.stream = stream as AudioStream
 	_music.volume_db = MUSIC_DB
+	_music.bus = REVERB_BUS_NAME
 	# The guide and teaching popup pause the tree.  Music must keep running
 	# through those pages, so the player itself is ALWAYS; the pause page then
 	# pauses it explicitly through stream_paused.
@@ -293,6 +334,35 @@ func shutdown() -> void:
 
 
 # --- read API for tests ----------------------------------------------------
+
+func get_reverb_bus_name() -> String:
+	return REVERB_BUS_NAME
+
+
+func get_reverb_bus_index() -> int:
+	return AudioServer.get_bus_index(REVERB_BUS_NAME)
+
+
+func has_reverb_bus() -> bool:
+	return get_reverb_bus_index() >= 0
+
+
+func get_reverb_effect() -> AudioEffectReverb:
+	var index: int = get_reverb_bus_index()
+	if index < 0:
+		return null
+	return _find_reverb(index)
+
+
+func get_player_bus(player_name: String) -> String:
+	for player: AudioStreamPlayer in [
+		_node_hit, _bullet, _node_break, _core_hit, _core_exposed, _deny,
+		_telegraph, _sweep, _summon, _fire, _gear, _stage, _complete, _music,
+	]:
+		if player != null and player.name == player_name:
+			return player.bus
+	return ""
+
 
 func get_telegraph_play_count() -> int:
 	return _telegraph_plays

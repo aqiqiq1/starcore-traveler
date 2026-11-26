@@ -9,26 +9,26 @@ extends DlcGuide
 ## the matching `open_guide()` gate.  Both demo ids are real 24-frame captures
 ## recorded from the formal star_loom scene into dlc/ui/demos/.
 ##
-## Page 1 is the world/goal page; page 2 folds the three-hit protection, the
-## stage-1 supply, the current-stage retry and the gear/wisp answers into one
-## page.  This removes the old entry/core teaching popups: every instruction
-## now has exactly one home in a run.
+## Page 1 is the world/goal page; page 2 explains the separate three-cell
+## health meter, the one-time stage-1 refill, the current-stage retry and the
+## gear/wisp answers in one page.  This removes the old entry/core teaching
+## popups: every instruction now has exactly one home in a run.
 
-## Copy source: dlc/UI_PARITY_SPEC.md section 3 (星核织机), condensed from the
-## approved four-page copy.  Every body line stays within 21 full-width
-## characters; ASCII and digits count as half-width.  Widths are recorded in
-## tests/README.md.
+## Copy source: dlc/UI_PARITY_SPEC.md section 3 (星核织机), with the key rows
+## rewritten as natural sentences per dlc/REWORK2_20261126.md.  Every body line
+## stays within 21 full-width characters; ASCII and digits count as half-width.
+## Widths are recorded in tests/README.md.
 const LOOM_PAGES: Array = [
 	{
 		"title": "星核织机",
 		"body": "织机以星核为梭，把全城命脉织进经线。\n打停两节点→打暴露核心；核心受创换相。",
-		"key": "异相 J 打节点 · 核心换相",
+		"key": "先看清相位，再绕到节点的异相一侧挥剑。",
 		"demo": "loom_nodes",
 	},
 	{
 		"title": "城垣的护持",
-		"body": "城内星核护你三次；3 次受击才失败。\n阶段 1 结束补一次；失败从当前阶段重开。\n齿轮跳过，浮灵用 J 清。",
-		"key": "3 次受击 · 齿轮跳过 · J 清浮灵",
+		"body": "生命值三格，每受击掉一格；三格耗尽折一命。\n阶段 1 结束补满；失败从当前阶段重开。\n齿轮跳过，浮灵用攻击清。",
+		"key": "跳过齿轮，用攻击清掉浮灵。",
 		"demo": "loom_gear",
 	},
 ]

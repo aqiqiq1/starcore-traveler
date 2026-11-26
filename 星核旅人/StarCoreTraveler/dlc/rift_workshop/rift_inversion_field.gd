@@ -7,7 +7,7 @@ extends Node2D
 ## Rules:
 ##   - entering the curtain (Area2D body_entered, player only) flips the player
 ##     exactly once;
-##   - staying inside never flips again, even if the player presses Q inside;
+##   - staying inside never flips again; Q is locked in this chapter;
 ##   - leaving re-arms the field, so the same curtain can be used again.
 ##
 ## The field never reads input, never hurts and never blocks movement: it only

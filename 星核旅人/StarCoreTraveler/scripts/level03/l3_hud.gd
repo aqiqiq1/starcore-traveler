@@ -164,11 +164,11 @@ func _build_completion() -> void:
 	_completion_panel = panel
 	_completion_panel_base = panel.position
 
-	var title: Label = _label("感谢游玩", Vector2(0.0, 12.0), Vector2(400.0, 34.0), 24, GOLD)
+	var title: Label = _label("第三关完成", Vector2(0.0, 12.0), Vector2(400.0, 34.0), 24, GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(title)
 	_completion_title = title
-	var subtitle: Label = _label("本次试玩到此结束", Vector2(0.0, 50.0), Vector2(400.0, 18.0), 12, TEXT)
+	var subtitle: Label = _label("断桥外郭 · 城门在望", Vector2(0.0, 50.0), Vector2(400.0, 18.0), 12, TEXT)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(subtitle)
 	_completion_subtitle = subtitle
@@ -185,6 +185,11 @@ func _build_completion() -> void:
 	_completion_replay = _menu_button("重玩本关", Vector2(120.0, 126.0), Vector2(160.0, 24.0), PixelMenuButton.Variant.OPTION)
 	_completion_replay.pressed.connect(func() -> void: replay_requested.emit())
 	panel.add_child(_completion_replay)
+	var completion_footer: Label = _label(
+		"本章结算 · 暂停菜单可查看操作", Vector2(0.0, 158.0), Vector2(400.0, 16.0), 12, DIM
+	)
+	completion_footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	panel.add_child(completion_footer)
 	_completion_hint = null
 	_completion_primary.focus_next = _completion_primary.get_path_to(_completion_replay)
 	_completion_primary.focus_previous = _completion_primary.get_path_to(_completion_replay)
@@ -243,7 +248,7 @@ func set_hits(value: int) -> void:
 
 func show_event(text_value: String, duration: float = 1.4) -> void:
 	# Event replaces the objective on the same line for at most 1.4 s.
-	_event_left = clampf(duration, 0.2, 1.4)
+	_event_left = clampf(duration, 0.2, 2.6)
 	if _objective != null:
 		_objective.text = text_value
 	if _guide != null:
@@ -432,8 +437,6 @@ func get_completion_hint_text() -> String:
 	return _completion_hint.text if _completion_hint != null else ""
 
 
+## The old permanent bottom controls legend is gone; pause shows the bindings.
 func get_controls_text() -> String:
-	return (
-		"A/D 移动   左Shift 奔跑   空格 跳跃   Q 切换相性   "
-		+ "J 挥击   E 操作/取核/嵌核   R 重来   Esc 暂停"
-	)
+	return "移动、奔跑、跳跃、换相、攻击与交互都在暂停页。"

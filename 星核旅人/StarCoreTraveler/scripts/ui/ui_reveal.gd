@@ -5,8 +5,9 @@ extends RefCounted
 ##
 ## The caller owns the real state: is_open()/unpause/focus must switch in the
 ## same frame as open()/close().  This helper only tweens the dimmer alpha and
-## the panel's 0.96 -> 1 scale / 4-6 px slide.  Open is 0.18 s ease-out; close
-## is 0.12 s with the reverse motion.  No bounce, blur or shader is used.
+## the panel's 4-6 px slide; the panel stays at 1.0 scale so text is never
+## resampled.  Open is 0.18 s ease-out; close is 0.12 s with the reverse motion.
+## No bounce, blur or shader is used.
 ##
 ## TWEEN_PAUSE_PROCESS keeps both directions running while the scene tree is
 ## paused.  On close the root stays visible only for the fade, with mouse input
@@ -14,7 +15,7 @@ extends RefCounted
 
 const OPEN_DURATION: float = 0.18
 const CLOSE_DURATION: float = 0.12
-const PANEL_SCALE_FROM: float = 0.96
+const PANEL_SCALE_FROM: float = 1.0
 const SLIDE_IN_PX: float = 5.0
 const SLIDE_OUT_PX: float = 3.0
 

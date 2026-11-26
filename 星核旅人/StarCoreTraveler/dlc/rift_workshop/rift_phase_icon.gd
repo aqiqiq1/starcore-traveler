@@ -1,9 +1,10 @@
 class_name RiftPhaseIcon
 extends Control
 
-## 16 x 16 phase icon for the rift HUD: gold sun = 辉相, cyan moon = 澜相.
-## The same reading as the trial gate / core icons (large emblem, no text),
-## reduced to the HUD's 16 px slot.  All pixels are drawn here; no texture.
+## 20 x 20 phase icon for the rift HUD: gold sun = 辉相, cyan moon = 澜相.
+## The same reading as the trial gate / core icons (large emblem, no text).
+## All pixels are drawn here; no texture.  The icon grew from 16 to 20 px in
+## the 2026-11-26 rework so the sun/moon state is readable at 640x360.
 
 const GOLD: Color = Color("#f4cd63")
 const CYAN: Color = Color("#5fe1e6")
@@ -15,8 +16,8 @@ var _positive: bool = true
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	custom_minimum_size = Vector2(16.0, 16.0)
-	size = Vector2(16.0, 16.0)
+	custom_minimum_size = Vector2(20.0, 20.0)
+	size = Vector2(20.0, 20.0)
 	queue_redraw()
 
 
@@ -37,7 +38,7 @@ func get_kind() -> String:
 
 
 func _draw() -> void:
-	var center: Vector2 = Vector2(8.0, 8.0)
+	var center: Vector2 = size * 0.5
 	if _positive:
 		_draw_sun(center)
 	else:
@@ -45,41 +46,39 @@ func _draw() -> void:
 
 
 func _draw_sun(center: Vector2) -> void:
-	# 11 px dark-rimmed disc + eight 2 px rays, inside 16 x 16.
-	_pixel_disc(center, 6, INK)
-	_pixel_disc(center, 5, GOLD)
-	# Four cardinal and four diagonal rays; alternate lengths keep the sun
-	# readable at 1x without a halo.
+	# 13 px dark-rimmed disc + eight 2 px rays, inside 20 x 20.
+	_pixel_disc(center, 7, INK)
+	_pixel_disc(center, 6, GOLD)
+	# Four cardinal rays and four short diagonal rays.
 	for offset: Vector2 in [
-		Vector2(-1.0, -7.0), Vector2(-1.0, 6.0),
-		Vector2(-7.0, -1.0), Vector2(6.0, -1.0),
+		Vector2(-1.0, -9.0), Vector2(-1.0, 8.0),
+		Vector2(-9.0, -1.0), Vector2(8.0, -1.0),
 	]:
 		draw_rect(Rect2(center + offset, Vector2(2.0, 2.0)), GOLD)
 	for offset: Vector2 in [
-		Vector2(-5.0, -5.0), Vector2(4.0, -5.0),
-		Vector2(-5.0, 4.0), Vector2(4.0, 4.0),
+		Vector2(-6.0, -6.0), Vector2(5.0, -6.0),
+		Vector2(-6.0, 5.0), Vector2(5.0, 5.0),
 	]:
 		draw_rect(Rect2(center + offset, Vector2(1.0, 1.0)), GOLD)
-	# White core + one highlight pixel: same hierarchy as the gate emblem.
+	# White core + one highlight pixel.
 	draw_rect(Rect2(center + Vector2(-1.0, -1.0), Vector2(3.0, 3.0)), WHITE)
-	draw_rect(Rect2(center + Vector2(2.0, -3.0), Vector2.ONE), Color(WHITE, 0.65))
+	draw_rect(Rect2(center + Vector2(2.0, -4.0), Vector2.ONE), Color(WHITE, 0.65))
 
 
 func _draw_moon(center: Vector2) -> void:
-	# 13 px crescent: a cyan disc minus a dark cut-out offset up-right.  The
-	# cut-out is ink, not transparent, so it reads on the bright sky.
-	_pixel_disc(center + Vector2(0.0, 0.0), 6, INK)
-	_pixel_disc(center + Vector2(0.0, 0.0), 5, CYAN)
-	_pixel_disc(center + Vector2(3.0, -1.0), 4, INK)
-	# Left rim light follows the same crescent edge.
-	for y: int in range(-5, 6):
-		var span: int = int(round(sqrt(maxf(25.0 - float(y * y), 0.0))))
+	# 15 px crescent: a cyan disc minus a dark cut-out offset up-right.
+	_pixel_disc(center, 7, INK)
+	_pixel_disc(center, 6, CYAN)
+	_pixel_disc(center + Vector2(3.0, -1.0), 5, INK)
+	# Left rim light follows the crescent edge.
+	for y: int in range(-6, 7):
+		var span: int = int(round(sqrt(maxf(36.0 - float(y * y), 0.0))))
 		draw_rect(
 			Rect2(center.x - float(span), center.y + float(y), 1.0, 1.0),
 			Color(CYAN.lightened(0.35), 0.9)
 		)
 	# Two 3 px stars, top-right and bottom-right; no text.
-	for star: Vector2 in [Vector2(4.0, -6.0), Vector2(6.0, 4.0)]:
+	for star: Vector2 in [Vector2(5.0, -8.0), Vector2(8.0, 5.0)]:
 		var origin: Vector2 = center + star
 		draw_rect(Rect2(origin, Vector2(3.0, 1.0)), WHITE)
 		draw_rect(Rect2(origin + Vector2(1.0, -1.0), Vector2(1.0, 3.0)), WHITE)

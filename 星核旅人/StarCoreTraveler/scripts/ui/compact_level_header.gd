@@ -1,12 +1,11 @@
 class_name CompactLevelHeader
 extends Control
 
-## Shared compact top header for the two formal levels.
+## Shared compact top header for the three formal levels.
 ##
 ## The approved sample layout is deliberately small:
 ##   title 12 px at (12, 7), chapter 12 px at (12, 23),
-##   right-side real 5x5 talisman PNG at 20x20 (exact 4x Nearest) and a 12 px
-##   affinity word immediately to its right.
+##   right-side 20x20 gold-sun / cyan-moon phase icon with no text.
 ## There is no panel, no "护符相性" caption, no large 24 px heading and no
 ## permanent "Q 切换" line. Every control ignores the mouse.
 
@@ -16,8 +15,9 @@ const TITLE_POSITION: Vector2 = Vector2(12.0, 7.0)
 const TITLE_SIZE: Vector2 = Vector2(240.0, 16.0)
 const SUBTITLE_POSITION: Vector2 = Vector2(12.0, 23.0)
 const SUBTITLE_SIZE: Vector2 = Vector2(240.0, 16.0)
-## 5 px source x 4 = 20 px; right edge 600, word starts 606, right margin 10.
-const ICON_POSITION: Vector2 = Vector2(580.0, 6.0)
+## Right-top slot: 20x20 icon, right edge 630, 10 px margin. The old affinity
+## word label is kept as a hidden data mirror for existing HUD/test callers.
+const ICON_POSITION: Vector2 = Vector2(610.0, 6.0)
 const ICON_SIZE: Vector2 = Vector2(20.0, 20.0)
 const AFFINITY_POSITION: Vector2 = Vector2(606.0, 8.0)
 const AFFINITY_SIZE: Vector2 = Vector2(24.0, 16.0)
@@ -30,14 +30,10 @@ const OUTLINE_DARK: Color = Color(0.015, 0.03, 0.035, 0.85)
 const GOLD: Color = Color("#f4cd63")
 const CYAN: Color = Color("#5fe1e6")
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
-const GOLD_TEXTURE_PATH: String = "res://assets/talisman/talisman_gold.png"
-const CYAN_TEXTURE_PATH: String = "res://assets/talisman/talisman_cyan.png"
-const GOLD_TEXTURE: Texture2D = preload("res://assets/talisman/talisman_gold.png")
-const CYAN_TEXTURE: Texture2D = preload("res://assets/talisman/talisman_cyan.png")
 
 var _title_label: Label
 var _subtitle_label: Label
-var _icon: TextureRect
+var _icon: PolarityPhaseIcon
 var _affinity_label: Label
 var _font_override: Font
 var _title_text: String = ""
@@ -83,20 +79,19 @@ func _build() -> void:
 	_subtitle_label.name = "CompactSubtitle"
 	add_child(_subtitle_label)
 
-	_icon = TextureRect.new()
+	_icon = PolarityPhaseIcon.new()
 	_icon.name = "AffinityIcon"
 	_icon.position = ICON_POSITION
 	_icon.size = ICON_SIZE
 	_icon.custom_minimum_size = ICON_SIZE
-	_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_icon.stretch_mode = TextureRect.STRETCH_SCALE
-	_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_icon.texture = GOLD_TEXTURE
 	add_child(_icon)
 
+	# Hidden data mirror: the visible phase read is icon-only, while older HUDs
+	# and tests can still query "辉相/澜相" through get_affinity_text().
 	_affinity_label = _make_label(AFFINITY_POSITION, AFFINITY_SIZE, GOLD, font)
 	_affinity_label.name = "AffinityText"
+	_affinity_label.visible = false
 	add_child(_affinity_label)
 	_apply_text()
 	_apply_polarity()
@@ -146,7 +141,7 @@ func _apply_text() -> void:
 
 func _apply_polarity() -> void:
 	if _icon != null:
-		_icon.texture = GOLD_TEXTURE if _positive else CYAN_TEXTURE
+		_icon.set_positive(_positive)
 	if _affinity_label != null:
 		_affinity_label.text = "辉相" if _positive else "澜相"
 		_affinity_label.add_theme_color_override("font_color", GOLD if _positive else CYAN)
@@ -168,14 +163,14 @@ func get_affinity_color() -> Color:
 	return _affinity_label.get_theme_color("font_color") if _affinity_label != null else GOLD
 
 
+## Kept for older callers; the header now draws the badge instead of loading a
+## talisman texture.
 func get_icon_texture_path() -> String:
-	if _icon == null or _icon.texture == null:
-		return ""
-	return _icon.texture.resource_path
+	return ""
 
 
 func get_icon_texture() -> Texture2D:
-	return _icon.texture if _icon != null else null
+	return null
 
 
 func get_icon_size() -> Vector2:
@@ -183,7 +178,28 @@ func get_icon_size() -> Vector2:
 
 
 func get_icon_source_size() -> Vector2:
-	return _icon.texture.get_size() if _icon != null and _icon.texture != null else Vector2.ZERO
+	return _icon.get_icon_size() if _icon != null else Vector2.ZERO
+
+
+func get_phase_icon() -> PolarityPhaseIcon:
+	return _icon
+
+
+## "sun" for 辉相, "moon" for 澜相; icon-only HUD read.
+func get_phase_kind() -> String:
+	if _icon != null:
+		return _icon.get_kind()
+	return "sun" if _positive else "moon"
+
+
+func get_phase_color() -> Color:
+	if _icon != null:
+		return _icon.get_phase_color()
+	return GOLD if _positive else CYAN
+
+
+func is_phase_text_visible() -> bool:
+	return _affinity_label != null and _affinity_label.visible
 
 
 func get_icon_rect() -> Rect2:

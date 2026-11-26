@@ -66,7 +66,7 @@ Public domain and free to use, personal or commercial. Credit is not required bu
 
 - 字体：正式两关 HUD、教程石碑、第一关残响对白与菜单提示使用本地 `assets/fonts/tutorial_zh.ttf`（Fusion Pixel 12px Prop zh-Hans，作者 TakWolf，SIL Open Font License 1.1）；旧英文 debug 界面仍可显示 ASCII。来源、校验值和许可原文见 `docs/TUTORIAL_FONT_SOURCE.md` 与 `assets/fonts/tutorial_font_LICENSE.txt`。
 - 引擎：Godot 4.7.2 stable（`D:\Godot\Godot_v4.7.2-stable_win64_console.exe` / GUI 同名无 `_console` 版本）。
-- 声音/音乐：未使用。
+- 声音/音乐：基础三关 BGM 为项目内原创程序化合成（`tools/generate_base_music.py` → `assets/audio/music/level_01..03_*.ogg`），使用 numpy/scipy，无第三方采样；三首曲子为本次原创，许可说明见 `tools/base_music_reference_notes.md`。DLC 环境音乐为另一批已批准程序化生成器产物。
 - 生成工具：Python 3（`D:\minic\envs\2024212971\python.exe`）只用于离线切图/像素审计/截图拼图，不进入游戏运行时。
 - 截图：`screenshots/` 下 22 张基础房 640×360 PNG 是运行中 Godot 根视口的实际捕获（01–20 为 pre-walk legacy，21–22 为 post-walk）；另有 4 张 `anchor_01`–`04` 借力房捕获（2定帧+2脚本物理运行静帧）。`CONTACT_SHEET.png` 是 01–22 实际捕获的 1.5× 最近邻拼图，`WALK_ADDENDUM.png` 是 21/22 的 2× 拼图；`docs/anchor_audit.png` 是源帧 + 护符叠加的审计图，**不是引擎截图**，图中已标注。
 

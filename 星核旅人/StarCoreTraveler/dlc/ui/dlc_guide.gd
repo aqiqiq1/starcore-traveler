@@ -51,42 +51,42 @@ const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 const PAGES: Dictionary = {
 	"trial": [
 		{
-			"title": "极性门：晶体与 Q",
-			"body": "试炼场的门由星核的辉、澜两面铸成。\n只放同相的人通过，门前立着相性晶体。\n第一道门靠晶体翻相；第二道门按 Q 换相。",
-			"key": "晶体=第一把钥匙 · Q=第二把",
+			"title": "门只放同相的人",
+			"body": "试炼场的门由星核的辉、澜两面铸成。\n只放同相的人通过，门前立着相性晶体。\n第一道门靠晶体翻相；第二道门靠换相。",
+			"key": "与门同色时按 {Q} 换相，门就会打开。",
 			"demo": "trial_gate",
 		},
 		{
 			"title": "门内的相性",
 			"body": "门只认相性：同相放行，异相拦停。\n门上大号日/月图标就是所需相性。\n门内换相不会被夹住，离开后才恢复。",
-			"key": "同相才放行 · 门内切相不夹",
+			"key": "门里换相不会被夹住，走出去后门才重新合拢。",
 			"demo": "trial_gate_inside",
 		},
 		{
 			"title": "守卫的胸口余烬",
-			"body": "守卫胸口锁着星核余烬，蓄力时以引力拖近。\n蓄力时 Q 切异相，被吸近后 J 打弱点 ×3。\n两次受击失败，试炼场送你回入口。",
-			"key": "蓄力时异相 J · 2 次受击重试",
+			"body": "守卫胸口锁着星核余烬，蓄力时以引力拖近。\n蓄力时换相，被吸近后用攻击打弱点 ×3。\n两次受击失败，试炼场送你回入口。",
+			"key": "等它蓄力时换成异相，贴近后按 {J} 打弱点。",
 			"demo": "trial_guard_hit",
 		},
 	],
 	"rift": [
 		{
 			"title": "路线：回廊 → 光桥 → 守卫",
-			"body": "穿过紫色光幕与极性门，按相性跨过三座光桥。\n高台尽头记录检查点，然后进入双生守卫竞技场。",
-			"key": "Q 换相 · 紫色光幕会自动翻转相性",
+			"body": "星核裂开时留下紫幕，穿过会把相性翻面。\n门只认同相；这一章无法自由换相。\n看清门上的日/月，让紫幕把相性翻成同相。",
+			"key": "穿过紫幕翻相，同相才能过门。",
 			"demo": "rift_inversion",
 		},
 		{
 			"title": "反转场与相性桥",
-			"body": "紫色光幕进入即反转一次，停在幕内不重复翻转。\n光桥同相才实体化；异相消失会落到下层。",
-			"key": "Q 换相 · 与桥同色才能站上去",
+			"body": "光桥只认同相，先用攻击熄灭桥上的光灵。\n光灵熄灭后，这座桥会一直亮着。\n俯冲的光灵会翻相，别停在桥上。",
+			"key": "先熄桥上的光灵，再过桥；俯冲会翻相。",
 			"demo": "rift_bridge",
 		},
 		{
-			"title": "双生守卫：两只都要打",
-			"body": "两只都要打：蓄力时异相 J 命中弱点 3 次。\n每次真伤后守卫换相，再按 Q 切回异相。\n两只都倒才开核心；失败/坠落时两只完整重生。",
-			"key": "J 命中弱点 · 每只 3 点真伤",
-			"demo": "rift_twins",
+			"title": "双面镜",
+			"body": "双面镜的金、青两面盘护着中央核心。\n只有异相攻击能打碎面盘，同相会弹开。\n两面都碎后攻击核心三次；共三个阶段。",
+			"key": "用异相攻击碎面盘，再打核心三次。",
+			"demo": "rift_mirror",
 		},
 	],
 }
@@ -106,8 +106,12 @@ var _demo_rect: TextureRect = null
 var _demo_placeholder: Label = null
 var _title_label: Label = null
 var _body_label: Label = null
-var _key_label: Label = null
-var _footer_label: Label = null
+## Key/footer rows render inline keycaps, so they are RichTextLabel.  The raw
+## copy keeps {Q}/{J}/{F} placeholders; the plain copy feeds tests/logs.
+var _key_label: RichTextLabel = null
+var _footer_label: RichTextLabel = null
+var _key_raw: String = ""
+var _footer_raw: String = ""
 var _page_indicator: Label = null
 var _skip_bar: SkipHoldBar = null
 var _font: Font = null
@@ -180,6 +184,31 @@ func _label(
 	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
 	label.add_theme_constant_override("outline_size", 0)
 	label.add_theme_constant_override("line_spacing", 3)
+	return label
+
+
+## Key/footer row: the same 12 px pixel font and colour, but BBCode so a {Q}
+## placeholder can become an inline 16x16 keycap.  Height stays fixed by the
+## caller; the label never scrolls and never grows the panel.
+func _rich_label(
+	position_value: Vector2, size_value: Vector2, font_size: int, color: Color
+) -> RichTextLabel:
+	var label: RichTextLabel = RichTextLabel.new()
+	label.position = position_value
+	label.size = size_value
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.bbcode_enabled = true
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.scroll_active = false
+	label.fit_content = false
+	label.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	if _font != null:
+		label.add_theme_font_override("normal_font", _font)
+	label.add_theme_font_size_override("normal_font_size", font_size)
+	label.add_theme_color_override("default_color", color)
+	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
+	label.add_theme_constant_override("outline_size", 0)
+	label.add_theme_constant_override("line_separation", 3)
 	return label
 
 
@@ -272,15 +301,16 @@ func _build_ui() -> void:
 	_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_panel.add_child(_body_label)
 
-	_key_label = _label("", Vector2(RIGHT_X, 108.0), Vector2(RIGHT_WIDTH, 38.0), 12, CYAN)
+	_key_label = _rich_label(Vector2(RIGHT_X, 108.0), Vector2(RIGHT_WIDTH, 38.0), 12, CYAN)
 	_key_label.name = "Key"
-	_key_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_panel.add_child(_key_label)
 
-	_footer_label = _label(
-		"F 下一页 · 长按空格 跳过", Vector2(16.0, 210.0), Vector2(420.0, 18.0), 12, DIM
+	_footer_label = _rich_label(
+		Vector2(16.0, 210.0), Vector2(420.0, 18.0), 12, DIM
 	)
 	_footer_label.name = "Footer"
+	_footer_raw = "{F} 下一页 · 长按空格 跳过"
+	_footer_label.text = KeyGlyph.decorate(_footer_raw)
 	_panel.add_child(_footer_label)
 
 	_skip_bar = SkipHoldBar.new()
@@ -323,11 +353,21 @@ func get_body_text() -> String:
 	return _body_label.text if _body_label != null else ""
 
 
+## Plain copy for tests/logs: {Q}/{J}/{F} become Q/J/F, never [img] markup.
 func get_key_text() -> String:
-	return _key_label.text if _key_label != null else ""
+	return KeyGlyph.plain(_key_raw)
 
 
 func get_footer_text() -> String:
+	return KeyGlyph.plain(_footer_raw)
+
+
+## Rendered BBCode; harnesses can assert the inline keycap is really present.
+func get_key_rich_text() -> String:
+	return _key_label.text if _key_label != null else ""
+
+
+func get_footer_rich_text() -> String:
 	return _footer_label.text if _footer_label != null else ""
 
 
@@ -521,15 +561,17 @@ func _apply_page() -> void:
 	var data: Dictionary = _current_page()
 	_title_label.text = String(data.get("title", ""))
 	_body_label.text = String(data.get("body", ""))
-	_key_label.text = String(data.get("key", ""))
+	_key_raw = String(data.get("key", ""))
+	_key_label.text = KeyGlyph.decorate(_key_raw)
 	_load_demo(String(data.get("demo", "")))
 	var count: int = get_page_count()
 	_page_indicator.text = "%d / %d" % [_page_index + 1, count]
-	_footer_label.text = (
-		"F 下一页 · 长按空格 跳过"
+	_footer_raw = (
+		"{F} 下一页 · 长按空格 跳过"
 		if _page_index + 1 < count
-		else "F 关闭 · 长按空格 跳过"
+		else "{F} 关闭 · 长按空格 跳过"
 	)
+	_footer_label.text = KeyGlyph.decorate(_footer_raw)
 
 
 # --- Demo strip ------------------------------------------------------------

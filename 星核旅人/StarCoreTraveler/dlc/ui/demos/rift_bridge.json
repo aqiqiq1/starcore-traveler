@@ -14,6 +14,6 @@
 	"frame_width": 256,
 	"frames": 24,
 	"id": "rift_bridge",
-	"note": "Formal rift terrace. Real Q materialises the gold deck, the player walks on, Q again dissolves it and the body falls to the safe lower shelf.",
+	"note": "Formal rift terrace. The old clip shows the phase deck and a hovering wisp; in the current chapter the player kills the deck wisp with J to make the bridge permanent instead of pressing Q.",
 	"source": "formal DLC scene, real input/state"
 }

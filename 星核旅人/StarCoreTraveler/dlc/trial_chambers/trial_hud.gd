@@ -405,7 +405,7 @@ func _build_completion() -> void:
 	panel.add_child(_completion_replay)
 
 	_completion_note = _label(
-		"本章结算 · Esc 可打开暂停菜单",
+		"本章结算 · 暂停菜单可查看操作",
 		Vector2(0.0, 158.0), Vector2(400.0, 16.0), 12, DIM
 	)
 	_completion_note.name = "CompletionNote"
@@ -606,6 +606,11 @@ func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 	if _completion_overlay == null:
 		return
 	_completion_overlay.visible = value
+	if _header != null:
+		_header.visible = not value
+	if _event_label != null:
+		_event_label.visible = not value
+	set_hit_pips_visible(not value)
 	_completion_title.text = "试炼完成 · 用时 %s" % _format_time(elapsed_seconds)
 	if value:
 		_completion_tween = _play_reveal(

@@ -1,10 +1,10 @@
 class_name LoomPhaseIcon
 extends Control
 
-## 16x16 top-right affinity marker: gold sun for 辉相, cyan moon for 澜相.
+## 20x20 top-right affinity marker: gold sun for 辉相, cyan moon for 澜相.
 ## No text; the same shared glyph geometry as the exposed core.
 
-const ICON_SIZE: Vector2 = Vector2(16.0, 16.0)
+const ICON_SIZE: Vector2 = Vector2(20.0, 20.0)
 const GOLD: Color = Color("#f4cd63")
 const CYAN: Color = Color("#5fe1e6")
 const WHITE: Color = Color(1.0, 0.98, 0.94, 1.0)
@@ -40,14 +40,14 @@ func get_phase_color() -> Color:
 
 
 func _draw() -> void:
-	var center: Vector2 = Vector2(8.0, 8.0)
+	var center: Vector2 = Vector2(10.0, 10.0)
 	if _positive:
 		for pixel: Dictionary in LoomPhaseGlyph.sun_pixels(
-			center, 5, 4, [6.0, 7.0], INK, GOLD, GOLD, WHITE
+			center, 6, 5, [8.0], INK, GOLD, GOLD, WHITE
 		):
 			draw_rect(pixel["rect"], pixel["color"])
 	else:
 		for pixel: Dictionary in LoomPhaseGlyph.moon_pixels(
-			center, 7, 6, Vector2(5.0, -4.0), 6, INK, CYAN
+			center, 9, 8, Vector2(7.0, -6.0), 7, INK, CYAN
 		):
 			draw_rect(pixel["rect"], pixel["color"])

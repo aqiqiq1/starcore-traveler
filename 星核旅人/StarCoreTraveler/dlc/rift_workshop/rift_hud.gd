@@ -32,13 +32,10 @@ const PAUSE_PANEL_SIZE: Vector2 = Vector2(360.0, 236.0)
 const COMPLETION_PANEL_POSITION: Vector2 = Vector2(120.0, 75.0)
 const COMPLETION_PANEL_SIZE: Vector2 = Vector2(400.0, 210.0)
 const PAUSE_SUBTITLE: String = "裂隙工坊 · 支线裂隙"
-const COMPLETION_SUBTITLE: String = "双生守卫归寂，裂隙核心重新入睡。"
+const COMPLETION_SUBTITLE: String = "双面镜碎裂，裂隙核心重新入睡。"
 const PAUSE_FOOTER: String = "返回主界面不保存本章进度"
-const COMPLETION_FOOTER: String = "本章结算 · Esc 可打开暂停菜单"
+const COMPLETION_FOOTER: String = "本章结算 · 暂停菜单可查看操作"
 const PANEL_ANIM_TIME: float = UiReveal.OPEN_DURATION
-const LEGEND_TEXT: String = (
-	"金/青=相性 · 紫幕=换相 · 引力=吸附 · 胸口菱形=弱点 · 蓄力+异相 J=真伤"
-)
 
 var _root: Control
 var _header: CompactLevelHeader
@@ -74,7 +71,8 @@ const HEALTH_PULSE_TIME: float = 1.0
 var _phase_icon: RiftPhaseIcon
 var _heart_shadow: RiftHeartShadow
 var _hit_pips: HitPips
-var _legend: RiftLegend
+var _boss_status: RiftBossStatus
+var _q_denied: RiftQDeniedIcon
 var _font: Font
 var _subtitle: String = ""
 var _completion_visible: bool = false
@@ -83,61 +81,7 @@ var _health_target: Node2D = null
 var _health_visible: bool = true
 var _last_hits: int = 0
 var _health_pulse_left: float = 0.0
-
-
-## Small permanent element legend under the event line.  Drawn by the HUD
-## itself (no panel): a gold/cyan pair for the two phases, a purple bar for the
-## inversion curtain, a ring for the gravity field and a diamond for the
-## weakpoint.  It is a read-only hint, not an interactable control.
-class RiftLegend extends Control:
-	const LEGEND_GOLD: Color = Color("#f4cd63")
-	const LEGEND_CYAN: Color = Color("#5fe1e6")
-	const LEGEND_PURPLE: Color = Color("#b98cff")
-	const LEGEND_TEXT_COLOR: Color = Color("#a4b3be")
-	const LEGEND_SHADOW: Color = Color(0.006, 0.014, 0.018, 0.92)
-	const LEGEND_SIZE: Vector2 = Vector2(616.0, 14.0)
-
-	var font: Font = null
-
-	func _ready() -> void:
-		position = Vector2(12.0, 58.0)
-		size = LEGEND_SIZE
-		mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	func _draw() -> void:
-		if font == null:
-			return
-		_diamond(Vector2(5.0, 7.0), 3.5, LEGEND_GOLD)
-		_diamond(Vector2(15.0, 7.0), 3.5, LEGEND_CYAN)
-		_text("金/青 相性", 21.0)
-		draw_rect(Rect2(78.0, 3.0, 4.0, 9.0), Color(LEGEND_PURPLE, 0.95))
-		_text("紫幕换相", 86.0)
-		draw_arc(Vector2(136.0, 7.0), 5.0, 0.0, TAU, 14, LEGEND_GOLD, 1.0)
-		_text("引力吸附", 144.0)
-		_diamond(Vector2(196.0, 7.0), 3.5, Color(1.0, 0.98, 0.9))
-		_text("弱点", 204.0)
-		_text("· 蓄力时异相 J 才真伤", 232.0)
-
-	func _text(value: String, x: float) -> void:
-		draw_string(
-			font, Vector2(x + 1.0, 12.0), value,
-			HORIZONTAL_ALIGNMENT_LEFT, -1.0, 10, LEGEND_SHADOW
-		)
-		draw_string(
-			font, Vector2(x, 11.0), value,
-			HORIZONTAL_ALIGNMENT_LEFT, -1.0, 10, LEGEND_TEXT_COLOR
-		)
-
-	func _diamond(center: Vector2, radius: float, color: Color) -> void:
-		draw_colored_polygon(
-			PackedVector2Array([
-				center + Vector2(0.0, -radius),
-				center + Vector2(radius, 0.0),
-				center + Vector2(0.0, radius),
-				center + Vector2(-radius, 0.0),
-			]),
-			color
-		)
+var _boss_visible: bool = false
 
 
 func _ready() -> void:
@@ -151,8 +95,9 @@ func _ready() -> void:
 	add_child(_root)
 	_build_header()
 	_build_event()
+	_build_boss_status()
 	_build_hit_pips()
-	_build_legend()
+	_build_q_denied()
 	_build_recovery_cover()
 	_build_completion()
 	_build_pause()
@@ -318,7 +263,7 @@ func _build_header() -> void:
 	_root.add_child(_header)
 	_header.configure(TITLE, DEFAULT_OBJECTIVE, _font)
 	_header.set_polarity(false)
-	# The shared header's talisman + "辉相/澜相" word is replaced by one 16x16
+	# The shared header's talisman + "辉相/澜相" word is replaced by one 20x20
 	# sun/moon emblem, matching the gate/core icon language and carrying no text.
 	var affinity_text: Control = _header.get_node_or_null("AffinityText") as Control
 	if affinity_text != null:
@@ -328,8 +273,8 @@ func _build_header() -> void:
 		affinity_icon.visible = false
 	_phase_icon = RiftPhaseIcon.new()
 	_phase_icon.name = "PhaseIcon"
-	_phase_icon.position = Vector2(614.0, 8.0)
-	_phase_icon.size = Vector2(16.0, 16.0)
+	_phase_icon.position = Vector2(610.0, 6.0)
+	_phase_icon.size = Vector2(20.0, 20.0)
 	_root.add_child(_phase_icon)
 	_phase_icon.set_positive(false)
 
@@ -364,11 +309,20 @@ func _build_hit_pips() -> void:
 	_hit_pips.pivot_offset = _hit_pips.size * 0.5
 
 
-func _build_legend() -> void:
-	_legend = RiftLegend.new()
-	_legend.name = "ElementLegend"
-	_legend.font = _font
-	_root.add_child(_legend)
+func _build_boss_status() -> void:
+	_boss_status = RiftBossStatus.new()
+	_boss_status.name = "BossStatus"
+	_boss_status.position = Vector2(252.0, 3.0)
+	_boss_status.size = Vector2(340.0, 28.0)
+	_boss_status.font = _font
+	_boss_status.visible = false
+	_root.add_child(_boss_status)
+
+
+func _build_q_denied() -> void:
+	_q_denied = RiftQDeniedIcon.new()
+	_q_denied.name = "QDeniedIcon"
+	_root.add_child(_q_denied)
 
 
 func _build_recovery_cover() -> void:
@@ -581,6 +535,56 @@ func set_polarity(positive: bool) -> void:
 		_phase_icon.set_positive(positive)
 
 
+func set_boss_visible(value: bool) -> void:
+	_boss_visible = value
+	if _boss_status != null:
+		_boss_status.visible = value
+
+
+func is_boss_visible() -> bool:
+	return _boss_visible and _boss_status != null and _boss_status.visible
+
+
+func set_boss_state(
+	phase_index: int, phase_count: int, core_hp: int, max_core: int,
+	gold_intact: bool, cyan_intact: bool, exposed: bool
+) -> void:
+	if _boss_status == null:
+		return
+	_boss_status.set_state(
+		phase_index, phase_count, core_hp, max_core,
+		gold_intact, cyan_intact, exposed
+	)
+
+
+func get_boss_status() -> RiftBossStatus:
+	return _boss_status
+
+
+func flash_q_denied(target: Node2D) -> void:
+	if _q_denied == null:
+		return
+	_q_denied.flash(target)
+
+
+func is_q_denied_visible() -> bool:
+	return _q_denied != null and _q_denied.is_showing()
+
+
+func get_q_denied_count() -> int:
+	return _q_denied.get_flash_count() if _q_denied != null else 0
+
+
+func get_q_denied_rect() -> Rect2:
+	return _q_denied.get_icon_rect() if _q_denied != null else Rect2()
+
+
+## The permanent "金/青 相性 …" legend row was removed in the 2026-11-26
+## rework.  The boss status row carries the only persistent icon state.
+func has_element_legend() -> bool:
+	return false
+
+
 ## hits_taken = 0 keeps both hearts filled; 1 removes one; 2 empties the row.
 ## A new hit starts the one-second follow-icon pulse.
 func set_player_hits(hits_taken: int, max_hits: int = 2) -> void:
@@ -661,6 +665,12 @@ func set_recovery_alpha(value: float) -> void:
 func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 	var changed: bool = value != _completion_visible
 	_completion_visible = value
+	if _header != null:
+		_header.visible = not value
+	if _event_label != null:
+		_event_label.visible = not value
+	if _hit_pips != null:
+		_hit_pips.visible = not value
 	if _completion_title != null:
 		_completion_title.text = "裂隙封闭 · 用时 %s" % _format_time(elapsed_seconds)
 	if _completion_root == null:
@@ -840,20 +850,6 @@ func get_hit_pips_rect() -> Rect2:
 	if _hit_pips == null:
 		return Rect2()
 	return Rect2(_hit_pips.position, _hit_pips.size)
-
-
-func is_legend_visible() -> bool:
-	return _legend != null and _legend.visible and _legend.font != null
-
-
-func get_legend_text() -> String:
-	return LEGEND_TEXT
-
-
-func get_legend_rect() -> Rect2:
-	if _legend == null:
-		return Rect2()
-	return Rect2(_legend.position, _legend.size)
 
 
 func get_pause_panel_alpha() -> float:
