@@ -40,11 +40,26 @@ var _time: float = 0.0
 var _weakpoint_ring_visible: bool = false
 var _attraction_line_visible: bool = false
 var _last_suspended: Dictionary = {}
+## Presentation cleanup counters.  They are read-only for tests and make the
+## true -> false redraw (the stale-frame fix) observable without inspecting the
+## renderer's internal canvas state.
+var _close_redraw_count: int = 0
+var _draw_count: int = 0
+var _last_draw_ring_count: int = 0
+var _last_draw_ring_centers: Array[Vector2] = []
 
 
 func _ready() -> void:
 	z_index = CUE_Z_INDEX
 	process_mode = Node.PROCESS_MODE_PAUSABLE
+
+
+## Nothing from this cue is allowed to outlive the chapter scene.  The canvas
+## goes away with the node, and the read state is cleared before that so a test
+## or a new scene never observes a stale "ring visible" flag.
+func _exit_tree() -> void:
+	_weakpoint_ring_visible = false
+	_attraction_line_visible = false
 
 
 func configure(player: Node2D, guards: Array) -> void:
@@ -67,9 +82,19 @@ func _process(delta: float) -> void:
 			ring = true
 			if _is_pulling(guard):
 				line = true
+	var changed: bool = ring != _weakpoint_ring_visible \
+		or line != _attraction_line_visible
 	_weakpoint_ring_visible = ring
 	_attraction_line_visible = line
-	if ring or line:
+	if changed:
+		# A state change in either direction must repaint.  In particular the
+		# true -> false edge (charge ended, guard died, guard suspended) used
+		# to leave the previous frame's corner brackets floating in the room.
+		if not (ring or line):
+			_close_redraw_count += 1
+		queue_redraw()
+	elif ring or line:
+		# Breathing animation and a moving chest need a fresh frame.
 		queue_redraw()
 
 
@@ -121,6 +146,9 @@ func _is_pulling(guard: L3Guard) -> bool:
 
 
 func _draw() -> void:
+	_draw_count += 1
+	_last_draw_ring_count = 0
+	_last_draw_ring_centers.clear()
 	var zoom: float = 1.0
 	var camera: Camera2D = get_viewport().get_camera_2d()
 	if camera != null:
@@ -132,7 +160,10 @@ func _draw() -> void:
 	for guard: L3Guard in _guards:
 		if not _is_guard_charging(guard):
 			continue
+		# The frame is anchored to the real chest, with no offset of its own.
 		var chest: Vector2 = guard.get_chest_global_position()
+		_last_draw_ring_count += 1
+		_last_draw_ring_centers.append(chest)
 		_draw_corner_frame(chest, alpha, frame_width)
 		if _is_pulling(guard):
 			_draw_attraction(
@@ -185,3 +216,22 @@ func is_weakpoint_ring_visible() -> bool:
 
 func is_attraction_line_visible() -> bool:
 	return _attraction_line_visible
+
+
+## Number of true -> false transitions that requested a repaint.
+func get_close_redraw_count() -> int:
+	return _close_redraw_count
+
+
+## Number of completed _draw passes; the last pass' ring count is 0 after the
+## cue has closed, proving the stale frame was replaced with an empty one.
+func get_draw_count() -> int:
+	return _draw_count
+
+
+func get_last_draw_ring_count() -> int:
+	return _last_draw_ring_count
+
+
+func get_last_draw_ring_centers() -> Array[Vector2]:
+	return _last_draw_ring_centers.duplicate()

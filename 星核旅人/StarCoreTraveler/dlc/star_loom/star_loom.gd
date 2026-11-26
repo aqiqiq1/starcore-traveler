@@ -34,29 +34,18 @@ const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popu
 ## 58 px tall, so each line stays within 21 full-width characters; three lines
 ## are the maximum.  ASCII and digits count as half-width.  Spec lines that were
 ## split/shortened for width are listed in tests/README.md.
+## After the two-page intro, the fire warning is the only in-chapter teaching
+## window.  The entry/core lessons live in the guide pages now, so a run cannot
+## repeat the same instruction in two places.
 const LOOM_TIPS: Dictionary = {
-	"loom_entry_tip": {
-		"title": "星核织机",
-		"body": "城内织机以星核为梭，金线网护住紫色核心。\n异相 J 打停两只节点，再打核心。\n核心每次受创换相，追着颜色切相再打。",
-		"key": "异相 J 打节点 → 核心 ×3",
-		"demo": "loom_nodes",
-	},
 	"loom_fire_tip": {
 		"title": "地砖火道",
 		"body": "织机把城内火道接进地砖，喷焰前砖面先亮。\n看到亮砖就离开，横扫光带跳过去。",
 		"key": "离开发火砖 · 跳过光带",
 		"demo": "loom_fire",
 	},
-	"loom_core_tip": {
-		"title": "织口核心",
-		"body": "节点停转后金线网散开，紫色织结就是核心。\n每打中一次换相，追色切相再打，共 3 次。",
-		"key": "核心换相 · Q 追相再 J",
-		"demo": "loom_core",
-	},
 }
-const TIP_ENTRY: String = "loom_entry_tip"
 const TIP_FIRE: String = "loom_fire_tip"
-const TIP_CORE: String = "loom_core_tip"
 
 const WORLD_LEFT: float = 0.0
 const WORLD_RIGHT: float = 960.0
@@ -131,9 +120,10 @@ var _gear_points: Array[Vector2] = []
 var _fire_serial: int = 0
 var _intro_guide: DlcGuide = null
 var _mechanic_popup: MechanicPopup = null
-var _entry_tip_pending: bool = false
 var _fire_tip_pending: bool = false
-var _core_tip_pending: bool = false
+## The cyan/gold opening burst is a once-per-run event; later exposures keep
+## the persistent pulse but do not replay the burst.
+var _core_burst_played: bool = false
 
 var _elapsed: float = 0.0
 var _completed: bool = false
@@ -182,7 +172,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	process_physics_priority = -10
 	# The shared popup table is static; registering is idempotent, so a chapter
-	# restart or a test reload uses the same three loom entries.
+	# restart or a test reload uses the same single loom entry.
 	MechanicPopup.register_tips(LOOM_TIPS, "res://dlc/ui/demos")
 	for node: Node in [
 		$CityBack, $Terrain, $CityFloor, $Props, $Boss, $Boss/Core,
@@ -262,21 +252,11 @@ func _setup_mechanic_popup() -> void:
 func _tick_mechanic_popups() -> void:
 	if _mechanic_popup == null or not is_instance_valid(_mechanic_popup):
 		return
-	if _entry_tip_pending:
-		if MechanicTips.has_seen(TIP_ENTRY):
-			_entry_tip_pending = false
-		else:
-			_mechanic_popup.request(TIP_ENTRY)
 	if _fire_tip_pending:
 		if MechanicTips.has_seen(TIP_FIRE):
 			_fire_tip_pending = false
 		else:
 			_mechanic_popup.request(TIP_FIRE)
-	if _core_tip_pending:
-		if MechanicTips.has_seen(TIP_CORE):
-			_core_tip_pending = false
-		else:
-			_mechanic_popup.request(TIP_CORE)
 
 
 ## Same contract as level_01/02/03: the popup may not appear over the intro
@@ -307,7 +287,7 @@ func _open_intro_guide() -> void:
 		return
 	var guide: DlcGuide = DLC_GUIDE_SCENE.instantiate() as DlcGuide
 	# The shared guide's page table is const, so this subclass supplies the
-	# third chapter's three pages through the existing virtual `_page_data()`.
+	# third chapter's two pages through the existing virtual `_page_data()`.
 	guide.set_script(LOOM_GUIDE_SCRIPT)
 	add_child(guide)
 	_intro_guide = guide
@@ -425,11 +405,7 @@ func _start_boss() -> void:
 	_hud.show_event("星核织机启动 · 异相 J 打节点", 2.2)
 	_hud.set_objective("目标：异相 J 打掉两个节点")
 	_update_hud_state()
-	# Trigger 1: the first real entry into the loom hall (the same crossing that
-	# starts the boss).  Opening the popup pauses this frame's tree, so the
-	# start grace and attack timers resume from this exact point.
-	_entry_tip_pending = true
-	_tick_mechanic_popups()
+	_core_burst_played = false
 
 
 func _respawn_nodes() -> void:
@@ -448,9 +424,11 @@ func _on_node_broken(_node: LoomNode) -> void:
 		_audio.play_core_exposed()
 		_hud.show_event("节点停转 · 核心暴露", 2.0)
 		_hud.set_objective("目标：核心暴露 · 异相 J 3 次")
-		# Trigger 3: the core is exposed for the first time in this run.
-		_core_tip_pending = true
-		_tick_mechanic_popups()
+		# The first exposure gets one cyan/gold burst; the purple knot keeps
+		# its breathing double ring for the whole exposed window.
+		if not _core_burst_played:
+			_core_burst_played = true
+			_fx.play_core_exposed_burst(_core.global_position)
 	_update_hud_state()
 
 
@@ -1141,9 +1119,7 @@ func _complete_chapter() -> void:
 	_boss_active = false
 	_pending_completion = false
 	_retry_pending = false
-	_entry_tip_pending = false
 	_fire_tip_pending = false
-	_core_tip_pending = false
 	_player_hits = 0
 	_clear_hazards()
 	_core.set_active(false)
@@ -1218,9 +1194,8 @@ func _restart_chapter() -> void:
 	_telegraph_windup = 1.0
 	_attack_key_down = false
 	_objective_key = ""
-	_entry_tip_pending = false
 	_fire_tip_pending = false
-	_core_tip_pending = false
+	_core_burst_played = false
 	_clear_hazards()
 	_hud.set_gear_warning(false, 0.0)
 	_core.configure()

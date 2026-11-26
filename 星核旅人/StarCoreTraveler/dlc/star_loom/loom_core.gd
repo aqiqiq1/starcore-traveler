@@ -19,6 +19,15 @@ const SPRITE: Texture2D = preload(
 const GOLD: Color = Color("#f4cd63")
 const CYAN: Color = Color("#5fe1e6")
 const GOLD_THREAD: Color = Color("#ffd77a")
+## Exposed-core beacon: a cyan/gold double ring outside the purple knot,
+## 26-32 px radius, 0.9 s breath, 0.75-1.0 alpha.  The rings and the three
+## low-alpha halo bands are drawn first, so the knot, its phase outline and the
+## corner brackets always stay on top and readable.
+const EXPOSE_GLOW_PERIOD: float = 0.9
+const EXPOSE_GLOW_RADIUS_MIN: float = 26.0
+const EXPOSE_GLOW_RADIUS_MAX: float = 32.0
+const EXPOSE_GLOW_ALPHA_MIN: float = 0.75
+const EXPOSE_GLOW_ALPHA_MAX: float = 1.0
 const GOLD_DARK: Color = Color(0.42, 0.28, 0.10, 0.95)
 const WHITE: Color = Color(1.0, 0.98, 0.94, 1.0)
 const INK: Color = Color(0.02, 0.01, 0.05, 1.0)
@@ -35,7 +44,6 @@ var _defeated: bool = false
 var _time: float = 0.0
 var _hit_flash: float = 0.0
 var _shield_flash: float = 0.0
-var _expose_flash: float = 0.0
 
 
 func _ready() -> void:
@@ -61,7 +69,6 @@ func configure() -> void:
 	_time = 0.0
 	_hit_flash = 0.0
 	_shield_flash = 0.0
-	_expose_flash = 0.0
 	_apply_visual()
 	queue_redraw()
 
@@ -95,8 +102,6 @@ func set_exposed(value: bool) -> void:
 	if _exposed == value:
 		return
 	_exposed = value
-	if value:
-		_expose_flash = 1.0
 	queue_redraw()
 
 
@@ -135,7 +140,6 @@ func _process(delta: float) -> void:
 	_time += delta
 	_hit_flash = maxf(_hit_flash - delta / 0.28, 0.0)
 	_shield_flash = maxf(_shield_flash - delta / 0.22, 0.0)
-	_expose_flash = maxf(_expose_flash - delta / 0.45, 0.0)
 	if _sprite != null:
 		_sprite.frame = int(_time * 3.2) % 4
 	queue_redraw()
@@ -225,6 +229,9 @@ func _draw_split_net() -> void:
 
 
 func _draw_exposed_core(phase_color: Color) -> void:
+	# Draw the exposure beacon first: rings and halos sit outside the knot, so
+	# the purple diamond and its phase outline stay crisp on top.
+	_draw_expose_glow()
 	# The core is a purple knot; the phase is a 1 px outline plus four corner
 	# brackets, so gold/cyan stays readable without turning the knot gold.
 	var pulse: float = 0.5 + 0.5 * sin(_time * 4.0)
@@ -251,11 +258,74 @@ func _draw_exposed_core(phase_color: Color) -> void:
 			Color(1.0, 1.0, 1.0, 0.85 * _hit_flash),
 			34
 		)
-	if _expose_flash > 0.0:
-		_ring(
-			26.0 + 36.0 * (1.0 - _expose_flash),
-			Color(1.0, 1.0, 1.0, 0.45 * _expose_flash),
-			34
+
+
+## Public facts used by the guide/UI and acceptance tests.  They are also the
+## single source for the exposed-core beacon's readable palette and timing.
+func get_expose_glow_info() -> Dictionary:
+	return {
+		"inner_color": CYAN,
+		"outer_color": GOLD,
+		"radius_min": EXPOSE_GLOW_RADIUS_MIN,
+		"radius_max": EXPOSE_GLOW_RADIUS_MAX,
+		"outer_offset": 3.0,
+		"outer_radius_min": EXPOSE_GLOW_RADIUS_MIN + 3.0,
+		"outer_radius_max": EXPOSE_GLOW_RADIUS_MAX + 3.0,
+		"period": EXPOSE_GLOW_PERIOD,
+		"alpha_min": EXPOSE_GLOW_ALPHA_MIN,
+		"alpha_max": EXPOSE_GLOW_ALPHA_MAX,
+	}
+
+
+## Breathing cyan/gold beacon around the exposed purple knot.  The 26-32 px
+## cyan ring plus the 29-35 px gold ring are the readable core signal at 1x;
+## three low-alpha halo bands add falloff without painting over the diamond or
+## the 1 px phase bracket.
+func _draw_expose_glow() -> void:
+	var breath: float = 0.5 + 0.5 * sin(_time * TAU / EXPOSE_GLOW_PERIOD - PI * 0.5)
+	var radius: float = lerpf(EXPOSE_GLOW_RADIUS_MIN, EXPOSE_GLOW_RADIUS_MAX, breath)
+	var alpha: float = lerpf(EXPOSE_GLOW_ALPHA_MIN, EXPOSE_GLOW_ALPHA_MAX, breath)
+	var halo_strength: float = 0.55 + 0.45 * breath
+	# Three halo bands (inner cyan, outer gold, far cyan), each a pair of 1 px
+	# rings with low alpha.  They fade outward and never fill the centre.
+	var halos: Array = [
+		[radius - 6.0, CYAN, 0.14],
+		[radius - 4.5, CYAN, 0.08],
+		[radius + 5.0, GOLD, 0.12],
+		[radius + 6.5, GOLD, 0.07],
+		[radius + 10.0, CYAN, 0.05],
+	]
+	for halo: Array in halos:
+		var halo_color: Color = halo[1]
+		_solid_ring(
+			float(halo[0]),
+			1.0,
+			Color(halo_color, float(halo[2]) * halo_strength)
+		)
+	# Ink separator rings give the cyan/gold pulse a hard edge against the gold
+	# split net; the coloured rings themselves are 2 px solid annuli, so the
+	# beacon reads at 1x instead of disappearing into the warp threads.
+	_solid_ring(radius - 1.6, 1.0, Color(INK, 0.72))
+	_solid_ring(radius + 5.5, 1.0, Color(INK, 0.62))
+	_solid_ring(radius, 2.0, Color(CYAN, alpha))
+	_solid_ring(radius + 3.0, 2.0, Color(GOLD, alpha))
+	# Eight short 3 px cross ticks just outside the gold ring make the beacon
+	# read as "open"; they are markers, never a filled disc.
+	for index: int in range(8):
+		var angle: float = TAU * float(index) / 8.0 + PI * 0.25
+		var tick: Vector2 = Vector2(cos(angle), sin(angle)) * (radius + 8.0)
+		var tick_color: Color = GOLD if index % 2 == 0 else CYAN
+		draw_rect(
+			Rect2(round(tick.x) - 1.0, round(tick.y), 3.0, 1.0),
+			Color(INK, 0.70)
+		)
+		draw_rect(
+			Rect2(round(tick.x), round(tick.y) - 1.0, 1.0, 3.0),
+			Color(INK, 0.70)
+		)
+		draw_rect(
+			Rect2(round(tick.x), round(tick.y), 1.0, 1.0),
+			Color(tick_color, alpha)
 		)
 
 
@@ -368,6 +438,33 @@ func _diamond(radius: float, color: Color) -> void:
 		if width < 0:
 			continue
 		draw_rect(Rect2(float(-width), float(y), float(width * 2 + 1), 1.0), color)
+
+
+## Solid pixel annulus by scanline.  Unlike the dotted `_ring`, this leaves no
+## gaps at 1x, which is what the exposed-core signal needs against the net.
+func _solid_ring(radius: float, thickness: float, color: Color) -> void:
+	var outer_r: float = radius + thickness * 0.5
+	var inner_r: float = maxf(radius - thickness * 0.5, 0.0)
+	var y_start: int = int(floor(-outer_r))
+	var y_end: int = int(ceil(outer_r))
+	for y: int in range(y_start, y_end):
+		var row: float = float(y) + 0.5
+		var outer_sq: float = outer_r * outer_r - row * row
+		if outer_sq <= 0.0:
+			continue
+		var outer_x: float = sqrt(outer_sq)
+		var inner_x: float = 0.0
+		var inner_sq: float = inner_r * inner_r - row * row
+		if inner_sq > 0.0:
+			inner_x = sqrt(inner_sq)
+		var left: int = int(floor(-outer_x))
+		var right: int = int(ceil(outer_x))
+		var gap_left: int = int(floor(-inner_x))
+		var gap_right: int = int(ceil(inner_x))
+		if gap_left > left:
+			draw_rect(Rect2(float(left), float(y), float(gap_left - left), 1.0), color)
+		if right > gap_right:
+			draw_rect(Rect2(float(gap_right), float(y), float(right - gap_right), 1.0), color)
 
 
 func _ring(radius: float, color: Color, segments: int) -> void:

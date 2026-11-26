@@ -4,11 +4,14 @@ extends Node2D
 ## DLC chapter 2 "裂隙工坊" (Rift Workshop).
 ##
 ## Three connected rooms on one 1600 x 360 scene:
-##   1. 反转回廊  x 0..560    : two InversionField curtains + a gold and a cyan
-##                              PolarityGate + two PolarityWisps;
+##   1. 反转回廊  x 0..560    : InversionA@160 flips the positive start to 澜相;
+##                              GateGold@270 (requires 辉相) forces one Q; then
+##                              GateCyan@490 (requires 澜相) forces a second Q
+##                              before InversionB@520 flips back to 辉相;
 ##   2. 相性桥    x 560..1080 : a raised terrace, three 64x10 PhaseBridges
 ##                              alternating gold / cyan with stone landings, two
-##                              more wisps and a checkpoint;
+##                              more wisps and a checkpoint.  There is no floor
+##                              under the bridge gaps: a fall is cloud sea;
 ##   3. 双生守卫  x 1080..1600: two reused scenes/level03/guard.tscn instances,
 ##                              one gold and one cyan, each with its own patrol
 ##                              range.  Both must be defeated to open the finish.
@@ -45,6 +48,10 @@ const RIFT_TIPS: Dictionary = {
 }
 
 const START_SPAWN: Vector2 = Vector2(40.0, 320.0)
+## The bridge section's own reset point.  A fall from any bridge gap goes back
+## here until the checkpoint is recorded, not all the way back to x = 40.
+const BRIDGE_HEAD_SPAWN: Vector2 = Vector2(600.0, 280.0)
+const BRIDGE_SECTION_LEFT: float = 540.0
 const ARENA_SPAWN: Vector2 = Vector2(1100.0, 320.0)
 const CHECKPOINT_POSITION: Vector2 = Vector2(1030.0, 280.0)
 const FINISH_POSITION: Vector2 = Vector2(1560.0, 320.0)
@@ -52,6 +59,8 @@ const GUARD_GOLD_SPAWN: Vector2 = Vector2(1240.0, 320.0)
 const GUARD_CYAN_SPAWN: Vector2 = Vector2(1450.0, 320.0)
 const ARENA_ENTER_X: float = 1090.0
 const ARENA_LEFT: float = 1080.0
+const BRIDGE_FALL_LINE: String = "坠入云海 · 相性不符的桥会消失 · Q 换相"
+const BRIDGE_EDGE_LINE: String = "断桥 · Q 换相让光桥实体化"
 ## Both guards hover asleep for this long after the arena entry event line, so
 ## the player is never caught between two charge-ups on the first step in.
 const ARENA_INTRO_TIME: float = 0.8
@@ -115,6 +124,11 @@ var _retry_pending_left: float = 0.0
 var _guard_ticks: int = 0
 var _last_polarity_toggles: int = 0
 var _last_bridge_sound_ms: int = -1000
+## X where the current fall recovery started.  It decides whether a fall is a
+## bridge-section fall (return to the bridge head) or a corridor fall (start).
+var _fall_origin_x: float = 0.0
+var _edge_hints_shown: Dictionary = {}
+var _edge_hint_count: int = 0
 
 var _recovery_active: bool = false
 var _recovery_phase: RecoveryPhase = RecoveryPhase.NONE
@@ -148,7 +162,9 @@ func _ready() -> void:
 	_player.set_spawn_point(START_SPAWN)
 	_player.set_recovery_intercept_enabled(true)
 	_player.reset_to_spawn("level_start", false)
-	_player.set_polarity_state(false)
+	# The chapter starts in 辉相 so InversionA@160 has real work to do; the two
+	# gates then each require one Q press instead of auto-passing.
+	_player.set_polarity_state(true)
 	_player.global_position = START_SPAWN
 	_player.velocity = Vector2.ZERO
 	_player.polarity_changed.connect(_on_player_polarity_changed)
@@ -192,7 +208,7 @@ func _ready() -> void:
 	_hud.restart_requested.connect(_restart_chapter)
 	_hud.title_requested.connect(_on_hud_title_requested)
 	_hud.quit_requested.connect(_on_hud_quit_requested)
-	_hud.set_polarity(false)
+	_hud.set_polarity(true)
 	_hud.set_objective("目标：穿过反转回廊")
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
@@ -339,6 +355,7 @@ func _physics_process(delta: float) -> void:
 	_apply_guard_force()
 	_update_strike_source()
 	_tick_gold_teaching()
+	_tick_bridge_edge_hints()
 
 	if not _arena_entered and _player.global_position.x >= ARENA_ENTER_X:
 		_arena_entered = true
@@ -452,11 +469,18 @@ func _update_objective(force: bool = false) -> void:
 		else:
 			text = "目标：再击败青守卫（%d / 2）" % _guards_defeated
 			key = "arena_cyan"
+	elif _checkpoint_active and _player.global_position.x >= 976.0:
+		# The bridge section is behind the player; do not keep the old
+		# "record the checkpoint" line next to the already-recorded event.
+		text = "目标：先击败金守卫（蓄力时异相 J）"
+		key = "checkpoint_done"
 	elif _player.global_position.x >= 976.0:
 		text = "目标：沿高台前进，记录检查点"
 		key = "terrace"
 	elif _player.global_position.x >= 560.0:
-		text = "目标：Q 换相，让光桥实体化"
+		# No Q instruction here: the fall / edge event lines own that hint, so
+		# the persistent objective and the transient line do not repeat it.
+		text = "目标：跨过三相性光桥"
 		key = "bridge"
 	elif _player.global_position.x >= 150.0:
 		text = "目标：让紫色光幕翻相，穿过极性门"
@@ -635,7 +659,9 @@ func _show_attack_result_hint(gold_result: Dictionary, cyan_result: Dictionary) 
 	var code: String = String(result.get("code", ""))
 	if code == "INACTIVE":
 		if nearest != null and is_instance_valid(nearest) and nearest.is_suspended():
-			_hud.show_event("%s待机 · 先击败金守卫" % _guard_label(nearest), 1.5)
+			# The persistent objective already carries the gold-first rule;
+			# this line only explains the guard's current state.
+			_hud.show_event("%s待机 · 稍后苏醒" % _guard_label(nearest), 1.5)
 		return
 	match code:
 		"SHELL_SHATTER":
@@ -673,6 +699,36 @@ func _on_bridge_solidity_changed(solid: bool) -> void:
 	_audio.play_bridge(solid)
 
 
+## Optional readability aid, once per deck: standing at a gap edge while the
+## next deck is ghosted earns one short HUD line.  It never blocks input and
+## never opens the shared mechanic popup.  The deck itself stays the only
+## source of truth for solidity.
+func _tick_bridge_edge_hints() -> void:
+	if _completed or _scene_leaving or _recovery_active or _retry_pending:
+		return
+	if _player == null or not is_instance_valid(_player):
+		return
+	if not _player.is_on_floor() or absf(_player.global_position.y - 280.0) > 3.0:
+		return
+	var x: float = _player.global_position.x
+	for bridge: RiftPhaseBridge in [_bridge_a, _bridge_b, _bridge_c]:
+		if bridge == null or not is_instance_valid(bridge) or bridge.is_solid():
+			continue
+		var key: StringName = bridge.name
+		if _edge_hints_shown.has(key):
+			continue
+		var rect: Rect2 = bridge.get_bridge_rect()
+		var near_start: bool = x >= rect.position.x - 18.0 \
+			and x <= rect.position.x + 2.0
+		var near_end: bool = x >= rect.end.x - 2.0 \
+			and x <= rect.end.x + 18.0
+		if near_start or near_end:
+			_edge_hints_shown[key] = true
+			_edge_hint_count += 1
+			_hud.show_event(BRIDGE_EDGE_LINE, 1.5)
+			return
+
+
 func _on_checkpoint_entered(checkpoint: LevelCheckpoint) -> void:
 	if _checkpoint_active:
 		return
@@ -680,6 +736,9 @@ func _on_checkpoint_entered(checkpoint: LevelCheckpoint) -> void:
 	checkpoint.set_activated(true)
 	_hud.show_event("检查点已记录 · 光桥之后", 1.8)
 	DemoAudio.play_record_save()
+	# Refresh immediately so the old "record the checkpoint" goal does not sit
+	# under the "checkpoint recorded" event line.
+	_update_objective(true)
 
 
 # --- room 3: twin guards ---------------------------------------------------
@@ -760,7 +819,9 @@ func _on_guard_shattered(guard: L3Guard) -> void:
 
 
 func _on_guard_charge_started(_positive: bool, guard: L3Guard) -> void:
-	_hud.show_event("%s蓄力中 · 异相 J 打弱点" % _guard_label(guard), 1.4)
+	# The objective already says "蓄力时异相 J"; keep this line about the
+	# guard's state only.
+	_hud.show_event("%s蓄力中 · 弱点暴露" % _guard_label(guard), 1.4)
 	# Fallback for the gold guard's very first charge if the opening-end
 	# request could not open (for example the player paused on that frame).
 	if guard == _guard_gold and not MechanicTips.has_seen("rift_charge_tip"):
@@ -828,6 +889,7 @@ func _guard_label(guard: L3Guard) -> String:
 func _on_player_recovery_transition_requested(reason: String) -> void:
 	if reason != "fall" or _recovery_active or _completed or _scene_leaving:
 		return
+	_fall_origin_x = _player.global_position.x
 	_begin_recovery("fall")
 
 
@@ -891,10 +953,18 @@ func _apply_recovery_reset() -> void:
 		return
 	_recovery_applying = true
 	if _recovery_kind == "fall" and not _arena_entered:
+		var bridge_fall: bool = _fall_origin_x >= BRIDGE_SECTION_LEFT \
+			and _fall_origin_x < ARENA_ENTER_X
 		if _checkpoint_active:
 			_reset_player_at(CHECKPOINT_POSITION)
+		elif bridge_fall:
+			# No PitFloor under the gaps: the bridge section retries from its
+			# own head instead of sending the player back to x = 40.
+			_reset_player_at(BRIDGE_HEAD_SPAWN)
 		else:
-			_reset_player_at(START_SPAWN)
+			_reset_player_at(START_SPAWN, true)
+		if bridge_fall:
+			_hud.show_event(BRIDGE_FALL_LINE, 3.0)
 	else:
 		_retry_combat()
 	_player.begin_recovery_hold()
@@ -960,17 +1030,17 @@ func _retry_combat() -> void:
 	_hud.show_event("失败 · 引力把你甩回入口 · 先打金守卫", 2.0)
 
 
-func _reset_player_at(point: Vector2) -> void:
+func _reset_player_at(point: Vector2, positive: bool = false) -> void:
 	_player.set_spawn_point(point)
 	_player.reset_to_spawn("combat_retry", true)
-	_player.set_polarity_state(false)
+	_player.set_polarity_state(positive)
 	_player.global_position = point
 	_player.velocity = Vector2.ZERO
 	_player.clear_input_buffers()
 	_player.clear_external_force()
 	_player.face_direction(1)
 	_camera.reset_smoothing()
-	_hud.set_polarity(false)
+	_hud.set_polarity(positive)
 
 
 # --- finish / completion ---------------------------------------------------
@@ -1070,6 +1140,9 @@ func _restart_chapter() -> void:
 	_finish_time = 0.0
 	_objective_key = ""
 	_attack_key_down = false
+	_fall_origin_x = 0.0
+	_edge_hints_shown.clear()
+	_edge_hint_count = 0
 	_last_polarity_toggles = _player.get_polarity_toggle_count()
 	_audio.stop_all()
 	_ambience.play(true)
@@ -1077,10 +1150,10 @@ func _restart_chapter() -> void:
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
 	_hud.set_objective("目标：穿过反转回廊")
-	_hud.set_polarity(false)
+	_hud.set_polarity(true)
 	_player.end_recovery_hold()
 	_player.unlock_completion_input()
-	_reset_player_at(START_SPAWN)
+	_reset_player_at(START_SPAWN, true)
 	_guard_gold.reset_state(GUARD_GOLD_SPAWN, true, true)
 	_guard_gold.set_player_target(_player)
 	_guard_gold.set_suspended(true)
@@ -1179,6 +1252,19 @@ func get_finish_position() -> Vector2:
 
 func get_start_spawn() -> Vector2:
 	return START_SPAWN
+
+
+func get_bridge_head_spawn() -> Vector2:
+	return BRIDGE_HEAD_SPAWN
+
+
+## Read-only for tests: X where the last fall transition began.
+func get_last_fall_origin_x() -> float:
+	return _fall_origin_x
+
+
+func get_edge_hint_count() -> int:
+	return _edge_hint_count
 
 
 func get_arena_spawn() -> Vector2:

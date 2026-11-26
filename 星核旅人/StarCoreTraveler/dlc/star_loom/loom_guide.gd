@@ -1,40 +1,33 @@
 class_name LoomGuide
 extends DlcGuide
 
-## Four-page intro guide for the city 星核织机 prototype.
+## Two-page intro guide for the city 星核织机 prototype.
 ##
 ## The shared guide (dlc/ui/dlc_guide.tscn/.gd) is used unchanged.  Its page
 ## table is a const keyed by chapter kind, so this small subclass supplies the
 ## third chapter's pages through the existing virtual `_page_data()` and adds
-## the matching `open_guide()` gate.  The four demo ids are real 24-frame
-## captures recorded from the formal star_loom scene into dlc/ui/demos/.
+## the matching `open_guide()` gate.  Both demo ids are real 24-frame captures
+## recorded from the formal star_loom scene into dlc/ui/demos/.
+##
+## Page 1 is the world/goal page; page 2 folds the three-hit protection, the
+## stage-1 supply, the current-stage retry and the gear/wisp answers into one
+## page.  This removes the old entry/core teaching popups: every instruction
+## now has exactly one home in a run.
 
-## Copy source: dlc/UI_PARITY_SPEC.md section 3 (星核织机, 4 pages).
-## Every body line stays within 21 full-width characters; ASCII and digits
-## count as half-width.  Several spec lines were shortened/reflowed for width;
-## each change is listed in tests/README.md.
+## Copy source: dlc/UI_PARITY_SPEC.md section 3 (星核织机), condensed from the
+## approved four-page copy.  Every body line stays within 21 full-width
+## characters; ASCII and digits count as half-width.  Widths are recorded in
+## tests/README.md.
 const LOOM_PAGES: Array = [
 	{
-		"title": "织机与双节点",
-		"body": "织机以星核为梭，把全城命脉织进经线。\n两只节点替它守线；异相 J 打停，同相弹开。",
-		"key": "Q 切异相 · J 打节点",
+		"title": "星核织机",
+		"body": "织机以星核为梭，把全城命脉织进经线。\n打停两节点→打暴露核心；核心受创换相。",
+		"key": "异相 J 打节点 · 核心换相",
 		"demo": "loom_nodes",
 	},
 	{
-		"title": "核心暴露与阶段补给",
-		"body": "节点停转，核心的金线网散开，露出紫色织结。\n核心每次真伤换相；阶段 1 结束补一次受击。",
-		"key": "异相 J ×3 · 核心换相要追",
-		"demo": "loom_core",
-	},
-	{
-		"title": "地砖火柱与横扫",
-		"body": "织机把城内火道接进地砖，又用横梁扫出光带。\n砖先亮起再喷火，光带会先给出预警。\n离开亮起的砖，跳过横扫光带。",
-		"key": "离开发火砖 · 跳过光带",
-		"demo": "loom_fire",
-	},
-	{
-		"title": "三受击、齿轮与浮灵",
-		"body": "织机用滚齿和浮灵补近身，城内星核护你三次。\n3 次受击才失败；失败从当前阶段重开。\n齿轮跳过，浮灵用 J 清。",
+		"title": "城垣的护持",
+		"body": "城内星核护你三次；3 次受击才失败。\n阶段 1 结束补一次；失败从当前阶段重开。\n齿轮跳过，浮灵用 J 清。",
 		"key": "3 次受击 · 齿轮跳过 · J 清浮灵",
 		"demo": "loom_gear",
 	},

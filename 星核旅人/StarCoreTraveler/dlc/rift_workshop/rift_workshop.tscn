@@ -68,11 +68,6 @@ position = Vector2(976, 280)
 script = ExtResource("5_terrain")
 block_rect = Rect2(0, 0, 104, 80)
 
-[node name="PitFloor" type="Node2D" parent="Terrain"]
-position = Vector2(688, 340)
-script = ExtResource("5_terrain")
-block_rect = Rect2(0, 0, 288, 60)
-
 [node name="ArenaGround" type="Node2D" parent="Terrain"]
 position = Vector2(1080, 320)
 script = ExtResource("5_terrain")
@@ -110,7 +105,7 @@ player_path = NodePath("../Player")
 
 [node name="InversionB" parent="." instance=ExtResource("10_field")]
 process_mode = 1
-position = Vector2(400, 320)
+position = Vector2(520, 320)
 player_path = NodePath("../Player")
 
 [node name="GateGold" parent="." instance=ExtResource("9_gate")]

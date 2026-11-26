@@ -15,17 +15,43 @@ const AMBER_HOT: Color = Color("#ffd27a")
 const AMBER_DARK: Color = Color(0.16, 0.08, 0.02, 0.95)
 const FLOOR_Y: float = 320.0
 const CORE_POS: Vector2 = Vector2(700.0, 244.0)
+## One-shot cyan/gold burst when the purple knot is first uncovered.  Every
+## ring/particle starts outside the 19 px knot bracket, so the burst frames the
+## weak point instead of painting a solid disc over it.
+const EXPOSE_BURST_TIME: float = 0.55
 
 var _chapter: Node = null
 var _time: float = 0.0
+var _burst_left: float = 0.0
+var _burst_center: Vector2 = CORE_POS
 
 
 func configure(chapter: Node) -> void:
 	_chapter = chapter
 
 
+## Called by the chapter exactly once per run, on the shielded -> exposed
+## transition.  The persistent pulse lives on LoomCore; this is only the
+## opening burst and its sparks.
+func play_core_exposed_burst(center: Vector2 = CORE_POS) -> void:
+	_burst_center = center
+	_burst_left = EXPOSE_BURST_TIME
+	queue_redraw()
+
+
+func is_core_exposed_burst_active() -> bool:
+	return _burst_left > 0.0
+
+
+func get_core_exposed_burst_progress() -> float:
+	if _burst_left <= 0.0:
+		return 1.0
+	return clampf(1.0 - _burst_left / EXPOSE_BURST_TIME, 0.0, 1.0)
+
+
 func _process(delta: float) -> void:
 	_time += delta
+	_burst_left = maxf(_burst_left - delta, 0.0)
 	queue_redraw()
 
 
@@ -38,6 +64,7 @@ func _draw() -> void:
 	if flash > 0.0:
 		_draw_stage_flash(flash)
 
+	_draw_core_exposed_burst()
 	_draw_core_threads()
 
 	var state: String = String(_chapter.call("get_attack_state_name"))
@@ -58,6 +85,69 @@ func _draw() -> void:
 			_draw_gear_warning(progress)
 		_:
 			pass
+
+
+func _draw_core_exposed_burst() -> void:
+	if _burst_left <= 0.0:
+		return
+	var progress: float = get_core_exposed_burst_progress()
+	var eased: float = 1.0 - pow(1.0 - progress, 2.0)
+	var fade: float = 1.0 - progress
+	var center: Vector2 = _burst_center
+	# Two opening rings: cyan leads, gold follows a step behind.  The extra
+	# half-alpha neighbour gives each ring a 2 px read at 1x.
+	var cyan_radius: float = lerpf(22.0, 54.0, eased)
+	var gold_radius: float = lerpf(24.0, 46.0, eased)
+	_solid_ring(center, cyan_radius, 2.0, Color(CYAN, 0.95 * fade))
+	_solid_ring(center, gold_radius, 2.0, Color(GOLD, 0.82 * fade))
+	# Eight short rays just outside the knot (r 22..36) at the opening instant;
+	# solid 1 px steps read better at 1x than the older dotted hints.
+	if progress < 0.45:
+		var ray_fade: float = (1.0 - progress / 0.45) * fade
+		var ray_length: int = int(round(10.0 + 8.0 * eased))
+		for index: int in range(8):
+			var direction: Vector2 = Vector2(
+				cos(TAU * float(index) / 8.0 + PI * 0.25),
+				sin(TAU * float(index) / 8.0 + PI * 0.25)
+			)
+			var ray_color: Color = GOLD if index % 2 == 0 else CYAN
+			for step: int in range(ray_length + 1):
+				var point: Vector2 = center + direction * (22.0 + float(step))
+				draw_rect(
+					Rect2(round(point.x), round(point.y), 1.0, 1.0),
+					Color(ray_color, ray_fade)
+				)
+	# 18 two-pixel sparks fly outward, alternating cyan/gold with a white hot
+	# cap and a short tail.  They start beyond the 19 px bracket so the diamond
+	# stays clear, and the 2 px body survives the gold net behind it at 1x.
+	for index: int in range(18):
+		var angle: float = TAU * float(index) / 18.0 + 0.13
+		var speed: float = 30.0 + 6.0 * float(index % 5)
+		var distance: float = 20.0 + speed * progress
+		var direction: Vector2 = Vector2(cos(angle), sin(angle))
+		var spark: Vector2 = center + direction * distance
+		var spark_color: Color = CYAN if index % 2 == 0 else GOLD
+		if index % 5 == 0:
+			spark_color = Color(1.0, 0.97, 0.86, 1.0)
+		var tail: Vector2 = spark - direction * 2.0
+		draw_rect(
+			Rect2(round(tail.x), round(tail.y), 1.0, 1.0),
+			Color(spark_color, fade * 0.45)
+		)
+		# A 2x2 body with a 1 px down/right ink shadow separates each spark from
+		# the gold net behind it; the white 1 px cap keeps the hot centre.
+		draw_rect(
+			Rect2(round(spark.x), round(spark.y) + 1.0, 2.0, 2.0),
+			Color(0.02, 0.01, 0.05, fade * 0.65)
+		)
+		draw_rect(
+			Rect2(round(spark.x), round(spark.y), 2.0, 2.0),
+			Color(spark_color, fade * 0.92)
+		)
+		draw_rect(
+			Rect2(round(spark.x), round(spark.y), 1.0, 1.0),
+			Color(1.0, 1.0, 1.0, fade * 0.95)
+		)
 
 
 func _draw_core_threads() -> void:
@@ -214,6 +304,32 @@ func _draw_gear_warning(progress: float) -> void:
 		# Dust/drag line.
 		draw_rect(Rect2(cx - 22.0, 314.0, 44.0, 3.0), Color(AMBER_DARK, 0.45))
 		draw_rect(Rect2(cx - 18.0, 315.0, 36.0, 1.0), Color(AMBER, 0.55))
+
+
+## Solid pixel annulus for the one-shot exposure burst.
+func _solid_ring(center: Vector2, radius: float, thickness: float, color: Color) -> void:
+	var outer_r: float = radius + thickness * 0.5
+	var inner_r: float = maxf(radius - thickness * 0.5, 0.0)
+	var y_start: int = int(floor(center.y - outer_r))
+	var y_end: int = int(ceil(center.y + outer_r))
+	for y: int in range(y_start, y_end):
+		var row: float = float(y) + 0.5 - center.y
+		var outer_sq: float = outer_r * outer_r - row * row
+		if outer_sq <= 0.0:
+			continue
+		var outer_x: float = sqrt(outer_sq)
+		var inner_x: float = 0.0
+		var inner_sq: float = inner_r * inner_r - row * row
+		if inner_sq > 0.0:
+			inner_x = sqrt(inner_sq)
+		var left: int = int(floor(center.x - outer_x))
+		var right: int = int(ceil(center.x + outer_x))
+		var gap_left: int = int(floor(center.x - inner_x))
+		var gap_right: int = int(ceil(center.x + inner_x))
+		if gap_left > left:
+			draw_rect(Rect2(float(left), float(y), float(gap_left - left), 1.0), color)
+		if right > gap_right:
+			draw_rect(Rect2(float(gap_right), float(y), float(right - gap_right), 1.0), color)
 
 
 func _ring(center: Vector2, radius: float, color: Color, segments: int) -> void:
