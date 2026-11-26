@@ -23,9 +23,22 @@ const PANEL_BG: Color = Color(0.014, 0.032, 0.040, 0.97)
 const PANEL_BORDER: Color = Color(0.45, 0.66, 0.63, 0.9)
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 const TITLE: String = "星核试炼场"
+## The two hearts sit above the player, not in a corner.  The bottom edge of
+## the 8 px heart row is ~34 px above the player's screen origin (body top is
+## 30 px; the sprite head is a little higher).  The value is intentionally
+## close to the approved "about -32 px" and keeps a gap under the Q keycap.
+const PIP_BOTTOM_OFFSET: float = 34.0
+const HIT_PULSE_SECONDS: float = 1.0
+const HIT_PULSE_SCALE: float = 0.28
 
 var _root: Control
 var _header: CompactLevelHeader
+var _polarity_icon: TrialPolarityIcon
+var _hit_pips: HitPips
+var _player: Node2D = null
+var _pips_visible: bool = true
+var _hit_pulse_left: float = 0.0
+var _hit_pulse_duration: float = HIT_PULSE_SECONDS
 var _event_label: Label
 var _event_left: float = 0.0
 var _recovery_cover: ColorRect
@@ -64,12 +77,14 @@ func _ready() -> void:
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
 	_build_header()
+	_build_hit_pips()
 	_build_event()
 	_build_recovery_cover()
 	_build_completion()
 	_build_pause()
 	set_polarity(false)
-	set_objective("目标：Q 换相，穿过金门")
+	set_player_hits(2, 2)
+	set_objective("目标：触碰晶体，换辉相过金门")
 	show_completion(false, 0.0)
 	show_pause(false)
 
@@ -104,6 +119,12 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
+	# Even while the tree is paused (guide / mechanic popup / pause page), the
+	# HUD is ALWAYS: keep the hearts hidden and their screen anchor current so
+	# resuming cannot flash them at a stale corner.
+	_update_hit_pips_follow()
+	_update_hit_pulse(delta)
+	_update_hit_pips_visibility()
 	if get_tree().paused:
 		return
 	if _event_left <= 0.0:
@@ -144,7 +165,9 @@ func _label(
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
-	label.add_theme_constant_override("outline_size", 2)
+	# 2026-11-26 parity rule: all notice/pause/completion text uses a 1 px
+	# outline; the title stays 24 px and the body 12 px.
+	label.add_theme_constant_override("outline_size", 1)
 	return label
 
 
@@ -165,8 +188,135 @@ func _build_header() -> void:
 	_header = CompactLevelHeader.new()
 	_header.name = "CompactHeader"
 	_root.add_child(_header)
-	_header.configure(TITLE, "目标：Q 换相，穿过金门", _font)
+	_header.configure(TITLE, "目标：触碰晶体，换辉相过金门", _font)
 	_header.set_polarity(false)
+	# The shared header's talisman + "辉相/澜相" word are hidden in the trial:
+	# the right-top read is the same sun/moon icon as the gates, with no text.
+	var old_icon: Control = _header.get_node_or_null("AffinityIcon") as Control
+	if old_icon != null:
+		old_icon.visible = false
+	var old_text: Control = _header.get_node_or_null("AffinityText") as Control
+	if old_text != null:
+		old_text.visible = false
+	_polarity_icon = TrialPolarityIcon.new()
+	_polarity_icon.name = "TrialAffinityIcon"
+	_polarity_icon.position = Vector2(610.0, 7.0)
+	_root.add_child(_polarity_icon)
+	_polarity_icon.set_positive(false)
+
+
+## Two heart pips that follow the player's screen position.  The trial has no
+## "受击 1 / 2" text: an accepted hit removes one heart, the second hit starts
+## the existing failure recovery and both hearts refill.
+func _build_hit_pips() -> void:
+	_hit_pips = HitPips.new()
+	_hit_pips.name = "HitPips"
+	_hit_pips.kind = HitPips.Kind.HEART
+	_hit_pips.pip_size = 8.0
+	_hit_pips.gap = 3.0
+	_hit_pips.filled_color = GOLD
+	# A missing heart must still read as a heart at 640x360 on the sky
+	# background; the shared default dark grey nearly vanishes there.
+	_hit_pips.empty_color = Color(0.52, 0.59, 0.60, 0.92)
+	_root.add_child(_hit_pips)
+	_hit_pips.set_state(2, 2)
+	_hit_pips.pivot_offset = _hit_pips.size * 0.5
+	# TrialChambers calls set_player_node() and then makes the row visible once
+	# the player's screen position is known; this avoids a one-frame (0,0) flash.
+	_hit_pips.visible = false
+
+
+## Called by TrialChambers once its player exists.  The HUD is a CanvasLayer
+## at the logical 640x360 size, so the pips' position is screen-space and is
+## refreshed every process frame from the player's canvas transform.
+func set_player_node(player: Node2D) -> void:
+	_player = player
+	_update_hit_pips_follow()
+
+
+func set_hit_pips_visible(value: bool) -> void:
+	_pips_visible = value
+	_update_hit_pips_visibility()
+
+
+func is_hit_pips_visible() -> bool:
+	return _hit_pips != null and _hit_pips.visible
+
+
+func get_hit_pips_position() -> Vector2:
+	return _hit_pips.position if _hit_pips != null else Vector2.ZERO
+
+
+func get_hit_pips_screen_center() -> Vector2:
+	if _hit_pips == null:
+		return Vector2.ZERO
+	return _hit_pips.position + _hit_pips.size * 0.5
+
+
+func get_hit_pips_rect() -> Rect2:
+	if _hit_pips == null:
+		return Rect2()
+	return Rect2(_hit_pips.position, _hit_pips.size)
+
+
+func pulse_hit_pips(duration: float = HIT_PULSE_SECONDS) -> void:
+	_hit_pulse_duration = maxf(duration, 0.05)
+	_hit_pulse_left = _hit_pulse_duration
+	set_process(true)
+
+
+func is_hit_pulse_active() -> bool:
+	return _hit_pulse_left > 0.0
+
+
+func get_hit_pulse_left() -> float:
+	return _hit_pulse_left
+
+
+func get_hit_pulse_duration() -> float:
+	return _hit_pulse_duration
+
+
+func _update_hit_pips_follow() -> void:
+	if _hit_pips == null:
+		return
+	_hit_pips.pivot_offset = _hit_pips.size * 0.5
+	if _player == null or not is_instance_valid(_player):
+		return
+	var screen_pos: Vector2 = _player.get_global_transform_with_canvas().origin
+	var pips_size: Vector2 = _hit_pips.size
+	var target: Vector2 = Vector2(
+		roundf(screen_pos.x - pips_size.x * 0.5),
+		roundf(screen_pos.y - PIP_BOTTOM_OFFSET - pips_size.y)
+	)
+	_hit_pips.position = Vector2(
+		clampf(target.x, 4.0, VIEW_SIZE.x - pips_size.x - 4.0),
+		clampf(target.y, 4.0, VIEW_SIZE.y - pips_size.y - 4.0)
+	)
+
+
+func _update_hit_pips_visibility() -> void:
+	if _hit_pips == null:
+		return
+	# Pausing covers the guide, mechanic popup and pause page; the chapter's
+	# own flag covers failure recovery, completion and scene leaving.
+	_hit_pips.visible = _pips_visible and not get_tree().paused
+
+
+func _update_hit_pulse(delta: float) -> void:
+	if _hit_pips == null:
+		return
+	if _hit_pulse_left <= 0.0:
+		if _hit_pips.scale != Vector2.ONE:
+			_hit_pips.scale = Vector2.ONE
+		return
+	_hit_pulse_left = maxf(_hit_pulse_left - delta, 0.0)
+	var progress: float = 1.0 - _hit_pulse_left / _hit_pulse_duration
+	var amount: float = (1.0 - progress) * absf(sin(progress * PI * 3.0 + PI * 0.5))
+	_hit_pips.pivot_offset = _hit_pips.size * 0.5
+	_hit_pips.scale = Vector2.ONE * (1.0 + HIT_PULSE_SCALE * amount)
+	if _hit_pulse_left <= 0.0:
+		_hit_pips.scale = Vector2.ONE
 
 
 func _build_event() -> void:
@@ -386,6 +536,47 @@ func _activate_pause_entry(focused: PixelMenuButton) -> void:
 func set_polarity(positive: bool) -> void:
 	if _header != null:
 		_header.set_polarity(positive)
+	if _polarity_icon != null:
+		_polarity_icon.set_positive(positive)
+
+
+func get_affinity_icon() -> TrialPolarityIcon:
+	return _polarity_icon
+
+
+func get_affinity_icon_positive() -> bool:
+	return _polarity_icon.is_positive() if _polarity_icon != null else false
+
+
+func is_affinity_text_visible() -> bool:
+	if _header == null:
+		return false
+	var text: Control = _header.get_node_or_null("AffinityText") as Control
+	return text != null and text.visible
+
+
+func get_affinity_icon_rect() -> Rect2:
+	if _polarity_icon == null:
+		return Rect2()
+	return Rect2(_polarity_icon.position, _polarity_icon.get_icon_size())
+
+
+func set_player_hits(current_value: int, max_value: int = 2) -> void:
+	if _hit_pips == null:
+		return
+	_hit_pips.set_state(current_value, max_value)
+
+
+func get_hit_pips_current() -> int:
+	return _hit_pips.get_current() if _hit_pips != null else 0
+
+
+func get_hit_pips_max() -> int:
+	return _hit_pips.get_max() if _hit_pips != null else 0
+
+
+func get_hit_pips() -> HitPips:
+	return _hit_pips
 
 
 func set_objective(text_value: String) -> void:

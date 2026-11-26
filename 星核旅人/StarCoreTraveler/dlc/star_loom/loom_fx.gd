@@ -15,10 +15,11 @@ const AMBER_HOT: Color = Color("#ffd27a")
 const AMBER_DARK: Color = Color(0.16, 0.08, 0.02, 0.95)
 const FLOOR_Y: float = 320.0
 const CORE_POS: Vector2 = Vector2(700.0, 244.0)
-## One-shot cyan/gold burst when the purple knot is first uncovered.  Every
-## ring/particle starts outside the 19 px knot bracket, so the burst frames the
-## weak point instead of painting a solid disc over it.
-const EXPOSE_BURST_TIME: float = 0.55
+## One-shot white flash and a few sparks when the core is first uncovered.
+## There is deliberately no ring, halo or full-screen flash; the new core shape
+## and phase colour carry the "exposed" read after these 0.30 s.
+const EXPOSE_BURST_TIME: float = 0.30
+const EXPOSE_PARTICLES: int = 10
 
 var _chapter: Node = null
 var _time: float = 0.0
@@ -91,54 +92,31 @@ func _draw_core_exposed_burst() -> void:
 	if _burst_left <= 0.0:
 		return
 	var progress: float = get_core_exposed_burst_progress()
-	var eased: float = 1.0 - pow(1.0 - progress, 2.0)
 	var fade: float = 1.0 - progress
 	var center: Vector2 = _burst_center
-	# Two opening rings: cyan leads, gold follows a step behind.  The extra
-	# half-alpha neighbour gives each ring a 2 px read at 1x.
-	var cyan_radius: float = lerpf(22.0, 54.0, eased)
-	var gold_radius: float = lerpf(24.0, 46.0, eased)
-	_solid_ring(center, cyan_radius, 2.0, Color(CYAN, 0.95 * fade))
-	_solid_ring(center, gold_radius, 2.0, Color(GOLD, 0.82 * fade))
-	# Eight short rays just outside the knot (r 22..36) at the opening instant;
-	# solid 1 px steps read better at 1x than the older dotted hints.
+	# A short white flash shaped like a slightly larger diamond over the core.
+	# It fades out by 45% of the burst and never becomes a ring.
 	if progress < 0.45:
-		var ray_fade: float = (1.0 - progress / 0.45) * fade
-		var ray_length: int = int(round(10.0 + 8.0 * eased))
-		for index: int in range(8):
-			var direction: Vector2 = Vector2(
-				cos(TAU * float(index) / 8.0 + PI * 0.25),
-				sin(TAU * float(index) / 8.0 + PI * 0.25)
-			)
-			var ray_color: Color = GOLD if index % 2 == 0 else CYAN
-			for step: int in range(ray_length + 1):
-				var point: Vector2 = center + direction * (22.0 + float(step))
-				draw_rect(
-					Rect2(round(point.x), round(point.y), 1.0, 1.0),
-					Color(ray_color, ray_fade)
-				)
-	# 18 two-pixel sparks fly outward, alternating cyan/gold with a white hot
-	# cap and a short tail.  They start beyond the 19 px bracket so the diamond
-	# stays clear, and the 2 px body survives the gold net behind it at 1x.
-	for index: int in range(18):
-		var angle: float = TAU * float(index) / 18.0 + 0.13
-		var speed: float = 30.0 + 6.0 * float(index % 5)
-		var distance: float = 20.0 + speed * progress
+		var flash: float = 1.0 - progress / 0.45
+		var half: float = 22.0 + 10.0 * progress
+		_fill_diamond(center, half * 2.0, half * 1.8, Color(1.0, 1.0, 1.0, 0.72 * flash))
+	# Ten white/gold sparks with a short tail.  Fewer, larger particles keep the
+	# effect cheap and readable instead of a second screen-filling burst.
+	for index: int in range(EXPOSE_PARTICLES):
+		var angle: float = TAU * float(index) / float(EXPOSE_PARTICLES) + 0.13
+		var speed: float = 34.0 + 7.0 * float(index % 4)
+		var distance: float = 14.0 + speed * progress
 		var direction: Vector2 = Vector2(cos(angle), sin(angle))
 		var spark: Vector2 = center + direction * distance
-		var spark_color: Color = CYAN if index % 2 == 0 else GOLD
-		if index % 5 == 0:
-			spark_color = Color(1.0, 0.97, 0.86, 1.0)
-		var tail: Vector2 = spark - direction * 2.0
+		var spark_color: Color = Color(1.0, 1.0, 1.0, 1.0) if index % 3 == 0 else GOLD
+		var tail: Vector2 = spark - direction * 3.0
 		draw_rect(
 			Rect2(round(tail.x), round(tail.y), 1.0, 1.0),
 			Color(spark_color, fade * 0.45)
 		)
-		# A 2x2 body with a 1 px down/right ink shadow separates each spark from
-		# the gold net behind it; the white 1 px cap keeps the hot centre.
 		draw_rect(
 			Rect2(round(spark.x), round(spark.y) + 1.0, 2.0, 2.0),
-			Color(0.02, 0.01, 0.05, fade * 0.65)
+			Color(0.02, 0.01, 0.05, fade * 0.55)
 		)
 		draw_rect(
 			Rect2(round(spark.x), round(spark.y), 2.0, 2.0),
@@ -147,6 +125,37 @@ func _draw_core_exposed_burst() -> void:
 		draw_rect(
 			Rect2(round(spark.x), round(spark.y), 1.0, 1.0),
 			Color(1.0, 1.0, 1.0, fade * 0.95)
+		)
+
+
+func get_expose_fx_info() -> Dictionary:
+	return {
+		"duration": EXPOSE_BURST_TIME,
+		"particles": EXPOSE_PARTICLES,
+		"white_flash": true,
+		"has_ring": false,
+	}
+
+
+## World-space diamond fill for the one-shot exposure flash.  Kept local so
+## the effect never needs a Sprite2D or a shader.
+func _fill_diamond(
+	center: Vector2, width: float, height: float, color: Color
+) -> void:
+	var half_h: float = height * 0.5
+	var half_w: float = width * 0.5
+	var y_start: int = int(round(center.y - half_h))
+	var y_end: int = int(round(center.y + half_h))
+	for y: int in range(y_start, y_end):
+		var cy: float = (float(y) + 0.5 - center.y) / half_h
+		if absf(cy) > 1.0:
+			continue
+		var span: int = int(round(half_w * (1.0 - absf(cy))))
+		if span < 1:
+			continue
+		draw_rect(
+			Rect2(center.x - float(span), float(y), float(span * 2), 1.0),
+			color
 		)
 
 
@@ -304,32 +313,6 @@ func _draw_gear_warning(progress: float) -> void:
 		# Dust/drag line.
 		draw_rect(Rect2(cx - 22.0, 314.0, 44.0, 3.0), Color(AMBER_DARK, 0.45))
 		draw_rect(Rect2(cx - 18.0, 315.0, 36.0, 1.0), Color(AMBER, 0.55))
-
-
-## Solid pixel annulus for the one-shot exposure burst.
-func _solid_ring(center: Vector2, radius: float, thickness: float, color: Color) -> void:
-	var outer_r: float = radius + thickness * 0.5
-	var inner_r: float = maxf(radius - thickness * 0.5, 0.0)
-	var y_start: int = int(floor(center.y - outer_r))
-	var y_end: int = int(ceil(center.y + outer_r))
-	for y: int in range(y_start, y_end):
-		var row: float = float(y) + 0.5 - center.y
-		var outer_sq: float = outer_r * outer_r - row * row
-		if outer_sq <= 0.0:
-			continue
-		var outer_x: float = sqrt(outer_sq)
-		var inner_x: float = 0.0
-		var inner_sq: float = inner_r * inner_r - row * row
-		if inner_sq > 0.0:
-			inner_x = sqrt(inner_sq)
-		var left: int = int(floor(center.x - outer_x))
-		var right: int = int(ceil(center.x + outer_x))
-		var gap_left: int = int(floor(center.x - inner_x))
-		var gap_right: int = int(ceil(center.x + inner_x))
-		if gap_left > left:
-			draw_rect(Rect2(float(left), float(y), float(gap_left - left), 1.0), color)
-		if right > gap_right:
-			draw_rect(Rect2(float(gap_right), float(y), float(right - gap_right), 1.0), color)
 
 
 func _ring(center: Vector2, radius: float, color: Color, segments: int) -> void:

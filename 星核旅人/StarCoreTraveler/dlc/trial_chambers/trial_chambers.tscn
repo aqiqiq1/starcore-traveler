@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://dlc/trial_chambers/trial_chambers.gd" id="1_trial"]
 [ext_resource type="Script" path="res://dlc/trial_chambers/trial_hud.gd" id="2_hud"]
@@ -12,6 +12,9 @@
 [ext_resource type="Texture2D" path="res://assets/level03_prototype/key_core_12f.png" id="10_core"]
 [ext_resource type="Script" path="res://scripts/level03/l3_audio.gd" id="11_audio"]
 [ext_resource type="Script" path="res://dlc/trial_chambers/chapter_ambience.gd" id="12_ambience"]
+[ext_resource type="PackedScene" path="res://dlc/trial_chambers/trial_phase_crystal.tscn" id="13_crystal"]
+[ext_resource type="Script" path="res://dlc/trial_chambers/trial_q_hint.gd" id="14_qhint"]
+[ext_resource type="Script" path="res://scripts/audio/player_footstep_audio.gd" id="15_footsteps"]
 
 [node name="TrialChambers" type="Node2D"]
 process_mode = 3
@@ -91,6 +94,12 @@ position = Vector2(520, 320)
 required_positive = false
 player_path = NodePath("../Player")
 
+[node name="PhaseCrystal" parent="." instance=ExtResource("13_crystal")]
+process_mode = 1
+position = Vector2(214, 320)
+player_path = NodePath("../Player")
+crystal_positive = true
+
 [node name="Player" parent="." instance=ExtResource("7_player")]
 process_mode = 1
 position = Vector2(40, 320)
@@ -107,6 +116,16 @@ limit_left = 0
 limit_top = 0
 limit_right = 1280
 limit_bottom = 360
+
+[node name="Footsteps" type="Node" parent="Player"]
+script = ExtResource("15_footsteps")
+enabled = true
+
+[node name="QHint" type="Node2D" parent="Player"]
+process_mode = 1
+position = Vector2(0, -44)
+z_index = 12
+script = ExtResource("14_qhint")
 
 [node name="Guard" parent="." instance=ExtResource("9_guard")]
 process_mode = 1

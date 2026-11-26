@@ -17,11 +17,11 @@ extends Node
 ## audible peak lands near -18 dBFS under SFX (not the inaudible -27.7 that a
 ## literal -20 player gain produced).
 ##
-## Pause: the player node is PAUSABLE, so the intro guide (which pauses the tree)
-## freezes the ambience automatically; the pause page additionally sets
-## stream_paused explicitly so the frozen/resumed state is deterministic and
-## testable.  Completion fades it out; returning to the title stops it; R plays
-## it again from the first frame.
+## Pause: the player node is PROCESS_MODE_ALWAYS, so the intro guide and the
+## mechanic popups (which pause the tree) keep the chapter music playing.  The
+## pause page still explicitly sets stream_paused, so its frozen/resumed state
+## is deterministic and testable.  Completion fades it out; returning to the
+## title stops it; R plays it again from the first frame.
 
 const MUSIC_DIRECTORY: String = "res://dlc/audio/music/"
 const EXTENSIONS: Array[String] = [".ogg", ".wav"]
@@ -42,9 +42,9 @@ var _stop_tween: Tween = null
 
 
 func _ready() -> void:
-	# Pausable: the intro guide pauses the tree on its own, and the chapter
-	# also pauses the tree for the pause page.
-	process_mode = Node.PROCESS_MODE_PAUSABLE
+	# Always: the guide and mechanic popups pause the tree but must not cut the
+	# chapter music.  The pause page freezes playback explicitly in set_paused.
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_resolve_stream()
 	if autoplay:
 		play()
@@ -116,6 +116,9 @@ func _ensure_player() -> void:
 		_player.stream = _stream
 		_player.volume_db = TARGET_VOLUME_DB
 		_player.bus = &"Master"
+		# Explicit even though the parent is ALWAYS: the test asserts the node's
+		# own mode and the guide/popup playback path.
+		_player.process_mode = Node.PROCESS_MODE_ALWAYS
 		add_child(_player)
 
 

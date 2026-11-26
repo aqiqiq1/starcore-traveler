@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3]
+[gd_scene load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_workshop.gd" id="1_rift"]
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_hud.gd" id="2_hud"]
@@ -18,6 +18,7 @@
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_audio.gd" id="16_audio"]
 [ext_resource type="Script" path="res://dlc/trial_chambers/chapter_ambience.gd" id="17_ambience"]
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_guard_cue.gd" id="18_cue"]
+[ext_resource type="Script" path="res://dlc/rift_workshop/rift_low_beams.gd" id="19_beams"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_checkpoint"]
 size = Vector2(40, 72)
@@ -103,22 +104,16 @@ process_mode = 1
 position = Vector2(160, 320)
 player_path = NodePath("../Player")
 
-[node name="InversionB" parent="." instance=ExtResource("10_field")]
-process_mode = 1
-position = Vector2(520, 320)
-player_path = NodePath("../Player")
-
 [node name="GateGold" parent="." instance=ExtResource("9_gate")]
 process_mode = 1
 position = Vector2(270, 320)
 required_positive = true
 player_path = NodePath("../Player")
 
-[node name="GateCyan" parent="." instance=ExtResource("9_gate")]
+[node name="LowBeams" type="Node2D" parent="."]
 process_mode = 1
-position = Vector2(490, 320)
-required_positive = false
-player_path = NodePath("../Player")
+z_index = 3
+script = ExtResource("19_beams")
 
 [node name="BridgeA" parent="." instance=ExtResource("11_bridge")]
 process_mode = 1
@@ -140,23 +135,43 @@ player_path = NodePath("../Player")
 
 [node name="WispA" parent="." instance=ExtResource("12_wisp")]
 process_mode = 1
-position = Vector2(330, 248)
+position = Vector2(720, 246)
 start_positive = true
+hazard_mode = true
+zone_center_x = 720.0
+zone_half_width = 28.0
 
 [node name="WispB" parent="." instance=ExtResource("12_wisp")]
 process_mode = 1
-position = Vector2(530, 246)
+position = Vector2(776, 246)
 start_positive = false
+hazard_mode = true
+zone_center_x = 776.0
+zone_half_width = 28.0
 
 [node name="WispC" parent="." instance=ExtResource("12_wisp")]
 process_mode = 1
-position = Vector2(776, 246)
+position = Vector2(832, 246)
 start_positive = true
+hazard_mode = true
+zone_center_x = 832.0
+zone_half_width = 28.0
 
 [node name="WispD" parent="." instance=ExtResource("12_wisp")]
 process_mode = 1
 position = Vector2(888, 246)
 start_positive = false
+hazard_mode = true
+zone_center_x = 888.0
+zone_half_width = 28.0
+
+[node name="WispE" parent="." instance=ExtResource("12_wisp")]
+process_mode = 1
+position = Vector2(944, 246)
+start_positive = true
+hazard_mode = true
+zone_center_x = 944.0
+zone_half_width = 28.0
 
 [node name="Player" parent="." instance=ExtResource("8_player")]
 process_mode = 1

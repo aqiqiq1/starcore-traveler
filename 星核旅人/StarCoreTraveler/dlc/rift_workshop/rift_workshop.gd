@@ -5,13 +5,17 @@ extends Node2D
 ##
 ## Three connected rooms on one 1600 x 360 scene:
 ##   1. 反转回廊  x 0..560    : InversionA@160 flips the positive start to 澜相;
-##                              GateGold@270 (requires 辉相) forces one Q; then
-##                              GateCyan@490 (requires 澜相) forces a second Q
-##                              before InversionB@520 flips back to 辉相;
+##                              GateGold@270 (requires 辉相) is the single
+##                              teaching gate that forces one real Q.  The
+##                              duplicate GateCyan / InversionB pair was removed
+##                              in the 2026-11-26 rework so the bridge section,
+##                              not a second corridor gate, is the main test;
 ##   2. 相性桥    x 560..1080 : a raised terrace, three 64x10 PhaseBridges
-##                              alternating gold / cyan with stone landings, two
-##                              more wisps and a checkpoint.  There is no floor
-##                              under the bridge gaps: a fall is cloud sea;
+##                              alternating gold / cyan with stone landings, one
+##                              hazard wisp per deck and a checkpoint.  A low
+##                              iron truss (27 px headroom) blocks every jump
+##                              over a missing deck.  There is no floor under
+##                              the gaps: a fall is cloud sea;
 ##   3. 双生守卫  x 1080..1600: two reused scenes/level03/guard.tscn instances,
 ##                              one gold and one cyan, each with its own patrol
 ##                              range.  Both must be defeated to open the finish.
@@ -28,6 +32,7 @@ const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const RIFT_GUIDE_SCRIPT: Script = preload("res://dlc/rift_workshop/rift_guide.gd")
 const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popup.tscn")
 const MECHANIC_DEMO_DIR: String = "res://dlc/ui/demos"
+const FOOTSTEP_SCRIPT = preload("res://scripts/audio/player_footstep_audio.gd")
 
 ## DLC copy registered through the shared MechanicPopup table.  Every body
 ## starts with the in-world cause and only then explains the keys.  Lines stay
@@ -61,6 +66,12 @@ const ARENA_ENTER_X: float = 1090.0
 const ARENA_LEFT: float = 1080.0
 const BRIDGE_FALL_LINE: String = "坠入云海 · 相性不符的桥会消失 · Q 换相"
 const BRIDGE_EDGE_LINE: String = "断桥 · Q 换相让光桥实体化"
+const WISP_FLIP_LINE: String = "光灵翻相 · Q 换回或 J 熄灭它"
+const WISP_CLEAR_LINE: String = "光灵熄灭 · 光桥已稳定"
+const PLAYER_MAX_HITS: int = 2
+## The low truss leaves 27 px over the player's head.  This is the same number
+## the beam script uses; tests compare the two.
+const BRIDGE_HEADROOM: float = 27.0
 ## Both guards hover asleep for this long after the arena entry event line, so
 ## the player is never caught between two charge-ups on the first step in.
 const ARENA_INTRO_TIME: float = 0.8
@@ -90,10 +101,10 @@ enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 @onready var _guard_gold: L3Guard = $GuardGold
 @onready var _guard_cyan: L3Guard = $GuardCyan
 @onready var _field_a: RiftInversionField = $InversionA
-@onready var _field_b: RiftInversionField = $InversionB
 @onready var _bridge_a: RiftPhaseBridge = $BridgeA
 @onready var _bridge_b: RiftPhaseBridge = $BridgeB
 @onready var _bridge_c: RiftPhaseBridge = $BridgeC
+@onready var _low_beams: RiftLowBeams = $LowBeams
 @onready var _checkpoint: LevelCheckpoint = $RiftCheckpoint
 @onready var _hud: RiftWorkshopHUD = $HUD
 @onready var _finish_core: Sprite2D = $FinishPoint/Core
@@ -102,6 +113,8 @@ enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 @onready var _cue: RiftGuardCue = $GuardCue
 
 var _wisps: Array[RiftPolarityWisp] = []
+var _wisp_bridges: Dictionary = {}
+var _footsteps: Node = null
 
 var _elapsed: float = 0.0
 var _completed: bool = false
@@ -147,14 +160,14 @@ func _ready() -> void:
 	process_physics_priority = -10
 	for node: Node in [
 		$Background, $Terrain, $Decorations, $Player, $GuardGold, $GuardCyan,
-		$InversionA, $InversionB, $BridgeA, $BridgeB, $BridgeC,
-		$WispA, $WispB, $WispC, $WispD, $RiftCheckpoint, $FinishPoint,
+		$InversionA, $BridgeA, $BridgeB, $BridgeC, $LowBeams,
+		$WispA, $WispB, $WispC, $WispD, $WispE, $RiftCheckpoint, $FinishPoint,
 	]:
 		if node != null:
 			node.process_mode = Node.PROCESS_MODE_PAUSABLE
 	$HUD.process_mode = Node.PROCESS_MODE_ALWAYS
 
-	_wisps = [$WispA, $WispB, $WispC, $WispD]
+	_wisps = [$WispA, $WispB, $WispC, $WispD, $WispE]
 
 	_player.allow_self_reset = false
 	_player.set_world_bounds(0.0, WORLD_RIGHT)
@@ -174,9 +187,7 @@ func _ready() -> void:
 	_last_polarity_toggles = _player.get_polarity_toggle_count()
 
 	_field_a.set_player_node(_player)
-	_field_b.set_player_node(_player)
 	_field_a.field_triggered.connect(_on_field_triggered)
-	_field_b.field_triggered.connect(_on_field_triggered)
 
 	_bridge_a.set_player_node(_player)
 	_bridge_b.set_player_node(_player)
@@ -199,8 +210,17 @@ func _ready() -> void:
 	_connect_guard(_guard_cyan)
 	_cue.configure(_player, [_guard_gold, _guard_cyan])
 
+	# One wisp guards each bridge/landing deck.  The three bridge wisps have a
+	# deck that becomes permanently stable when their J kill lands; the two
+	# landing wisps only own the flip threat themselves.
+	_wisp_bridges = {
+		_wisps[0]: _bridge_a,
+		_wisps[2]: _bridge_b,
+		_wisps[4]: _bridge_c,
+	}
 	for wisp: RiftPolarityWisp in _wisps:
 		wisp.defeated.connect(_on_wisp_defeated)
+		wisp.flip_requested.connect(_on_wisp_flip_requested)
 
 	_checkpoint.checkpoint_entered.connect(_on_checkpoint_entered)
 
@@ -209,6 +229,9 @@ func _ready() -> void:
 	_hud.title_requested.connect(_on_hud_title_requested)
 	_hud.quit_requested.connect(_on_hud_quit_requested)
 	_hud.set_polarity(true)
+	_hud.set_player_hits(0, PLAYER_MAX_HITS)
+	_hud.set_health_target(_player)
+	_hud.set_player_health_visible(true)
 	_hud.set_objective("目标：穿过反转回廊")
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
@@ -217,6 +240,12 @@ func _ready() -> void:
 
 	MechanicPopup.register_tips(RIFT_TIPS, MECHANIC_DEMO_DIR)
 	_setup_mechanic_popup()
+	_setup_footsteps()
+	# The chapter ambience is ALWAYS so it keeps playing under the guide and
+	# every mechanic popup (both pause the tree).  The pause page still calls
+	# set_paused(true) explicitly, so pausing music there remains deterministic.
+	_ambience.process_mode = Node.PROCESS_MODE_ALWAYS
+	_ambience.play(true)
 
 	_camera.reset_smoothing()
 	_elapsed = 0.0
@@ -225,8 +254,6 @@ func _ready() -> void:
 	_guard_ticks = 3
 	if show_intro_guide:
 		call_deferred("_open_intro_guide")
-	else:
-		_ambience.play(true)
 
 
 ## Called once per scene load.  Tests set show_intro_guide = false before
@@ -250,8 +277,58 @@ func _on_intro_guide_closed(_kind: String) -> void:
 	_attack_key_down = false
 	_player.begin_input_override()
 	_guard_ticks = 3
-	# Held back while the guide covered the screen; starts with play.
-	_ambience.play(true)
+	# Music already runs under the guide (PROCESS_MODE_ALWAYS); do not restart
+	# the track here or the opening would audibly jump.
+
+
+func _setup_footsteps() -> void:
+	if _player == null:
+		return
+	_footsteps = FOOTSTEP_SCRIPT.new()
+	_footsteps.name = "PlayerFootstepAudio"
+	if not bool(_footsteps.call("attach_to", _player)):
+		_footsteps.queue_free()
+		_footsteps = null
+		return
+	_footsteps.call("set_enabled_check", Callable(self, "_footstep_allowed"))
+
+
+func _footstep_allowed() -> bool:
+	if _completed or _recovery_active or _retry_pending or _scene_leaving:
+		return false
+	if _pause_open or get_tree().paused:
+		return false
+	if _guard_ticks > 0 or _arena_intro_left > 0.0:
+		return false
+	if _intro_guide != null and is_instance_valid(_intro_guide) \
+			and _intro_guide.is_open():
+		return false
+	if _mechanic_popup != null and _mechanic_popup.is_open():
+		return false
+	return true
+
+
+func _footstep_stop() -> void:
+	if _footsteps != null and is_instance_valid(_footsteps):
+		_footsteps.call("stop")
+
+
+## Drop the active OGG stream and player before a real quit / title hand-off.
+## Without this, quitting while the chapter ambience plays leaves the duplicated
+## OggPacketSequence and playback objects alive in the engine teardown report.
+## The shared DlcChapterAmbience is not modified; its private _stream is cleared
+## through the script property so the duplicated resource is released here.
+func _release_ambience() -> void:
+	if _ambience == null or not is_instance_valid(_ambience):
+		return
+	var player: AudioStreamPlayer = _ambience.get_player()
+	if player != null:
+		player.stop()
+		player.stream = null
+	_ambience.stop(0.0)
+	_ambience.set("_stream", null)
+	_ambience.free()
+	_ambience = null
 
 
 ## Teaching layer only: one shared popup, same scene and input behaviour as the
@@ -307,8 +384,11 @@ func is_mechanic_popup_blocked() -> bool:
 
 
 func _exit_tree() -> void:
-	if _ambience != null:
-		_ambience.stop(0.0)
+	_footstep_stop()
+	# Drop the active OGG playback before the engine tears the audio server
+	# down.  DlcChapterAmbience also does this; doing it again at the parent
+	# level keeps an abrupt scene teardown from leaving playback objects.
+	_release_ambience()
 	if _audio != null:
 		_audio.stop_all()
 	for wisp: RiftPolarityWisp in _wisps:
@@ -568,9 +648,18 @@ func _on_hud_quit_requested() -> void:
 		return
 	_scene_leaving = true
 	get_tree().paused = false
-	_ambience.stop(0.0)
+	_release_ambience()
 	if is_instance_valid(DemoAudio):
 		DemoAudio.stop_world()
+	# Give the audio server a few idle frames to release the OGG playback before
+	# the process goes away; quitting in the same callback leaves four engine
+	# playback objects in the teardown report on this build.
+	_quit_after_audio_release()
+
+
+func _quit_after_audio_release() -> void:
+	for _index: int in range(16):
+		await get_tree().process_frame
 	get_tree().quit()
 
 
@@ -584,6 +673,7 @@ func _set_paused(value: bool) -> void:
 	_player.clear_input_buffers()
 	_player.clear_external_force()
 	if value:
+		_footstep_stop()
 		if _arena_entered:
 			_guard_gold.set_suspended(true)
 			_guard_cyan.set_suspended(true)
@@ -630,8 +720,8 @@ func _on_player_attack_hit_window(swing_id: int, facing: int, positive: bool) ->
 	_resolved_swings[swing_id] = true
 	for wisp: RiftPolarityWisp in _wisps:
 		if wisp != null and is_instance_valid(wisp) and wisp.is_alive():
-			if wisp.try_player_hit(_player, facing, positive, swing_id):
-				_hud.show_event("光灵熄灭", 1.0)
+			# _on_wisp_defeated owns the deck-stable / remaining-count line.
+			wisp.try_player_hit(_player, facing, positive, swing_id)
 	var gold_result: Dictionary = _guard_gold.receive_player_hit(
 		_player, facing, positive, swing_id
 	)
@@ -678,13 +768,44 @@ func _show_attack_result_hint(gold_result: Dictionary, cyan_result: Dictionary) 
 			pass
 
 
-func _on_wisp_defeated(_wisp: RiftPolarityWisp) -> void:
+func _on_wisp_defeated(wisp: RiftPolarityWisp) -> void:
+	var bridge: RiftPhaseBridge = _wisp_bridges.get(wisp, null) as RiftPhaseBridge
+	if bridge != null and is_instance_valid(bridge):
+		bridge.set_stabilized(true)
+		_audio.play_bridge(true)
+		_hud.show_event(WISP_CLEAR_LINE, 1.8)
+		return
 	var alive: int = 0
-	for wisp: RiftPolarityWisp in _wisps:
-		if wisp != null and is_instance_valid(wisp) and wisp.is_alive():
+	for other: RiftPolarityWisp in _wisps:
+		if other != null and is_instance_valid(other) and other.is_alive():
 			alive += 1
 	if alive > 0:
 		_hud.show_event("光灵熄灭 · 剩余 %d" % alive, 1.2)
+
+
+## Forced flip: the wisp dives, the chapter performs the same toggle as Q (so
+## the shared player ring, HUD polarity and shared switch cue all stay honest),
+## then the affected bridge disappears on its next physics tick.  The player
+## can press Q immediately to re-materialise the deck under their feet, or J the
+## wisp before this fires.
+func _on_wisp_flip_requested(wisp: RiftPolarityWisp) -> void:
+	if _completed or _scene_leaving or _recovery_active or _retry_pending:
+		return
+	if _player == null or not is_instance_valid(_player):
+		return
+	if wisp == null or not is_instance_valid(wisp) or not wisp.is_alive():
+		return
+	if _player.has_method("is_input_override_active") \
+			and bool(_player.call("is_input_override_active")):
+		return
+	var guarded_bridge: RiftPhaseBridge = _wisp_bridges.get(
+		wisp, null
+	) as RiftPhaseBridge
+	if guarded_bridge != null and is_instance_valid(guarded_bridge):
+		# 0.55 s of solid grace: the HUD says Q, and Q really can save the body.
+		guarded_bridge.hold_solid(0.55)
+	_player.call("_toggle_polarity")
+	_hud.show_event(WISP_FLIP_LINE, 1.4)
 
 
 # --- room 2: bridges / checkpoint ------------------------------------------
@@ -753,7 +874,8 @@ func _wake_gold_guard() -> void:
 		return
 	_guard_gold.set_suspended(false)
 	_gold_teaching_pending = true
-	_charge_tip_pending = true
+	# No popup here: rift_charge_tip belongs to the first real GRAVITY_CHARGE,
+	# not to the arena opening/overlay.
 
 
 func _wake_cyan_guard() -> void:
@@ -801,8 +923,9 @@ func _on_guard_player_struck(_facing: int) -> void:
 		return
 	_player_hits += 1
 	DemoAudio.play_player_hurt()
-	_hud.show_event("受击 %d / 2" % _player_hits, 1.1)
-	if _player_hits >= 2:
+	# Icon-only count: two hearts, no "受击 1 / 2" sentence.
+	_hud.set_player_hits(_player_hits, PLAYER_MAX_HITS)
+	if _player_hits >= PLAYER_MAX_HITS:
 		_retry_pending = true
 		_retry_pending_left = maxf(_player.get_hit_reaction_remaining(), 0.0)
 
@@ -822,8 +945,9 @@ func _on_guard_charge_started(_positive: bool, guard: L3Guard) -> void:
 	# The objective already says "蓄力时异相 J"; keep this line about the
 	# guard's state only.
 	_hud.show_event("%s蓄力中 · 弱点暴露" % _guard_label(guard), 1.4)
-	# Fallback for the gold guard's very first charge if the opening-end
-	# request could not open (for example the player paused on that frame).
+	# The one and only trigger for the charge tip: the gold guard's first real
+	# GRAVITY_CHARGE.  It can be retried on later ticks while a guide/recovery
+	# owns the screen, but it is never armed by the arena opening.
 	if guard == _guard_gold and not MechanicTips.has_seen("rift_charge_tip"):
 		_charge_tip_pending = true
 
@@ -859,6 +983,7 @@ func _on_guard_defeated(guard: L3Guard) -> void:
 		return
 	_guards_defeated += 1
 	_player_hits = 0
+	_hud.set_player_hits(0, PLAYER_MAX_HITS)
 	_retry_pending = false
 	DemoAudio.play_record_save()
 	if _guards_defeated >= 2:
@@ -896,6 +1021,8 @@ func _on_player_recovery_transition_requested(reason: String) -> void:
 func _begin_recovery(kind: String) -> void:
 	if _recovery_active or _completed or _scene_leaving:
 		return
+	_footstep_stop()
+	_hud.set_player_health_visible(false)
 	_recovery_active = true
 	_recovery_kind = kind
 	_recovery_phase = RecoveryPhase.FADE_OUT
@@ -985,6 +1112,7 @@ func _finish_recovery() -> void:
 	_player.end_input_override()
 	_player.clear_input_buffers()
 	_player.clear_external_force()
+	_hud.set_player_health_visible(true)
 	_attack_key_down = false
 	LEVEL_FLOW.release_one_shot_actions()
 	# A retry always restarts the approved 0.8 s arena opening.  The timer was
@@ -1006,6 +1134,7 @@ func _finish_recovery() -> void:
 func _retry_combat() -> void:
 	_resolved_swings.clear()
 	_player_hits = 0
+	_hud.set_player_hits(0, PLAYER_MAX_HITS)
 	_retry_pending = false
 	_retry_pending_left = 0.0
 	_gold_defeated = false
@@ -1068,6 +1197,8 @@ func _update_finish_marker() -> void:
 func _complete_chapter() -> void:
 	if _completed or _scene_leaving:
 		return
+	_footstep_stop()
+	_hud.set_player_health_visible(false)
 	_completed = true
 	_retry_pending = false
 	_arena_intro_left = 0.0
@@ -1095,6 +1226,7 @@ func _complete_chapter() -> void:
 func _return_to_title() -> void:
 	if _scene_leaving:
 		return
+	_footstep_stop()
 	get_tree().paused = false
 	_pause_open = false
 	_scene_leaving = true
@@ -1102,7 +1234,7 @@ func _return_to_title() -> void:
 	_core_tip_pending = false
 	_hud.show_pause(false)
 	_hud.show_completion(false, _elapsed)
-	_ambience.stop(0.0)
+	_release_ambience()
 	if is_instance_valid(DemoAudio):
 		DemoAudio.stop_world()
 	_player.reset_movement_input_state()
@@ -1116,6 +1248,7 @@ func _return_to_title() -> void:
 func _restart_chapter() -> void:
 	if _scene_leaving:
 		return
+	_footstep_stop()
 	get_tree().paused = false
 	_pause_open = false
 	_completed = false
@@ -1151,6 +1284,9 @@ func _restart_chapter() -> void:
 	_hud.show_pause(false)
 	_hud.set_objective("目标：穿过反转回廊")
 	_hud.set_polarity(true)
+	_hud.set_player_hits(0, PLAYER_MAX_HITS)
+	_hud.set_health_target(_player)
+	_hud.set_player_health_visible(true)
 	_player.end_recovery_hold()
 	_player.unlock_completion_input()
 	_reset_player_at(START_SPAWN, true)
@@ -1161,11 +1297,13 @@ func _restart_chapter() -> void:
 	_guard_cyan.set_player_target(_player)
 	_guard_cyan.set_suspended(true)
 	_gold_teaching_pending = false
+	_bridge_a.set_stabilized(false)
+	_bridge_b.set_stabilized(false)
+	_bridge_c.set_stabilized(false)
 	for wisp: RiftPolarityWisp in _wisps:
 		if wisp != null and is_instance_valid(wisp):
 			wisp.respawn()
 	_field_a.reset_inside_state()
-	_field_b.reset_inside_state()
 	_checkpoint.set_activated(false)
 	_update_finish_marker()
 	LEVEL_FLOW.release_one_shot_actions()
@@ -1194,10 +1332,6 @@ func get_field_a() -> RiftInversionField:
 	return _field_a
 
 
-func get_field_b() -> RiftInversionField:
-	return _field_b
-
-
 func get_bridge_a() -> RiftPhaseBridge:
 	return _bridge_a
 
@@ -1212,6 +1346,26 @@ func get_bridge_c() -> RiftPhaseBridge:
 
 func get_wisps() -> Array[RiftPolarityWisp]:
 	return _wisps
+
+
+func get_wisp_bridge(wisp: RiftPolarityWisp) -> RiftPhaseBridge:
+	return _wisp_bridges.get(wisp, null) as RiftPhaseBridge
+
+
+func get_low_beams() -> RiftLowBeams:
+	return _low_beams
+
+
+func get_footstep_audio() -> Node:
+	return _footsteps
+
+
+func get_bridge_headroom() -> float:
+	return BRIDGE_HEADROOM
+
+
+func get_player_max_hits() -> int:
+	return PLAYER_MAX_HITS
 
 
 func get_hud() -> RiftWorkshopHUD:

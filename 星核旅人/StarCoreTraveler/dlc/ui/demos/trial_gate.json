@@ -6,14 +6,14 @@
 	"crop": {
 		"h": 144,
 		"w": 256,
-		"x": 190,
-		"y": 190
+		"x": 120,
+		"y": 178
 	},
 	"fps": 8.0,
 	"frame_height": 144,
 	"frame_width": 256,
 	"frames": 24,
 	"id": "trial_gate",
-	"note": "Formal trial scene. Player starts 澜相 left of the gold gate; a real Q opens it and the player walks through.",
+	"note": "Formal trial scene. The player starts 澜相 left of the phase crystal; walking right touches the crystal (辉相 flip + pulse), the gold gate opens, and the player walks through. The crystal, gold gate and player stay in frame; HUD hidden.",
 	"source": "formal DLC scene, real input/state"
 }

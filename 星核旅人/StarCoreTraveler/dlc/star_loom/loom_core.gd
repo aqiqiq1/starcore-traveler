@@ -5,9 +5,10 @@ extends Node2D
 ##
 ## The 208x152 four-frame sprite is a stone/wood frame: two piers, a top beam,
 ## a bottom cloth beam, a stone base, a near-black weave face, 8-10 warp
-## threads and a moving shuttle.  The exposed core is a purple knot at the
-## weaving mouth.  While the nodes are alive a gold thread net wraps that knot;
-## once both nodes break, the net visibly splits left/right and the core opens.
+## threads and a moving shuttle.  While the nodes are alive a gold thread net
+## wraps a dim purple knot; once both nodes break, the net visibly peels
+## left/right and a 40x40 solid phase diamond (purple inset core + sun/moon
+## icon) is uncovered.
 ##
 ## The sprite is drawn behind this node's own drawing (show_behind_parent), so
 ## the net, core, base shadow and the two chains up to the ceiling stay on top
@@ -19,15 +20,17 @@ const SPRITE: Texture2D = preload(
 const GOLD: Color = Color("#f4cd63")
 const CYAN: Color = Color("#5fe1e6")
 const GOLD_THREAD: Color = Color("#ffd77a")
-## Exposed-core beacon: a cyan/gold double ring outside the purple knot,
-## 26-32 px radius, 0.9 s breath, 0.75-1.0 alpha.  The rings and the three
-## low-alpha halo bands are drawn first, so the knot, its phase outline and the
-## corner brackets always stay on top and readable.
-const EXPOSE_GLOW_PERIOD: float = 0.9
-const EXPOSE_GLOW_RADIUS_MIN: float = 26.0
-const EXPOSE_GLOW_RADIUS_MAX: float = 32.0
-const EXPOSE_GLOW_ALPHA_MIN: float = 0.75
-const EXPOSE_GLOW_ALPHA_MAX: float = 1.0
+## The exposed weak point is a single 40x40 phase diamond.  The whole face is
+## gold or cyan; the purple knot stays as a small inset core, so the phase
+## colour dominates at 1x.  The shield net peels left/right and leaves a clear
+## vertical opening (never narrower than 24 px).
+const PHASE_DIAMOND_SIZE: Vector2 = Vector2(40.0, 40.0)
+const CORE_HIT_SIZE: Vector2 = Vector2(40.0, 36.0)
+const NET_OPEN_GAP: float = 26.0
+const NET_PEEL: float = 3.0
+const PURPLE_CORE: Color = Color(0.24, 0.10, 0.34, 1.0)
+const PURPLE_MID: Color = Color(0.45, 0.26, 0.64, 1.0)
+const PURPLE_LIGHT: Color = Color(0.68, 0.47, 0.92, 1.0)
 const GOLD_DARK: Color = Color(0.42, 0.28, 0.10, 0.95)
 const WHITE: Color = Color(1.0, 0.98, 0.94, 1.0)
 const INK: Color = Color(0.02, 0.01, 0.05, 1.0)
@@ -44,6 +47,7 @@ var _defeated: bool = false
 var _time: float = 0.0
 var _hit_flash: float = 0.0
 var _shield_flash: float = 0.0
+var _phase_flash: float = 0.0
 
 
 func _ready() -> void:
@@ -69,6 +73,7 @@ func configure() -> void:
 	_time = 0.0
 	_hit_flash = 0.0
 	_shield_flash = 0.0
+	_phase_flash = 0.0
 	_apply_visual()
 	queue_redraw()
 
@@ -87,6 +92,9 @@ func set_phase(value: bool) -> void:
 	if _positive == value:
 		return
 	_positive = value
+	# A short white overlay sells the whole-face colour swap without adding a
+	# ring; the fill itself is always one solid phase colour.
+	_phase_flash = 1.0
 	queue_redraw()
 
 
@@ -130,16 +138,18 @@ func flash_shield() -> void:
 	queue_redraw()
 
 
-## Generous 112x116 weak-point box over the 208x152 frame.  A grounded J can
-## reach the lower half of the knot; a jump reaches the rest.
+## A tight 40x36 weak-point box around the raised diamond.  Its bottom edge is
+## 56 px above the floor, so a grounded J (top of the swing ~38 px above the
+## feet) misses and a jump J reaches it.
 func get_hit_rect() -> Rect2:
-	return Rect2(global_position - Vector2(56.0, 58.0), Vector2(112.0, 116.0))
+	return Rect2(global_position - CORE_HIT_SIZE * 0.5, CORE_HIT_SIZE)
 
 
 func _process(delta: float) -> void:
 	_time += delta
 	_hit_flash = maxf(_hit_flash - delta / 0.28, 0.0)
 	_shield_flash = maxf(_shield_flash - delta / 0.22, 0.0)
+	_phase_flash = maxf(_phase_flash - delta / 0.16, 0.0)
 	if _sprite != null:
 		_sprite.frame = int(_time * 3.2) % 4
 	queue_redraw()
@@ -172,35 +182,40 @@ func _draw() -> void:
 			)
 		return
 	if not _active:
-		_ring(30.0, Color(0.46, 0.50, 0.56, 0.18), 28)
+		_fill_diamond(26.0, 26.0, Color(0.06, 0.06, 0.09, 0.45))
+		_fill_diamond(20.0, 20.0, Color(0.32, 0.34, 0.38, 0.72))
 		return
 	if not _exposed:
+		_draw_shielded_core()
 		_draw_net_shield()
 		_draw_shuttle()
-		if _shield_flash > 0.0:
-			_ring(
-				38.0 + 8.0 * (1.0 - _shield_flash),
-				Color(1.0, 1.0, 1.0, 0.7 * _shield_flash),
-				32
-			)
 		return
 	_draw_split_net()
 	_draw_shuttle()
 	_draw_exposed_core(phase_color)
 
 
+## The purple knot stays visible through the gold net, so the shield reads as a
+## woven cover over a real core instead of an empty ring of threads.
+func _draw_shielded_core() -> void:
+	_fill_diamond(26.0, 26.0, Color(0.02, 0.01, 0.05, 0.65), Vector2(0.0, 2.0))
+	_fill_diamond(22.0, 22.0, Color(0.16, 0.08, 0.24, 0.92), Vector2(0.0, 2.0))
+	_fill_diamond(14.0, 14.0, Color(0.28, 0.14, 0.42, 0.9), Vector2(0.0, 2.0))
+
+
 func _draw_net_shield() -> void:
 	# A gold warp net woven across the purple knot: two diagonal families,
 	# clipped to the socket.  It is a net, not a circular clock face.
 	var pulse: float = 0.5 + 0.5 * sin(_time * 2.4)
+	var alpha: float = 0.58 + 0.28 * pulse + 0.20 * _shield_flash
 	for offset in [-24.0, -12.0, 0.0, 12.0, 24.0]:
 		_net_line(
 			Vector2(offset - 38.0, -38.0), Vector2(offset + 38.0, 38.0),
-			33.0, Color(GOLD_THREAD, 0.58 + 0.28 * pulse), false
+			33.0, Color(GOLD_THREAD, alpha), false
 		)
 		_net_line(
 			Vector2(offset - 38.0, 38.0), Vector2(offset + 38.0, -38.0),
-			33.0, Color(GOLD_THREAD, 0.58 + 0.28 * pulse), false
+			33.0, Color(GOLD_THREAD, alpha), false
 		)
 	# Four gold knots where the net is tied.
 	for angle in [PI * 0.25, PI * 0.75, PI * 1.25, PI * 1.75]:
@@ -210,122 +225,148 @@ func _draw_net_shield() -> void:
 		draw_rect(Rect2(kx, ky, 1.0, 1.0), GOLD_THREAD)
 
 
+## The same net pulls to the sides.  Each half is clipped so the remaining
+## vertical opening is exactly NET_OPEN_GAP (26 px, against the required 24 px
+## minimum); torn inner thread ends show that it was opened, not erased.
 func _draw_split_net() -> void:
-	# The same net opens left/right: only the outer threads remain, leaving a
-	# clear vertical gap for the purple core.
 	var pulse: float = 0.5 + 0.5 * sin(_time * 3.0)
-	for offset in [-24.0, -12.0, 0.0, 12.0, 24.0]:
-		_net_line(
-			Vector2(offset - 38.0, -38.0), Vector2(offset + 38.0, 38.0),
-			35.0, Color(GOLD_THREAD, 0.72), true
+	var color: Color = Color(GOLD_THREAD, 0.74)
+	for side: float in [-1.0, 1.0]:
+		for offset in [-24.0, -12.0, 0.0, 12.0, 24.0]:
+			_net_line(
+				Vector2(offset - 38.0, -38.0), Vector2(offset + 38.0, 38.0),
+				35.0, color, true, side, NET_OPEN_GAP, NET_PEEL
+			)
+			_net_line(
+				Vector2(offset - 38.0, 38.0), Vector2(offset + 38.0, -38.0),
+				35.0, color, true, side, NET_OPEN_GAP, NET_PEEL
+			)
+		_draw_net_torn_edge(side, pulse)
+
+
+func _draw_net_torn_edge(side: float, pulse: float) -> void:
+	var edge_x: float = side * (NET_OPEN_GAP * 0.5)
+	var bright: Color = Color(GOLD_THREAD, 0.70 + 0.25 * pulse)
+	for index: int in range(6):
+		var y: float = -26.0 + float(index) * 10.0 + float(index % 2)
+		var jog: float = -1.0 if index % 3 == 0 else 0.0
+		draw_rect(Rect2(edge_x + side * jog, y, 1.0, 4.0), bright)
+		draw_rect(
+			Rect2(minf(edge_x, edge_x + side * 4.0), y + 2.0, 4.0, 1.0),
+			Color(GOLD_THREAD, 0.50 + 0.20 * pulse)
 		)
-		_net_line(
-			Vector2(offset - 38.0, 38.0), Vector2(offset + 38.0, -38.0),
-			35.0, Color(GOLD_THREAD, 0.72), true
-		)
-	# Two short peeled arcs.
-	_arc(34.0, -0.62, 0.62, Color(GOLD_THREAD, 0.65 + 0.20 * pulse), 12)
-	_arc(34.0, PI - 0.62, PI + 0.62, Color(GOLD_THREAD, 0.65 + 0.20 * pulse), 12)
+	# Two longer peeled hooks at the widest rows.
+	draw_rect(
+		Rect2(minf(edge_x - side * 3.0, edge_x + side * 5.0), -14.0, 8.0, 1.0),
+		bright
+	)
+	draw_rect(
+		Rect2(minf(edge_x - side * 3.0, edge_x + side * 5.0), 14.0, 8.0, 1.0),
+		Color(GOLD_THREAD, 0.55 + 0.20 * pulse)
+	)
 
 
 func _draw_exposed_core(phase_color: Color) -> void:
-	# Draw the exposure beacon first: rings and halos sit outside the knot, so
-	# the purple diamond and its phase outline stay crisp on top.
-	_draw_expose_glow()
-	# The core is a purple knot; the phase is a 1 px outline plus four corner
-	# brackets, so gold/cyan stays readable without turning the knot gold.
-	var pulse: float = 0.5 + 0.5 * sin(_time * 4.0)
-	var half: float = 15.0 + 1.5 * pulse
-	_diamond(half + 2.0, INK)
-	_diamond(half + 1.0, phase_color)
-	_diamond(half, Color(0.23, 0.13, 0.32, 1.0))
-	_diamond(half - 4.0, Color(0.42, 0.24, 0.60, 1.0))
-	_diamond(9.0, Color(0.66, 0.45, 0.92, 1.0))
-	draw_rect(Rect2(-2.0, -2.0, 4.0, 4.0), WHITE)
-	for direction: Vector2 in [
-		Vector2(-1.0, -1.0), Vector2(1.0, -1.0),
-		Vector2(-1.0, 1.0), Vector2(1.0, 1.0),
-	]:
-		var corner: Vector2 = direction * 19.0
-		var bx: float = minf(corner.x, corner.x + direction.x * 3.0)
-		var by: float = minf(corner.y, corner.y + direction.y * 3.0)
-		draw_rect(Rect2(bx, corner.y, 3.0, 1.0), phase_color)
-		draw_rect(Rect2(corner.x, by, 1.0, 3.0), phase_color)
-		draw_rect(Rect2(corner.x - 1.0, corner.y - 1.0, 2.0, 2.0), Color(WHITE, 0.65))
-	if _hit_flash > 0.0:
-		_ring(
-			30.0 + 30.0 * (1.0 - _hit_flash),
-			Color(1.0, 1.0, 1.0, 0.85 * _hit_flash),
-			34
+	# One solid phase diamond (40x40) with a 1 px dark edge.  The purple knot is
+	# a small inset, so the required phase colour owns the shape.  No ring,
+	# halo or bracket is drawn around the weak point.
+	_fill_diamond(44.0, 44.0, Color(0.0, 0.0, 0.0, 0.32), Vector2(1.0, 2.0))
+	_fill_diamond(42.0, 42.0, INK)
+	_fill_diamond(40.0, 40.0, phase_color)
+	# Purple core, inset but still visible at the centre.
+	_fill_diamond(22.0, 22.0, Color(0.06, 0.03, 0.10, 0.96), Vector2(0.0, 3.0))
+	_fill_diamond(20.0, 20.0, PURPLE_CORE, Vector2(0.0, 3.0))
+	_fill_diamond(14.0, 14.0, PURPLE_MID, Vector2(0.0, 3.0))
+	_fill_diamond(8.0, 8.0, PURPLE_LIGHT, Vector2(-1.0, 2.0))
+	# White highlight on the upper-left phase face.
+	for index: int in range(7):
+		var row_y: float = -16.0 + float(index) * 2.0
+		var cy: float = (row_y + 0.5) / 20.0
+		var span: int = int(round(20.0 * (1.0 - absf(cy))))
+		draw_rect(
+			Rect2(-float(span) + 1.0, row_y, 1.0, 1.0),
+			Color(WHITE, 0.82)
 		)
+	draw_rect(Rect2(-9.0, -12.0, 2.0, 1.0), WHITE)
+	# Sun = gold phase, moon = cyan phase.  The ~15 px icon sits above the
+	# inset knot, inside the diamond, so the required phase reads without text.
+	_draw_phase_icon(Vector2(0.0, -5.0), phase_color)
+	# Hit and phase flashes only brighten the diamond face itself.
+	var flash: float = maxf(_hit_flash * 0.62, _phase_flash * 0.46)
+	if flash > 0.0:
+		_fill_diamond(40.0, 40.0, Color(1.0, 1.0, 1.0, flash))
 
 
-## Public facts used by the guide/UI and acceptance tests.  They are also the
-## single source for the exposed-core beacon's readable palette and timing.
-func get_expose_glow_info() -> Dictionary:
+func get_phase_color() -> Color:
+	return GOLD if _positive else CYAN
+
+
+func get_phase_icon_name() -> String:
+	return "sun" if _positive else "moon"
+
+
+func get_diamond_size() -> Vector2:
+	return PHASE_DIAMOND_SIZE
+
+
+func get_net_gap() -> float:
+	return NET_OPEN_GAP
+
+
+## Public facts used by tests and the capture scripts.  This replaces the old
+## cyan/gold ring contract; has_ring is kept false on purpose.
+func get_expose_visual_info() -> Dictionary:
 	return {
-		"inner_color": CYAN,
-		"outer_color": GOLD,
-		"radius_min": EXPOSE_GLOW_RADIUS_MIN,
-		"radius_max": EXPOSE_GLOW_RADIUS_MAX,
-		"outer_offset": 3.0,
-		"outer_radius_min": EXPOSE_GLOW_RADIUS_MIN + 3.0,
-		"outer_radius_max": EXPOSE_GLOW_RADIUS_MAX + 3.0,
-		"period": EXPOSE_GLOW_PERIOD,
-		"alpha_min": EXPOSE_GLOW_ALPHA_MIN,
-		"alpha_max": EXPOSE_GLOW_ALPHA_MAX,
+		"diamond_size": PHASE_DIAMOND_SIZE,
+		"diamond_color": get_phase_color(),
+		"edge_color": INK,
+		"highlight_color": WHITE,
+		"icon": get_phase_icon_name(),
+		"icon_size": Vector2(15.0, 15.0),
+		"net_gap": NET_OPEN_GAP,
+		"net_peel": NET_PEEL,
+		"hit_rect": get_hit_rect(),
+		"purple_core": PURPLE_CORE,
+		"has_ring": false,
 	}
 
 
-## Breathing cyan/gold beacon around the exposed purple knot.  The 26-32 px
-## cyan ring plus the 29-35 px gold ring are the readable core signal at 1x;
-## three low-alpha halo bands add falloff without painting over the diamond or
-## the 1 px phase bracket.
-func _draw_expose_glow() -> void:
-	var breath: float = 0.5 + 0.5 * sin(_time * TAU / EXPOSE_GLOW_PERIOD - PI * 0.5)
-	var radius: float = lerpf(EXPOSE_GLOW_RADIUS_MIN, EXPOSE_GLOW_RADIUS_MAX, breath)
-	var alpha: float = lerpf(EXPOSE_GLOW_ALPHA_MIN, EXPOSE_GLOW_ALPHA_MAX, breath)
-	var halo_strength: float = 0.55 + 0.45 * breath
-	# Three halo bands (inner cyan, outer gold, far cyan), each a pair of 1 px
-	# rings with low alpha.  They fade outward and never fill the centre.
-	var halos: Array = [
-		[radius - 6.0, CYAN, 0.14],
-		[radius - 4.5, CYAN, 0.08],
-		[radius + 5.0, GOLD, 0.12],
-		[radius + 6.5, GOLD, 0.07],
-		[radius + 10.0, CYAN, 0.05],
-	]
-	for halo: Array in halos:
-		var halo_color: Color = halo[1]
-		_solid_ring(
-			float(halo[0]),
-			1.0,
-			Color(halo_color, float(halo[2]) * halo_strength)
-		)
-	# Ink separator rings give the cyan/gold pulse a hard edge against the gold
-	# split net; the coloured rings themselves are 2 px solid annuli, so the
-	# beacon reads at 1x instead of disappearing into the warp threads.
-	_solid_ring(radius - 1.6, 1.0, Color(INK, 0.72))
-	_solid_ring(radius + 5.5, 1.0, Color(INK, 0.62))
-	_solid_ring(radius, 2.0, Color(CYAN, alpha))
-	_solid_ring(radius + 3.0, 2.0, Color(GOLD, alpha))
-	# Eight short 3 px cross ticks just outside the gold ring make the beacon
-	# read as "open"; they are markers, never a filled disc.
-	for index: int in range(8):
-		var angle: float = TAU * float(index) / 8.0 + PI * 0.25
-		var tick: Vector2 = Vector2(cos(angle), sin(angle)) * (radius + 8.0)
-		var tick_color: Color = GOLD if index % 2 == 0 else CYAN
+func _draw_phase_icon(center: Vector2, _phase_color: Color) -> void:
+	if _positive:
+		for pixel: Dictionary in LoomPhaseGlyph.sun_pixels(
+			center.round(), 4, 3, [5.0, 6.0, 7.0], INK, WHITE, WHITE
+		):
+			draw_rect(pixel["rect"], pixel["color"])
+	else:
+		# The cut side is simply not drawn, so the phase-coloured diamond shows
+		# through and the crescent keeps a 1 px dark rim.
+		for pixel: Dictionary in LoomPhaseGlyph.moon_pixels(
+			center.round(), 6, 5, Vector2(4.0, -3.0), 5, INK, WHITE
+		):
+			draw_rect(pixel["rect"], pixel["color"])
+
+
+## Crisp diamond fill measured in whole pixels.  width/height give the outer
+## extent; a 1 px wider dark diamond behind it supplies the outline.
+func _fill_diamond(
+	width: float, height: float, color: Color, offset: Vector2 = Vector2.ZERO
+) -> void:
+	var half_h: float = height * 0.5
+	var half_w: float = width * 0.5
+	var base_x: float = round(offset.x)
+	var base_y: float = round(offset.y)
+	var y_start: int = int(round(base_y - half_h))
+	var y_end: int = int(round(base_y + half_h))
+	for y: int in range(y_start, y_end):
+		var cy: float = (float(y) + 0.5 - base_y) / half_h
+		if absf(cy) > 1.0:
+			continue
+		var span: int = int(round(half_w * (1.0 - absf(cy))))
+		if span < 1:
+			continue
 		draw_rect(
-			Rect2(round(tick.x) - 1.0, round(tick.y), 3.0, 1.0),
-			Color(INK, 0.70)
-		)
-		draw_rect(
-			Rect2(round(tick.x), round(tick.y) - 1.0, 1.0, 3.0),
-			Color(INK, 0.70)
-		)
-		draw_rect(
-			Rect2(round(tick.x), round(tick.y), 1.0, 1.0),
-			Color(tick_color, alpha)
+			Rect2(base_x - float(span), float(y), float(span * 2), 1.0),
+			color
 		)
 
 
@@ -393,84 +434,25 @@ func _draw_chains() -> void:
 
 
 func _net_line(
-	from: Vector2, to: Vector2, clip_radius: float, color: Color, split: bool
+	from: Vector2, to: Vector2, clip_radius: float, color: Color, split: bool,
+	side: float = 0.0, gap: float = NET_OPEN_GAP, peel: float = NET_PEEL
 ) -> void:
 	var steps: int = 96
+	var inner_cut: float = maxf(gap * 0.5 - peel, 0.0)
 	for index in range(steps + 1):
 		var t: float = float(index) / float(steps)
 		var point: Vector2 = from.lerp(to, t)
+		if split:
+			if side < 0.0 and point.x > -inner_cut:
+				continue
+			if side > 0.0 and point.x < inner_cut:
+				continue
+			point.x += side * peel
 		if point.length() > clip_radius:
-			continue
-		if split and absf(point.x) < 5.0:
 			continue
 		draw_rect(Rect2(round(point.x) + 1.0, round(point.y) + 1.0, 1.0, 1.0), Color(GOLD_DARK, 0.55))
 		draw_rect(Rect2(round(point.x), round(point.y), 1.0, 1.0), color)
 
 
-func _draw_radial(angle: float, r0: float, r1: float, color: Color) -> void:
-	var steps: int = int(maxf(r1 - r0, 1.0))
-	for index in range(steps + 1):
-		var t: float = float(index) / float(maxi(steps, 1))
-		var radius: float = lerpf(r0, r1, t)
-		draw_rect(
-			Rect2(
-				round(cos(angle) * radius),
-				round(sin(angle) * radius),
-				1.0, 1.0
-			),
-			color
-		)
-
-
-func _arc(radius: float, start: float, end: float, color: Color, steps: int) -> void:
-	for index in range(steps + 1):
-		var angle: float = lerpf(start, end, float(index) / float(maxi(steps, 1)))
-		draw_rect(
-			Rect2(round(cos(angle) * radius), round(sin(angle) * radius), 1.0, 1.0),
-			color
-		)
-
-
-func _diamond(radius: float, color: Color) -> void:
-	var r: int = int(round(radius))
-	for y in range(-r, r + 1):
-		var width: int = r - abs(y)
-		if width < 0:
-			continue
-		draw_rect(Rect2(float(-width), float(y), float(width * 2 + 1), 1.0), color)
-
-
-## Solid pixel annulus by scanline.  Unlike the dotted `_ring`, this leaves no
-## gaps at 1x, which is what the exposed-core signal needs against the net.
-func _solid_ring(radius: float, thickness: float, color: Color) -> void:
-	var outer_r: float = radius + thickness * 0.5
-	var inner_r: float = maxf(radius - thickness * 0.5, 0.0)
-	var y_start: int = int(floor(-outer_r))
-	var y_end: int = int(ceil(outer_r))
-	for y: int in range(y_start, y_end):
-		var row: float = float(y) + 0.5
-		var outer_sq: float = outer_r * outer_r - row * row
-		if outer_sq <= 0.0:
-			continue
-		var outer_x: float = sqrt(outer_sq)
-		var inner_x: float = 0.0
-		var inner_sq: float = inner_r * inner_r - row * row
-		if inner_sq > 0.0:
-			inner_x = sqrt(inner_sq)
-		var left: int = int(floor(-outer_x))
-		var right: int = int(ceil(outer_x))
-		var gap_left: int = int(floor(-inner_x))
-		var gap_right: int = int(ceil(inner_x))
-		if gap_left > left:
-			draw_rect(Rect2(float(left), float(y), float(gap_left - left), 1.0), color)
-		if right > gap_right:
-			draw_rect(Rect2(float(gap_right), float(y), float(right - gap_right), 1.0), color)
-
-
-func _ring(radius: float, color: Color, segments: int) -> void:
-	for index in range(segments):
-		var angle: float = float(index) * TAU / float(segments)
-		draw_rect(
-			Rect2(round(cos(angle) * radius), round(sin(angle) * radius), 1.0, 1.0),
-			color
-		)
+## (All old ring/halo helpers were removed with the exposure beacon; the core
+## is read from its shape and solid phase colour now.)

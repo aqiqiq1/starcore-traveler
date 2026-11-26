@@ -118,19 +118,42 @@ func _setup_music() -> void:
 	_music.name = "Music"
 	_music.stream = stream as AudioStream
 	_music.volume_db = MUSIC_DB
+	# The guide and teaching popup pause the tree.  Music must keep running
+	# through those pages, so the player itself is ALWAYS; the pause page then
+	# pauses it explicitly through stream_paused.
+	_music.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(_music)
 
 
 func start_music() -> void:
 	if _music == null:
 		return
+	_music.stream_paused = false
 	if not _music.playing:
 		_music.play()
 
 
 func stop_music() -> void:
 	if _music != null:
+		_music.stream_paused = false
 		_music.stop()
+
+
+## The pause page is the one place music really stops; the guide and the
+## teaching popup keep it playing because their tree pause does not touch this
+## PROCESS_MODE_ALWAYS player.
+func pause_music() -> void:
+	if _music != null and _music.playing:
+		_music.stream_paused = true
+
+
+func resume_music() -> void:
+	if _music != null:
+		_music.stream_paused = false
+
+
+func is_music_paused() -> bool:
+	return _music != null and _music.stream_paused
 
 
 func is_music_available() -> bool:
@@ -251,6 +274,22 @@ func stop_all() -> void:
 	]:
 		if player != null:
 			player.stop()
+
+
+## Scene shutdown: release the OGG playback/stream references before the
+## SceneTree exits.  `stop_all()` is also used for R and the title flow, where
+## the streams must stay loaded, so this is a separate exit-only path.
+func shutdown() -> void:
+	if _music != null:
+		_music.stop()
+		_music.stream = null
+	for player: AudioStreamPlayer in [
+		_node_hit, _bullet, _node_break, _core_hit, _core_exposed, _deny,
+		_telegraph, _sweep, _summon, _fire, _gear, _stage, _complete,
+	]:
+		if player != null:
+			player.stop()
+			player.stream = null
 
 
 # --- read API for tests ----------------------------------------------------

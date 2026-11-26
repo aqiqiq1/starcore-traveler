@@ -7,21 +7,29 @@ extends Node2D
 ## behaviour are original:
 ##   - hovers on a sine path around its authored base position;
 ##   - switches phase every 2.2 s, so its colour is a real timer the player can
-##     read before the next pulse;
-##   - pulses every 3.0 s.  A matching player is pushed away, an opposite player
-##     is pulled in.  The last 0.45 s before a pulse draws a charging ring;
+##     read before the next attack;
+##   - in hazard_mode (the bridge corridor) it guards one deck.  While the
+##     player stands inside its zone it charges for 1.5 s, draws a tether and a
+##     pulsing ring, then dives and flips the player's phase.  On a matching
+##     light bridge that removes the deck under the player, so the threat is a
+##     real fall unless they Q back or clear the wisp first;
+##   - outside hazard_mode it keeps the original 3.0 s push/pull pulse;
 ##   - one J hit destroys it (no true-damage requirement, no phase requirement).
 ##     The hit is resolved by the chapter from the player's real attack hit
-##     window with a forward rectangle.
+##     window with a forward rectangle.  The chapter then stabilises the deck
+##     this wisp was assigned to.
 ##
 ## Presentation: a dark silhouette, a two-tone body, one large eye and a tail,
-## so the 16 px enemy reads at 2x zoom.  Reference read on Celeste's Seeker was
-## used only for "one big eye + strong orbiting silhouette"; no sprite, palette
-## or animation is copied.  See REFERENCE.md.
+## so the 16 px enemy reads at 2x zoom.  References viewed for this round:
+## Secrets of Grindea's pixel wisp attack (thin line from caster to target plus
+## a large ring at the moment of fire) and Celeste's low-ceiling teaching room.
+## Only the reading order "tether, ring, then effect" is borrowed; no sprite,
+## palette or animation is copied.  See REFERENCE_LOW_BEAM_WISP_20261126.md.
 
 signal defeated(wisp: RiftPolarityWisp)
 signal phase_switched(positive: bool)
 signal pulsed(mode: String, force: float)
+signal flip_requested(wisp: RiftPolarityWisp)
 
 const SPRITE: Texture2D = preload(
 	"res://dlc/rift_workshop/assets/sprites/polarity_wisp_16x16_8f.png"
@@ -45,6 +53,17 @@ const CYAN: Color = Color("#5fe1e6")
 @export var pull_force: float = 170.0
 @export var player_path: NodePath = NodePath()
 @export var hum_enabled: bool = true
+## Bridge-corridor mode: guard one deck and flip the standing player instead of
+## the old push/pull pulse.
+@export var hazard_mode: bool = false
+@export var zone_center_x: float = -10000.0
+@export var zone_half_width: float = 28.0
+@export var hazard_deck_y: float = 280.0
+@export var hazard_y_tolerance: float = 10.0
+## Time the player can stand in the zone before the flip.  The HUD/guide copy
+## names this value, so keep the two in sync.
+@export var flip_interval: float = 1.5
+@export var flip_telegraph: float = 0.45
 
 var _sprite: Sprite2D = null
 var _hum: AudioStreamPlayer = null
@@ -63,6 +82,10 @@ var _last_pulse_mode: String = "none"
 var _last_pulse_force: float = 0.0
 var _last_swing_id: int = -1
 var _phase_switch_count: int = 0
+var _in_zone: bool = false
+var _flip_left: float = 0.0
+var _flip_count: int = 0
+var _dive_left: float = 0.0
 
 
 func _ready() -> void:
@@ -70,6 +93,7 @@ func _ready() -> void:
 	_positive = start_positive
 	_phase_left = phase_period
 	_pulse_left = pulse_period
+	_flip_left = flip_interval
 	z_index = 4
 	_build_sprite()
 	_build_audio()
@@ -144,9 +168,14 @@ func _process(delta: float) -> void:
 		return
 
 	_time += delta
+	_dive_left = maxf(_dive_left - delta, 0.0)
+	var dive_y: float = 0.0
+	if _dive_left > 0.0:
+		# One short downward lunge on the attack frame, then a smooth return.
+		dive_y = sin((1.0 - _dive_left / 0.28) * PI) * 10.0
 	position = _base + Vector2(
 		sin(_time * 0.7) * 2.0,
-		sin(_time * hover_speed) * hover_amplitude
+		sin(_time * hover_speed) * hover_amplitude + dive_y
 	)
 	_apply_frame(_time)
 
@@ -155,12 +184,57 @@ func _process(delta: float) -> void:
 		_phase_left = phase_period
 		_set_phase(not _positive)
 
-	_pulse_left -= delta
-	if _pulse_left <= 0.0:
-		_pulse_left = pulse_period
-		_do_pulse()
+	if hazard_mode:
+		_tick_hazard(delta)
+	else:
+		_pulse_left -= delta
+		if _pulse_left <= 0.0:
+			_pulse_left = pulse_period
+			_do_pulse()
 	_pulse_flash = maxf(_pulse_flash - delta / 0.42, 0.0)
 	queue_redraw()
+
+
+## Runs while the player is standing on this wisp's deck.  The 1.5 s timer is
+## reset on every exit, so a fast crossing is safe but lingering always costs a
+## phase flip.  The tether/ring starts 0.45 s before the flip.
+func _tick_hazard(delta: float) -> void:
+	if _player == null or not is_instance_valid(_player):
+		_resolve_player()
+	if _player == null or not is_instance_valid(_player):
+		return
+	var inside: bool = is_player_in_zone()
+	if not inside:
+		_in_zone = false
+		_flip_left = flip_interval
+		return
+	if not _in_zone:
+		_in_zone = true
+		_flip_left = flip_interval
+		return
+	_flip_left = maxf(_flip_left - delta, 0.0)
+	if _flip_left > 0.0:
+		return
+	_flip_left = flip_interval
+	_flip_count += 1
+	_pulse_flash = 1.0
+	_dive_left = 0.28
+	# Same pop file as the kill, pitched down: the flip is a threat, not a kill.
+	_play_sfx(0.78, -3.0)
+	flip_requested.emit(self)
+
+
+func is_player_in_zone() -> bool:
+	if _player == null or not is_instance_valid(_player):
+		return false
+	if absf(_player.global_position.x - zone_center_x) >= zone_half_width:
+		return false
+	if absf(_player.global_position.y - hazard_deck_y) > hazard_y_tolerance:
+		return false
+	if _player.has_method("is_input_override_active") \
+			and bool(_player.call("is_input_override_active")):
+		return false
+	return bool(_player.call("is_on_floor"))
 
 
 func _apply_frame(time: float) -> void:
@@ -275,6 +349,10 @@ func respawn() -> void:
 	_phase_left = phase_period
 	_pulse_left = pulse_period
 	_pulse_flash = 0.0
+	_flip_left = flip_interval
+	_flip_count = 0
+	_in_zone = false
+	_dive_left = 0.0
 	_last_swing_id = -1
 	position = _base
 	if _sprite != null:
@@ -331,6 +409,29 @@ func get_last_pulse_force() -> float:
 
 func get_phase_switch_count() -> int:
 	return _phase_switch_count
+
+
+func get_flip_count() -> int:
+	return _flip_count
+
+
+func get_flip_time_left() -> float:
+	return _flip_left
+
+
+func is_hazard_armed() -> bool:
+	return hazard_mode and _alive and _in_zone
+
+
+func get_zone_center_x() -> float:
+	return zone_center_x
+
+
+func get_zone_rect() -> Rect2:
+	return Rect2(
+		zone_center_x - zone_half_width, hazard_deck_y - hazard_y_tolerance,
+		zone_half_width * 2.0, hazard_y_tolerance * 2.0
+	)
 
 
 ## 1.0 on the killing frame, falling to 0 over the 0.14 s burst.  A read-only
@@ -398,17 +499,97 @@ func _draw() -> void:
 			)
 		return
 
-	# Charging ring: the last 0.45 s before a pulse.
-	var telegraph: float = clampf(1.0 - _pulse_left / 0.45, 0.0, 1.0)
-	if _pulse_left > 0.0 and telegraph > 0.0:
-		var ring_radius: float = 12.0 + 8.0 * telegraph
-		_draw_ring(ring_radius, Color(color, 0.20 + 0.35 * telegraph))
-	# Pulse burst: one expanding 1 px ring, 0.42 s.
+	if hazard_mode:
+		_draw_hazard_telegraph(color)
+	else:
+		# Charging ring: the last 0.45 s before a pulse.
+		var telegraph: float = clampf(1.0 - _pulse_left / 0.45, 0.0, 1.0)
+		if _pulse_left > 0.0 and telegraph > 0.0:
+			var ring_radius: float = 12.0 + 8.0 * telegraph
+			_draw_ring(ring_radius, Color(color, 0.20 + 0.35 * telegraph))
+	# Pulse burst: one expanding 1 px ring, 0.42 s.  The hazard ring starts
+	# outside the 32 px sprite, otherwise its first frames are invisible.
 	if _pulse_flash > 0.0:
 		var grow: float = 1.0 - _pulse_flash
-		_draw_ring(11.0 + 46.0 * grow, Color(color, 0.75 * _pulse_flash))
+		var start_radius: float = 18.0 if hazard_mode else 11.0
+		_draw_ring(
+			start_radius + 40.0 * grow, Color(color, 0.75 * _pulse_flash)
+		)
+		if hazard_mode:
+			_draw_ring_at_player(
+				color, 17.0 + 14.0 * grow, 0.80 * _pulse_flash
+			)
 	# A faint 1 px halo keeps the 16 px body readable over the bright sky.
 	_draw_ring(11.0, Color(color, 0.22 + 0.08 * sin(_time * 3.0)))
+
+
+## Hazard read order (borrowed from the Secrets of Grindea wisp reference):
+## long thin tether to the target first, then a closing ring, then the effect.
+func _draw_hazard_telegraph(color: Color) -> void:
+	if not _in_zone or _flip_left <= 0.0:
+		return
+	var warn: float = clampf(1.0 - _flip_left / flip_telegraph, 0.0, 1.0)
+	if warn <= 0.0:
+		# A very faint tether while charging: the player can trace what is
+		# watching them without a full-screen warning.
+		_draw_tether(0.16)
+		_draw_chevron(color, 0.25)
+		return
+	_draw_tether(0.30 + 0.55 * warn)
+	_draw_chevron(color, 0.45 + 0.55 * warn)
+	_draw_ring(12.0 + 9.0 * warn, Color(color, 0.18 + 0.42 * warn))
+	# Closing ring around the player's head: the last 0.2 s is the readable
+	# "flip now" frame.
+	if warn > 0.55:
+		var close: float = (warn - 0.55) / 0.45
+		_draw_ring_at_player(color, 15.0 - 4.0 * close, 0.25 + 0.55 * close)
+
+
+func _draw_tether(strength: float) -> void:
+	if _player == null or not is_instance_valid(_player):
+		return
+	var target: Vector2 = to_local(_player.global_position + Vector2(0.0, -15.0))
+	var direction: Vector2 = (target - Vector2.ZERO).normalized()
+	var length: float = minf(target.length(), 72.0)
+	var step: float = 4.0
+	var distance: float = 4.0
+	while distance < length:
+		if int(distance / step) % 2 == 0:
+			draw_rect(
+				Rect2(direction * distance, Vector2(1.0, 1.0)),
+				Color(1.0, 1.0, 1.0, strength)
+			)
+		distance += step
+	# Arrow head at the player end.
+	var tip: Vector2 = direction * length
+	draw_rect(Rect2(tip + Vector2(-1.0, -1.0), Vector2(3.0, 1.0)),
+		Color(1.0, 1.0, 1.0, strength))
+	draw_rect(Rect2(tip + Vector2(-1.0, 0.0), Vector2(1.0, 1.0)),
+		Color(1.0, 1.0, 1.0, strength))
+
+
+func _draw_ring_at_player(color: Color, radius: float, alpha: float) -> void:
+	if _player == null or not is_instance_valid(_player):
+		return
+	var center: Vector2 = to_local(_player.global_position + Vector2(0.0, -15.0))
+	var segments: int = 20
+	for index: int in range(segments):
+		var angle: float = float(index) * TAU / float(segments)
+		draw_rect(
+			Rect2(center + Vector2(round(cos(angle) * radius),
+				round(sin(angle) * radius)), Vector2(1.0, 1.0)),
+			Color(color, alpha)
+		)
+
+
+func _draw_chevron(color: Color, alpha: float) -> void:
+	# Three 1 px downward chevrons below the body: "this one dives".
+	var base_y: float = 10.0
+	for index: int in range(3):
+		var y: float = base_y + float(index) * 3.0
+		draw_rect(Rect2(-2.0, y, 1.0, 1.0), Color(color, alpha))
+		draw_rect(Rect2(0.0, y + 1.0, 1.0, 1.0), Color(color, alpha))
+		draw_rect(Rect2(2.0, y, 1.0, 1.0), Color(color, alpha))
 
 
 func _draw_ring(radius: float, color: Color) -> void:

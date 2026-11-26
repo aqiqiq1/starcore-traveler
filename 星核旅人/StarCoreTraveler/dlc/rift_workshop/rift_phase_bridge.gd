@@ -14,6 +14,12 @@ extends Node2D
 ## always places a safe lower shelf under the bridges; falling is a retry, not
 ## a soft lock.
 ##
+## Stabilised deck: killing the wisp assigned to this bridge sets a permanent
+## "stable" flag.  The deck then stays solid for either phase (a pale locked
+## core reads as "no longer phase-dependent").  This is the J-first reward from
+## the 2026-11-26 feedback: clear the wisp before crossing and the bridge can
+## no longer be flipped out from under the player.
+##
 ## Presentation reference: Celeste Core Block hot/cold, only for the reading
 ## order "one solid colour block + central bright core, state before detail".
 ## Shape, palette, animation and collision are this project's own.
@@ -26,6 +32,10 @@ const DARK_EDGE: Color = Color(0.004, 0.012, 0.016, 0.96)
 const GONE_EDGE: Color = Color(0.55, 0.72, 0.78, 0.30)
 const FLASH_TIME: float = 0.22
 const DISSOLVE_TIME: float = 0.18
+## Pale locked core used by a wisp-cleared deck.  Deliberately warmer/whiter
+## than either phase so "stable" is not confused with gold or cyan.
+const STABLE_CORE: Color = Color(1.0, 0.955, 0.820)
+const STABLE_EDGE: Color = Color(0.780, 0.940, 0.930)
 
 @export var required_positive: bool = true
 @export var bridge_width: float = 64.0
@@ -36,6 +46,10 @@ var _player: Node2D = null
 var _blocker: StaticBody2D = null
 var _shape: CollisionShape2D = null
 var _solid: bool = false
+var _stabilized: bool = false
+## A wisp flip holds the deck solid for a short reaction window, so the HUD's
+## "Q 换回" instruction is a real, playable save rather than a 0.14 s fall.
+var _hold_solid_left: float = 0.0
 var _flash: float = 0.0
 var _dissolve: float = 0.0
 var _time: float = 0.0
@@ -67,7 +81,9 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	if _hold_solid_left > 0.0:
+		_hold_solid_left = maxf(_hold_solid_left - delta, 0.0)
 	if _player == null or not is_instance_valid(_player):
 		_resolve_player()
 	var desired: bool = _compute_desired()
@@ -93,6 +109,10 @@ func _physics_process(_delta: float) -> void:
 
 func is_solid() -> bool:
 	return _solid
+
+
+func is_stabilized() -> bool:
+	return _stabilized
 
 
 func is_player_inside() -> bool:
@@ -130,6 +150,8 @@ func get_collision_layer() -> int:
 
 
 func get_state_name() -> String:
+	if _stabilized and _solid:
+		return "stable"
 	return "solid" if _solid else "gone"
 
 
@@ -146,31 +168,67 @@ func get_dissolve_strength() -> float:
 
 func set_required_positive(value: bool) -> void:
 	required_positive = value
-	var before: bool = _solid
-	_solid = _compute_desired()
-	if _solid != before:
-		if _solid:
-			_flash = 1.0
-		else:
-			_dissolve = 1.0
-	_apply_collision()
+	_refresh_solid()
 	queue_redraw()
 
 
 func set_player_node(player: Node2D) -> void:
 	_player = player
+	_refresh_solid()
+	queue_redraw()
+
+
+## Wisp-cleared decks stay solid for either phase until the chapter restarts.
+## The same anti-crush guard as a phase change prevents a re-form inside the
+## body when the killing J lands while the player is falling through the span.
+func set_stabilized(value: bool) -> void:
+	if _stabilized == value:
+		return
+	_stabilized = value
+	_hold_solid_left = 0.0
+	_refresh_solid()
+	queue_redraw()
+
+
+## Called by the chapter when its assigned wisp flips the player.  The deck
+## stays solid for `seconds` even though the phase no longer matches, so the
+## player can see the HUD line and press Q to recover.  If they do not, the
+## normal phase check resumes and the deck dissolves at the end of the window.
+func hold_solid(seconds: float) -> void:
+	if _stabilized:
+		return
+	_hold_solid_left = maxf(_hold_solid_left, seconds)
+	_refresh_solid()
+	queue_redraw()
+
+
+func is_hold_solid_active() -> bool:
+	return _hold_solid_left > 0.0
+
+
+func get_hold_solid_left() -> float:
+	return _hold_solid_left
+
+
+# --- internals -------------------------------------------------------------
+
+func _refresh_solid() -> void:
 	var before: bool = _solid
-	_solid = _compute_desired()
+	var desired: bool = _compute_desired()
+	if desired and _player_overlaps():
+		desired = false
+		_deferred_reforms += 1
+	_solid = desired
 	if _solid != before:
 		if _solid:
 			_flash = 1.0
 		else:
 			_dissolve = 1.0
+		_apply_collision()
+		solidity_changed.emit(_solid)
+		return
 	_apply_collision()
-	queue_redraw()
 
-
-# --- internals -------------------------------------------------------------
 
 func _resolve_player() -> void:
 	if _player != null and is_instance_valid(_player):
@@ -191,6 +249,8 @@ func _resolve_player() -> void:
 
 
 func _compute_desired() -> bool:
+	if _stabilized or _hold_solid_left > 0.0:
+		return true
 	if _player == null or not is_instance_valid(_player):
 		return false
 	return bool(_player.call("is_positive")) == required_positive
@@ -214,9 +274,40 @@ func _apply_collision() -> void:
 
 func _draw() -> void:
 	var color: Color = GOLD if required_positive else CYAN
+	if _stabilized:
+		color = STABLE_CORE
 	var w: float = bridge_width
 	var h: float = bridge_height
 	var pulse: float = 0.5 + 0.5 * sin(_time * 4.0)
+	if _stabilized and _solid:
+		# A stable deck is phase-independent: a near-white core, a mint edge
+		# and one small lock diamond.  No gold/cyan hue is used for the body,
+		# so it cannot be mistaken for a phase the player must match.
+		draw_rect(Rect2(0.0, -3.0, w, 3.0), Color(STABLE_EDGE, 0.13 + 0.03 * pulse))
+		draw_rect(Rect2(0.0, h, w, 2.0), Color(STABLE_EDGE, 0.10))
+		draw_rect(Rect2(0.0, 0.0, w, h), DARK_EDGE)
+		draw_rect(Rect2(1.0, 1.0, w - 2.0, h - 2.0), Color(0.62, 0.76, 0.72, 0.62))
+		draw_rect(Rect2(1.0, 3.0, w - 2.0, 4.0), STABLE_CORE)
+		draw_rect(Rect2(1.0, 4.0, w - 2.0, 2.0), Color.WHITE)
+		draw_rect(Rect2(0.0, 0.0, 3.0, h), STABLE_EDGE)
+		draw_rect(Rect2(w - 3.0, 0.0, 3.0, h), STABLE_EDGE)
+		# Central lock diamond: 5 x 5, crisp, with a dark keyhole notch.
+		var center_x: float = round(w * 0.5)
+		for row: int in range(5):
+			var half: int = 2 - absi(row - 2)
+			draw_rect(
+				Rect2(center_x - float(half), 1.0 + float(row),
+					float(half * 2 + 1), 1.0),
+				Color(0.10, 0.13, 0.13, 0.95)
+			)
+		draw_rect(Rect2(center_x, 3.0, 1.0, 2.0), STABLE_CORE)
+		var tick_x: float = 6.0
+		while tick_x < w - 5.0:
+			draw_rect(Rect2(tick_x, 1.0, 1.0, 1.0), Color(1.0, 1.0, 1.0, 0.60))
+			tick_x += 8.0
+		if _flash > 0.0:
+			draw_rect(Rect2(0.0, 0.0, w, h), Color(1.0, 1.0, 1.0, 0.55 * _flash))
+		return
 
 	if not _solid:
 		# Ghost state: 1 px dashed outline plus a few drifting sparks.  Empty
@@ -278,5 +369,10 @@ func _draw() -> void:
 		draw_rect(Rect2(tick_x, 1.0, 1.0, 1.0), Color(1.0, 0.98, 0.9, 0.55))
 		draw_rect(Rect2(tick_x, h - 2.0, 1.0, 1.0), Color(0.0, 0.0, 0.0, 0.35))
 		tick_x += 8.0
+	if _hold_solid_left > 0.0:
+		# Short grace after a wisp flip: a white pulse says "still standing, Q
+		# now" without changing the phase colour of the deck.
+		var grace: float = 0.5 + 0.5 * sin(_time * 18.0)
+		draw_rect(Rect2(0.0, 0.0, w, h), Color(1.0, 1.0, 1.0, 0.12 + 0.14 * grace))
 	if _flash > 0.0:
 		draw_rect(Rect2(0.0, 0.0, w, h), Color(1.0, 1.0, 1.0, 0.55 * _flash))

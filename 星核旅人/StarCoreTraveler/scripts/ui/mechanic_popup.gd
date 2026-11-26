@@ -642,7 +642,7 @@ func _build_ui() -> void:
 	_demo_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_panel.add_child(_demo_rect)
 
-	_title_label = _label("", Vector2(RIGHT_X, 13.0), Vector2(RIGHT_WIDTH, 20.0), 16, GOLD)
+	_title_label = _label("", Vector2(RIGHT_X, 6.0), Vector2(RIGHT_WIDTH, 28.0), 24, GOLD)
 	_panel.add_child(_title_label)
 
 	_page_indicator = _label("", Vector2(486.0, 12.0), Vector2(62.0, 16.0), 12, MUTED)
@@ -700,5 +700,5 @@ func _label(
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
-	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_constant_override("outline_size", 0)
 	return label

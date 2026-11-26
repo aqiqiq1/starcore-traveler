@@ -9,13 +9,16 @@ extends Node2D
 ## down -> core open -> three true hits -> next stage (three stages total).
 ##
 ## The boss has three attacks, introduced by stage:
-##   1. slow homing bolts      (warning 0.55 s)
-##   2. sweeping light band    (warning 0.65 s)
-##   3. summon 1-2 rift wisps  (warning 0.80 s)
+##   1. slow homing bolts      (0.70 s warning)
+##   2. sweeping light band    (0.80 s warning)
+##   3. summon 1-2 rift wisps  (1.00 s warning)
 ##
-## Two accepted hits -> black fade -> player back at the hall entrance and the
-## whole boss restored.  R restarts the chapter.  Completion shows
-## "织机停转 · 用时 mm:ss"; E / Enter returns to the title.
+## Three accepted hits = one death: the current stage is restored at its
+## entrance and one of the run's three hearts is spent.  At zero hearts a game
+## over page offers 重试本章 / 返回标题; R restarts the chapter and resets the
+## hearts.  Completion shows "织机停转 · 用时 mm:ss"; E / Enter returns to the
+## title.  The exposed core is a 40x40 solid phase diamond and can only be hit
+## from a jump.
 ##
 ## Reused, never modified: L3Player (J / hurt / fall), the shared DS03
 ## background, L3Terrain, CompactLevelHeader, the project font and palette, the
@@ -69,6 +72,9 @@ const GEAR_Y: float = 302.0
 const CORE_HITS_PER_STAGE: int = 3
 const MAX_STAGE: int = 3
 const PLAYER_HIT_LIMIT: int = 3
+## Three hearts for the whole run.  A death (three accepted hits, or a fall)
+## removes one and retries the current stage; the third death opens game over.
+const PLAYER_LIVES: int = 3
 ## Chapter-level grace after an accepted hit.  The shared L3Player owns 0.6 s;
 ## this covers the 0.6-0.95 s window the brief asked for.
 const DAMAGE_IMMUNITY_TIME: float = 0.95
@@ -109,6 +115,7 @@ enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 @onready var _hud: LoomHUD = $HUD
 @onready var _audio: LoomAudio = $Audio
 
+var _footsteps: PlayerFootstepAudio = null
 var _nodes: Array[LoomNode] = []
 var _bullets: Array[LoomBullet] = []
 var _wisps: Array[LoomWisp] = []
@@ -121,8 +128,8 @@ var _fire_serial: int = 0
 var _intro_guide: DlcGuide = null
 var _mechanic_popup: MechanicPopup = null
 var _fire_tip_pending: bool = false
-## The cyan/gold opening burst is a once-per-run event; later exposures keep
-## the persistent pulse but do not replay the burst.
+## The white opening flash is a once-per-run event; later exposures keep the
+## body-only diamond read but do not replay the flash.
 var _core_burst_played: bool = false
 
 var _elapsed: float = 0.0
@@ -132,6 +139,8 @@ var _boss_active: bool = false
 var _stage: int = 1
 var _core_hits: int = 0
 var _player_hits: int = 0
+var _lives: int = PLAYER_LIVES
+var _game_over: bool = false
 var _damage_immunity_left: float = 0.0
 var _stage_supply_used: bool = false
 var _boss_grace: float = 0.0
@@ -207,18 +216,31 @@ func _ready() -> void:
 	_player.attack_hit_window.connect(_on_player_attack_hit_window)
 	_player.recovery_transition_requested.connect(_on_player_recovery_transition_requested)
 	_last_polarity_toggles = _player.get_polarity_toggle_count()
+	_setup_footsteps()
 
 	_hud.resume_requested.connect(_on_hud_resume_requested)
 	_hud.restart_requested.connect(_on_hud_restart_requested)
 	_hud.title_requested.connect(_on_hud_title_requested)
 	_hud.quit_requested.connect(_on_hud_quit_requested)
 	_setup_mechanic_popup()
+	_hud.bind_player_overhead(_player, Callable(self, "_overhead_hits_suppressed"))
 	_hud.set_polarity(false)
 	_hud.set_objective("目标：向右进入织机厅")
-	_hud.set_boss_state(1, MAX_STAGE, 2, 0, CORE_HITS_PER_STAGE, false, 0, 3)
+	_hud.set_boss_state(
+		1, MAX_STAGE, 2, 0, CORE_HITS_PER_STAGE, false, 0,
+		PLAYER_HIT_LIMIT, PLAYER_LIVES, PLAYER_LIVES
+	)
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
+	_hud.show_game_over(false)
 	_hud.set_recovery_alpha(0.0)
+	# The intro guide pauses the tree; in a real window start the track before
+	# it opens so the PROCESS_MODE_ALWAYS music really runs through the guide.
+	# The headless 90-frame smoke run has no audio device, and starting an OGG
+	# playback there leaves it referenced by AudioServer at forced exit, so the
+	# real-window path is the one that owns this early start.
+	if DisplayServer.get_name() != "headless":
+		_audio.start_music()
 
 	_camera.reset_smoothing()
 	_elapsed = 0.0
@@ -230,10 +252,60 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+	if _footsteps != null and is_instance_valid(_footsteps):
+		_footsteps.stop()
 	if _audio != null:
 		_audio.stop_all()
+		_audio.shutdown()
 	if is_instance_valid(DemoAudio):
 		DemoAudio.stop_world()
+
+
+## The shared footstep helper is parented to the real player.  Its gate keeps
+## every menu/guide/popup/recovery/completion screen silent while normal
+## walking and running still play the small stone bank.
+func _setup_footsteps() -> void:
+	if _footsteps != null and is_instance_valid(_footsteps):
+		return
+	_footsteps = PlayerFootstepAudio.new()
+	_footsteps.name = "Footsteps"
+	_footsteps.attach_to(_player)
+	_footsteps.set_enabled_check(Callable(self, "_footsteps_allowed"))
+
+
+## The damage hearts above the player's head are only part of normal boss
+## gameplay.  They hide for every modal/transition state, including the tree
+## pauses owned by the guide and teaching popup.
+func _overhead_hits_suppressed() -> bool:
+	if not _boss_active:
+		return true
+	if get_tree() == null or get_tree().paused:
+		return true
+	if (
+		_pause_open or _game_over or _completed or _pending_completion
+		or _recovery_active or _retry_pending
+	):
+		return true
+	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
+		return true
+	if _mechanic_popup != null and is_instance_valid(_mechanic_popup) and _mechanic_popup.is_open():
+		return true
+	return false
+
+
+func _footsteps_allowed() -> bool:
+	if get_tree() == null or get_tree().paused:
+		return false
+	if (
+		_completed or _pending_completion or _pause_open or _recovery_active
+		or _retry_pending or _game_over
+	):
+		return false
+	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
+		return false
+	if _mechanic_popup != null and is_instance_valid(_mechanic_popup) and _mechanic_popup.is_open():
+		return false
+	return true
 
 
 ## Teaching layer only: the shared MechanicPopup pauses on first contact with
@@ -253,10 +325,19 @@ func _tick_mechanic_popups() -> void:
 	if _mechanic_popup == null or not is_instance_valid(_mechanic_popup):
 		return
 	if _fire_tip_pending:
+		# Stay attached to the one real fire telegraph.  If another page owns
+		# the screen and the warning is gone, drop the tip instead of popping it
+		# later at the entrance or over a different attack.
+		var same_warning: bool = (
+			_attack_state == AttackState.TELEGRAPH and _attack_kind == "fire"
+		)
+		_fire_tip_pending = false
 		if MechanicTips.has_seen(TIP_FIRE):
-			_fire_tip_pending = false
-		else:
-			_mechanic_popup.request(TIP_FIRE)
+			return
+		if not same_warning or is_mechanic_popup_blocked():
+			MechanicTips.mark_seen(TIP_FIRE)
+			return
+		_mechanic_popup.request(TIP_FIRE)
 
 
 ## Same contract as level_01/02/03: the popup may not appear over the intro
@@ -267,7 +348,7 @@ func is_mechanic_popup_blocked() -> bool:
 		return true
 	if get_tree().paused:
 		return true
-	if _completed or _pending_completion or _scene_leaving:
+	if _completed or _pending_completion or _scene_leaving or _game_over:
 		return true
 	if _pause_open or _recovery_active or _retry_pending:
 		return true
@@ -305,7 +386,7 @@ func _on_intro_guide_closed(_kind: String) -> void:
 # --- frame flow ------------------------------------------------------------
 
 func _physics_process(delta: float) -> void:
-	if get_tree().paused or _completed or _scene_leaving:
+	if get_tree().paused or _completed or _game_over or _scene_leaving:
 		return
 	_damage_immunity_left = maxf(_damage_immunity_left - delta, 0.0)
 	if _recovery_active:
@@ -350,7 +431,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _process(delta: float) -> void:
-	if get_tree().paused or _scene_leaving:
+	if get_tree().paused or _game_over or _scene_leaving:
 		return
 	if not _completed:
 		_elapsed += delta
@@ -423,9 +504,9 @@ func _on_node_broken(_node: LoomNode) -> void:
 		_core.set_exposed(true)
 		_audio.play_core_exposed()
 		_hud.show_event("节点停转 · 核心暴露", 2.0)
-		_hud.set_objective("目标：核心暴露 · 异相 J 3 次")
-		# The first exposure gets one cyan/gold burst; the purple knot keeps
-		# its breathing double ring for the whole exposed window.
+		_hud.set_objective("目标：核心暴露 · 异相 J 打核心")
+		# The first exposure gets one 0.3 s white flash and a few sparks; the
+		# core then reads from its solid phase diamond and opened net only.
 		if not _core_burst_played:
 			_core_burst_played = true
 			_fx.play_core_exposed_burst(_core.global_position)
@@ -447,7 +528,7 @@ func _resolve_core_hit(snapshot_positive: bool) -> void:
 	if _core_hits >= CORE_HITS_PER_STAGE:
 		_advance_stage()
 	else:
-		_hud.show_event("核心真伤 %d / 3 · 核心已换相" % _core_hits, 1.6)
+		_hud.show_event("核心真伤 · 核心已换相", 1.6)
 	_update_hud_state()
 
 
@@ -477,9 +558,9 @@ func _advance_stage() -> void:
 	if _stage == 2 and not _stage_supply_used:
 		_stage_supply_used = true
 		_player_hits = 0
-		_hud.show_event("阶段 2 · 城垣补给：受击数清零", 2.4)
+		_hud.show_event("阶段推进 · 城垣补给：受击清零", 2.4)
 	else:
-		_hud.show_event("阶段 %d / %d · 节点重生" % [_stage, MAX_STAGE], 2.0)
+		_hud.show_event("阶段推进 · 节点重生", 2.0)
 	_hud.set_objective("目标：异相 J 打掉两个节点")
 	_update_hud_state()
 
@@ -489,7 +570,8 @@ func _update_hud_state() -> void:
 		return
 	_hud.set_boss_state(
 		_stage, MAX_STAGE, _nodes_alive_count(), _core_hits,
-		CORE_HITS_PER_STAGE, _core.is_exposed(), _player_hits, PLAYER_HIT_LIMIT
+		CORE_HITS_PER_STAGE, _core.is_exposed(), _player_hits, PLAYER_HIT_LIMIT,
+		_lives, PLAYER_LIVES
 	)
 
 
@@ -510,7 +592,7 @@ func _update_objective(force: bool = false) -> void:
 		text = "目标：向右进入织机厅"
 		key = "enter"
 	elif _core.is_exposed():
-		text = "目标：核心暴露 · 异相 J %d / 3" % _core_hits
+		text = "目标：核心暴露 · 异相 J 打核心"
 		key = "core"
 	else:
 		text = "目标：异相 J 打掉两个节点"
@@ -840,7 +922,7 @@ func apply_enemy_hit(source_position: Vector2) -> bool:
 	_player_hits += 1
 	if is_instance_valid(DemoAudio):
 		DemoAudio.play_player_hurt()
-	_hud.show_event("受击 %d / %d" % [_player_hits, PLAYER_HIT_LIMIT], 1.2)
+	_hud.show_event("受击 · 保护已启动", 1.2)
 	_update_hud_state()
 	if _player_hits >= PLAYER_HIT_LIMIT:
 		_retry_pending = true
@@ -867,14 +949,20 @@ func _on_player_recovery_transition_requested(reason: String) -> void:
 # --- recovery (same approved timing as the other DLC chapters) -------------
 
 func _begin_recovery(kind: String) -> void:
-	if _recovery_active or _completed or _scene_leaving:
+	if _recovery_active or _completed or _scene_leaving or _game_over:
 		return
+	# One recovery == one death.  The heart row is the only read of the new
+	# count; stage progress and the one-time stage-1 supply are not restored.
+	_lives = maxi(_lives - 1, 0)
+	_update_hud_state()
 	_recovery_active = true
 	_recovery_phase = RecoveryPhase.FADE_OUT
 	_recovery_elapsed = 0.0
 	_recovery_alpha = 0.0
 	_attack_key_down = false
 	_retry_pending = false
+	if _footsteps != null and is_instance_valid(_footsteps):
+		_footsteps.stop()
 	_clear_hazards()
 	_attack_state = AttackState.IDLE
 	_attack_left = 1.2
@@ -899,7 +987,10 @@ func _advance_recovery(delta: float) -> void:
 			if _recovery_alpha >= 1.0:
 				_recovery_phase = RecoveryPhase.BLACK_HOLD
 				_recovery_elapsed = 0.0
-				_apply_recovery_reset()
+				if _lives <= 0:
+					_start_game_over()
+				else:
+					_apply_recovery_reset()
 		RecoveryPhase.BLACK_HOLD:
 			_recovery_alpha = 1.0
 			_hud.set_recovery_alpha(1.0)
@@ -938,6 +1029,37 @@ func _finish_recovery() -> void:
 	_player.clear_external_force()
 	_attack_key_down = false
 	LEVEL_FLOW.release_one_shot_actions()
+
+
+## Third death: the arena stays in the background under a dim page with the
+## empty heart row, 重试本章 / 返回标题 and R as the keyboard reset.  R resets
+## lives through _restart_chapter; no path can add a fourth heart.
+func _start_game_over() -> void:
+	if _game_over or _completed or _scene_leaving:
+		return
+	_game_over = true
+	_boss_active = false
+	_pending_completion = false
+	_retry_pending = false
+	_fire_tip_pending = false
+	_clear_hazards()
+	_recovery_active = false
+	_recovery_phase = RecoveryPhase.NONE
+	_recovery_elapsed = 0.0
+	_recovery_alpha = 0.0
+	_hud.set_recovery_alpha(0.0)
+	_hud.set_gear_warning(false, 0.0)
+	_hud.hide_event()
+	_hud.show_game_over(true, 0)
+	_update_hud_state()
+	_audio.stop_music()
+	if _footsteps != null and is_instance_valid(_footsteps):
+		_footsteps.stop()
+	_attack_key_down = false
+	_player.begin_input_override()
+	_player.set_input_override_axis(0.0, false)
+	_player.cancel_attack()
+	_player.begin_recovery_hold()
 
 
 ## A failure retries the CURRENT stage at its entrance: stage is preserved,
@@ -1004,6 +1126,10 @@ func _input(event: InputEvent) -> void:
 		return
 	if _scene_leaving:
 		return
+	if _game_over:
+		# R above already restarts; the game over page owns Enter/Space and
+		# arrows through LoomHUD's own fallback.
+		return
 	if _completed:
 		if key_event.pressed and not key_event.echo:
 			if code == int(KEY_E):
@@ -1040,7 +1166,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if _mechanic_popup != null and is_instance_valid(_mechanic_popup) and _mechanic_popup.is_open():
 		return
-	if _scene_leaving:
+	if _scene_leaving or _game_over:
 		return
 	# The completion page's footnote promises Esc can open the pause page, so
 	# Esc is live there too; only the failure fade/retry owns no pause.
@@ -1103,9 +1229,13 @@ func _set_paused(value: bool) -> void:
 	_player.clear_input_buffers()
 	_player.clear_external_force()
 	if value:
+		if _footsteps != null and is_instance_valid(_footsteps):
+			_footsteps.stop()
+		_audio.pause_music()
 		get_tree().paused = true
 		return
 	get_tree().paused = false
+	_audio.resume_music()
 	LEVEL_FLOW.release_one_shot_actions()
 	_player.clear_input_buffers()
 
@@ -1129,14 +1259,17 @@ func _complete_chapter() -> void:
 	_player.clear_input_buffers()
 	_player.clear_external_force()
 	_player.lock_completion_input()
+	if _footsteps != null and is_instance_valid(_footsteps):
+		_footsteps.stop()
 	_hud.show_pause(false)
 	_hud.set_recovery_alpha(0.0)
 	_hud.set_gear_warning(false, 0.0)
 	_hud.show_completion(true, _elapsed)
 	_hud.set_objective("目标：织机停转")
-	# The completion row should read "核心 3 / 3", not the shielded wording.
+	# The completion row should show all three core pips and no shielded icon.
 	_hud.set_boss_state(
-		_stage, MAX_STAGE, 0, CORE_HITS_PER_STAGE, CORE_HITS_PER_STAGE, true, 0, PLAYER_HIT_LIMIT
+		_stage, MAX_STAGE, 0, CORE_HITS_PER_STAGE, CORE_HITS_PER_STAGE, true,
+		0, PLAYER_HIT_LIMIT, _lives, PLAYER_LIVES
 	)
 	_hud.show_event("织机停转", 3.0)
 	_audio.stop_music()
@@ -1152,8 +1285,11 @@ func _return_to_title() -> void:
 	_pause_open = false
 	_scene_leaving = true
 	_hud.show_pause(false)
+	_hud.show_game_over(false)
 	_hud.show_completion(false, _elapsed)
 	_audio.stop_all()
+	if _footsteps != null and is_instance_valid(_footsteps):
+		_footsteps.stop()
 	if is_instance_valid(DemoAudio):
 		DemoAudio.stop_world()
 	_player.reset_movement_input_state()
@@ -1168,10 +1304,12 @@ func _restart_chapter() -> void:
 	get_tree().paused = false
 	_pause_open = false
 	_completed = false
+	_game_over = false
 	_boss_active = false
 	_stage = 1
 	_core_hits = 0
 	_player_hits = 0
+	_lives = PLAYER_LIVES
 	_damage_immunity_left = 0.0
 	_stage_supply_used = false
 	_fire_serial = 0
@@ -1207,7 +1345,11 @@ func _restart_chapter() -> void:
 	_hud.set_recovery_alpha(0.0)
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
-	_hud.set_boss_state(1, MAX_STAGE, 2, 0, CORE_HITS_PER_STAGE, false, 0, PLAYER_HIT_LIMIT)
+	_hud.show_game_over(false)
+	_hud.set_boss_state(
+		1, MAX_STAGE, 2, 0, CORE_HITS_PER_STAGE, false, 0,
+		PLAYER_HIT_LIMIT, PLAYER_LIVES, PLAYER_LIVES
+	)
 	_hud.set_objective("目标：向右进入织机厅")
 	_hud.set_polarity(false)
 	_player.end_recovery_hold()
@@ -1296,6 +1438,26 @@ func get_core_hits_per_stage() -> int:
 
 func get_player_hits() -> int:
 	return _player_hits
+
+
+func get_lives() -> int:
+	return _lives
+
+
+func get_max_lives() -> int:
+	return PLAYER_LIVES
+
+
+func is_game_over() -> bool:
+	return _game_over
+
+
+func get_footstep_audio() -> PlayerFootstepAudio:
+	return _footsteps
+
+
+func is_footstep_audio_allowed() -> bool:
+	return _footsteps_allowed()
 
 
 func get_nodes_alive_count() -> int:
@@ -1532,3 +1694,10 @@ func debug_clear_hazards() -> void:
 
 func debug_set_boss_grace(seconds: float) -> void:
 	_boss_grace = maxf(seconds, 0.0)
+
+
+## Capture/test hook only: choose a readable heart count before driving a real
+## death through apply_enemy_hit.  It can never exceed the run's 3-heart cap.
+func debug_set_lives(value: int) -> void:
+	_lives = clampi(value, 0, PLAYER_LIVES)
+	_update_hud_state()

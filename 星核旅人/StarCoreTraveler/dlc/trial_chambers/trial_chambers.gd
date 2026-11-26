@@ -5,9 +5,14 @@ extends Node2D
 ## fight, ending on a small completion page.  Nothing here changes the three
 ## formal levels, the shared player/guard rules, project.godot or the menus.
 ##
-## Rules kept from the approved brief:
-##   - the player starts in 澜相 (cyan), the first gate is 辉相, the second is
-##     澜相, so the route is gold -> Q -> cyan -> Q;
+## Rules kept from the approved brief (2026-11-26 rework):
+##   - the player starts in 澜相 (cyan); the gold gate requires 辉相, so the
+##     first "key" is the phase crystal before it, which flips the body to gold;
+##   - the cyan gate requires 澜相 and deliberately has no crystal, so the
+##     second key is the player's own Q press;
+##   - wrong-phase contact with a door gives a 0.15 s red reject pulse and a
+##     one-second Q keycap over the player's head; the old text popup at the
+##     gate is removed (the guide page still explains the rule);
 ##   - the gate only reads player.is_positive(); it never injects input;
 ##   - the guard fight reuses scenes/level03/guard.tscn and the L3 player's
 ##     existing J / hurt / retry rules.  Two accepted hits retry at the arena
@@ -30,12 +35,6 @@ const MECHANIC_DEMO_DIR: String = "res://dlc/ui/demos"
 ## sentence and only then states keys and judgement.  Each line is at most 21
 ## CJK cells (ASCII half-width); the shared popup body is 62 px / 3 lines.
 const MECHANIC_TIPS: Dictionary = {
-	"trial_gate_tip": {
-		"title": "极性门",
-		"body": "试炼场的门由星核的辉、澜两面铸成。\n只放同相的人通过。\n按 Q 换相，与门同色再走进去。",
-		"key": "Q 换相 · 同相过门",
-		"demo": "trial_gate",
-	},
 	"trial_guard_deny": {
 		"title": "只碎壳的一击",
 		"body": "守卫的壳由星核余烬凝成。\n同相或未蓄力的 J 只碎壳。\n等它蓄力、切异相、贴近再打，才会留下真伤。",
@@ -55,7 +54,6 @@ const ARENA_SPAWN: Vector2 = Vector2(850.0, 320.0)
 const GUARD_SPAWN: Vector2 = Vector2(1060.0, 320.0)
 const FINISH_POSITION: Vector2 = Vector2(1218.0, 320.0)
 const ARENA_ENTER_X: float = 820.0
-const GATE_TIP_RANGE: float = 90.0
 const GATE_CROSS_MARGIN: float = 6.0
 const FINISH_RANGE: float = 18.0
 const KILL_Y: float = 430.0
@@ -78,10 +76,13 @@ enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 @onready var _guard: L3Guard = $Guard
 @onready var _gate_gold: PolarityGate = $GateGold
 @onready var _gate_cyan: PolarityGate = $GateCyan
+@onready var _crystal: TrialPhaseCrystal = $PhaseCrystal
 @onready var _hud: TrialHUD = $HUD
 @onready var _finish_core: Sprite2D = $FinishPoint/Core
 @onready var _audio = $Audio
 @onready var _ambience: DlcChapterAmbience = $Ambience
+@onready var _footsteps: PlayerFootstepAudio = $Player/Footsteps
+@onready var _q_hint: TrialQHint = $Player/QHint
 
 var _elapsed: float = 0.0
 var _completed: bool = false
@@ -120,7 +121,7 @@ func _ready() -> void:
 
 	for node: Node in [
 		$Background, $Terrain, $Decorations, $Player, $Guard,
-		$GateGold, $GateCyan, $FinishPoint,
+		$GateGold, $GateCyan, $PhaseCrystal, $FinishPoint,
 	]:
 		if node != null:
 			node.process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -144,6 +145,15 @@ func _ready() -> void:
 	_gate_cyan.set_player_node(_player)
 	_gate_gold.set_required_positive(true)
 	_gate_cyan.set_required_positive(false)
+	_gate_gold.denied.connect(_on_gate_denied)
+	_gate_cyan.denied.connect(_on_gate_denied)
+	_crystal.set_player_node(_player)
+
+	# The shared footstep helper is attached to the player and gated by the
+	# chapter state below: no steps while the guide, pause page, recovery or
+	# completion page owns the screen.
+	_footsteps.attach_to(_player)
+	_footsteps.set_enabled_check(_footsteps_allowed)
 
 	_guard.set_player_target(_player)
 	_guard.reset_state(GUARD_SPAWN, true, true)
@@ -155,8 +165,11 @@ func _ready() -> void:
 	_hud.restart_requested.connect(_on_hud_restart_requested)
 	_hud.title_requested.connect(_on_hud_title_requested)
 	_hud.quit_requested.connect(_on_hud_quit_requested)
+	_hud.set_player_node(_player)
+	_hud.set_hit_pips_visible(true)
 	_hud.set_polarity(false)
-	_hud.set_objective("目标：Q 换相，穿过金门")
+	_hud.set_player_hits(2, 2)
+	_hud.set_objective("目标：触碰晶体，换辉相过金门")
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
 	_hud.set_recovery_alpha(0.0)
@@ -168,6 +181,7 @@ func _ready() -> void:
 	_mechanic_popup = MECHANIC_POPUP_SCENE.instantiate() as MechanicPopup
 	_mechanic_popup.name = "MechanicPopup"
 	_mechanic_popup.level_node = self
+	_mechanic_popup.opened.connect(_on_mechanic_popup_opened)
 	add_child(_mechanic_popup)
 
 	_prev_player_x = _player.global_position.x
@@ -176,11 +190,11 @@ func _ready() -> void:
 	LEVEL_FLOW.release_one_shot_actions()
 	_player.begin_input_override()
 	_guard_ticks = 3
+	# The chapter music is a PROCESS_MODE_ALWAYS player now: it starts on entry
+	# and keeps playing while the guide or a mechanic popup pauses the tree.
+	_ambience.play(true)
 	if show_intro_guide:
 		call_deferred("_open_intro_guide")
-	else:
-		# No guide (auto tests / a re-entry): the ambience starts with play.
-		_ambience.play(true)
 
 
 ## Called once per scene load.  Tests set show_intro_guide = false before
@@ -192,8 +206,9 @@ func _open_intro_guide() -> void:
 		return
 	_intro_guide = DLC_GUIDE_SCENE.instantiate() as DlcGuide
 	if _intro_guide == null:
-		_ambience.play(true)
 		return
+	_footsteps.stop()
+	_q_hint.hide_hint()
 	add_child(_intro_guide)
 	_intro_guide.closed.connect(_on_intro_guide_closed)
 	_intro_guide.configure("trial", self)
@@ -206,9 +221,45 @@ func _on_intro_guide_closed(_kind: String) -> void:
 	_attack_key_down = false
 	_player.begin_input_override()
 	_guard_ticks = 3
-	# The ambience was held back while the guide covered the screen so the
-	# chapter proper starts with its music.
-	_ambience.play(true)
+	# Music never stopped: the ambience player is PROCESS_MODE_ALWAYS and was
+	# started at chapter entry.  Do not restart it here or the track would jump
+	# back to frame 0 every time the guide closes.
+
+
+## Real-gameplay gate for the shared footstep helper.  The helper also checks
+## input override / hit reaction / completion lock itself; this covers the
+## screens that pause the tree or hide the player behind a cover.
+func _footsteps_allowed() -> bool:
+	if get_tree() == null or get_tree().paused:
+		return false
+	if _scene_leaving or _completed or _pause_open:
+		return false
+	if _recovery_active or _retry_pending:
+		return false
+	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
+		return false
+	if _mechanic_popup != null and is_instance_valid(_mechanic_popup) \
+			and _mechanic_popup.is_open():
+		return false
+	return true
+
+
+func is_footsteps_allowed() -> bool:
+	return _footsteps_allowed()
+
+
+func _on_mechanic_popup_opened(_id: String) -> void:
+	# The popup pauses the tree; a PAUSABLE footstep tail would freeze, not
+	# silence.  Stop it explicitly so no step survives into the reading pause.
+	_footsteps.stop()
+	_q_hint.hide_hint()
+
+
+func _on_gate_denied(_required_positive: bool) -> void:
+	if _completed or _scene_leaving or _recovery_active:
+		return
+	# Icon-only feedback: one large Q keycap over the body for one second.
+	_q_hint.show_q(1.0)
 
 
 func _exit_tree() -> void:
@@ -299,22 +350,15 @@ func _track_gate_progress() -> void:
 	_prev_player_x = x
 
 
-## One teaching popup at a time.  The conditions are the chapter's real state:
-## the first gate approach, the first shell-only hit and the first true hit.
+## One teaching popup at a time.  Only real combat events open one now: the gate
+## itself teaches through its sun/moon lock and the Q keycap, and the old
+## text popup at the first gate has been removed.
 func _tick_mechanic_popups() -> void:
 	if not show_mechanic_tips:
 		return
 	if _mechanic_popup == null or not is_instance_valid(_mechanic_popup):
 		return
 	if _mechanic_popup.is_open() or is_mechanic_popup_blocked():
-		return
-	var gate_x: float = _gate_gold.global_position.x
-	var near_gate: bool = (
-		_player.global_position.x >= gate_x - GATE_TIP_RANGE
-		and _player.global_position.x <= gate_x + GATE_CROSS_MARGIN
-	)
-	if near_gate and not MechanicTips.has_seen("trial_gate_tip"):
-		_mechanic_popup.request("trial_gate_tip")
 		return
 	if _shell_shatter_pending and _gate_gold_passed and _gate_cyan_passed:
 		if not MechanicTips.has_seen("trial_guard_deny"):
@@ -388,7 +432,7 @@ func _update_objective() -> void:
 		text = "目标：再按 Q 回澜相，穿过青门"
 		key = "cyan_gate"
 	else:
-		text = "目标：Q 换相，穿过金门"
+		text = "目标：触碰晶体，换辉相过金门"
 		key = "gold_gate"
 	if key == _objective_key:
 		return
@@ -482,6 +526,8 @@ func _set_paused(value: bool) -> void:
 	if value:
 		if _arena_entered and not _guard_defeated:
 			_guard.set_suspended(true)
+		_footsteps.stop()
+		_q_hint.hide_hint()
 		_ambience.set_paused(true)
 		get_tree().paused = true
 		return
@@ -547,7 +593,10 @@ func _on_guard_player_struck(_facing: int) -> void:
 		return
 	_player_hits += 1
 	DemoAudio.play_player_hurt()
-	_hud.show_event("受击 %d / 2" % _player_hits, 1.1)
+	# Icon-only life read: two hearts over the player's head, one removed per
+	# accepted hit.  No "受击 1 / 2" sentence is written to the event line.
+	_hud.set_player_hits(2 - _player_hits, 2)
+	_hud.pulse_hit_pips(1.0)
 	if _player_hits >= 2:
 		_retry_pending = true
 		_retry_pending_left = maxf(_player.get_hit_reaction_remaining(), 0.0)
@@ -607,10 +656,13 @@ func _begin_recovery(kind: String) -> void:
 		return
 	_recovery_active = true
 	_recovery_kind = kind
+	_hud.set_hit_pips_visible(false)
 	_recovery_phase = RecoveryPhase.FADE_OUT
 	_recovery_elapsed = 0.0
 	_recovery_alpha = 0.0
 	_attack_key_down = false
+	_footsteps.stop()
+	_q_hint.hide_hint()
 	_audio.stop_charge(0.05)
 	DemoAudio.play_failure()
 	_hud.set_recovery_alpha(0.0)
@@ -670,6 +722,7 @@ func _finish_recovery() -> void:
 	_recovery_phase = RecoveryPhase.NONE
 	_recovery_elapsed = 0.0
 	_recovery_alpha = 0.0
+	_hud.set_hit_pips_visible(true)
 	_hud.set_recovery_alpha(0.0)
 	_player.end_recovery_hold()
 	_player.end_input_override()
@@ -684,6 +737,7 @@ func _finish_recovery() -> void:
 func _retry_combat() -> void:
 	_resolved_swings.clear()
 	_player_hits = 0
+	_hud.set_player_hits(2, 2)
 	_retry_pending = false
 	_retry_pending_left = 0.0
 	_guard.reset_state(GUARD_SPAWN, true, true)
@@ -733,6 +787,9 @@ func _complete_trial() -> void:
 	_completed = true
 	_retry_pending = false
 	_player_hits = 0
+	_hud.set_hit_pips_visible(false)
+	_footsteps.stop()
+	_q_hint.hide_hint()
 	_player.clear_input_buffers()
 	_player.clear_external_force()
 	_player.lock_completion_input()
@@ -752,8 +809,10 @@ func _return_to_title() -> void:
 	get_tree().paused = false
 	_pause_open = false
 	_scene_leaving = true
+	_hud.set_hit_pips_visible(false)
 	_hud.show_pause(false)
 	_hud.show_completion(false, _elapsed)
+	_footsteps.stop()
 	_ambience.stop(0.0)
 	if is_instance_valid(DemoAudio):
 		DemoAudio.stop_world()
@@ -783,6 +842,8 @@ func _restart_trial() -> void:
 	_recovery_kind = ""
 	_resolved_swings.clear()
 	_player_hits = 0
+	_hud.set_player_hits(2, 2)
+	_hud.set_hit_pips_visible(true)
 	_elapsed = 0.0
 	_finish_time = 0.0
 	_objective_key = ""
@@ -794,11 +855,15 @@ func _restart_trial() -> void:
 	_shell_shatter_pending = false
 	_true_damage_pending = false
 	_audio.stop_all()
+	_footsteps.stop()
+	_footsteps.reset_tracking()
+	_crystal.reset_state()
+	_q_hint.hide_hint()
 	_ambience.play(true)
 	_hud.set_recovery_alpha(0.0)
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
-	_hud.set_objective("目标：Q 换相，穿过金门")
+	_hud.set_objective("目标：触碰晶体，换辉相过金门")
 	_hud.set_polarity(false)
 	_player.end_recovery_hold()
 	_player.unlock_completion_input()
@@ -857,6 +922,18 @@ func get_gate_gold() -> PolarityGate:
 
 func get_gate_cyan() -> PolarityGate:
 	return _gate_cyan
+
+
+func get_phase_crystal() -> TrialPhaseCrystal:
+	return _crystal
+
+
+func get_q_hint() -> TrialQHint:
+	return _q_hint
+
+
+func get_footsteps() -> PlayerFootstepAudio:
+	return _footsteps
 
 
 func get_finish_position() -> Vector2:

@@ -68,11 +68,21 @@ var _pause_quit: PixelMenuButton
 var _pause_footer: Label
 var _pause_reveal: UiReveal
 
+const HEALTH_OFFSET_Y: float = -32.0
+const HEALTH_PULSE_TIME: float = 1.0
+
+var _phase_icon: RiftPhaseIcon
+var _heart_shadow: RiftHeartShadow
+var _hit_pips: HitPips
 var _legend: RiftLegend
 var _font: Font
 var _subtitle: String = ""
 var _completion_visible: bool = false
 var _pause_visible: bool = false
+var _health_target: Node2D = null
+var _health_visible: bool = true
+var _last_hits: int = 0
+var _health_pulse_left: float = 0.0
 
 
 ## Small permanent element legend under the event line.  Drawn by the HUD
@@ -141,6 +151,7 @@ func _ready() -> void:
 	add_child(_root)
 	_build_header()
 	_build_event()
+	_build_hit_pips()
 	_build_legend()
 	_build_recovery_cover()
 	_build_completion()
@@ -195,6 +206,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
+	_update_health_overlay(delta)
 	if get_tree().paused:
 		return
 	if _event_left <= 0.0:
@@ -202,6 +214,54 @@ func _process(delta: float) -> void:
 	_event_left = maxf(_event_left - delta, 0.0)
 	if _event_left <= 0.0:
 		_event_label.visible = false
+
+
+## The two hit hearts live in screen space above the player, not in a corner.
+## They follow walk/jump through the camera transform, hide whenever the tree is
+## paused (guide / popup / pause), during recovery, and on completion, and pulse
+## for a full second after an accepted hit.
+func _update_health_overlay(delta: float) -> void:
+	if _hit_pips == null:
+		return
+	var should_show: bool = (
+		_health_visible
+		and not get_tree().paused
+		and not _completion_visible
+		and not (_recovery_cover != null and _recovery_cover.visible)
+	)
+	_hit_pips.visible = should_show
+	if _heart_shadow != null:
+		_heart_shadow.visible = should_show
+	if not should_show:
+		return
+	if _health_target != null and is_instance_valid(_health_target):
+		var screen: Vector2 = _health_target.get_global_transform_with_canvas().origin
+		var heart_size: Vector2 = _hit_pips.size
+		var x: float = clampf(
+			screen.x - heart_size.x * 0.5,
+			6.0,
+			VIEW_SIZE.x - heart_size.x - 6.0
+		)
+		var y: float = clampf(
+			screen.y + HEALTH_OFFSET_Y,
+			6.0,
+			VIEW_SIZE.y - heart_size.y - 6.0
+		)
+		_hit_pips.position = Vector2(round(x), round(y))
+		if _heart_shadow != null:
+			_heart_shadow.position = _hit_pips.position - Vector2.ONE
+	_health_pulse_left = maxf(_health_pulse_left - delta, 0.0)
+	if _health_pulse_left > 0.0:
+		var progress: float = 1.0 - _health_pulse_left / HEALTH_PULSE_TIME
+		var wave: float = absf(sin(progress * PI * 3.0)) * (1.0 - progress * 0.35)
+		var pulse_scale: Vector2 = Vector2.ONE * (1.0 + 0.22 * wave)
+		_hit_pips.scale = pulse_scale
+		if _heart_shadow != null:
+			_heart_shadow.scale = pulse_scale
+	else:
+		_hit_pips.scale = Vector2.ONE
+		if _heart_shadow != null:
+			_heart_shadow.scale = Vector2.ONE
 
 
 func _load_font() -> Font:
@@ -258,6 +318,20 @@ func _build_header() -> void:
 	_root.add_child(_header)
 	_header.configure(TITLE, DEFAULT_OBJECTIVE, _font)
 	_header.set_polarity(false)
+	# The shared header's talisman + "辉相/澜相" word is replaced by one 16x16
+	# sun/moon emblem, matching the gate/core icon language and carrying no text.
+	var affinity_text: Control = _header.get_node_or_null("AffinityText") as Control
+	if affinity_text != null:
+		affinity_text.visible = false
+	var affinity_icon: Control = _header.get_node_or_null("AffinityIcon") as Control
+	if affinity_icon != null:
+		affinity_icon.visible = false
+	_phase_icon = RiftPhaseIcon.new()
+	_phase_icon.name = "PhaseIcon"
+	_phase_icon.position = Vector2(614.0, 8.0)
+	_phase_icon.size = Vector2(16.0, 16.0)
+	_root.add_child(_phase_icon)
+	_phase_icon.set_positive(false)
 
 
 func _build_event() -> void:
@@ -265,6 +339,29 @@ func _build_event() -> void:
 	_event_label.name = "EventLine"
 	_event_label.visible = false
 	_root.add_child(_event_label)
+
+
+func _build_hit_pips() -> void:
+	_heart_shadow = RiftHeartShadow.new()
+	_heart_shadow.name = "HeartShadow"
+	_heart_shadow.visible = false
+	_root.add_child(_heart_shadow)
+	_heart_shadow.pivot_offset = (
+		_heart_shadow.size * 0.5 + Vector2(1.0, 1.0)
+	)
+	_hit_pips = HitPips.new()
+	_hit_pips.name = "HitPips"
+	_hit_pips.kind = HitPips.Kind.HEART
+	_hit_pips.pip_size = 8.0
+	_hit_pips.gap = 3.0
+	_hit_pips.filled_color = GOLD
+	# A light empty heart stays readable over gold hair and the pale stable
+	# bridge; the default dark grey disappeared into the character silhouette.
+	_hit_pips.empty_color = Color(0.56, 0.66, 0.66, 0.95)
+	_hit_pips.visible = false
+	_root.add_child(_hit_pips)
+	_hit_pips.set_state(2, 2)
+	_hit_pips.pivot_offset = _hit_pips.size * 0.5
 
 
 func _build_legend() -> void:
@@ -480,6 +577,63 @@ func _build_pause() -> void:
 func set_polarity(positive: bool) -> void:
 	if _header != null:
 		_header.set_polarity(positive)
+	if _phase_icon != null:
+		_phase_icon.set_positive(positive)
+
+
+## hits_taken = 0 keeps both hearts filled; 1 removes one; 2 empties the row.
+## A new hit starts the one-second follow-icon pulse.
+func set_player_hits(hits_taken: int, max_hits: int = 2) -> void:
+	if _hit_pips == null:
+		return
+	if hits_taken > _last_hits:
+		_health_pulse_left = HEALTH_PULSE_TIME
+	_last_hits = hits_taken
+	_hit_pips.set_state(max_hits - hits_taken, max_hits)
+	_hit_pips.pivot_offset = _hit_pips.size * 0.5
+
+
+## Screen-space target is the player's feet; the row is drawn 32 px above it.
+func set_health_target(player: Node2D) -> void:
+	_health_target = player
+
+
+func set_player_health_visible(value: bool) -> void:
+	_health_visible = value
+	if not value:
+		if _hit_pips != null:
+			_hit_pips.visible = false
+		if _heart_shadow != null:
+			_heart_shadow.visible = false
+
+
+func is_player_health_visible() -> bool:
+	return _hit_pips != null and _hit_pips.visible
+
+
+func get_player_health_rect() -> Rect2:
+	if _hit_pips == null:
+		return Rect2()
+	return Rect2(_hit_pips.position, _hit_pips.size)
+
+
+func get_health_pulse_left() -> float:
+	return _health_pulse_left
+
+
+func get_phase_icon() -> RiftPhaseIcon:
+	return _phase_icon
+
+
+func get_phase_icon_kind() -> String:
+	return _phase_icon.get_kind() if _phase_icon != null else ""
+
+
+func is_affinity_text_visible() -> bool:
+	if _header == null:
+		return false
+	var label: Control = _header.get_node_or_null("AffinityText") as Control
+	return label != null and label.visible
 
 
 func set_objective(text_value: String) -> void:
@@ -676,6 +830,16 @@ func get_event_text() -> String:
 
 func is_event_visible() -> bool:
 	return _event_label != null and _event_label.visible
+
+
+func get_hit_pips() -> HitPips:
+	return _hit_pips
+
+
+func get_hit_pips_rect() -> Rect2:
+	if _hit_pips == null:
+		return Rect2()
+	return Rect2(_hit_pips.position, _hit_pips.size)
 
 
 func is_legend_visible() -> bool:

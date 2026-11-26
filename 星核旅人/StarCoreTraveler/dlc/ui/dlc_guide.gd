@@ -51,15 +51,15 @@ const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 const PAGES: Dictionary = {
 	"trial": [
 		{
-			"title": "极性门：两道门",
-			"body": "试炼场的门由星核的辉、澜两面铸成。\n只放同相的人通过，门后是竞技场。\nQ 换辉相过金门，再换澜相过青门。",
-			"key": "Q 换相 · 与门同相才能通过",
+			"title": "极性门：晶体与 Q",
+			"body": "试炼场的门由星核的辉、澜两面铸成。\n只放同相的人通过，门前立着相性晶体。\n第一道门靠晶体翻相；第二道门按 Q 换相。",
+			"key": "晶体=第一把钥匙 · Q=第二把",
 			"demo": "trial_gate",
 		},
 		{
 			"title": "门内的相性",
-			"body": "门只认相性：同相放行，异相拦停。\n门内换相不会被夹住。\n门重新闭合前离开，门才会恢复。",
-			"key": "门内切相不夹 · 同相才放行",
+			"body": "门只认相性：同相放行，异相拦停。\n门上大号日/月图标就是所需相性。\n门内换相不会被夹住，离开后才恢复。",
+			"key": "同相才放行 · 门内切相不夹",
 			"demo": "trial_gate_inside",
 		},
 		{
@@ -178,7 +178,7 @@ func _label(
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
-	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_constant_override("outline_size", 0)
 	label.add_theme_constant_override("line_spacing", 3)
 	return label
 
@@ -250,7 +250,7 @@ func _build_ui() -> void:
 	_demo_placeholder.visible = false
 	_panel.add_child(_demo_placeholder)
 
-	_title_label = _label("", Vector2(RIGHT_X, 13.0), Vector2(TITLE_WIDTH, 20.0), 16, GOLD)
+	_title_label = _label("", Vector2(RIGHT_X, 6.0), Vector2(TITLE_WIDTH, 28.0), 24, GOLD)
 	_title_label.name = "Title"
 	_panel.add_child(_title_label)
 
