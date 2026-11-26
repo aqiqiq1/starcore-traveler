@@ -65,12 +65,11 @@ var _pause_quit: PixelMenuButton
 var _pause_footer: Label
 var _pause_reveal: UiReveal
 
-const HEALTH_OFFSET_Y: float = -32.0
 const HEALTH_PULSE_TIME: float = 1.0
 
 var _phase_icon: RiftPhaseIcon
-var _heart_shadow: RiftHeartShadow
-var _hit_pips: HitPips
+var _health_bar: PlayerHealthBar
+var _health_label: Label
 var _boss_status: RiftBossStatus
 var _q_denied: RiftQDeniedIcon
 var _font: Font
@@ -161,12 +160,12 @@ func _process(delta: float) -> void:
 		_event_label.visible = false
 
 
-## The two hit hearts live in screen space above the player, not in a corner.
-## They follow walk/jump through the camera transform, hide whenever the tree is
-## paused (guide / popup / pause), during recovery, and on completion, and pulse
-## for a full second after an accepted hit.
+## The shared two-segment red bar is fixed at the lower-left HUD corner.  It is
+## visible on the route and in the boss fight, hides whenever the tree is paused
+## (guide / popup / pause page), during recovery and completion, and pulses for
+## a second after an accepted hit.  Only the bar scales; the label stays 12 px.
 func _update_health_overlay(delta: float) -> void:
-	if _hit_pips == null:
+	if _health_bar == null:
 		return
 	var should_show: bool = (
 		_health_visible
@@ -174,39 +173,20 @@ func _update_health_overlay(delta: float) -> void:
 		and not _completion_visible
 		and not (_recovery_cover != null and _recovery_cover.visible)
 	)
-	_hit_pips.visible = should_show
-	if _heart_shadow != null:
-		_heart_shadow.visible = should_show
+	_health_bar.visible = should_show
+	if _health_label != null:
+		_health_label.visible = should_show
 	if not should_show:
+		_health_bar.scale = Vector2.ONE
 		return
-	if _health_target != null and is_instance_valid(_health_target):
-		var screen: Vector2 = _health_target.get_global_transform_with_canvas().origin
-		var heart_size: Vector2 = _hit_pips.size
-		var x: float = clampf(
-			screen.x - heart_size.x * 0.5,
-			6.0,
-			VIEW_SIZE.x - heart_size.x - 6.0
-		)
-		var y: float = clampf(
-			screen.y + HEALTH_OFFSET_Y,
-			6.0,
-			VIEW_SIZE.y - heart_size.y - 6.0
-		)
-		_hit_pips.position = Vector2(round(x), round(y))
-		if _heart_shadow != null:
-			_heart_shadow.position = _hit_pips.position - Vector2.ONE
+	_health_bar.position = PlayerHealthBar.HUD_POSITION
 	_health_pulse_left = maxf(_health_pulse_left - delta, 0.0)
 	if _health_pulse_left > 0.0:
 		var progress: float = 1.0 - _health_pulse_left / HEALTH_PULSE_TIME
 		var wave: float = absf(sin(progress * PI * 3.0)) * (1.0 - progress * 0.35)
-		var pulse_scale: Vector2 = Vector2.ONE * (1.0 + 0.22 * wave)
-		_hit_pips.scale = pulse_scale
-		if _heart_shadow != null:
-			_heart_shadow.scale = pulse_scale
+		_health_bar.scale = Vector2.ONE * (1.0 + 0.22 * wave)
 	else:
-		_hit_pips.scale = Vector2.ONE
-		if _heart_shadow != null:
-			_heart_shadow.scale = Vector2.ONE
+		_health_bar.scale = Vector2.ONE
 
 
 func _load_font() -> Font:
@@ -287,26 +267,21 @@ func _build_event() -> void:
 
 
 func _build_hit_pips() -> void:
-	_heart_shadow = RiftHeartShadow.new()
-	_heart_shadow.name = "HeartShadow"
-	_heart_shadow.visible = false
-	_root.add_child(_heart_shadow)
-	_heart_shadow.pivot_offset = (
-		_heart_shadow.size * 0.5 + Vector2(1.0, 1.0)
+	_health_bar = PlayerHealthBar.new()
+	_health_bar.name = "PlayerHealthBar"
+	_health_bar.max_segments = 2
+	_health_bar.position = PlayerHealthBar.HUD_POSITION
+	_health_bar.set_state(2, 2)
+	_health_bar.visible = false
+	_root.add_child(_health_bar)
+	_health_bar.pivot_offset = _health_bar.size * 0.5
+	_health_label = _label(
+		"生命值", PlayerHealthBar.LABEL_POSITION, Vector2(52.0, 14.0),
+		PlayerHealthBar.LABEL_FONT_SIZE, MUTED
 	)
-	_hit_pips = HitPips.new()
-	_hit_pips.name = "HitPips"
-	_hit_pips.kind = HitPips.Kind.HEART
-	_hit_pips.pip_size = 8.0
-	_hit_pips.gap = 3.0
-	_hit_pips.filled_color = GOLD
-	# A light empty heart stays readable over gold hair and the pale stable
-	# bridge; the default dark grey disappeared into the character silhouette.
-	_hit_pips.empty_color = Color(0.56, 0.66, 0.66, 0.95)
-	_hit_pips.visible = false
-	_root.add_child(_hit_pips)
-	_hit_pips.set_state(2, 2)
-	_hit_pips.pivot_offset = _hit_pips.size * 0.5
+	_health_label.name = "HealthValueLabel"
+	_health_label.visible = false
+	_root.add_child(_health_label)
 
 
 func _build_boss_status() -> void:
@@ -557,6 +532,17 @@ func set_boss_state(
 	)
 
 
+func set_anchor_state(
+	gold_anchored: bool, cyan_anchored: bool,
+	gold_window: float, cyan_window: float
+) -> void:
+	if _boss_status == null:
+		return
+	_boss_status.set_anchor_state(
+		gold_anchored, cyan_anchored, gold_window, cyan_window
+	)
+
+
 func get_boss_status() -> RiftBossStatus:
 	return _boss_status
 
@@ -585,19 +571,20 @@ func has_element_legend() -> bool:
 	return false
 
 
-## hits_taken = 0 keeps both hearts filled; 1 removes one; 2 empties the row.
-## A new hit starts the one-second follow-icon pulse.
+## hits_taken = 0 keeps both segments filled; 1 removes one; 2 empties the bar.
+## A new hit starts the one-second bar pulse.
 func set_player_hits(hits_taken: int, max_hits: int = 2) -> void:
-	if _hit_pips == null:
+	if _health_bar == null:
 		return
 	if hits_taken > _last_hits:
 		_health_pulse_left = HEALTH_PULSE_TIME
 	_last_hits = hits_taken
-	_hit_pips.set_state(max_hits - hits_taken, max_hits)
-	_hit_pips.pivot_offset = _hit_pips.size * 0.5
+	_health_bar.set_state(max_hits - hits_taken, max_hits)
+	_health_bar.pivot_offset = _health_bar.size * 0.5
 
 
-## Screen-space target is the player's feet; the row is drawn 32 px above it.
+## Kept for the existing chapter call.  The bar is fixed at the lower-left, so
+## the player's screen position no longer affects it.
 func set_health_target(player: Node2D) -> void:
 	_health_target = player
 
@@ -605,20 +592,21 @@ func set_health_target(player: Node2D) -> void:
 func set_player_health_visible(value: bool) -> void:
 	_health_visible = value
 	if not value:
-		if _hit_pips != null:
-			_hit_pips.visible = false
-		if _heart_shadow != null:
-			_heart_shadow.visible = false
+		if _health_bar != null:
+			_health_bar.visible = false
+			_health_bar.scale = Vector2.ONE
+		if _health_label != null:
+			_health_label.visible = false
 
 
 func is_player_health_visible() -> bool:
-	return _hit_pips != null and _hit_pips.visible
+	return _health_bar != null and _health_bar.visible
 
 
 func get_player_health_rect() -> Rect2:
-	if _hit_pips == null:
+	if _health_bar == null:
 		return Rect2()
-	return Rect2(_hit_pips.position, _hit_pips.size)
+	return Rect2(_health_bar.position, _health_bar.size)
 
 
 func get_health_pulse_left() -> float:
@@ -669,8 +657,10 @@ func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 		_header.visible = not value
 	if _event_label != null:
 		_event_label.visible = not value
-	if _hit_pips != null:
-		_hit_pips.visible = not value
+	if _health_bar != null:
+		_health_bar.visible = not value
+	if _health_label != null:
+		_health_label.visible = not value
 	if _completion_title != null:
 		_completion_title.text = "裂隙封闭 · 用时 %s" % _format_time(elapsed_seconds)
 	if _completion_root == null:
@@ -842,14 +832,24 @@ func is_event_visible() -> bool:
 	return _event_label != null and _event_label.visible
 
 
-func get_hit_pips() -> HitPips:
-	return _hit_pips
+## Compatibility name kept from the old heart row; the value is now the shared
+## red health VALUE bar.
+func get_hit_pips() -> PlayerHealthBar:
+	return _health_bar
 
 
 func get_hit_pips_rect() -> Rect2:
-	if _hit_pips == null:
+	if _health_bar == null:
 		return Rect2()
-	return Rect2(_hit_pips.position, _hit_pips.size)
+	return Rect2(_health_bar.position, _health_bar.size)
+
+
+func get_player_health_bar() -> PlayerHealthBar:
+	return _health_bar
+
+
+func get_health_label() -> Label:
+	return _health_label
 
 
 func get_pause_panel_alpha() -> float:

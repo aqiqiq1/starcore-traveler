@@ -1,11 +1,12 @@
 class_name L3Guide
 extends Control
 
-## L3-only low-HUD navigation and tiny feedback layer.
+## L3-only low-HUD navigation and feedback layer.
 ## One real target at a time; a short-lived dashed direction line / target
 ## diamond / screen-edge arrow appears for ~2.4 s after a stage change. Combat
 ## hides the navigation. E prompts are small text attached to the object; no
-## panel. Two small talisman-crack pips carry the player's two-hit feedback.
+## panel. The player's two-hit feedback moved to the fixed shared health bar in
+## L3HUD, so no talisman shards are drawn above the character any more.
 
 const SAFE_RECT: Rect2 = Rect2(8.0, 48.0, 624.0, 252.0)
 const GUIDE_TIME: float = 2.4
@@ -13,7 +14,6 @@ const INTERACTION_KEY_HINT = preload("res://scripts/ui/interaction_key_hint.gd")
 const GOLD: Color = Color("#f4cd63")
 const MUTED: Color = Color("#a4b3be")
 const DARK: Color = Color(0.01, 0.02, 0.024, 0.92)
-const CHART: Color = Color("#ff7f72")
 
 var player: L3Player = null
 var target_world: Vector2 = Vector2.ZERO
@@ -138,7 +138,6 @@ func _draw() -> void:
 	_target_screen = target_screen
 	var camera: Camera2D = get_viewport().get_camera_2d()
 	if camera != null:
-		_draw_pips(player_screen)
 		if not combat and guide_time > 0.0:
 			_draw_guide(player_center, player_screen, target_screen)
 		if prompt_visible and not combat:
@@ -149,40 +148,6 @@ func _draw() -> void:
 			_draw_world_text()
 		if symbol_time > 0.0:
 			_draw_symbol()
-	else:
-		_draw_pips(player_screen)
-
-
-## Two small talismans, always visible in a fight: whole while the hit is
-## still available, cracked/extinguished once it was taken. 0 hits = two whole,
-## 1 hit = one cracked, 2 hits = both cracked (then the fight resets).
-func _draw_pips(player_screen: Vector2) -> void:
-	if not show_pips:
-		return
-	var base: Vector2 = player_screen + Vector2(0.0, -54.0)
-	for index: int in range(2):
-		var c: Vector2 = base + Vector2(float(index) * 12.0 - 6.0, 0.0)
-		var points: PackedVector2Array = PackedVector2Array([
-			Vector2(c.x, c.y - 4.0), Vector2(c.x + 4.0, c.y),
-			Vector2(c.x, c.y + 4.0), Vector2(c.x - 4.0, c.y),
-		])
-		if index < hit_pips:
-			# Taken: dark cracked shard, clearly not a live hit.
-			draw_colored_polygon(points, Color(0.16, 0.10, 0.10, 0.85))
-			draw_polyline(PackedVector2Array([
-				points[0], points[1], points[2], points[3], points[0]
-			]), Color(CHART, 0.55), 1.0)
-			draw_line(Vector2(c.x - 3.0, c.y - 3.0), Vector2(c.x + 2.0, c.y + 3.0),
-				Color(CHART, 0.85), 1.0)
-			draw_line(Vector2(c.x + 2.0, c.y + 3.0), Vector2(c.x + 3.0, c.y - 1.0),
-				Color(CHART, 0.85), 1.0)
-		else:
-			draw_colored_polygon(points, GOLD)
-			draw_polyline(PackedVector2Array([
-				points[0], points[1], points[2], points[3], points[0]
-			]), Color(DARK, 0.9), 1.0)
-			draw_line(Vector2(c.x, c.y - 2.0), Vector2(c.x, c.y + 2.0),
-				Color(DARK, 0.75), 1.0)
 
 
 func _line_blocked(player_center: Vector2) -> bool:

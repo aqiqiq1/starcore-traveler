@@ -21,10 +21,17 @@ extends Node2D
 ##                              centre.  Gold/cyan face plates are shields; only
 ##                              an opposite-phase J shatters each one.  Both
 ##                              broken -> the core is exposed and J hits it three
-##                              times, for three phases.  Two inversion crystals
-##                              (left/right, 2 s cooldown) are the player's own
-##                              phase control.  Failure or falling returns to
-##                              the arena entrance and resets the boss.
+##                              times.  Form 2 anchors each plate to a wisp: the
+##                              plate is immune while it lives and breakable for
+##                              6 s after its anchor dies.  Form 3 cracks the
+##                              mirror, speeds the plate orbit, alternates phase
+##                              waves with double sweeps, shortens the core
+##                              window and summons extra wisps.  Two inversion
+##                              crystals (left/right, 2 s cooldown) are the
+##                              player's own phase control.  Failure or falling
+##                              returns to the arena entrance and resets the boss.
+##                              The final core clear is a 1.35 s collapse; only
+##                              after it finishes does the finish core activate.
 ##
 ## Reused, never modified: L3Player (J / hurt / fall recovery / locked Q),
 ## the shared PolarityGate scene from the trial chapter, DS03, the L2 stone
@@ -47,8 +54,8 @@ const WISP_SCENE: PackedScene = preload("res://dlc/rift_workshop/rift_polarity_w
 const RIFT_TIPS: Dictionary = {
 	"rift_mirror_tip": {
 		"title": "双面镜",
-		"body": "金面盘同辉相，青面盘同澜相。\n只有异相攻击能打碎一面盘。\n两面都碎后，中央核心才暴露。",
-		"key": "用异相攻击碎两面盘，再打核心三次。",
+		"body": "金面盘同辉相，青面盘同澜相。\n第二形态起，两面盘各被一只光灵锚定；\n先熄光灵，六秒内用异相攻击击碎。",
+		"key": "先熄锚定光灵，六秒内碎面盘，再打核心。",
 		"demo": "rift_mirror",
 	},
 	"rift_core_tip": {
@@ -72,6 +79,7 @@ const BOSS_CENTER: Vector2 = Vector2(1540.0, 260.0)
 const CRYSTAL_LEFT_X: float = 1320.0
 const CRYSTAL_RIGHT_X: float = 1760.0
 const BOSS_WISP_OFFSET: float = 170.0
+const BOSS_ANCHOR_OFFSET: float = 96.0
 const BRIDGE_FALL_LINE: String = "坠入云海 · 光桥只认同相 · 先熄光灵再走"
 const BRIDGE_EDGE_LINE: String = "断桥了 · 先熄灭光灵，桥才会稳定"
 const WISP_FLIP_LINE: String = "光灵翻相了 · 快退回石台，或熄灭它"
@@ -122,6 +130,8 @@ var _completed: bool = false
 var _scene_leaving: bool = false
 var _arena_entered: bool = false
 var _boss_defeated: bool = false
+var _boss_collapse_active: bool = false
+var _boss_defeat_cue_played: bool = false
 var _arena_intro_left: float = 0.0
 var _mirror_tip_pending: bool = false
 var _core_tip_pending: bool = false
@@ -170,6 +180,8 @@ func _ready() -> void:
 	_wisps = [$WispA, $WispB, $WispC, $WispD, $WispE]
 
 	_player.allow_self_reset = false
+	# Keep the body in front of the z=5 mirror effects and the HUD-free arena.
+	_player.z_index = 6
 	# The whole chapter is a locked-Q chapter.  Q only emits the shared denied
 	# signal (refusal sound + cross-Q icon); fields, wisps, the boss wave and
 	# the arena crystals are the real phase changes.
@@ -205,9 +217,14 @@ func _ready() -> void:
 	_boss.phase_wave_released.connect(_on_boss_phase_wave_released)
 	_boss.player_struck.connect(_on_boss_player_struck)
 	_boss.summon_requested.connect(_on_boss_summon_requested)
+	_boss.anchors_requested.connect(_on_boss_anchors_requested)
+	_boss.anchor_window_started.connect(_on_boss_anchor_window_started)
+	_boss.anchor_window_expired.connect(_on_boss_anchor_window_expired)
 	_boss.face_shattered.connect(_on_boss_face_shattered)
 	_boss.core_hit.connect(_on_boss_core_hit)
 	_boss.core_exposed.connect(_on_boss_core_exposed)
+	_boss.core_closed.connect(_on_boss_core_closed)
+	_boss.defeat_started.connect(_on_boss_defeat_started)
 	_boss.phase_cleared.connect(_on_boss_phase_cleared)
 	_boss.phase_started.connect(_on_boss_phase_started)
 	_boss.defeated.connect(_on_boss_defeated)
@@ -478,6 +495,10 @@ func _sync_boss_hud() -> void:
 		_boss.is_face_intact(true), _boss.is_face_intact(false),
 		_boss.is_core_exposed()
 	)
+	_hud.set_anchor_state(
+		_boss.has_face_anchor(true), _boss.has_face_anchor(false),
+		_boss.get_anchor_window_left(true), _boss.get_anchor_window_left(false)
+	)
 
 
 ## Real J presses turn toward the nearest live arena target.  The bridge
@@ -511,13 +532,33 @@ func _update_objective(force: bool = false) -> void:
 	if _completed:
 		text = "目标：裂隙封闭"
 		key = "done"
+	elif _boss_collapse_active:
+		text = "目标：双面镜正在崩塌"
+		key = "boss_collapse"
 	elif _boss_defeated:
 		text = "目标：触碰裂隙核心"
 		key = "finish"
 	elif _arena_entered:
 		if _boss.is_core_exposed():
-			text = "目标：攻击中央核心（还剩 %d 次）" % _boss.get_core_hp()
-			key = "arena_core"
+			var core_left: int = int(ceil(_boss.get_core_window_left()))
+			text = "目标：攻击中央核心（还剩 %d 次 · %ds）" % [
+				_boss.get_core_hp(), core_left
+			]
+			key = "arena_core_%d_%d" % [_boss.get_core_hp(), core_left]
+		elif _boss.get_anchor_window_left(true) > 0.0 \
+				or _boss.get_anchor_window_left(false) > 0.0:
+			var window_left: float = maxf(
+				_boss.get_anchor_window_left(true),
+				_boss.get_anchor_window_left(false)
+			)
+			var side_name: String = "金"
+			if _boss.get_anchor_window_left(true) <= 0.0:
+				side_name = "青"
+			text = "目标：%s面盘 %.0fs 内击碎" % [side_name, ceil(window_left)]
+			key = "arena_window_%s_%d" % [side_name, int(ceil(window_left))]
+		elif _boss.get_phase_index() >= 1 and _boss.get_alive_anchor_count() > 0:
+			text = "目标：先熄灭锚定光灵"
+			key = "arena_anchor"
 		elif _boss.get_intact_face_count() >= 2:
 			text = "目标：用异相攻击打碎两面盘"
 			key = "arena_faces"
@@ -691,11 +732,17 @@ func _on_player_attack_hit_window(swing_id: int, facing: int, positive: bool) ->
 	if _resolved_swings.has(swing_id):
 		return
 	_resolved_swings[swing_id] = true
+	var killed_anchor: bool = false
 	for wisp: RiftPolarityWisp in _all_wisps():
 		if wisp != null and is_instance_valid(wisp) and wisp.is_alive():
+			var was_anchor: bool = wisp.is_anchor()
 			# _on_wisp_defeated owns the deck-stable / remaining-count line.
 			wisp.try_player_hit(_player, facing, positive, swing_id)
-	if _arena_entered and not _boss_defeated and _boss.is_active():
+			if was_anchor and not wisp.is_alive():
+				killed_anchor = true
+	# The swing that breaks an anchor only breaks the anchor.  The plate is
+	# shattered by the next real J inside the 6 s window, never by the same hit.
+	if not killed_anchor and _arena_entered and not _boss_defeated and _boss.is_active():
 		var result: Dictionary = _boss.receive_player_hit(
 			_player, facing, positive, swing_id
 		)
@@ -707,6 +754,12 @@ func _show_boss_attack_result(result: Dictionary) -> void:
 	match code:
 		"SAME_PHASE":
 			_hud.show_event("同相打不碎面盘 · 先借晶体或相位波翻相", 1.8)
+		"ANCHORED":
+			var window: float = float(result.get("window", 0.0))
+			if window > 0.0:
+				_hud.show_event("面盘已脱锚 · %.0f 秒内用异相攻击击碎" % ceil(window), 1.8)
+			else:
+				_hud.show_event("面盘被光灵锚定 · 先熄灭锚定光灵", 1.8)
 		"SHIELDED":
 			if _boss.is_core_exposed():
 				_hud.show_event("没打中核心 · 对准中央再攻击", 1.4)
@@ -721,6 +774,11 @@ func _show_boss_attack_result(result: Dictionary) -> void:
 
 
 func _on_wisp_defeated(wisp: RiftPolarityWisp) -> void:
+	var anchor_side: int = _boss.get_anchor_side_for(wisp)
+	if anchor_side != 0:
+		_boss.notify_anchor_defeated(anchor_side > 0)
+		_sync_boss_hud()
+		return
 	var bridge: RiftPhaseBridge = _wisp_bridges.get(wisp, null) as RiftPhaseBridge
 	if bridge != null and is_instance_valid(bridge):
 		bridge.set_stabilized(true)
@@ -744,6 +802,8 @@ func _on_wisp_defeated(wisp: RiftPolarityWisp) -> void:
 ## retreat to the landing is a real save.
 func _on_wisp_flip_requested(wisp: RiftPolarityWisp) -> void:
 	if _completed or _scene_leaving or _recovery_active or _retry_pending:
+		return
+	if _boss_collapse_active or _boss_defeated:
 		return
 	if _player == null or not is_instance_valid(_player):
 		return
@@ -844,6 +904,8 @@ func _on_boss_phase_wave_released(positive_after: bool, flipped: bool) -> void:
 func _on_boss_player_struck(_away: int) -> void:
 	if _completed or _scene_leaving or _recovery_active or _retry_pending:
 		return
+	if _boss_collapse_active:
+		return
 	_player_hits += 1
 	DemoAudio.play_player_hurt()
 	_audio.play_slam()
@@ -854,20 +916,53 @@ func _on_boss_player_struck(_away: int) -> void:
 
 
 func _on_boss_summon_requested(count: int) -> void:
-	if _completed or _scene_leaving:
+	if _completed or _scene_leaving or _boss_defeated:
 		return
-	_spawn_boss_wisps(count)
+	_spawn_extra_wisps(count)
 	DemoAudio.play_link()
 	_hud.show_event("双面镜召来两只光灵 · 攻击可以熄灭", 1.8)
+	_sync_boss_hud()
+
+
+func _on_boss_anchors_requested(_count: int) -> void:
+	if _completed or _scene_leaving or _boss_defeated:
+		return
+	var sides: Array[bool] = _boss.get_missing_anchor_sides()
+	_spawn_anchor_wisps(sides)
+	DemoAudio.play_link()
+	if _boss.get_phase_index() == 1:
+		_hud.show_event("紫色锚链落下 · 光灵护住面盘", 1.9)
+	else:
+		_hud.show_event("锚链重织 · 先熄光灵，六秒内碎面盘", 1.9)
+	_sync_boss_hud()
+
+
+func _on_boss_anchor_window_started(positive: bool, seconds: float) -> void:
+	DemoAudio.play_shell_shatter()
+	_hud.show_event(
+		"%s面盘锚已断 · %.0f 秒内可击碎" % [
+			"金" if positive else "青", seconds
+		], 2.0
+	)
+	_sync_boss_hud()
+
+
+func _on_boss_anchor_window_expired(positive: bool) -> void:
+	_hud.show_event(
+		"%s面盘锚链重织 · 光灵即将归来" % ("金" if positive else "青"), 1.8
+	)
+	_sync_boss_hud()
 
 
 func _on_boss_face_shattered(positive: bool) -> void:
 	DemoAudio.play_shell_shatter()
-	_hud.show_event(
-		("金" if positive else "青") + "面盘碎裂 · " + (
-			"还差一面" if _boss.get_intact_face_count() > 0 else "中央核心暴露"
-		), 1.8
-	)
+	var remaining: int = _boss.get_intact_face_count()
+	if remaining > 0:
+		_hud.show_event(
+			("金" if positive else "青") + "面盘碎裂 · 还差一面", 1.8
+		)
+	else:
+		_hud.show_event("两面盘已碎 · 中央核心暴露", 1.9)
 	_sync_boss_hud()
 
 
@@ -880,54 +975,129 @@ func _on_boss_core_hit(remaining: int) -> void:
 
 func _on_boss_core_exposed() -> void:
 	_audio.play_bridge(true)
+	_clear_boss_wisps()
 	_hud.show_event("两面盘已碎 · 中央核心暴露", 1.9)
+	_sync_boss_hud()
+
+
+func _on_boss_core_closed() -> void:
+	_clear_boss_wisps()
+	_audio.play_bridge(false)
+	_hud.show_event("核心闭合 · 面盘与锚链重生", 1.9)
 	_sync_boss_hud()
 
 
 func _on_boss_phase_cleared(phase_index: int) -> void:
 	_audio.play_inversion()
 	_hud.show_event(
-		"第 %d 阶段结束 · 双面盘即将重生" % (phase_index + 1), 2.0
+		"形态 %d 破碎 · 核心闪白 · 镜面重组中" % (phase_index + 1), 2.0
 	)
 	_clear_boss_wisps()
 	_sync_boss_hud()
 
 
 func _on_boss_phase_started(phase_index: int) -> void:
-	_hud.show_event("第 %d 阶段 · 面盘重生" % (phase_index + 1), 1.8)
+	if phase_index == 1:
+		_hud.show_event("形态 2 · 面盘被光灵锚定 · 横扫更快", 2.2)
+	elif phase_index == 2:
+		_hud.show_event("形态 3 · 镜面裂开 · 双横扫与短核心窗", 2.2)
+	else:
+		_hud.show_event("形态 1 · 异相攻击才能碎面盘", 2.0)
+	_sync_boss_hud()
+
+
+func _on_boss_defeat_started() -> void:
+	if _completed or _scene_leaving or _boss_defeated:
+		return
+	_boss_collapse_active = true
+	# Display only: the 1.35 s collapse owns the screen, so the player health
+	# bar is suppressed until the mirror has finished falling apart.
+	_hud.set_player_health_visible(false)
+	# No attack, wisp dive or reflected hazard may damage the player while the
+	# 1.35 s collapse owns the screen.  The chapter also paints the shared hit
+	# protection window so even a stray call is refused by the player itself.
+	_player.set("_hit_protection_remaining", 999.0)
+	_clear_boss_wisps()
+	_hud.show_event("双面镜崩塌 · 面盘碎裂 · 核心内爆", 2.0)
+	_update_objective(true)
 	_sync_boss_hud()
 
 
 func _on_boss_defeated() -> void:
 	if _completed or _scene_leaving or _boss_defeated:
 		return
+	_boss_collapse_active = false
 	_boss_defeated = true
+	# The collapse is over; the post-fight route shows the bar again until the
+	# completion page or a modal pauses it.
+	_hud.set_player_health_visible(true)
 	_clear_boss_wisps()
 	_hud.show_event("双面镜碎裂 · 裂隙核心开启", 2.4)
-	_audio.play_bridge(true)
+	_audio.play_complete()
+	_boss_defeat_cue_played = true
 	_core_tip_pending = true
 	_update_finish_marker()
 	_update_objective(true)
 	_sync_boss_hud()
 
 
-func _spawn_boss_wisps(count: int) -> void:
-	_clear_boss_wisps()
+## Form 2/3 face anchors.  They hover at the player's strike height (y=292) so
+## the real J can actually kill them; the boss owns immunity/window timing.
+func _spawn_anchor_wisps(sides: Array[bool]) -> void:
+	if _boss == null or _boss_defeated:
+		return
+	for positive: bool in sides:
+		if _boss.has_face_anchor(positive):
+			continue
+		var side: float = -1.0 if positive else 1.0
+		var spawn_x: float = BOSS_CENTER.x + side * BOSS_ANCHOR_OFFSET
+		var wisp: RiftPolarityWisp = WISP_SCENE.instantiate() as RiftPolarityWisp
+		if wisp == null:
+			continue
+		wisp.name = "GoldAnchor" if positive else "CyanAnchor"
+		wisp.position = Vector2(spawn_x, 292.0)
+		wisp.hazard_mode = true
+		wisp.zone_center_x = spawn_x
+		wisp.zone_half_width = 36.0
+		wisp.hazard_deck_y = 320.0
+		wisp.hazard_y_tolerance = 10.0
+		wisp.flip_interval = 2.2 if _boss.get_phase_index() == 1 else 1.6
+		wisp.start_positive = positive
+		wisp.process_mode = Node.PROCESS_MODE_PAUSABLE
+		add_child(wisp)
+		wisp.set_anchor_target(_boss, positive)
+		wisp.defeated.connect(_on_wisp_defeated)
+		wisp.flip_requested.connect(_on_wisp_flip_requested)
+		wisp.set_hum_enabled(true)
+		_boss_wisps.append(wisp)
+		_boss.attach_anchor(positive, wisp)
+
+
+## Form 3's independent summon timer.  Extra hazard wisps never replace a live
+## anchor; the arena caps them at two so the core window stays readable.
+func _spawn_extra_wisps(count: int) -> void:
+	if _boss == null or _boss_defeated:
+		return
+	var extra_existing: int = 0
+	for wisp: RiftPolarityWisp in _boss_wisps:
+		if wisp != null and is_instance_valid(wisp) and not wisp.is_anchor():
+			extra_existing += 1
 	var spawn_count: int = mini(maxi(count, 1), 2)
+	spawn_count = mini(spawn_count, maxi(2 - extra_existing, 0))
 	for index: int in range(spawn_count):
 		var side: float = -1.0 if index == 0 else 1.0
 		var spawn_x: float = BOSS_CENTER.x + side * BOSS_WISP_OFFSET
 		var wisp: RiftPolarityWisp = WISP_SCENE.instantiate() as RiftPolarityWisp
 		if wisp == null:
 			continue
-		wisp.name = "BossWisp%d" % (index + 1)
-		wisp.position = Vector2(spawn_x, 246.0)
+		wisp.name = "BossWispExtra%d" % (index + 1)
+		wisp.position = Vector2(spawn_x, 292.0)
 		wisp.hazard_mode = true
 		wisp.zone_center_x = spawn_x
 		wisp.zone_half_width = 34.0
 		wisp.hazard_deck_y = 320.0
 		wisp.hazard_y_tolerance = 10.0
-		wisp.flip_interval = 1.8
+		wisp.flip_interval = 1.6
 		wisp.start_positive = index == 0
 		wisp.process_mode = Node.PROCESS_MODE_PAUSABLE
 		add_child(wisp)
@@ -943,6 +1113,8 @@ func _clear_boss_wisps() -> void:
 			wisp.set_hum_enabled(false)
 			wisp.queue_free()
 	_boss_wisps.clear()
+	if _boss != null:
+		_boss.clear_anchors()
 
 
 func _on_crystal_flipped(positive: bool, crystal: RiftInversionCrystal) -> void:
@@ -1079,6 +1251,8 @@ func _retry_boss() -> void:
 	_hud.set_player_hits(0, PLAYER_MAX_HITS)
 	_retry_pending = false
 	_retry_pending_left = 0.0
+	_boss_collapse_active = false
+	_boss_defeat_cue_played = false
 	_mirror_tip_pending = false
 	_core_tip_pending = false
 	_clear_boss_wisps()
@@ -1136,6 +1310,7 @@ func _complete_chapter() -> void:
 	_footstep_stop()
 	_hud.set_player_health_visible(false)
 	_completed = true
+	_boss_collapse_active = false
 	_retry_pending = false
 	_arena_intro_left = 0.0
 	_mirror_tip_pending = false
@@ -1154,7 +1329,9 @@ func _complete_chapter() -> void:
 	_hud.show_completion(true, _elapsed)
 	_hud.set_objective("目标：裂隙封闭")
 	_ambience.stop(DlcChapterAmbience.STOP_FADE_SECONDS)
-	_audio.play_complete()
+	if not _boss_defeat_cue_played:
+		_audio.play_complete()
+		_boss_defeat_cue_played = true
 	LEVEL_FLOW.release_one_shot_actions()
 	level_completed.emit()
 
@@ -1190,6 +1367,8 @@ func _restart_chapter() -> void:
 	_completed = false
 	_arena_entered = false
 	_boss_defeated = false
+	_boss_collapse_active = false
+	_boss_defeat_cue_played = false
 	_arena_intro_left = 0.0
 	_mirror_tip_pending = false
 	_core_tip_pending = false
@@ -1374,6 +1553,15 @@ func is_completed() -> bool:
 
 func is_boss_defeated() -> bool:
 	return _boss_defeated
+
+
+func is_boss_collapse_active() -> bool:
+	return _boss_collapse_active
+
+
+## True during the 1.35 s collapse, when no arena hazard may damage the player.
+func is_boss_collapse_invulnerable() -> bool:
+	return _boss_collapse_active
 
 
 func is_arena_entered() -> bool:

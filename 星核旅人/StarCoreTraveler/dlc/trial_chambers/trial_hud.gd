@@ -23,18 +23,14 @@ const PANEL_BG: Color = Color(0.014, 0.032, 0.040, 0.97)
 const PANEL_BORDER: Color = Color(0.45, 0.66, 0.63, 0.9)
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 const TITLE: String = "星核试炼场"
-## The two hearts sit above the player, not in a corner.  The bottom edge of
-## the 8 px heart row is ~34 px above the player's screen origin (body top is
-## 30 px; the sprite head is a little higher).  The value is intentionally
-## close to the approved "about -32 px" and keeps a gap under the Q keycap.
-const PIP_BOTTOM_OFFSET: float = 34.0
 const HIT_PULSE_SECONDS: float = 1.0
 const HIT_PULSE_SCALE: float = 0.28
 
 var _root: Control
 var _header: CompactLevelHeader
 var _polarity_icon: TrialPolarityIcon
-var _hit_pips: HitPips
+var _hit_pips: PlayerHealthBar
+var _health_label: Label
 var _player: Node2D = null
 var _pips_visible: bool = true
 var _hit_pulse_left: float = 0.0
@@ -120,9 +116,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _process(delta: float) -> void:
 	# Even while the tree is paused (guide / mechanic popup / pause page), the
-	# HUD is ALWAYS: keep the hearts hidden and their screen anchor current so
-	# resuming cannot flash them at a stale corner.
-	_update_hit_pips_follow()
+	# HUD is ALWAYS: keep the fixed bar hidden and its pulse settled so resuming
+	# cannot flash it mid-scale.
 	_update_hit_pulse(delta)
 	_update_hit_pips_visibility()
 	if get_tree().paused:
@@ -205,33 +200,32 @@ func _build_header() -> void:
 	_polarity_icon.set_positive(false)
 
 
-## Two heart pips that follow the player's screen position.  The trial has no
-## "受击 1 / 2" text: an accepted hit removes one heart, the second hit starts
-## the existing failure recovery and both hearts refill.
+## Shared two-segment red health VALUE bar, fixed at the lower-left HUD corner.
+## The trial has no "受击 1 / 2" text: an accepted hit removes one segment, the
+## second hit starts the existing failure recovery and both segments refill.
+## The row never follows the character.
 func _build_hit_pips() -> void:
-	_hit_pips = HitPips.new()
-	_hit_pips.name = "HitPips"
-	_hit_pips.kind = HitPips.Kind.HEART
-	_hit_pips.pip_size = 8.0
-	_hit_pips.gap = 3.0
-	_hit_pips.filled_color = GOLD
-	# A missing heart must still read as a heart at 640x360 on the sky
-	# background; the shared default dark grey nearly vanishes there.
-	_hit_pips.empty_color = Color(0.52, 0.59, 0.60, 0.92)
-	_root.add_child(_hit_pips)
+	_hit_pips = PlayerHealthBar.new()
+	_hit_pips.name = "PlayerHealthBar"
+	_hit_pips.max_segments = 2
+	_hit_pips.position = PlayerHealthBar.HUD_POSITION
 	_hit_pips.set_state(2, 2)
-	_hit_pips.pivot_offset = _hit_pips.size * 0.5
-	# TrialChambers calls set_player_node() and then makes the row visible once
-	# the player's screen position is known; this avoids a one-frame (0,0) flash.
 	_hit_pips.visible = false
+	_root.add_child(_hit_pips)
+	_hit_pips.pivot_offset = _hit_pips.size * 0.5
+	_health_label = _label(
+		"生命值", PlayerHealthBar.LABEL_POSITION, Vector2(52.0, 14.0),
+		PlayerHealthBar.LABEL_FONT_SIZE, MUTED
+	)
+	_health_label.name = "HealthValueLabel"
+	_health_label.visible = false
+	_root.add_child(_health_label)
 
 
-## Called by TrialChambers once its player exists.  The HUD is a CanvasLayer
-## at the logical 640x360 size, so the pips' position is screen-space and is
-## refreshed every process frame from the player's canvas transform.
+## Kept for the existing chapter call.  The bar is fixed at the lower-left, so
+## the player's screen position no longer affects it.
 func set_player_node(player: Node2D) -> void:
 	_player = player
-	_update_hit_pips_follow()
 
 
 func set_hit_pips_visible(value: bool) -> void:
@@ -277,30 +271,22 @@ func get_hit_pulse_duration() -> float:
 	return _hit_pulse_duration
 
 
-func _update_hit_pips_follow() -> void:
-	if _hit_pips == null:
-		return
-	_hit_pips.pivot_offset = _hit_pips.size * 0.5
-	if _player == null or not is_instance_valid(_player):
-		return
-	var screen_pos: Vector2 = _player.get_global_transform_with_canvas().origin
-	var pips_size: Vector2 = _hit_pips.size
-	var target: Vector2 = Vector2(
-		roundf(screen_pos.x - pips_size.x * 0.5),
-		roundf(screen_pos.y - PIP_BOTTOM_OFFSET - pips_size.y)
-	)
-	_hit_pips.position = Vector2(
-		clampf(target.x, 4.0, VIEW_SIZE.x - pips_size.x - 4.0),
-		clampf(target.y, 4.0, VIEW_SIZE.y - pips_size.y - 4.0)
-	)
-
-
 func _update_hit_pips_visibility() -> void:
 	if _hit_pips == null:
 		return
 	# Pausing covers the guide, mechanic popup and pause page; the chapter's
-	# own flag covers failure recovery, completion and scene leaving.
-	_hit_pips.visible = _pips_visible and not get_tree().paused
+	# own flag covers failure recovery, completion and scene leaving.  The
+	# recovery cover is also checked directly so a direct alpha test hides it.
+	var should_show: bool = (
+		_pips_visible
+		and not get_tree().paused
+		and not (_recovery_cover != null and _recovery_cover.visible)
+	)
+	_hit_pips.visible = should_show
+	if _health_label != null:
+		_health_label.visible = should_show
+	if not should_show:
+		_hit_pips.scale = Vector2.ONE
 
 
 func _update_hit_pulse(delta: float) -> void:
@@ -313,6 +299,7 @@ func _update_hit_pulse(delta: float) -> void:
 	_hit_pulse_left = maxf(_hit_pulse_left - delta, 0.0)
 	var progress: float = 1.0 - _hit_pulse_left / _hit_pulse_duration
 	var amount: float = (1.0 - progress) * absf(sin(progress * PI * 3.0 + PI * 0.5))
+	# Only the bar pulses; the 生命值 label keeps its 12 px scale.
 	_hit_pips.pivot_offset = _hit_pips.size * 0.5
 	_hit_pips.scale = Vector2.ONE * (1.0 + HIT_PULSE_SCALE * amount)
 	if _hit_pulse_left <= 0.0:
@@ -565,6 +552,7 @@ func set_player_hits(current_value: int, max_value: int = 2) -> void:
 	if _hit_pips == null:
 		return
 	_hit_pips.set_state(current_value, max_value)
+	_hit_pips.pivot_offset = _hit_pips.size * 0.5
 
 
 func get_hit_pips_current() -> int:
@@ -575,8 +563,14 @@ func get_hit_pips_max() -> int:
 	return _hit_pips.get_max() if _hit_pips != null else 0
 
 
-func get_hit_pips() -> HitPips:
+## Compatibility name kept from the old heart row; the value is now the shared
+## red health VALUE bar.
+func get_hit_pips() -> PlayerHealthBar:
 	return _hit_pips
+
+
+func get_health_label() -> Label:
+	return _health_label
 
 
 func set_objective(text_value: String) -> void:

@@ -18,6 +18,10 @@ const PANEL: Color = Color(0.012, 0.028, 0.034, 0.90)
 const BORDER: Color = Color(0.30, 0.45, 0.45, 0.75)
 const WHITE: Color = Color(1.0, 0.98, 0.90)
 const BROKEN: Color = Color(0.86, 0.28, 0.24, 0.95)
+const RED: Color = Color("#ff5a4f")
+const PURPLE: Color = Color("#a86cff")
+const PURPLE_PALE: Color = Color("#e0c8ff")
+const ANCHOR_WINDOW: float = 6.0
 
 const ROW_SIZE: Vector2 = Vector2(340.0, 28.0)
 
@@ -29,6 +33,10 @@ var _max_core: int = 3
 var _gold_intact: bool = true
 var _cyan_intact: bool = true
 var _exposed: bool = false
+var _gold_anchored: bool = false
+var _cyan_anchored: bool = false
+var _gold_window: float = 0.0
+var _cyan_window: float = 0.0
 
 
 func _ready() -> void:
@@ -57,6 +65,49 @@ func set_state(
 	_exposed = exposed
 	if changed:
 		queue_redraw()
+
+
+## Called separately from set_state so the existing HUD call sites keep their
+## shape while the anchor read is still explicit.
+func set_anchor_state(
+	gold_anchored: bool, cyan_anchored: bool,
+	gold_window: float, cyan_window: float
+) -> void:
+	var changed: bool = (
+		gold_anchored != _gold_anchored or cyan_anchored != _cyan_anchored
+		or not is_equal_approx(gold_window, _gold_window)
+		or not is_equal_approx(cyan_window, _cyan_window)
+	)
+	_gold_anchored = gold_anchored
+	_cyan_anchored = cyan_anchored
+	_gold_window = maxf(gold_window, 0.0)
+	_cyan_window = maxf(cyan_window, 0.0)
+	if changed:
+		queue_redraw()
+
+
+func get_form_text() -> String:
+	return "形态 %d/%d" % [_phase_index + 1, _phase_count]
+
+
+func is_gold_anchored() -> bool:
+	return _gold_anchored
+
+
+func is_cyan_anchored() -> bool:
+	return _cyan_anchored
+
+
+func get_gold_window() -> float:
+	return _gold_window
+
+
+func get_cyan_window() -> float:
+	return _cyan_window
+
+
+func get_anchor_window_max() -> float:
+	return ANCHOR_WINDOW
 
 
 func get_phase_index() -> int:
@@ -91,6 +142,8 @@ func _draw() -> void:
 
 	_draw_face(Vector2(72.0, 14.0), true, _gold_intact)
 	_draw_face(Vector2(102.0, 14.0), false, _cyan_intact)
+	_draw_anchor_overlay(Vector2(72.0, 14.0), _gold_intact, _gold_anchored, _gold_window)
+	_draw_anchor_overlay(Vector2(102.0, 14.0), _cyan_intact, _cyan_anchored, _cyan_window)
 
 	for index: int in range(_max_core):
 		var filled: bool = index >= _max_core - _core_hp
@@ -109,7 +162,7 @@ func _draw() -> void:
 		)
 	if font != null:
 		draw_string(
-			font, Vector2(224.0, 19.0), "%d/%d" % [_phase_index + 1, _phase_count],
+			font, Vector2(220.0, 19.0), get_form_text(),
 			HORIZONTAL_ALIGNMENT_LEFT, -1.0, 10, MUTED
 		)
 
@@ -161,6 +214,36 @@ func _draw_face(center: Vector2, positive: bool, intact: bool) -> void:
 			BROKEN, 1.0)
 		draw_line(center + Vector2(9.0, -11.0), center + Vector2(5.0, -7.0),
 			BROKEN, 1.0)
+
+
+## A live anchor gets a violet chain ring; a killed anchor shows the amber 6 s
+## window as a partial right-hand arc.  Both reads sit on the shield itself, so
+## the HUD stays one compact row.
+func _draw_anchor_overlay(
+	center: Vector2, intact: bool, anchored: bool, window: float
+) -> void:
+	if not intact:
+		return
+	if anchored:
+		for index: int in range(12):
+			var angle: float = float(index) * TAU / 12.0
+			var dot: Vector2 = center + Vector2(
+				round(cos(angle) * 13.0), round(sin(angle) * 13.0)
+			)
+			draw_rect(Rect2(dot, Vector2(1.0, 1.0)), Color(PURPLE, 0.92))
+		draw_rect(Rect2(center + Vector2(-1.0, -14.0), Vector2(3.0, 3.0)),
+			Color(PURPLE_PALE, 0.95))
+		return
+	if window <= 0.0:
+		return
+	var ratio: float = clampf(window / ANCHOR_WINDOW, 0.0, 1.0)
+	var lit: int = int(round(ratio * 10.0))
+	for index: int in range(10):
+		var y: float = -9.0 + float(index) * 2.0
+		var color: Color = Color(GOLD_PALE, 0.95) if index < lit else Color(0.22, 0.28, 0.28, 0.85)
+		draw_rect(Rect2(center + Vector2(13.0, y), Vector2(1.0, 2.0)), color)
+	draw_rect(Rect2(center + Vector2(12.0, -11.0), Vector2(3.0, 1.0)),
+		Color(RED, 0.75))
 
 
 func _draw_diamond(center: Vector2, radius: float, fill: Color, edge: Color) -> void:

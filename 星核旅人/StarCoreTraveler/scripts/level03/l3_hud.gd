@@ -24,6 +24,12 @@ var _event_left: float = 0.0
 var _control_hint: Label = null
 var _control_left: float = 0.0
 var _guide: L3Guide
+## Fixed lower-left health VALUE bar (shared with every chapter that has an
+## enemy).  Hits taken are mirrored here; the old overhead talisman shards are
+## no longer drawn by L3Guide.
+var _health_bar: PlayerHealthBar
+var _health_label: Label
+var _hits: int = 0
 ## Full-screen recovery cover. It sits above the ordinary HUD (header,
 ## objective, guide, prompts) but below the completion page, while the separate
 ## pause CanvasLayer (layer 16) stays above it.
@@ -54,10 +60,12 @@ func _ready() -> void:
 	_build_header()
 	_build_objective()
 	_build_guide()
+	_build_health_bar()
 	_build_recovery_cover()
 	_build_completion()
 	set_polarity(true)
 	set_objective("送核入符石仓")
+	set_hits(0)
 	set_pause_visible(false)
 	show_completion(false)
 
@@ -121,6 +129,25 @@ func _build_guide() -> void:
 	_guide.size = VIEW_SIZE
 	_guide.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_guide)
+
+
+## Two-segment red bar fixed at (14,324); the label is the same 12 px
+## 生命值 row used by the DLC chapters.  It is display-only and sits under the
+## recovery cover/completion page, never over the player.
+func _build_health_bar() -> void:
+	_health_bar = PlayerHealthBar.new()
+	_health_bar.name = "PlayerHealthBar"
+	_health_bar.max_segments = 2
+	_health_bar.position = PlayerHealthBar.HUD_POSITION
+	_health_bar.set_state(2, 2)
+	_root.add_child(_health_bar)
+	_health_label = _label(
+		"生命值", PlayerHealthBar.LABEL_POSITION, Vector2(52.0, 14.0),
+		PlayerHealthBar.LABEL_FONT_SIZE, MUTED
+	)
+	_health_label.name = "HealthValueLabel"
+	_root.add_child(_health_label)
+	_update_health_bar_visibility()
 
 
 ## The recovery cover is a plain black rectangle owned by this HUD. The level
@@ -242,8 +269,12 @@ func set_prompt(text_value: String, world_position: Vector2, visible_value: bool
 
 
 func set_hits(value: int) -> void:
+	_hits = clampi(value, 0, 2)
 	if _guide != null:
-		_guide.set_hits(value)
+		_guide.set_hits(_hits)
+	if _health_bar != null:
+		_health_bar.set_state(2 - _hits, 2)
+		_health_bar.pivot_offset = _health_bar.size * 0.5
 
 
 func show_event(text_value: String, duration: float = 1.4) -> void:
@@ -263,6 +294,7 @@ func show_control_hint(_duration: float = 3.0) -> void:
 
 
 func _process(delta: float) -> void:
+	_update_health_bar_visibility()
 	if _event_left > 0.0:
 		_event_left = maxf(_event_left - delta, 0.0)
 		if _event_left <= 0.0 and _objective != null:
@@ -271,6 +303,22 @@ func _process(delta: float) -> void:
 		_control_left = maxf(_control_left - delta, 0.0)
 		if _control_left <= 0.0 and _control_hint != null:
 			_control_hint.visible = false
+
+
+## Pause, mechanic popup, failure recovery and the completion page all own the
+## screen; the fixed bar and its label are hidden rather than dimmed.
+func _update_health_bar_visibility() -> void:
+	if _health_bar == null:
+		return
+	var should_show: bool = (
+		not _pause_visible
+		and not _completion_active
+		and not get_tree().paused
+		and not (_recovery_cover != null and _recovery_cover.visible)
+	)
+	_health_bar.visible = should_show
+	if _health_label != null:
+		_health_label.visible = should_show
 
 
 func show_world_text(text_value: String, world_position: Vector2, duration: float = 0.7) -> void:
@@ -288,6 +336,7 @@ func set_pause_visible(value: bool) -> void:
 	_pause_visible = value
 	if _guide != null:
 		_guide.visible = not value and not _completion_active
+	_update_health_bar_visibility()
 
 
 func set_gameplay_visible(value: bool) -> void:
@@ -303,6 +352,7 @@ func set_recovery_alpha(value: float) -> void:
 	_recovery_cover.color = Color(0.0, 0.0, 0.0, alpha)
 	_recovery_cover.visible = alpha > 0.0001
 	_recovery_cover.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_update_health_bar_visibility()
 
 
 func get_recovery_alpha() -> float:
@@ -326,6 +376,7 @@ func show_completion(value: bool, completion_count: int = 0) -> void:
 	_completion_active = value
 	if _guide != null:
 		_guide.visible = not value and not _pause_visible
+	_update_health_bar_visibility()
 	if value:
 		# A failed scene change must never leave the page with dead buttons.
 		_play_completion_reveal()
@@ -400,7 +451,33 @@ func get_guide() -> L3Guide:
 
 
 func get_hits() -> int:
-	return _guide.get_hit_pips() if _guide != null else 0
+	return _hits
+
+
+func get_player_health_bar() -> PlayerHealthBar:
+	return _health_bar
+
+
+func get_health_label() -> Label:
+	return _health_label
+
+
+func is_health_bar_visible() -> bool:
+	return _health_bar != null and _health_bar.visible
+
+
+func get_health_bar_rect() -> Rect2:
+	if _health_bar == null:
+		return Rect2()
+	return Rect2(_health_bar.position, _health_bar.size)
+
+
+func get_hit_pips_current() -> int:
+	return _health_bar.get_current() if _health_bar != null else 0
+
+
+func get_hit_pips_max() -> int:
+	return _health_bar.get_max() if _health_bar != null else 0
 
 
 func get_prompt_text() -> String:

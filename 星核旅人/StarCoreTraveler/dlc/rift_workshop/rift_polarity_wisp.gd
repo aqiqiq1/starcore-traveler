@@ -43,6 +43,8 @@ const POP_STREAM: AudioStreamWAV = preload(
 )
 const GOLD: Color = Color("#f4cd63")
 const CYAN: Color = Color("#5fe1e6")
+const PURPLE: Color = Color("#a86cff")
+const PURPLE_PALE: Color = Color("#e0c8ff")
 
 @export var start_positive: bool = true
 @export var hover_amplitude: float = 6.0
@@ -87,6 +89,9 @@ var _in_zone: bool = false
 var _flip_left: float = 0.0
 var _flip_count: int = 0
 var _dive_left: float = 0.0
+## Form 2/3 face anchor: the wisp visibly chains itself to one mirror plate.
+var _anchor_target: Node2D = null
+var _anchor_positive: bool = true
 
 
 func _ready() -> void:
@@ -383,6 +388,23 @@ func set_hum_enabled(value: bool) -> void:
 
 # --- read API --------------------------------------------------------------
 
+## The boss sets this on the two summoned anchor wisps.  A null target means
+## an ordinary hazard wisp.  The tether is presentation only; the boss owns the
+## plate immunity and the 6 s window.
+func set_anchor_target(target: Node2D, positive: bool) -> void:
+	_anchor_target = target
+	_anchor_positive = positive
+	queue_redraw()
+
+
+func is_anchor() -> bool:
+	return _anchor_target != null and is_instance_valid(_anchor_target)
+
+
+func get_anchor_positive() -> bool:
+	return _anchor_positive
+
+
 func is_alive() -> bool:
 	return _alive
 
@@ -500,6 +522,9 @@ func _draw() -> void:
 			)
 		return
 
+	if is_anchor():
+		_draw_anchor_chain()
+		_draw_ring(13.0, Color(PURPLE, 0.42 + 0.18 * sin(_time * 4.0)))
 	if hazard_mode:
 		_draw_hazard_telegraph(color)
 	else:
@@ -522,6 +547,48 @@ func _draw() -> void:
 			)
 	# A faint 1 px halo keeps the 16 px body readable over the bright sky.
 	_draw_ring(11.0, Color(color, 0.22 + 0.08 * sin(_time * 3.0)))
+
+
+## A violet, segmented chain from the wisp body to its mirror plate.  Sparse
+## 2 px links keep the 170 px span readable at 1x without becoming a solid bar.
+func _draw_anchor_chain() -> void:
+	if not is_anchor() or not _alive:
+		return
+	if not _anchor_target.has_method("get_face_center_global"):
+		return
+	var target_global: Vector2 = _anchor_target.call(
+		"get_face_center_global", _anchor_positive
+	)
+	var target: Vector2 = to_local(target_global)
+	var offset: Vector2 = target - Vector2.ZERO
+	var distance: float = offset.length()
+	if distance < 8.0:
+		return
+	var direction: Vector2 = offset / distance
+	# A faint full-length guide makes the owner obvious; the 3 px studs are the
+	# actual chain links and stay readable over the sky gradient.
+	draw_line(Vector2.ZERO, target, Color(PURPLE, 0.20), 1.0)
+	var travelled: float = 8.0
+	var index: int = 0
+	while travelled < distance - 4.0:
+		var point: Vector2 = direction * travelled
+		var color: Color = PURPLE if index % 2 == 0 else PURPLE_PALE
+		draw_rect(Rect2(round(point.x) - 1.0, round(point.y), 3.0, 2.0),
+			Color(color, 0.82))
+		draw_rect(Rect2(round(point.x), round(point.y) - 1.0, 1.0, 1.0),
+			Color(PURPLE_PALE, 0.75))
+		travelled += 7.0
+		index += 1
+	# A 14 px violet shackle at the plate end.
+	for ring_index: int in range(16):
+		var angle: float = float(ring_index) * TAU / 16.0
+		draw_rect(
+			Rect2(target + Vector2(round(cos(angle) * 7.0), round(sin(angle) * 7.0)),
+				Vector2(1.0, 1.0)),
+			Color(PURPLE_PALE, 0.82)
+		)
+	draw_rect(Rect2(target - Vector2(1.0, 1.0), Vector2(3.0, 3.0)),
+		Color(PURPLE_PALE, 0.95))
 
 
 ## Hazard read order (borrowed from the Secrets of Grindea wisp reference):

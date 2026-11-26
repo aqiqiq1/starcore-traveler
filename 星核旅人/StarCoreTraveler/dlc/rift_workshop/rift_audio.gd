@@ -48,6 +48,7 @@ var _deny: AudioStreamPlayer
 var _bridge_plays: int = 0
 var _slam_plays: int = 0
 var _deny_plays: int = 0
+var _complete_plays: int = 0
 var _last_slam_ms: int = -1000
 
 
@@ -136,6 +137,11 @@ func play_complete() -> void:
 	if _complete == null:
 		return
 	_complete.play()
+	_complete_plays += 1
+
+
+func get_complete_play_count() -> int:
+	return _complete_plays
 
 
 func stop_all() -> void:

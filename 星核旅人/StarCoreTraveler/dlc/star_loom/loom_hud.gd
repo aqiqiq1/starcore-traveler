@@ -49,6 +49,9 @@ const LIFE_FILLED: Color = Color("#ef6b6b")
 ## Lifting 34 px from that centre lands the health meter just above the head.
 const PLAYER_HIT_BODY_OFFSET: float = 20.0
 const PLAYER_HIT_LIFT: float = 34.0
+## Fixed HUD corner for the health VALUE; never floats over the character.
+const HEALTH_POSITION: Vector2 = Vector2(14.0, 324.0)
+const HEALTH_LABEL_POSITION: Vector2 = Vector2(14.0, 310.0)
 
 var _root: Control
 var _header: CompactLevelHeader
@@ -65,6 +68,7 @@ var _node_label: Label
 var _core_label: Label
 var _life_label: Label
 var _player_health_bar: LoomHealthBar
+var _health_label: Label
 var _event_label: Label
 var _gear_edge: LoomEdgeWarning
 var _event_left: float = 0.0
@@ -244,7 +248,7 @@ func _label(
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
-	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_constant_override("outline_size", 1)
 	return label
 
 
@@ -342,7 +346,7 @@ func _build_status() -> void:
 	)
 
 	_life_pips = _status_pips(
-		HitPips.Kind.HEART, 3, 3, 9.0, 3.0, LIFE_FILLED,
+		HitPips.Kind.HEART, 3, 3, 10.0, 3.0, LIFE_FILLED,
 		Vector2(172.0, 41.0), "LifePips"
 	)
 
@@ -358,10 +362,10 @@ func _status_label(
 	text_value: String, position_value: Vector2, color: Color
 ) -> Label:
 	var label: Label = _label(
-		text_value, position_value, Vector2(40.0, 12.0), 9, color
+		text_value, position_value, Vector2(44.0, 14.0), 12, color
 	)
 	label.name = "StatusLabel" + text_value
-	label.add_theme_constant_override("outline_size", 1)
+	label.add_theme_constant_override("outline_size", 0)
 	_root.add_child(label)
 	return label
 
@@ -395,10 +399,9 @@ func _status_pips(
 	return pips
 
 
-## Three-cell health meter that floats just above the player's head.  It lives
-## on this CanvasLayer, so the position is screen-space and follows both walking
-## and jumping.  The level supplies the suppression predicate (pause, guide,
-## popup, recovery, completion, game over).
+## Three-heart health VALUE fixed at the lower-left HUD corner, so it never
+## covers the character.  The level supplies the suppression predicate (pause,
+## guide, popup, recovery, completion, game over).
 func _build_player_hit_overlay() -> void:
 	_player_health_bar = LoomHealthBar.new()
 	_player_health_bar.name = "PlayerHealthBar"
@@ -406,8 +409,13 @@ func _build_player_hit_overlay() -> void:
 	_player_health_bar.set_state(3, 3)
 	_player_health_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_player_health_bar.visible = false
+	_player_health_bar.position = HEALTH_POSITION
 	_root.add_child(_player_health_bar)
 	_player_health_bar.pivot_offset = _player_health_bar.size * 0.5
+	_health_label = _label("生命值", HEALTH_LABEL_POSITION, Vector2(52.0, 14.0), 12, MUTED)
+	_health_label.name = "HealthValueLabel"
+	_health_label.visible = false
+	_root.add_child(_health_label)
 
 
 func bind_player_overhead(player: Node2D, suppress_check: Callable = Callable()) -> void:
@@ -420,21 +428,23 @@ func _update_player_hit_overlay(delta: float) -> void:
 		return
 	if _player == null or not is_instance_valid(_player):
 		_player_health_bar.visible = false
+		if _health_label != null:
+			_health_label.visible = false
 		return
 	var suppressed: bool = (
 		_player_hit_suppress.is_valid() and bool(_player_hit_suppress.call())
 	)
 	if suppressed:
 		_player_health_bar.visible = false
+		if _health_label != null:
+			_health_label.visible = false
 		_player_health_bar.scale = Vector2.ONE
 		_player_hit_pulse_left = 0.0
 		return
-	var screen_position: Vector2 = _player.get_global_transform_with_canvas().origin
-	_player_health_bar.position = Vector2(
-		round(screen_position.x - _player_health_bar.size.x * 0.5),
-		round(screen_position.y - PLAYER_HIT_BODY_OFFSET - PLAYER_HIT_LIFT)
-	)
+	_player_health_bar.position = HEALTH_POSITION
 	_player_health_bar.visible = true
+	if _health_label != null:
+		_health_label.visible = true
 	if _player_hit_pulse_left > 0.0:
 		_player_hit_pulse_left = maxf(_player_hit_pulse_left - delta, 0.0)
 		var progress: float = 1.0 - _player_hit_pulse_left
@@ -445,7 +455,7 @@ func _update_player_hit_overlay(delta: float) -> void:
 
 
 func _build_event() -> void:
-	_event_label = _label("", Vector2(12.0, 64.0), Vector2(520.0, 16.0), 12, GOLD)
+	_event_label = _label("", Vector2(12.0, 66.0), Vector2(520.0, 16.0), 12, GOLD)
 	_event_label.name = "EventLine"
 	_event_label.visible = false
 	_root.add_child(_event_label)
@@ -741,9 +751,6 @@ func set_boss_state(
 		_last_player_hits = player_hits
 		var health_value: int = clampi(hit_limit - player_hits, 0, hit_limit)
 		_player_health_bar.set_state(health_value, hit_limit)
-		_player_health_bar.filled_color = (
-			Color("#ef6b6b") if health_value <= 1 else Color("#ff8f6b")
-		)
 		_player_health_bar.queue_redraw()
 		if hit_increased and player_hits > 0:
 			# A single 1.0 s sine pulse, scaled around the row's centre.

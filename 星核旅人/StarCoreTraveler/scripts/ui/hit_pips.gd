@@ -5,7 +5,7 @@ extends Control
 ## the DLC rows replace that text with pips so the count is readable without
 ## reading a sentence.  Seven-pixel art, no anti-aliasing, no labels.
 
-enum Kind { HEART, DIAMOND }
+enum Kind { HEART, DIAMOND, STAR }
 
 @export var kind: Kind = Kind.HEART
 @export var max_pips: int = 3
@@ -66,6 +66,8 @@ func _draw() -> void:
 		color.a = minf(color.a * alpha, 1.0)
 		if kind == Kind.HEART:
 			_draw_heart(origin, color)
+		elif kind == Kind.STAR:
+			_draw_star(origin, color)
 		else:
 			_draw_diamond(origin, color)
 
@@ -98,6 +100,27 @@ func _draw_diamond(origin: Vector2, color: Color) -> void:
 		var left: int = half - span
 		var right: int = half + span
 		for x: int in range(left, right + 1):
+			draw_rect(
+				Rect2(origin + Vector2(float(x), float(y)), Vector2.ONE),
+				color
+			)
+
+
+## A 7x7 pixel star for the run's life count; distinct from health hearts.
+func _draw_star(origin: Vector2, color: Color) -> void:
+	var rows: Array[String] = [
+		"...x...",
+		"..xxx..",
+		"xxxxxxx",
+		".xxxxx.",
+		"..x.x..",
+		".x...x.",
+		"...x...",
+	]
+	for y: int in range(rows.size()):
+		for x: int in range(rows[y].length()):
+			if rows[y][x] != "x":
+				continue
 			draw_rect(
 				Rect2(origin + Vector2(float(x), float(y)), Vector2.ONE),
 				color
