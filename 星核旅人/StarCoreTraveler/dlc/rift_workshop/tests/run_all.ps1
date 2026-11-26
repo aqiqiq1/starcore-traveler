@@ -45,6 +45,7 @@ $summary += Invoke-Case "rift_intro" "res://dlc/rift_workshop/tests/intro_test.t
 $summary += Invoke-Case "rift_mech" "res://dlc/rift_workshop/tests/mechanics_test.tscn" "mechanics_test" $true
 $summary += Invoke-Case "rift_route" "res://dlc/rift_workshop/tests/route_test.tscn" "route_test" $true
 $summary += Invoke-Case "rift_polish" "res://dlc/rift_workshop/tests/polish_test.tscn" "polish_test" $true
+$summary += Invoke-Case "rift_parity" "res://dlc/rift_workshop/tests/parity_test.tscn" "parity_test" $true
 $summary += Invoke-Case "rift_title" "res://dlc/rift_workshop/tests/title_test.tscn" "title_test" $true
 $summary += Invoke-Smoke "rift_90" "res://dlc/rift_workshop/rift_workshop.tscn" "rift_90"
 $summary += Invoke-Smoke "level_01_90" "res://scenes/level_01.tscn" "level_01_90"

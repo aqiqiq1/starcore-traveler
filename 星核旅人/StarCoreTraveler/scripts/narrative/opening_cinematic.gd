@@ -35,6 +35,7 @@ const STOP_SPEED_EPSILON: float = 6.0
 const DIALOGUE_OPEN_TIMEOUT: float = 1.0
 const SKIP_HOLD: float = 0.6
 
+const PROMPT_FOOTER_SCRIPT = preload("res://scripts/ui/prompt_footer.gd")
 const FOOTSTEP_DIR: String = "res://assets/audio_movement_20261117/"
 const FOOTSTEP_FILES: Array[String] = [
 	"footstep_stone_1.wav",
@@ -63,6 +64,7 @@ var _top_bar: ColorRect = null
 var _bottom_bar: ColorRect = null
 var _bar_height: float = 0.0
 var _skip_bar: SkipHoldBar = null
+var _prompt_footer: Control = null
 
 var _phase: Phase = Phase.IDLE
 var _active: bool = false
@@ -145,6 +147,12 @@ func _build_ui() -> void:
 	_skip_bar.name = "SkipHoldBar"
 	_root.add_child(_skip_bar)
 
+	# Shared one-line page footer.  It lives in this film's own CanvasLayer,
+	# above the picture and below the pause page, and never reads input.
+	_prompt_footer = PROMPT_FOOTER_SCRIPT.new()
+	_prompt_footer.name = "PromptFooter"
+	_root.add_child(_prompt_footer)
+
 	_ui.visible = false
 
 
@@ -176,6 +184,8 @@ func start() -> bool:
 	_apply_bar_height()
 	if _skip_bar != null:
 		_skip_bar.hide_progress()
+	if _prompt_footer != null:
+		_prompt_footer.call("hide_footer")
 	_opening_start_x = _player.global_position.x
 	_stop_x = _echo.global_position.x - STOP_GAP
 
@@ -198,11 +208,14 @@ func start() -> bool:
 
 func _process(delta: float) -> void:
 	if not _active and not _await_release:
+		_hide_prompt_footer()
 		return
 	if get_tree() != null and get_tree().paused:
+		_hide_prompt_footer()
 		return
 
 	if _await_release:
+		_hide_prompt_footer()
 		if _skip_bar != null:
 			_skip_bar.hide_progress()
 		if not _space_held and not Input.is_physical_key_pressed(KEY_SPACE):
@@ -249,6 +262,45 @@ func _process(delta: float) -> void:
 				_complete_finish()
 		_:
 			pass
+	_update_prompt_footer()
+
+
+## Presentation only.  The footer appears only while the echo page is fully
+## revealed and really waits for F; typing, transitions and OUTRO keep it
+## hidden.  While the hold-to-skip bar is on screen it takes the same corner,
+## so the footer yields to it instead of drawing two skip cues on top of one
+## another.
+func _update_prompt_footer() -> void:
+	if _prompt_footer == null:
+		return
+	var waiting: bool = (
+		_active
+		and _phase == Phase.DIALOGUE
+		and not _dialogue_attempting
+		and not _skip_queued
+		and _echo != null
+		and _echo.is_dialogue_open()
+		and not (_skip_bar != null and _skip_bar.visible)
+	)
+	if waiting:
+		var index: int = _echo.get_page_index()
+		var full: String = _echo.get_full_page_text()
+		if index < 0 or full.is_empty() or _echo.get_revealed_count() < full.length():
+			waiting = false
+		else:
+			var text: String = (
+				PROMPT_FOOTER_SCRIPT.PAGE_FOOTER
+				if index + 1 < _echo.get_page_count()
+				else PROMPT_FOOTER_SCRIPT.SINGLE_FOOTER
+			)
+			_prompt_footer.call("show_footer", text)
+	if not waiting:
+		_prompt_footer.call("hide_footer")
+
+
+func _hide_prompt_footer() -> void:
+	if _prompt_footer != null:
+		_prompt_footer.call("hide_footer")
 
 
 func _enter_run() -> void:
@@ -317,6 +369,7 @@ func _begin_outro(skipped: bool) -> void:
 	_skipped = skipped
 	if _skip_bar != null:
 		_skip_bar.hide_progress()
+	_hide_prompt_footer()
 	_stop_local_footsteps()
 	if _echo != null:
 		_echo.force_close()
@@ -368,6 +421,7 @@ func _complete_finish() -> void:
 	_apply_bar_height()
 	if _skip_bar != null:
 		_skip_bar.hide_progress()
+	_hide_prompt_footer()
 	_await_release = _space_held or Input.is_physical_key_pressed(KEY_SPACE)
 	if _await_release:
 		# Keep the movement override and the hidden objective until the same
@@ -389,6 +443,7 @@ func _complete_handoff() -> void:
 	_apply_bar_height()
 	if _skip_bar != null:
 		_skip_bar.hide_progress()
+	_hide_prompt_footer()
 	_stop_local_footsteps()
 	if _player != null:
 		_player.end_input_override()
@@ -417,6 +472,7 @@ func abort() -> void:
 	_apply_bar_height()
 	if _skip_bar != null:
 		_skip_bar.hide_progress()
+	_hide_prompt_footer()
 	_stop_local_footsteps()
 	if _player != null:
 		_player.end_input_override()
@@ -439,6 +495,7 @@ func handle_pause_opened() -> void:
 	_space_action_done = false
 	if _skip_bar != null:
 		_skip_bar.hide_progress()
+	_hide_prompt_footer()
 	_stop_local_footsteps()
 	if not (_active or _await_release) or _player == null:
 		return
@@ -744,3 +801,19 @@ func get_skip_bar_label_font_size() -> int:
 
 func get_skip_bar_style() -> StyleBoxFlat:
 	return _skip_bar.get_style() if _skip_bar != null else null
+
+
+# --- Shared page footer read-only helpers (tests / captures) ----------------
+
+func get_prompt_footer() -> Control:
+	return _prompt_footer
+
+
+func is_prompt_footer_visible() -> bool:
+	return _prompt_footer != null and _prompt_footer.visible
+
+
+func get_prompt_footer_text() -> String:
+	if _prompt_footer == null:
+		return ""
+	return String(_prompt_footer.call("get_text"))

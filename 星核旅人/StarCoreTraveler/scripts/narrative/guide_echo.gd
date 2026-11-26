@@ -23,6 +23,7 @@ const SHEET_PATH: String = "res://assets/guide_echo_20261113/guide_echo_idle_6f_
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 const DIALOGUE_VOICE_SCRIPT = preload("res://scripts/narrative/dialogue_voice.gd")
 const INTERACTION_KEY_HINT = preload("res://scripts/ui/interaction_key_hint.gd")
+const PROMPT_FOOTER_SCRIPT = preload("res://scripts/ui/prompt_footer.gd")
 const FRAME_SIZE: Vector2i = Vector2i(48, 64)
 const FRAME_COUNT: int = 6
 const FOOT_ANCHOR: Vector2 = Vector2(24.0, 60.0)
@@ -114,6 +115,7 @@ var _dialog_panel: Panel = null
 var _speaker_label: Label = null
 var _body_label: Label = null
 var _page_label: Label = null
+var _prompt_footer: Control = null
 var _screen_anchor_x: float = 0.0
 var _reveal: float = 0.0
 var _dialog_size: Vector2 = Vector2(246.0, 60.0)
@@ -171,12 +173,23 @@ func _process(delta: float) -> void:
 	if within != _in_range:
 		_set_in_range(within)
 	if not _in_range:
+		_update_prompt_footer()
 		return
 	if _page_index >= 0:
 		_advance_reveal(delta)
 		_layout_dialog()
 	else:
 		_layout_prompt()
+	_update_prompt_footer()
+
+
+## Node pause notification covers the pause page even if a caller forgets to
+## suspend the echo.  It only refreshes presentation; page/input state is not
+## changed here.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PAUSED or what == NOTIFICATION_UNPAUSED:
+		if is_inside_tree() and not Engine.is_editor_hint():
+			_refresh_ui()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -472,6 +485,22 @@ func get_voice():
 	return _voice
 
 
+# --- Shared page footer read-only helpers (tests / captures) ----------------
+
+func get_prompt_footer() -> Control:
+	return _prompt_footer
+
+
+func is_prompt_footer_visible() -> bool:
+	return _prompt_footer != null and _prompt_footer.visible
+
+
+func get_prompt_footer_text() -> String:
+	if _prompt_footer == null:
+		return ""
+	return String(_prompt_footer.call("get_text"))
+
+
 ## Actual visible sprite rectangle in viewport coordinates. Uses the real
 ## Sprite2D transform + get_rect(), including the projection offset.
 func get_echo_screen_rect() -> Rect2:
@@ -702,6 +731,12 @@ func _ensure_ui() -> void:
 	_page_label = _make_label(font, META_FONT_SIZE, MUTED_COLOR, HORIZONTAL_ALIGNMENT_RIGHT)
 	_dialog_root.add_child(_page_label)
 
+	# Shared one-line page footer, added under the echo's existing UI layer.
+	# It never reads input; this node decides when the bubble waits for F.
+	_prompt_footer = PROMPT_FOOTER_SCRIPT.new()
+	_prompt_footer.name = "PromptFooter"
+	_ui_layer.add_child(_prompt_footer)
+
 
 func _ensure_voice() -> void:
 	if _voice != null:
@@ -752,6 +787,40 @@ func _refresh_ui() -> void:
 		_layout_dialog()
 	elif show_prompt:
 		_layout_prompt()
+	_update_prompt_footer()
+
+
+## Footer appears only while the dialogue bubble is open, the player is in
+## range, no film owns the echo, the tree is not paused and the line has fully
+## revealed.  Every other state hides it in the same frame.
+func _update_prompt_footer() -> void:
+	if _prompt_footer == null:
+		return
+	var paused: bool = get_tree() != null and get_tree().paused
+	var waiting: bool = (
+		not _suspended
+		and not _cinematic_owned
+		and _in_range
+		and not paused
+		and _page_index >= 0
+		and _page_index < pages.size()
+		and _manifest > 0.0
+		and _dialog_root != null
+		and _dialog_root.visible
+	)
+	if waiting:
+		var full: String = get_current_page_text()
+		if full.is_empty() or _reveal < float(full.length()):
+			waiting = false
+		else:
+			var text: String = (
+				PROMPT_FOOTER_SCRIPT.PAGE_FOOTER
+				if _page_index + 1 < pages.size()
+				else PROMPT_FOOTER_SCRIPT.SINGLE_FOOTER
+			)
+			_prompt_footer.call("show_footer", text)
+	if not waiting:
+		_prompt_footer.call("hide_footer")
 
 
 func _layout_prompt() -> void:

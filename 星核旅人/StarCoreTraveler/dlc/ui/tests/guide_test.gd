@@ -109,6 +109,25 @@ func _cleanup() -> void:
 		await get_tree().process_frame
 
 
+## The real chapter plays its short intro film before the guide.  Wait for the
+## hand-off instead of assuming the guide exists six frames after add_child().
+func _wait_for_guide(level: Node, timeout_ms: int) -> DlcGuide:
+	var started: int = Time.get_ticks_msec()
+	while Time.get_ticks_msec() - started < timeout_ms:
+		var guide: DlcGuide = level.call("get_intro_guide") as DlcGuide
+		if guide != null:
+			return guide
+		await get_tree().process_frame
+	return null
+
+
+func _wait_page_transition(guide: DlcGuide, timeout_ms: int = 900) -> void:
+	var started: int = Time.get_ticks_msec()
+	while guide.is_page_transitioning() and Time.get_ticks_msec() - started < timeout_ms:
+		await get_tree().process_frame
+	await _wait_process(1)
+
+
 func _hold_space_until(guide: DlcGuide, timeout_ms: int) -> Dictionary:
 	var started: int = Time.get_ticks_msec()
 	var bar_seen: bool = false
@@ -130,7 +149,7 @@ func _run_trial() -> void:
 	get_tree().root.add_child(trial)
 	get_tree().current_scene = trial
 	await _wait_process(6)
-	var guide: DlcGuide = trial.get_intro_guide()
+	var guide: DlcGuide = await _wait_for_guide(trial, 12000)
 	_check(guide != null, "trial auto-creates the shared guide")
 	if guide == null:
 		await _cleanup()
@@ -173,9 +192,26 @@ func _run_trial() -> void:
 		"a short Space tap changes nothing",
 		"page=%d" % guide.get_page_index())
 
-	# F advances one page at a time; the next page's demo starts at frame 0.
+	# F advances one page at a time; the flip is a 0.12 s alpha crossfade with
+	# no scale/slide.  The next page's demo starts at frame 0 after the swap.
+	_check(_near(DlcGuide.PAGE_FADE_OUT + DlcGuide.PAGE_FADE_IN, 0.12),
+		"page crossfade is 0.06 s out + 0.06 s in = 0.12 s")
 	_press_f_now()
-	_check(guide.get_page_index() == 1 and guide.is_open(), "F advances to page 2")
+	_check(guide.is_open(), "F keeps the guide open on page 2")
+	_check(guide.get_page_index() == 1, "F accepts page 2 immediately")
+	_check(guide.is_page_transitioning(), "F starts the 0.12 s page crossfade")
+	await _wait_process(3)
+	_check(guide.get_content_alpha() < 1.0,
+		"page content alpha drops during the flip",
+		"%.3f" % guide.get_content_alpha())
+	_press_f_now()
+	_check(guide.get_page_index() == 1,
+		"F during the flip does not skip a page", str(guide.get_page_index()))
+	await _wait_page_transition(guide)
+	_check(not guide.is_page_transitioning(), "the page flip finishes")
+	_check(_near(guide.get_content_alpha(), 1.0),
+		"page content returns to alpha 1 after 0.12 s",
+		"%.3f" % guide.get_content_alpha())
 	_check(guide.get_page_indicator_text() == "2 / 3",
 		"page indicator is 2 / 3", guide.get_page_indicator_text())
 	_check(guide.get_demo_frame() == 0, "page 2 demo restarts at frame 0",
@@ -186,6 +222,7 @@ func _run_trial() -> void:
 		"frame=%d" % guide.get_demo_frame())
 	_press_f_now()
 	_check(guide.get_page_index() == 2 and guide.is_open(), "F advances to page 3")
+	await _wait_page_transition(guide)
 	_check(guide.get_page_indicator_text() == "3 / 3",
 		"page indicator is 3 / 3", guide.get_page_indicator_text())
 	_check(guide.get_demo_frame() == 0, "page 3 demo restarts at frame 0",
@@ -237,7 +274,11 @@ func _run_trial() -> void:
 	_press_f_now()
 	_check(guide.get_page_index() == 1 and not guide.has_demo(),
 		"missing demo fallback advances pages during the reveal")
+	await _wait_page_transition(guide)
 	_press_f_now()
+	_check(guide.get_page_index() == 2 and guide.is_open(),
+		"missing demo fallback reaches the last page")
+	await _wait_page_transition(guide)
 	_press_f_now()
 	_check(not guide.is_open(), "missing demo guide closes with F")
 	_check(not get_tree().paused, "missing demo close unpauses the tree")
@@ -271,7 +312,7 @@ func _run_rift() -> void:
 	get_tree().root.add_child(rift)
 	get_tree().current_scene = rift
 	await _wait_process(6)
-	var guide: DlcGuide = rift.get_intro_guide()
+	var guide: DlcGuide = await _wait_for_guide(rift, 12000)
 	_check(guide != null, "rift auto-creates the shared guide")
 	if guide == null:
 		await _cleanup()
@@ -295,6 +336,7 @@ func _run_rift() -> void:
 		_check(_near(reveal.get_panel_scale(), 1.0), "rift panel settles at 1x")
 	_press_f_now()
 	_check(guide.get_page_index() == 1, "rift F advances to page 2")
+	await _wait_page_transition(guide)
 	_check(guide.get_demo_frame() == 0, "rift page 2 demo restarts at frame 0",
 		"frame=%d" % guide.get_demo_frame())
 	_check_demo(guide, "rift_bridge")
@@ -303,6 +345,7 @@ func _run_rift() -> void:
 		"frame=%d" % guide.get_demo_frame())
 	_press_f_now()
 	_check(guide.get_page_index() == 2, "rift F advances to page 3")
+	await _wait_page_transition(guide)
 	_check(guide.get_title_text() == "双面镜",
 		"rift page 3 title is 双面镜", guide.get_title_text())
 	_check(guide.get_body_text()

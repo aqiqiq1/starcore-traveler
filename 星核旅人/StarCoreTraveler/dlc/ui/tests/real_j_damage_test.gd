@@ -119,8 +119,12 @@ func _load_scene(path: String) -> Node:
 	var node: Node = packed.instantiate()
 	if node is TrialChambers:
 		(node as TrialChambers).show_intro_guide = false
+		# This is a damage test: the real J must reach the guard/player without
+		# the chapter's opening film holding the control lock.
+		(node as TrialChambers).show_intro_cinematic = false
 	elif node is RiftWorkshop:
 		(node as RiftWorkshop).show_intro_guide = false
+		(node as RiftWorkshop).show_intro_cinematic = false
 	get_tree().root.add_child(node)
 	get_tree().current_scene = node
 	await _wait_process(3)

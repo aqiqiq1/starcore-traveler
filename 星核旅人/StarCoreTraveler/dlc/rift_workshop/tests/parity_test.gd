@@ -71,6 +71,14 @@ func _tap_key(code: int) -> void:
 	await _wait_process(4)
 
 
+## The shared guide swaps page copy at the midpoint of a 0.12 s crossfade.
+func _wait_page_transition(guide: DlcGuide) -> void:
+	for _index: int in range(600):
+		if not guide.is_page_transitioning():
+			return
+		await get_tree().process_frame
+
+
 func _display_width(text_value: String) -> float:
 	var width: float = 0.0
 	for index: int in range(text_value.length()):
@@ -260,6 +268,7 @@ func _test_guide() -> void:
 			keys[index])
 		if index < 2:
 			await _tap_key(KEY_F)
+			await _wait_page_transition(guide)
 	_check(guide.get_page_indicator_text() == "3 / 3",
 		"guide reaches 3 / 3", guide.get_page_indicator_text())
 	_check(guide.get_footer_rich_text().contains("[img=16x16]"),

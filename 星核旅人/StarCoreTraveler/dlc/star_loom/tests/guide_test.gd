@@ -60,6 +60,14 @@ func _tap_f() -> void:
 	await _wait_process(2)
 
 
+## The shared guide swaps page copy at the midpoint of a 0.12 s crossfade.
+func _wait_page_transition(guide: DlcGuide, timeout_ms: int = 900) -> void:
+	var started: int = Time.get_ticks_msec()
+	while guide.is_page_transitioning() and Time.get_ticks_msec() - started < timeout_ms:
+		await get_tree().process_frame
+	await _wait_process(1)
+
+
 ## Full-width units: ASCII and digits count 0.5, CJK punctuation and Han 1.0.
 ## The shared body label is 266 px wide at 12 px, so 21 units is the safe cap.
 func _display_width(text_value: String) -> float:
@@ -162,6 +170,7 @@ func _run() -> void:
 
 	await _tap_f()
 	_check(guide.get_page_index() == 1, "F advances to page 2")
+	await _wait_page_transition(guide)
 	_check(guide.get_demo_id() == "loom_gear", "page 2 demo id is loom_gear",
 		guide.get_demo_id())
 	_check(guide.has_demo() and guide.get_demo_frame_count() == 24,

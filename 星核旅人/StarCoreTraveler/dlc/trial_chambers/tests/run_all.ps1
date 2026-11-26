@@ -47,6 +47,7 @@ $summary += Invoke-Case "trial_route" "res://dlc/trial_chambers/tests/route_test
 $summary += Invoke-Case "trial_title" "res://dlc/trial_chambers/tests/title_test.tscn" "title_test" $true
 $summary += Invoke-Case "trial_pause_title" "res://dlc/trial_chambers/tests/pause_title_test.tscn" "pause_title_test" $true
 $summary += Invoke-Case "trial_ambience" "res://dlc/trial_chambers/tests/ambience_test.tscn" "ambience_test" $true
+$summary += Invoke-Case "trial_teaching" "res://dlc/trial_chambers/tests/teaching_test.tscn" "teaching_test" $true
 $summary += Invoke-Smoke "trial_90" "res://dlc/trial_chambers/trial_chambers.tscn" "trial_90"
 $summary += Invoke-Smoke "level_01_90" "res://scenes/level_01.tscn" "level_01_90"
 $summary += Invoke-Smoke "level_02_90" "res://scenes/level_02.tscn" "level_02_90"

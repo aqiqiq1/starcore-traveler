@@ -33,6 +33,7 @@ $summary += Invoke-Case "hud_unified" "res://scripts/ui/tests/hud_unified_test.t
 $summary += Invoke-Case "phase_icon" "res://scripts/ui/tests/phase_icon_test.tscn" "phase_icon_test"
 $summary += Invoke-Case "ui_reveal" "res://scripts/ui/tests/ui_reveal_test.tscn" "ui_reveal_test"
 $summary += Invoke-Case "completion_reveal" "res://scripts/ui/tests/completion_reveal_test.tscn" "completion_reveal_test"
+$summary += Invoke-Case "prompt_footer" "res://scripts/ui/tests/prompt_footer_test.tscn" "prompt_footer_test"
 $summary += Invoke-Case "level03_health" "res://scripts/level03/tests/health_bar_test.tscn" "health_bar_test"
 
 Write-Host ""

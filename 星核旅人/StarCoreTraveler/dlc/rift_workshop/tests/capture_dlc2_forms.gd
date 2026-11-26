@@ -89,6 +89,17 @@ func _place(x: float, y: float, positive: bool) -> void:
 	await _wait_process(8)
 
 
+## The shared guide swaps copy at the midpoint of a 0.12 s crossfade; do not
+## press F again or save until that page is settled.
+func _wait_page_flip(guide: DlcGuide) -> void:
+	if guide == null:
+		return
+	for _index: int in range(600):
+		if not guide.is_page_transitioning():
+			return
+		await get_tree().process_frame
+
+
 func _push_key(code: int, pressed: bool) -> void:
 	var event: InputEventKey = InputEventKey.new()
 	event.physical_keycode = code as Key
@@ -297,7 +308,9 @@ func _run() -> void:
 	await _spawn(true)
 	await _wait_process(20)
 	await _tap_key(KEY_F)
+	await _wait_page_flip(_rift.get_intro_guide())
 	await _tap_key(KEY_F)
+	await _wait_page_flip(_rift.get_intro_guide())
 	await _wait_process(10)
 	await _save("dlc2_guide_page3.png")
 	print("STATE guide page=%d title=%s key=%s" % [

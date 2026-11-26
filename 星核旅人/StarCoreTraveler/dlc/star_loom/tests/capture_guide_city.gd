@@ -68,6 +68,11 @@ func _run() -> void:
 		_push_key(KEY_F, true)
 		await _wait_process(3)
 		_push_key(KEY_F, false)
+		var guide_now: DlcGuide = _loom.get_intro_guide()
+		for _index: int in range(600):
+			if guide_now == null or not guide_now.is_page_transitioning():
+				break
+			await get_tree().process_frame
 		await _wait_process(8)
 		await _save("guide_city_%d.png" % page)
 	_push_key(KEY_SPACE, true)

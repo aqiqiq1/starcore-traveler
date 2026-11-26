@@ -113,6 +113,14 @@ func _tap_key(code: int) -> void:
 	await _wait_process(2)
 
 
+## The shared guide swaps page copy at the midpoint of a 0.12 s crossfade.
+func _wait_page_transition(guide: DlcGuide) -> void:
+	for _index: int in range(600):
+		if not guide.is_page_transitioning():
+			return
+		await get_tree().process_frame
+
+
 func _hold_right(frames: int) -> void:
 	Input.action_press(&"move_right")
 	await _wait_physics(frames)
@@ -302,7 +310,7 @@ func _check_guide() -> void:
 	for index: int in range(pages.size()):
 		if index > 0:
 			await _tap_key(KEY_F)
-			await _wait_process(3)
+			await _wait_page_transition(guide)
 		var page: Dictionary = pages[index]
 		_check(guide.is_open(), "guide stays open on page %d" % (index + 1))
 		_check(guide.get_page_index() == index,

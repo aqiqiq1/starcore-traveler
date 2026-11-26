@@ -45,6 +45,7 @@ $summary += Invoke-Case "loom_intro" "res://dlc/star_loom/tests/intro_test.tscn"
 $summary += Invoke-Case "loom_mech" "res://dlc/star_loom/tests/mechanics_test.tscn" "mechanics_test" $true
 $summary += Invoke-Case "loom_route" "res://dlc/star_loom/tests/route_test.tscn" "route_test" $true
 $summary += Invoke-Case "loom_guide" "res://dlc/star_loom/tests/guide_test.tscn" "guide_test" $true
+$summary += Invoke-Case "loom_ui_parity" "res://dlc/star_loom/tests/ui_parity_test.tscn" "ui_parity_test" $true
 # music_test needs a real audio device and a real window; run it by hand:
 #   ... --path . --position 60,60 res://dlc/star_loom/tests/music_test.tscn
 $summary += Invoke-Case "loom_title" "res://dlc/star_loom/tests/title_test.tscn" "title_test" $true

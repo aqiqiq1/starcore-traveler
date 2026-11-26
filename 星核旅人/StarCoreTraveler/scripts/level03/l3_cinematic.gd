@@ -63,6 +63,7 @@ const MUTED: Color = Color("#a4b3be")
 const PANEL_BG: Color = Color(0.012, 0.028, 0.035, 0.95)
 const PANEL_BORDER: Color = Color(0.45, 0.66, 0.63, 0.85)
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
+const PROMPT_FOOTER_SCRIPT = preload("res://scripts/ui/prompt_footer.gd")
 const DIALOGUE_VOICE_SCRIPT = preload("res://scripts/narrative/dialogue_voice.gd")
 
 const ECHO_SHEET: Texture2D = preload("res://assets/guide_echo_20261113/guide_echo_idle_6f_s40.png")
@@ -98,6 +99,7 @@ var _bottom_bar: ColorRect = null
 var _bar_height: float = 0.0
 var _bar_target: float = 0.0
 var _skip_bar: SkipHoldBar = null
+var _prompt_footer: Control = null
 var _speaker: Label = null
 var _body: Label = null
 var _page_label: Label = null
@@ -215,6 +217,12 @@ func _build_ui() -> void:
 	_skip_bar = SkipHoldBar.new()
 	_skip_bar.name = "SkipHoldBar"
 	_root.add_child(_skip_bar)
+
+	# Shared one-line page footer in this film's own CanvasLayer.  It is
+	# presentation only and yields the corner to the hold-to-skip bar.
+	_prompt_footer = PROMPT_FOOTER_SCRIPT.new()
+	_prompt_footer.name = "PromptFooter"
+	_root.add_child(_prompt_footer)
 
 	_bubble = Panel.new()
 	_bubble.name = "EchoBubble"
@@ -342,6 +350,7 @@ func play() -> void:
 	_door_turned = false
 	if _skip_bar != null:
 		_skip_bar.hide_progress()
+	_hide_prompt_footer()
 	_pages = DEFEATED_PAGES if (_guard != null and _guard.is_defeated()) else PAGES
 	if _player != null:
 		_player.lock_for_cinematic()
@@ -369,12 +378,14 @@ func play() -> void:
 
 func _process(delta: float) -> void:
 	if _await_release:
+		_hide_prompt_footer()
 		if _skip_bar != null:
 			_skip_bar.hide_progress()
 		if not _space_held and not Input.is_physical_key_pressed(KEY_SPACE):
 			_restore_control()
 		return
 	if not _active:
+		_hide_prompt_footer()
 		if _skip_bar != null:
 			_skip_bar.hide_progress()
 		return
@@ -483,7 +494,42 @@ func _process(delta: float) -> void:
 		Phase.OUTRO:
 			if _t >= 0.30:
 				_complete_finish()
+	_update_prompt_footer()
 	_update_camera(delta)
+
+
+## Only a fully revealed page that really waits for F shows the footer.
+## Typing, OUTRO/AWAIT_RELEASE and the hold-to-skip bar all hide it.
+func _update_prompt_footer() -> void:
+	if _prompt_footer == null:
+		return
+	var waiting: bool = (
+		_active
+		and _phase == Phase.DIALOGUE
+		and _page_index >= 0
+		and _page_index < _pages.size()
+		and _bubble != null
+		and _bubble.visible
+		and not (_skip_bar != null and _skip_bar.visible)
+	)
+	if waiting:
+		var full: String = _pages[_page_index]
+		if _reveal < float(full.length()):
+			waiting = false
+		else:
+			var text: String = (
+				PROMPT_FOOTER_SCRIPT.PAGE_FOOTER
+				if _page_index + 1 < _pages.size()
+				else PROMPT_FOOTER_SCRIPT.SINGLE_FOOTER
+			)
+			_prompt_footer.call("show_footer", text)
+	if not waiting:
+		_prompt_footer.call("hide_footer")
+
+
+func _hide_prompt_footer() -> void:
+	if _prompt_footer != null:
+		_prompt_footer.call("hide_footer")
 
 
 func _update_bars(delta: float) -> void:
@@ -737,6 +783,7 @@ func _begin_outro() -> void:
 	if _voice != null:
 		_voice.stop()
 	_set_bubble_visible(false)
+	_hide_prompt_footer()
 	if _skip_bar != null:
 		_skip_bar.hide_progress()
 	_question.visible = false
@@ -769,6 +816,7 @@ func _complete_finish() -> void:
 	if _skip_bar != null:
 		_skip_bar.hide_progress()
 	_set_bubble_visible(false)
+	_hide_prompt_footer()
 	_question.visible = false
 	_exclaim.visible = false
 	_clear_projection_fx()
@@ -817,6 +865,7 @@ func abort() -> void:
 	_apply_bar_height()
 	_set_visible_all(false)
 	_set_bubble_visible(false)
+	_hide_prompt_footer()
 	_question.visible = false
 	_exclaim.visible = false
 	_clear_projection_fx()
@@ -876,6 +925,7 @@ func _set_visible_all(value: bool) -> void:
 	if not value:
 		if _skip_bar != null:
 			_skip_bar.hide_progress()
+		_hide_prompt_footer()
 		_question.visible = false
 		_exclaim.visible = false
 		_clear_projection_fx()
@@ -990,6 +1040,7 @@ func debug_force_await_release() -> void:
 	if _skip_bar != null:
 		_skip_bar.hide_progress()
 	_set_bubble_visible(false)
+	_hide_prompt_footer()
 	_question.visible = false
 	_exclaim.visible = false
 	_clear_projection_fx()
@@ -1127,3 +1178,19 @@ func get_skip_bar_label_font_size() -> int:
 
 func get_skip_bar_style() -> StyleBoxFlat:
 	return _skip_bar.get_style() if _skip_bar != null else null
+
+
+# --- Shared page footer read-only helpers (tests / captures) ----------------
+
+func get_prompt_footer() -> Control:
+	return _prompt_footer
+
+
+func is_prompt_footer_visible() -> bool:
+	return _prompt_footer != null and _prompt_footer.visible
+
+
+func get_prompt_footer_text() -> String:
+	if _prompt_footer == null:
+		return ""
+	return String(_prompt_footer.call("get_text"))

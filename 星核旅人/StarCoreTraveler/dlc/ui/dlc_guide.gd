@@ -33,6 +33,11 @@ const RIGHT_X: float = 282.0
 const RIGHT_WIDTH: float = 266.0
 const TITLE_WIDTH: float = 196.0
 const SKIP_HOLD: float = 0.5
+## Page flip: 0.06 s fade out, swap copy/demo/page number/footer, 0.06 s fade
+## in.  The content group only changes alpha; nothing scales or moves, so the
+## 12 px pixel font is never resampled.
+const PAGE_FADE_OUT: float = 0.06
+const PAGE_FADE_IN: float = 0.06
 const DEMO_DIR: String = "res://dlc/ui/demos"
 const DEFAULT_DEMO_FRAME_WIDTH: int = 256
 const DEFAULT_DEMO_FRAME_HEIGHT: int = 144
@@ -101,6 +106,8 @@ var demo_dir: String = DEMO_DIR
 var _root: Control = null
 var _shade: ColorRect = null
 var _panel: Panel = null
+## Title/body/key/demo/page number are tweened together as one alpha group.
+var _content: Control = null
 var _demo_border: Panel = null
 var _demo_rect: TextureRect = null
 var _demo_placeholder: Label = null
@@ -128,6 +135,8 @@ var _demo_still: bool = false
 
 var _open: bool = false
 var _page_index: int = 0
+var _page_transitioning: bool = false
+var _page_tween: Tween = null
 var _paused_before: bool = false
 var _space_held: bool = false
 var _space_hold: float = 0.0
@@ -245,6 +254,13 @@ func _build_ui() -> void:
 	_panel.add_theme_stylebox_override("panel", style)
 	_root.add_child(_panel)
 
+	_content = Control.new()
+	_content.name = "Content"
+	_content.position = Vector2.ZERO
+	_content.size = PANEL_SIZE
+	_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_panel.add_child(_content)
+
 	_demo_border = Panel.new()
 	_demo_border.name = "DemoBorder"
 	_demo_border.position = DEMO_POSITION - Vector2.ONE
@@ -259,7 +275,7 @@ func _build_ui() -> void:
 	demo_style.border_color = Color(0.45, 0.66, 0.63, 0.75)
 	demo_style.anti_aliasing = false
 	_demo_border.add_theme_stylebox_override("panel", demo_style)
-	_panel.add_child(_demo_border)
+	_content.add_child(_demo_border)
 
 	_demo_rect = TextureRect.new()
 	_demo_rect.name = "Demo"
@@ -268,7 +284,7 @@ func _build_ui() -> void:
 	_demo_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_demo_rect.stretch_mode = TextureRect.STRETCH_SCALE
 	_demo_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_panel.add_child(_demo_rect)
+	_content.add_child(_demo_rect)
 
 	_demo_placeholder = _label(
 		"演示缺失", DEMO_POSITION, DEMO_SIZE, 12, MUTED
@@ -277,16 +293,16 @@ func _build_ui() -> void:
 	_demo_placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_demo_placeholder.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_demo_placeholder.visible = false
-	_panel.add_child(_demo_placeholder)
+	_content.add_child(_demo_placeholder)
 
 	_title_label = _label("", Vector2(RIGHT_X, 6.0), Vector2(TITLE_WIDTH, 28.0), 24, GOLD)
 	_title_label.name = "Title"
-	_panel.add_child(_title_label)
+	_content.add_child(_title_label)
 
 	_page_indicator = _label("", Vector2(486.0, 12.0), Vector2(62.0, 16.0), 12, MUTED)
 	_page_indicator.name = "PageIndicator"
 	_page_indicator.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_panel.add_child(_page_indicator)
+	_content.add_child(_page_indicator)
 
 	var divider: ColorRect = ColorRect.new()
 	divider.name = "Divider"
@@ -294,16 +310,16 @@ func _build_ui() -> void:
 	divider.size = Vector2(RIGHT_WIDTH, 1.0)
 	divider.color = Color(0.45, 0.66, 0.63, 0.35)
 	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_panel.add_child(divider)
+	_content.add_child(divider)
 
 	_body_label = _label("", Vector2(RIGHT_X, 43.0), Vector2(RIGHT_WIDTH, 62.0), 12, TEXT)
 	_body_label.name = "Body"
 	_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_panel.add_child(_body_label)
+	_content.add_child(_body_label)
 
 	_key_label = _rich_label(Vector2(RIGHT_X, 108.0), Vector2(RIGHT_WIDTH, 38.0), 12, CYAN)
 	_key_label.name = "Key"
-	_panel.add_child(_key_label)
+	_content.add_child(_key_label)
 
 	_footer_label = _rich_label(
 		Vector2(16.0, 210.0), Vector2(420.0, 18.0), 12, DIM
@@ -343,6 +359,15 @@ func get_page_index() -> int:
 
 func get_page_indicator_text() -> String:
 	return _page_indicator.text if _page_indicator != null else ""
+
+
+## 1.0 when the page is settled; < 1.0 only during the 0.12 s flip.
+func get_content_alpha() -> float:
+	return _content.modulate.a if _content != null else 1.0
+
+
+func is_page_transitioning() -> bool:
+	return _page_transitioning
 
 
 func get_title_text() -> String:
@@ -433,6 +458,7 @@ func open_guide() -> bool:
 	_page_index = 0
 	_paused_before = get_tree().paused
 	get_tree().paused = true
+	_cancel_page_transition()
 	_apply_page()
 	_space_held = false
 	_space_hold = 0.0
@@ -456,6 +482,7 @@ func close() -> void:
 	# Close/unpause is immediate; the panel only performs its 0.12 s exit and
 	# no longer receives input.
 	_open = false
+	_cancel_page_transition()
 	get_tree().paused = _paused_before
 	_space_held = false
 	_space_hold = 0.0
@@ -471,6 +498,7 @@ func close() -> void:
 
 
 func _exit_tree() -> void:
+	_cancel_page_transition()
 	# A scene change while the guide is open must not leave the tree paused.
 	if _open and get_tree() != null:
 		get_tree().paused = _paused_before
@@ -534,15 +562,61 @@ func _process(delta: float) -> void:
 func _advance_page() -> void:
 	if not _open:
 		return
+	# A page flip owns 0.12 s.  F during that window is ignored, so one press
+	# can never jump two pages or race the copy swap.
+	if _page_transitioning:
+		return
 	if _page_index + 1 < get_page_count():
 		_page_index += 1
-		_apply_page()
+		_begin_page_transition()
 		_space_hold = 0.0
 		_space_armed = not Input.is_physical_key_pressed(KEY_SPACE)
 		if _skip_bar != null:
 			_skip_bar.hide_progress()
 		return
 	close()
+
+
+## Content group fade-out -> swap page copy/demo/number/footer -> fade-in.
+## `_page_index` moves immediately so state readers see the accepted page;
+## the visible copy is replaced at the midpoint.  No scale, no slide.
+func _begin_page_transition() -> void:
+	if _content == null:
+		_apply_page()
+		return
+	_cancel_page_transition()
+	_page_transitioning = true
+	_content.modulate.a = 1.0
+	_page_tween = create_tween()
+	_page_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_page_tween.tween_property(_content, "modulate:a", 0.0, PAGE_FADE_OUT) \
+		.set_trans(Tween.TRANS_LINEAR)
+	_page_tween.tween_callback(_swap_page_content)
+	_page_tween.tween_property(_content, "modulate:a", 1.0, PAGE_FADE_IN) \
+		.set_trans(Tween.TRANS_LINEAR)
+	_page_tween.tween_callback(_finish_page_transition)
+
+
+func _swap_page_content() -> void:
+	if not _open:
+		return
+	_set_page_content()
+
+
+func _finish_page_transition() -> void:
+	_page_tween = null
+	_page_transitioning = false
+	if _content != null:
+		_content.modulate.a = 1.0
+
+
+func _cancel_page_transition() -> void:
+	if _page_tween != null and _page_tween.is_valid():
+		_page_tween.kill()
+	_page_tween = null
+	_page_transitioning = false
+	if _content != null:
+		_content.modulate.a = 1.0
 
 
 func _page_data() -> Array:
@@ -557,7 +631,13 @@ func _current_page() -> Dictionary:
 	return pages[_page_index] as Dictionary
 
 
+## Immediate page application, used on open and as the no-tween fallback.
 func _apply_page() -> void:
+	_cancel_page_transition()
+	_set_page_content()
+
+
+func _set_page_content() -> void:
 	var data: Dictionary = _current_page()
 	_title_label.text = String(data.get("title", ""))
 	_body_label.text = String(data.get("body", ""))
