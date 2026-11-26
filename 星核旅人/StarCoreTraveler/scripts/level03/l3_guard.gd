@@ -187,6 +187,7 @@ var _enemy_slam_count: int = 0
 var _enemy_ring_count: int = 0
 var _enemy_hit_count: int = 0
 var _head_bar_visible: bool = false
+var _hud_hides_head_bar: bool = false
 var _alert_time: float = 0.0
 var _alert_shown: bool = false
 
@@ -1243,6 +1244,8 @@ func get_head_font() -> Font:
 
 
 func should_draw_health() -> bool:
+	if _hud_hides_head_bar:
+		return false
 	if _defeated or _state == State.DEAD:
 		return false
 	var camera: Camera2D = get_viewport().get_camera_2d()
@@ -1315,6 +1318,17 @@ func get_chest_global_position() -> Vector2:
 func get_head_bar_rect() -> Rect2:
 	# Three cells (14 px each, 3 px gaps) at y = -152.
 	return Rect2(global_position.x - 24.0, global_position.y - 152.0, 48.0, 5.0)
+
+
+## Presentation-only: the chapter HUD's shared top boss bar replaces this
+## world-anchored bar.  Damage, state machine and hit resolution are unchanged.
+func set_health_bar_suppressed(value: bool) -> void:
+	_hud_hides_head_bar = value
+	queue_redraw()
+
+
+func is_health_bar_suppressed() -> bool:
+	return _hud_hides_head_bar
 
 
 func get_health_cells() -> int:

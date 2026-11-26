@@ -1,9 +1,11 @@
 class_name Level01HUD
 extends CanvasLayer
 
-## Formal level HUD. Unlike PrototypeHUD this is player-facing Chinese text:
-## 辉相 / 澜相, no numeric polarity, no debug readouts. It owns pause and
-## first-level completion panels but no gameplay state.
+## Formal level HUD.  One top-left row (chapter 12 px warm white + one 12 px
+## gold objective, events replace the objective over 0.15 s), one 20x20 phase
+## icon at top-right, and the fixed lower-left red health bar.  It owns pause
+## and first-level completion panels but no gameplay state.  Every modal page
+## hides the HUD chrome and restores it with a 0.15 s fade.
 
 signal next_level_requested
 signal replay_requested
@@ -18,11 +20,9 @@ const DIM: Color = Color("#728889")
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 
 var _root: Control
-var _header: CompactLevelHeader
-var _objective: Label
+var _header: HudObjective
+var _health_bar: PlayerHealthBar
 var _objective_base: String = "前往庭院出口"
-var _event_text: String = ""
-var _event_left: float = 0.0
 var _opening_active: bool = false
 var _pending_event_text: String = ""
 var _pending_event_left: float = 0.0
@@ -50,21 +50,19 @@ func _ready() -> void:
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
 	_build_header()
-	_build_objective()
+	_build_health_bar()
 	_build_completion()
 	set_polarity(true)
 	set_pause_visible(false)
 	show_completion(false)
+	_root.modulate.a = 0.0
+	var intro_tween: Tween = create_tween()
+	intro_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	intro_tween.tween_property(_root, "modulate:a", 1.0, 0.15)
 
 
-func _process(delta: float) -> void:
-	if _event_left <= 0.0:
-		return
-	_event_left = maxf(_event_left - delta, 0.0)
-	if _event_left <= 0.0:
-		_event_text = ""
-		if _objective != null and not _opening_active and not _completion_active:
-			_objective.text = _objective_base
+func _process(_delta: float) -> void:
+	_update_chrome_visibility()
 
 
 func _load_font() -> Font:
@@ -102,23 +100,28 @@ func _label(
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
-	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_constant_override("outline_size", 1)
 	return label
 
 
 func _build_header() -> void:
 	_header = CompactLevelHeader.new()
-	_header.name = "CompactHeader"
+	_header.name = "HudObjective"
 	_root.add_child(_header)
-	_header.configure("断桥庭院", "第一关", _font)
+	_header.configure("断桥庭院", _objective_base, _font)
 	_header.set_polarity(true)
 
 
-func _build_objective() -> void:
-	# One single objective/event line, same baseline as level 03: 12 px gold at
-	# (15, 58), no panel, no second row. Short events replace it and restore.
-	_objective = _label(_objective_base, Vector2(15.0, 58.0), Vector2(430.0, 18.0), 12, GOLD)
-	_root.add_child(_objective)
+## Fixed lower-left red bar, exactly the same group as every chapter.  The
+## base story levels do not have an enemy yet, but the HUD keeps a full bar so
+## the layout never changes between chapters.
+func _build_health_bar() -> void:
+	_health_bar = PlayerHealthBar.new()
+	_health_bar.name = "PlayerHealthBar"
+	_health_bar.max_segments = 3
+	_health_bar.position = PlayerHealthBar.HUD_POSITION
+	_health_bar.set_state(3, 3)
+	_root.add_child(_health_bar)
 
 
 func _build_completion() -> void:
@@ -218,80 +221,63 @@ func get_compact_header() -> CompactLevelHeader:
 
 func set_objective(text_value: String) -> void:
 	_objective_base = text_value
-	if _objective != null and _event_left <= 0.0 and not _opening_active and not _completion_active:
-		_objective.text = text_value
+	if _header != null and not _opening_active and not _completion_active:
+		_header.set_objective(text_value)
 
 
-## Opening-film state: the objective/event slot is hidden from the first bar
-## frame until control is actually handed back. A restart event raised during
-## the film is held and shown once the slot returns.
+## Opening-film state: the whole chrome row (chapter/objective/icon) and the
+## health bar are hidden from the first bar frame until control is handed back.
+## A restart event raised during the film is held and shown once the slot
+## returns.
 func set_opening_active(value: bool) -> void:
 	_opening_active = value
-	# The 44 px bar is 0.96-opaque, so the compact header would otherwise show
-	# as a ghost through it. Hide the whole header (title/chapter/affinity) for
-	# the film, and restore it only on the real hand-off/abort.
-	if _header != null:
-		_header.visible = not value
 	if value:
-		if _event_left > 0.0 and not _event_text.is_empty():
-			_pending_event_text = _event_text
-			_pending_event_left = _event_left
-		_event_left = 0.0
-		_event_text = ""
-		if _objective != null:
-			_objective.visible = false
-		return
-	if _objective != null:
-		_objective.visible = not _completion_active
-	if not _completion_active:
+		var active_event: String = _header.get_event_text() if _header != null else ""
+		if not active_event.is_empty() and _header.is_event_visible():
+			_pending_event_text = active_event
+			_pending_event_left = 1.2
+		_header.clear_event()
+	else:
 		_restore_objective_after_opening()
+	_update_chrome_visibility()
+	if not value and _header != null:
+		_header.fade_in()
 
 
 func _restore_objective_after_opening() -> void:
-	if _objective == null:
+	if _header == null:
 		return
 	if not _pending_event_text.is_empty():
 		var pending_text: String = _pending_event_text
 		var pending_left: float = maxf(_pending_event_left, 0.2)
 		_pending_event_text = ""
 		_pending_event_left = 0.0
-		_start_event(pending_text, pending_left)
+		_header.show_event(pending_text, pending_left)
 		return
-	_objective.text = _objective_base
+	_header.set_objective(_objective_base)
 
 
 func show_toast(text_value: String, duration: float = 1.6) -> void:
-	if _objective == null:
+	if _header == null:
 		return
 	if text_value.is_empty():
-		_event_left = 0.0
-		_event_text = ""
-		_pending_event_text = ""
-		_pending_event_left = 0.0
+		_header.clear_event()
 		if not _opening_active and not _completion_active:
-			_objective.text = _objective_base
+			_header.set_objective(_objective_base)
 		return
 	var event_duration: float = clampf(duration, 0.2, 2.6)
 	if _opening_active:
 		_pending_event_text = text_value
 		_pending_event_left = event_duration
 		return
-	_start_event(text_value, event_duration)
-
-
-func _start_event(text_value: String, duration: float) -> void:
-	_event_text = text_value
-	_event_left = maxf(duration, 0.2)
-	if _objective != null:
-		_objective.visible = not _completion_active
-		_objective.text = text_value
+	_header.show_event(text_value, event_duration)
 
 
 func set_pause_visible(value: bool) -> void:
-	# The real pause page is owned by PauseMenu; the HUD keeps only the state
-	# flag for compatibility with gameplay tests.  No permanent controls strip
-	# or duplicate pause panel is drawn here any more.
+	# The real pause page is owned by PauseMenu; this HUD only hides its chrome
+	# while the page/guide/popup is up.
 	_pause_visible = value
+	_update_chrome_visibility()
 
 
 func show_completion(value: bool, completion_count: int = 0) -> void:
@@ -299,24 +285,19 @@ func show_completion(value: bool, completion_count: int = 0) -> void:
 		return
 	_completion_overlay.visible = value
 	_completion_active = value
-	if _header != null:
-		_header.visible = not value
 	if value:
 		_play_completion_reveal()
-		_event_left = 0.0
-		_event_text = ""
+		_header.clear_event()
 		_pending_event_text = ""
 		_pending_event_left = 0.0
-		if _objective != null:
-			_objective.visible = false
 		call_deferred("focus_completion_primary")
 	else:
 		release_completion_focus()
-		if _objective != null:
-			_objective.visible = not _opening_active
-			_objective.text = _objective_base
-	if not value:
-		_stop_completion_reveal()
+		if not _opening_active:
+			_header.set_objective(_objective_base)
+		if not value:
+			_stop_completion_reveal()
+	_update_chrome_visibility()
 	if _completion_count_label != null:
 		_completion_count_label.text = "本关结算 · Esc 可打开暂停菜单" if value else ""
 
@@ -388,15 +369,15 @@ func get_polarity_text() -> String:
 
 
 func get_toast_text() -> String:
-	return _event_text
+	return _header.get_event_text() if _header != null else ""
 
 
 func get_objective_text() -> String:
-	return _objective.text if _objective != null else ""
+	return _objective_base
 
 
 func is_objective_visible() -> bool:
-	return _objective != null and _objective.visible
+	return _header != null and _header.is_chrome_visible()
 
 
 func get_label_font_sizes() -> Array[int]:
@@ -409,7 +390,50 @@ func get_label_font_sizes() -> Array[int]:
 
 
 func is_toast_visible() -> bool:
-	return _event_left > 0.0 and _objective != null and _objective.visible
+	return _header != null and _header.is_event_visible()
+
+
+## Pause / guide / mechanic popup / opening film / completion all hide the
+## chapter, objective, event and health bar.  Restoring fades the row in.
+func _update_chrome_visibility() -> void:
+	var hidden: bool = (
+		_pause_visible
+		or _completion_active
+		or _opening_active
+		or (get_tree() != null and get_tree().paused)
+	)
+	if _header != null:
+		_header.set_chrome_visible(not hidden)
+	_set_health_visible(not hidden)
+
+
+func _set_health_visible(value: bool) -> void:
+	if _health_bar == null:
+		return
+	if value:
+		if _health_bar.visible:
+			return
+		_health_bar.visible = true
+		_health_bar.modulate.a = 0.0
+		var tween: Tween = create_tween()
+		tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		tween.tween_property(_health_bar, "modulate:a", 1.0, 0.15)
+		return
+	_health_bar.visible = false
+
+
+func get_player_health_bar() -> PlayerHealthBar:
+	return _health_bar
+
+
+func is_health_bar_visible() -> bool:
+	return _health_bar != null and _health_bar.visible
+
+
+func get_health_bar_rect() -> Rect2:
+	if _health_bar == null:
+		return Rect2()
+	return Rect2(_health_bar.position, _health_bar.size)
 
 
 func is_pause_visible() -> bool:

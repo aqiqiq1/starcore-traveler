@@ -3,13 +3,12 @@ extends CanvasLayer
 
 ## Small rift-workshop HUD.
 ##
-## Same approved compact header as the trial chapter (title / one objective /
-## current phase), plus a one-line event ticker, the recovery cover, the
-## completion page ("裂隙封闭 · 用时 mm:ss") and the four-item pause page.
-## No full settings page is copied into the DLC.  Every colour, the 12 px
-## Fusion Pixel font and the existing PixelMenuButton are the project ones.
-## Both modal pages use the shared UiReveal (0.18 s open / 0.12 s close for the
-## pause page; the completion page snaps away when the chapter restarts).
+## One top-left chapter/objective row, shared 20x20 phase icon, fixed lower-left
+## red health bar, and the shared 360x16 double-mirror boss bar.  Events replace
+## the objective with a 0.15 s cross-fade; there is no second event line.  The
+## recovery cover, completion page and four-item pause page hide the chrome.
+## Every colour, the 12 px project font and PixelMenuButton are the project ones.
+## Both modal pages use the shared UiReveal (0.18 s open / 0.12 s close).
 
 signal resume_requested
 signal restart_requested
@@ -38,9 +37,7 @@ const COMPLETION_FOOTER: String = "本章结算 · 暂停菜单可查看操作"
 const PANEL_ANIM_TIME: float = UiReveal.OPEN_DURATION
 
 var _root: Control
-var _header: CompactLevelHeader
-var _event_label: Label
-var _event_left: float = 0.0
+var _header: HudObjective
 var _recovery_cover: ColorRect
 
 var _completion_root: Control
@@ -67,9 +64,7 @@ var _pause_reveal: UiReveal
 
 const HEALTH_PULSE_TIME: float = 1.0
 
-var _phase_icon: RiftPhaseIcon
 var _health_bar: PlayerHealthBar
-var _health_label: Label
 var _boss_status: RiftBossStatus
 var _q_denied: RiftQDeniedIcon
 var _font: Font
@@ -93,7 +88,6 @@ func _ready() -> void:
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
 	_build_header()
-	_build_event()
 	_build_boss_status()
 	_build_hit_pips()
 	_build_q_denied()
@@ -115,6 +109,10 @@ func _ready() -> void:
 	set_objective(DEFAULT_OBJECTIVE)
 	show_completion(false, 0.0)
 	show_pause(false)
+	_root.modulate.a = 0.0
+	var intro_tween: Tween = create_tween()
+	intro_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	intro_tween.tween_property(_root, "modulate:a", 1.0, 0.15)
 
 
 ## Pause-page keyboard fallback.  The PixelMenuButton controls already handle
@@ -150,14 +148,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
+	_update_chrome_visibility()
 	_update_health_overlay(delta)
-	if get_tree().paused:
-		return
-	if _event_left <= 0.0:
-		return
-	_event_left = maxf(_event_left - delta, 0.0)
-	if _event_left <= 0.0:
-		_event_label.visible = false
 
 
 ## The shared two-segment red bar is fixed at the lower-left HUD corner.  It is
@@ -171,11 +163,18 @@ func _update_health_overlay(delta: float) -> void:
 		_health_visible
 		and not get_tree().paused
 		and not _completion_visible
+		and not _pause_visible
 		and not (_recovery_cover != null and _recovery_cover.visible)
 	)
-	_health_bar.visible = should_show
-	if _health_label != null:
-		_health_label.visible = should_show
+	if should_show:
+		if not _health_bar.visible:
+			_health_bar.visible = true
+			_health_bar.modulate.a = 0.0
+			var tween: Tween = create_tween()
+			tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+			tween.tween_property(_health_bar, "modulate:a", 1.0, 0.15)
+	else:
+		_health_bar.visible = false
 	if not should_show:
 		_health_bar.scale = Vector2.ONE
 		return
@@ -187,6 +186,21 @@ func _update_health_overlay(delta: float) -> void:
 		_health_bar.scale = Vector2.ONE * (1.0 + 0.22 * wave)
 	else:
 		_health_bar.scale = Vector2.ONE
+
+
+## Pause / guide / mechanic popup / recovery / completion hide the top row and
+## boss bar; the health overlay hides itself through _update_health_overlay.
+func _update_chrome_visibility() -> void:
+	var hidden: bool = (
+		_pause_visible
+		or _completion_visible
+		or (get_tree() != null and get_tree().paused)
+		or (_recovery_cover != null and _recovery_cover.visible)
+	)
+	if _header != null:
+		_header.set_chrome_visible(not hidden)
+	if _boss_status != null:
+		_boss_status.set_modal_suppressed(hidden)
 
 
 func _load_font() -> Font:
@@ -220,7 +234,7 @@ func _label(
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
-	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_constant_override("outline_size", 1)
 	return label
 
 
@@ -238,32 +252,11 @@ func _menu_button(
 
 
 func _build_header() -> void:
-	_header = CompactLevelHeader.new()
-	_header.name = "CompactHeader"
+	_header = HudObjective.new()
+	_header.name = "HudObjective"
 	_root.add_child(_header)
 	_header.configure(TITLE, DEFAULT_OBJECTIVE, _font)
 	_header.set_polarity(false)
-	# The shared header's talisman + "辉相/澜相" word is replaced by one 20x20
-	# sun/moon emblem, matching the gate/core icon language and carrying no text.
-	var affinity_text: Control = _header.get_node_or_null("AffinityText") as Control
-	if affinity_text != null:
-		affinity_text.visible = false
-	var affinity_icon: Control = _header.get_node_or_null("AffinityIcon") as Control
-	if affinity_icon != null:
-		affinity_icon.visible = false
-	_phase_icon = RiftPhaseIcon.new()
-	_phase_icon.name = "PhaseIcon"
-	_phase_icon.position = Vector2(610.0, 6.0)
-	_phase_icon.size = Vector2(20.0, 20.0)
-	_root.add_child(_phase_icon)
-	_phase_icon.set_positive(false)
-
-
-func _build_event() -> void:
-	_event_label = _label("", Vector2(12.0, 42.0), Vector2(460.0, 16.0), 12, GOLD)
-	_event_label.name = "EventLine"
-	_event_label.visible = false
-	_root.add_child(_event_label)
 
 
 func _build_hit_pips() -> void:
@@ -275,23 +268,16 @@ func _build_hit_pips() -> void:
 	_health_bar.visible = false
 	_root.add_child(_health_bar)
 	_health_bar.pivot_offset = _health_bar.size * 0.5
-	_health_label = _label(
-		"生命值", PlayerHealthBar.LABEL_POSITION, Vector2(52.0, 14.0),
-		PlayerHealthBar.LABEL_FONT_SIZE, MUTED
-	)
-	_health_label.name = "HealthValueLabel"
-	_health_label.visible = false
-	_root.add_child(_health_label)
 
 
 func _build_boss_status() -> void:
 	_boss_status = RiftBossStatus.new()
 	_boss_status.name = "BossStatus"
-	_boss_status.position = Vector2(252.0, 3.0)
-	_boss_status.size = Vector2(340.0, 28.0)
+	_boss_status.position = HudBossBar.HUD_POSITION
+	_boss_status.size = HudBossBar.BAR_SIZE
 	_boss_status.font = _font
-	_boss_status.visible = false
 	_root.add_child(_boss_status)
+	_boss_status.set_active(false)
 
 
 func _build_q_denied() -> void:
@@ -506,18 +492,16 @@ func _build_pause() -> void:
 func set_polarity(positive: bool) -> void:
 	if _header != null:
 		_header.set_polarity(positive)
-	if _phase_icon != null:
-		_phase_icon.set_positive(positive)
 
 
 func set_boss_visible(value: bool) -> void:
 	_boss_visible = value
 	if _boss_status != null:
-		_boss_status.visible = value
+		_boss_status.set_active(value)
 
 
 func is_boss_visible() -> bool:
-	return _boss_visible and _boss_status != null and _boss_status.visible
+	return _boss_visible and _boss_status != null and _boss_status.is_bar_visible()
 
 
 func set_boss_state(
@@ -595,8 +579,6 @@ func set_player_health_visible(value: bool) -> void:
 		if _health_bar != null:
 			_health_bar.visible = false
 			_health_bar.scale = Vector2.ONE
-		if _health_label != null:
-			_health_label.visible = false
 
 
 func is_player_health_visible() -> bool:
@@ -613,33 +595,27 @@ func get_health_pulse_left() -> float:
 	return _health_pulse_left
 
 
-func get_phase_icon() -> RiftPhaseIcon:
-	return _phase_icon
+func get_phase_icon() -> PolarityPhaseIcon:
+	return _header.get_phase_icon() if _header != null else null
 
 
 func get_phase_icon_kind() -> String:
-	return _phase_icon.get_kind() if _phase_icon != null else ""
+	return _header.get_phase_kind() if _header != null else ""
 
 
 func is_affinity_text_visible() -> bool:
-	if _header == null:
-		return false
-	var label: Control = _header.get_node_or_null("AffinityText") as Control
-	return label != null and label.visible
+	return false
 
 
 func set_objective(text_value: String) -> void:
 	_subtitle = text_value
 	if _header != null:
-		_header.configure(TITLE, text_value, _font)
+		_header.set_objective(text_value)
 
 
 func show_event(text_value: String, seconds: float = 1.5) -> void:
-	if _event_label == null:
-		return
-	_event_label.text = text_value
-	_event_label.visible = true
-	_event_left = maxf(seconds, 0.1)
+	if _header != null:
+		_header.show_event(text_value, seconds)
 
 
 func set_recovery_alpha(value: float) -> void:
@@ -648,19 +624,14 @@ func set_recovery_alpha(value: float) -> void:
 	var alpha: float = clampf(value, 0.0, 1.0)
 	_recovery_cover.visible = alpha > 0.0
 	_recovery_cover.color = Color(0.0, 0.0, 0.0, alpha)
+	_update_chrome_visibility()
 
 
 func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 	var changed: bool = value != _completion_visible
 	_completion_visible = value
 	if _header != null:
-		_header.visible = not value
-	if _event_label != null:
-		_event_label.visible = not value
-	if _health_bar != null:
-		_health_bar.visible = not value
-	if _health_label != null:
-		_health_label.visible = not value
+		_header.clear_event()
 	if _completion_title != null:
 		_completion_title.text = "裂隙封闭 · 用时 %s" % _format_time(elapsed_seconds)
 	if _completion_root == null:
@@ -668,11 +639,15 @@ func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 	if value:
 		if changed:
 			_completion_reveal.play_open()
+		_update_chrome_visibility()
+		_update_health_overlay(0.0)
 		call_deferred("_focus_completion")
 		return
 	if changed:
 		_completion_reveal.snap_closed()
 	_release_completion_focus()
+	_update_chrome_visibility()
+	_update_health_overlay(0.0)
 
 
 func show_pause(value: bool) -> void:
@@ -683,11 +658,15 @@ func show_pause(value: bool) -> void:
 	if value:
 		if changed:
 			_pause_reveal.play_open()
+		_update_chrome_visibility()
+		_update_health_overlay(0.0)
 		call_deferred("_focus_pause")
 		return
 	if changed:
 		_pause_reveal.play_close()
 	_release_pause_focus()
+	_update_chrome_visibility()
+	_update_health_overlay(0.0)
 	if _completion_visible:
 		call_deferred("_focus_completion")
 
@@ -735,7 +714,7 @@ func _format_time(seconds: float) -> String:
 
 # --- test / capture accessors ---------------------------------------------
 
-func get_header() -> CompactLevelHeader:
+func get_header() -> HudObjective:
 	return _header
 
 
@@ -744,7 +723,7 @@ func get_title_text() -> String:
 
 
 func get_objective_text() -> String:
-	return _header.get_subtitle_text() if _header != null else _subtitle
+	return _subtitle
 
 
 func get_affinity_text() -> String:
@@ -823,13 +802,13 @@ func get_completion_title_label() -> Label:
 	return _completion_title
 
 
-## Current event-line text, whether or not its display timer has expired.
+## Current event text, whether or not its fade-out has finished.
 func get_event_text() -> String:
-	return _event_label.text if _event_label != null else ""
+	return _header.get_event_text() if _header != null else ""
 
 
 func is_event_visible() -> bool:
-	return _event_label != null and _event_label.visible
+	return _header != null and _header.is_event_visible()
 
 
 ## Compatibility name kept from the old heart row; the value is now the shared
@@ -849,7 +828,11 @@ func get_player_health_bar() -> PlayerHealthBar:
 
 
 func get_health_label() -> Label:
-	return _health_label
+	return null
+
+
+func is_health_bar_visible() -> bool:
+	return _health_bar != null and _health_bar.visible
 
 
 func get_pause_panel_alpha() -> float:

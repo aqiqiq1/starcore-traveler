@@ -41,8 +41,10 @@ F 或长按空格关闭，R / 阶段重开不会重弹。
 
 ## 素材
 
-- 城内背景/前景/地板、208×152 四帧织机、40×40 节点、火盆/格栅/齿轮、弹与浮灵，全部由
-  `tools/gen_city_assets.py`（已归档）程序化绘制；音效由 `tools/gen_assets.py` 生成；无外部素材。
+- 城内背景/前景/地板由 `tools/gen_city_assets_v2.py`（2026-11-27 美术审计）程序化生成，
+  运行时在 `assets/city_v2/`；旧 `assets/city/` 背景/前景/地板保留作回退。208×152 四帧织机、
+  40×40 节点、火盆/格栅/齿轮、弹与浮灵仍来自旧 `assets/city/`；音效由 `tools/gen_assets.py`
+  生成；无外部素材。
 - BOSS 音乐 `dlc/audio/music/loom_boss.ogg`，运行时强制循环，播放器 -6 dB。
 
 ## 验收记录

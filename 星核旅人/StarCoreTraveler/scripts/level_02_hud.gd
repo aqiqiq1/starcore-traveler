@@ -3,10 +3,10 @@ extends CanvasLayer
 
 ## Compact player-facing HUD for the level-02 greybox.
 ##
-## This is deliberately not PrototypeHUD: the second-level prototype should
-## show short Chinese stage feedback, not the English F4 debug readouts. It owns
-## only presentation state; all gameplay state remains in Level02/the shared
-## star-core room.
+## One top-left row (chapter 12 px warm white + one 12 px gold objective),
+## shared 20x20 phase icon, fixed lower-left red health bar.  Events replace
+## the objective over 0.15 s.  This owns only presentation state; all gameplay
+## state remains in Level02/the shared star-core room.
 
 signal next_level_requested
 signal replay_requested
@@ -22,13 +22,11 @@ const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 const INTERACTION_KEY_HINT = preload("res://scripts/ui/interaction_key_hint.gd")
 
 var _root: Control
-var _header: CompactLevelHeader
-var _objective: Label
+var _header: HudObjective
+var _health_bar: PlayerHealthBar
 var _phase_base: String = "任务：释放星核"
 var _core_text: String = "星核：起始仓"
 var _prompt_text: String = ""
-var _event_text: String = ""
-var _event_left: float = 0.0
 var _object_prompt_visible: bool = false
 var _prompt_world: Vector2 = Vector2.ZERO
 var _world_layer: Control
@@ -59,23 +57,22 @@ func _ready() -> void:
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
 	_build_header()
-	_build_objective()
+	_build_health_bar()
 	_build_world_prompt()
 	_build_completion()
 	set_polarity(true)
 	set_status("任务：释放星核", "星核：起始仓", "")
 	set_pause_visible(false)
 	show_completion(false)
+	_root.modulate.a = 0.0
+	var intro_tween: Tween = create_tween()
+	intro_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	intro_tween.tween_property(_root, "modulate:a", 1.0, 0.15)
 
 
-func _process(delta: float) -> void:
-	if _event_left > 0.0:
-		_event_left = maxf(_event_left - delta, 0.0)
-		if _event_left <= 0.0:
-			_event_text = ""
-			if _objective != null and not _completion_active:
-				_objective.text = _display_phase(_phase_base)
+func _process(_delta: float) -> void:
 	_refresh_object_prompt_state()
+	_update_chrome_visibility()
 
 
 func _load_font() -> Font:
@@ -113,30 +110,33 @@ func _label(
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
-	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_constant_override("outline_size", 1)
 	return label
 
 
 func _build_header() -> void:
 	_header = CompactLevelHeader.new()
-	_header.name = "CompactHeader"
+	_header.name = "HudObjective"
 	_root.add_child(_header)
-	_header.configure("沉寂回廊", "第二关 · 石栅通路", _font)
+	_header.configure("沉寂回廊", _display_phase(_phase_base), _font)
 	_header.set_polarity(true)
 
 
-func _build_objective() -> void:
-	# Single objective line at the level-03 baseline: 12 px gold, no panel, no
-	# second core row. The phase prefix is kept internally, but the display drops
-	# the "任务：" prefix to match the other two levels' one-line objective.
-	_objective = _label("释放星核", Vector2(15.0, 58.0), Vector2(430.0, 18.0), 12, GOLD)
-	_root.add_child(_objective)
+## Fixed lower-left red health group (heart + three cells).  The story level has
+## no enemy yet; a full bar keeps the same HUD scaffolding as combat chapters.
+func _build_health_bar() -> void:
+	_health_bar = PlayerHealthBar.new()
+	_health_bar.name = "PlayerHealthBar"
+	_health_bar.max_segments = 3
+	_health_bar.position = PlayerHealthBar.HUD_POSITION
+	_health_bar.set_state(3, 3)
+	_root.add_child(_health_bar)
 
 
 func _build_world_prompt() -> void:
 	# Object-bound action hint near the real bay. Real E actions draw the one
 	# approved 11x13 E cap + action word through InteractionKeyHint; lid motion
-	# ("开罩中…/合罩中…") stays plain state text with no cap. No panel, no
+	# ("开罩中…" / "合罩中…") stays plain state text with no cap. No panel, no
 	# central strip. It reads only public level/player/core/bay interfaces.
 	_world_layer = Control.new()
 	_world_layer.name = "WorldActionPrompt"
@@ -252,8 +252,8 @@ func set_status(phase: String, core_text: String, prompt: String) -> void:
 	# A real event owns the one line until it expires. A core-text change alone
 	# never takes the slot (compatibility data only), so the objective cannot
 	# flicker on every transport state.
-	if _objective != null and _event_left <= 0.0 and not _completion_active:
-		_objective.text = _display_phase(phase)
+	if _header != null and not _completion_active:
+		_header.set_objective(_display_phase(phase))
 	_refresh_object_prompt_state()
 
 
@@ -262,18 +262,14 @@ func _display_phase(phase: String) -> String:
 
 
 func show_toast(text_value: String, duration: float = 1.6) -> void:
-	if _objective == null:
+	if _header == null:
 		return
 	if text_value.is_empty():
-		_event_left = 0.0
-		_event_text = ""
+		_header.clear_event()
 		if not _completion_active:
-			_objective.text = _display_phase(_phase_base)
+			_header.set_objective(_display_phase(_phase_base))
 		return
-	_event_text = text_value
-	_event_left = clampf(duration, 0.2, 2.6)
-	_objective.visible = not _completion_active
-	_objective.text = text_value
+	_header.show_event(text_value, clampf(duration, 0.2, 2.6))
 
 
 func _refresh_object_prompt_state() -> void:
@@ -409,6 +405,7 @@ func set_pause_visible(value: bool) -> void:
 		_object_prompt_visible = false
 		if _world_layer != null:
 			_world_layer.visible = false
+	_update_chrome_visibility()
 
 
 func set_recovery_hint(text_value: String) -> void:
@@ -425,26 +422,21 @@ func show_completion(value: bool, completion_count: int = 0) -> void:
 		return
 	_completion_overlay.visible = value
 	_completion_active = value
-	if _header != null:
-		_header.visible = not value
 	if value:
 		_play_completion_reveal()
-		_event_left = 0.0
-		_event_text = ""
-		if _objective != null:
-			_objective.visible = false
+		_header.clear_event()
 		_object_prompt_visible = false
 		if _world_layer != null:
 			_world_layer.visible = false
 		call_deferred("focus_completion_primary")
 	else:
 		release_completion_focus()
-		if _objective != null:
-			_objective.visible = true
-			_objective.text = _display_phase(_phase_base)
+		if _header != null:
+			_header.set_objective(_display_phase(_phase_base))
 		_refresh_object_prompt_state()
 	if not value:
 		_stop_completion_reveal()
+	_update_chrome_visibility()
 	if _completion_count_label != null:
 		_completion_count_label.text = "本关结算 · Esc 可打开暂停菜单" if value else ""
 
@@ -558,11 +550,60 @@ func get_label_font_sizes() -> Array[int]:
 
 
 func get_toast_text() -> String:
-	return _event_text
+	return _header.get_event_text() if _header != null else ""
 
 
 func is_toast_visible() -> bool:
-	return _event_left > 0.0
+	return _header != null and _header.is_event_visible()
+
+
+func is_objective_visible() -> bool:
+	return _header != null and _header.is_chrome_visible()
+
+
+func get_objective_text() -> String:
+	return _header.get_display_objective_text() if _header != null else ""
+
+
+## Modal pages hide chapter/objective/event/icon/health.  Restoring fades.
+func _update_chrome_visibility() -> void:
+	var hidden: bool = (
+		_pause_visible
+		or _completion_active
+		or (get_tree() != null and get_tree().paused)
+	)
+	if _header != null:
+		_header.set_chrome_visible(not hidden)
+	_set_health_visible(not hidden)
+
+
+func _set_health_visible(value: bool) -> void:
+	if _health_bar == null:
+		return
+	if value:
+		if _health_bar.visible:
+			return
+		_health_bar.visible = true
+		_health_bar.modulate.a = 0.0
+		var tween: Tween = create_tween()
+		tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		tween.tween_property(_health_bar, "modulate:a", 1.0, 0.15)
+		return
+	_health_bar.visible = false
+
+
+func get_player_health_bar() -> PlayerHealthBar:
+	return _health_bar
+
+
+func is_health_bar_visible() -> bool:
+	return _health_bar != null and _health_bar.visible
+
+
+func get_health_bar_rect() -> Rect2:
+	if _health_bar == null:
+		return Rect2()
+	return Rect2(_health_bar.position, _health_bar.size)
 
 
 func is_pause_visible() -> bool:

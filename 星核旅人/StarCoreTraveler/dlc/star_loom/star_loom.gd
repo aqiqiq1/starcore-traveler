@@ -1,4 +1,4 @@
-class_name StarLoom
+﻿class_name StarLoom
 extends Node2D
 
 ## DLC chapter 3: 星核织机 (Star Loom), one 960 x 360 boss hall.
@@ -27,10 +27,15 @@ extends Node2D
 signal level_completed
 
 @export var show_intro_guide: bool = true
+## First-entry opening film; R and combat retries never replay it.
+@export var show_intro_cinematic: bool = true
 
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const DLC_GUIDE_SCENE: PackedScene = preload("res://dlc/ui/dlc_guide.tscn")
 const LOOM_GUIDE_SCRIPT: Script = preload("res://dlc/star_loom/loom_guide.gd")
+const INTRO_CINEMATIC_SCENE: PackedScene = preload(
+	"res://dlc/star_loom/loom_intro_cinematic.tscn"
+)
 const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popup.tscn")
 
 ## Copy source: dlc/UI_PARITY_SPEC.md section 2 (星核织机).  The body label is
@@ -128,6 +133,10 @@ var _fire_points: Array[Vector2] = []
 var _gear_points: Array[Vector2] = []
 var _fire_serial: int = 0
 var _intro_guide: DlcGuide = null
+var _intro_cinematic: DlcIntroCinematic = null
+var _intro_active: bool = false
+var _intro_played: bool = false
+var _intro_skipped: bool = false
 var _mechanic_popup: MechanicPopup = null
 var _fire_tip_pending: bool = false
 ## The white opening flash is a once-per-run event; later exposures keep the
@@ -249,11 +258,50 @@ func _ready() -> void:
 	LEVEL_FLOW.release_one_shot_actions()
 	_player.begin_input_override()
 	_input_ticks = 3
+	call_deferred("_start_intro_cinematic_or_guide")
+
+
+## The opening film runs before the guide.  The music was started above for a
+## real window and is PROCESS_MODE_ALWAYS, so the film never pauses or restarts
+## the track.  The HUD is hidden for the whole film and revealed at the end.
+func _start_intro_cinematic_or_guide() -> void:
+	if show_intro_cinematic and not _intro_played and not _completed and not _scene_leaving:
+		if _intro_cinematic == null or not is_instance_valid(_intro_cinematic):
+			_intro_cinematic = INTRO_CINEMATIC_SCENE.instantiate() as DlcIntroCinematic
+		if _intro_cinematic != null:
+			_intro_active = true
+			_intro_skipped = false
+			_hud.visible = false
+			if _footsteps != null and is_instance_valid(_footsteps):
+				_footsteps.stop()
+			_player.lock_for_cinematic()
+			add_child(_intro_cinematic)
+			_intro_cinematic.finished.connect(_on_intro_cinematic_finished)
+			_intro_cinematic.start()
+			return
+	if show_intro_guide:
+		_open_intro_guide()
+
+
+func _on_intro_cinematic_finished(skipped: bool) -> void:
+	_intro_active = false
+	_intro_played = true
+	_intro_skipped = skipped
+	_hud.visible = true
+	_attack_key_down = false
+	_player.unlock_after_cinematic()
+	_player.begin_input_override()
+	_input_ticks = 3
 	if show_intro_guide:
 		call_deferred("_open_intro_guide")
 
 
 func _exit_tree() -> void:
+	_intro_active = false
+	if _intro_cinematic != null and is_instance_valid(_intro_cinematic):
+		_intro_cinematic.abort()
+		_intro_cinematic.queue_free()
+		_intro_cinematic = null
 	if _footsteps != null and is_instance_valid(_footsteps):
 		_footsteps.stop()
 	if _audio != null:
@@ -275,17 +323,15 @@ func _setup_footsteps() -> void:
 	_footsteps.set_enabled_check(Callable(self, "_footsteps_allowed"))
 
 
-## The health meter above the player's head is only part of normal boss
-## gameplay.  It hides for every modal/transition state, including the tree
-## pauses owned by the guide and teaching popup.
+## The fixed lower-left health group is part of normal gameplay on every
+## chapter, including the walk into the loom.  It hides only for modal /
+## transition states, including the tree pauses owned by the guide and popup.
 func _overhead_hits_suppressed() -> bool:
-	if not _boss_active:
-		return true
 	if get_tree() == null or get_tree().paused:
 		return true
 	if (
 		_pause_open or _game_over or _completed or _pending_completion
-		or _recovery_active or _retry_pending
+		or _recovery_active or _retry_pending or _intro_active
 	):
 		return true
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
@@ -300,7 +346,7 @@ func _footsteps_allowed() -> bool:
 		return false
 	if (
 		_completed or _pending_completion or _pause_open or _recovery_active
-		or _retry_pending or _game_over
+		or _retry_pending or _game_over or _intro_active
 	):
 		return false
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
@@ -356,6 +402,8 @@ func is_mechanic_popup_blocked() -> bool:
 		return true
 	if _stage_flash > 0.0:
 		return true
+	if _intro_active:
+		return true
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
 		return true
 	return false
@@ -389,6 +437,8 @@ func _on_intro_guide_closed(_kind: String) -> void:
 
 func _physics_process(delta: float) -> void:
 	if get_tree().paused or _completed or _game_over or _scene_leaving:
+		return
+	if _intro_active:
 		return
 	_damage_immunity_left = maxf(_damage_immunity_left - delta, 0.0)
 	if _recovery_active:
@@ -434,6 +484,8 @@ func _physics_process(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	if get_tree().paused or _game_over or _scene_leaving:
+		return
+	if _intro_active:
 		return
 	if not _completed:
 		_elapsed += delta
@@ -485,7 +537,7 @@ func _start_boss() -> void:
 	_audio.start_music()
 	_audio.play_core_exposed()
 	_hud.set_gear_warning(false, 0.0)
-	_hud.show_event("星核织机启动 · 异相攻击打节点", 2.2)
+	_hud.show_event("织机启动 · 异相攻击打节点", 2.2)
 	_hud.set_objective("目标：用异相攻击打掉两个节点")
 	_update_hud_state()
 	_core_burst_played = false
@@ -506,7 +558,7 @@ func _on_node_broken(_node: LoomNode) -> void:
 		_core.set_exposed(true)
 		_audio.play_core_exposed()
 		_hud.show_event("节点停转 · 核心暴露", 2.0)
-		_hud.set_objective("目标：核心暴露 · 异相攻击打核心")
+		_hud.set_objective("目标：异相攻击暴露的核心")
 		# The first exposure gets one 0.3 s white flash and a few sparks; the
 		# core then reads from its solid phase diamond and opened net only.
 		if not _core_burst_played:
@@ -540,6 +592,7 @@ func _advance_stage() -> void:
 		_boss_active = false
 		_clear_hazards()
 		_hud.show_event("织机停转", 2.0)
+		_hud.set_boss_visible(false)
 		return
 	if _stage < MAX_STAGE:
 		_stage += 1
@@ -576,6 +629,9 @@ func _update_hud_state() -> void:
 		CORE_HITS_PER_STAGE, _core.is_exposed(), _player_hits, PLAYER_HIT_LIMIT,
 		_lives, PLAYER_LIVES
 	)
+	# Enemy appearance rule: the shared boss bar is only present during the
+	# actual loom fight (and is hidden by the HUD on every modal page).
+	_hud.set_boss_visible(_boss_active and not _completed and not _pending_completion)
 
 
 func _sync_gear_warning() -> void:
@@ -595,7 +651,7 @@ func _update_objective(force: bool = false) -> void:
 		text = "目标：向右进入织机厅"
 		key = "enter"
 	elif _core.is_exposed():
-		text = "目标：核心暴露 · 异相攻击打核心"
+		text = "目标：异相攻击暴露的核心"
 		key = "core"
 	else:
 		text = "目标：用异相攻击打掉两个节点"
@@ -1110,6 +1166,8 @@ func _reset_player_at(point: Vector2) -> void:
 # --- input -----------------------------------------------------------------
 
 func _input(event: InputEvent) -> void:
+	if _intro_active:
+		return
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
 		return
 	if _mechanic_popup != null and is_instance_valid(_mechanic_popup) and _mechanic_popup.is_open():
@@ -1165,6 +1223,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _intro_active:
+		return
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
 		return
 	if _mechanic_popup != null and is_instance_valid(_mechanic_popup) and _mechanic_popup.is_open():
@@ -1221,7 +1281,7 @@ func _on_hud_quit_requested() -> void:
 
 
 func _set_paused(value: bool) -> void:
-	if value == _pause_open:
+	if _intro_active or value == _pause_open:
 		return
 	_pause_open = value
 	_hud.show_pause(value)
@@ -1353,6 +1413,7 @@ func _restart_chapter() -> void:
 		1, MAX_STAGE, 2, 0, CORE_HITS_PER_STAGE, false, 0,
 		PLAYER_HIT_LIMIT, PLAYER_LIVES, PLAYER_LIVES
 	)
+	_hud.set_boss_visible(false)
 	_hud.set_objective("目标：向右进入织机厅")
 	_hud.set_polarity(false)
 	_player.end_recovery_hold()
@@ -1405,6 +1466,22 @@ func get_fx() -> LoomFx:
 
 func get_intro_guide() -> DlcGuide:
 	return _intro_guide
+
+
+func get_intro_cinematic() -> DlcIntroCinematic:
+	return _intro_cinematic
+
+
+func is_intro_active() -> bool:
+	return _intro_active
+
+
+func has_played_intro() -> bool:
+	return _intro_played
+
+
+func was_intro_skipped() -> bool:
+	return _intro_skipped
 
 
 func get_mechanic_popup() -> MechanicPopup:

@@ -3,19 +3,12 @@ extends CanvasLayer
 
 ## Compact HUD for 星核织机.
 ##
-## Same approved header as the other DLC chapters (title / one objective /
-## current phase), plus one boss-state row (stage / live nodes / core damage /
-## three lives with 9 px labels), a floating three-cell health meter above the
-## player, a one-line event ticker, the recovery cover, the completion page
-## ("织机停转 · 用时 mm:ss"), the shared four-item DLC pause page and a 360x210
-## game over page.  The pause/completion pages
-## follow dlc/UI_PARITY_SPEC.md sections 4 and 5: a 360x236
-## pause page with 已暂停 / 星核织机 · 城内原型, and a 400x210 completion page
-## with a world-line subtitle, 返回主界面 / 重玩本章 and the chapter-summary
-## footnote.  Both pages use the shared UiReveal (0.18 s open / 0.12 s close),
-## whose tween runs with TWEEN_PAUSE_PROCESS, so the pause page opens and closes
-## while the tree itself is paused.  Every colour, the 12 px project font and
-## the STONE / OPTION button faces are the existing project ones.
+## One top-left chapter/objective row, shared 20x20 phase icon, fixed lower-left
+## three-cell red health bar, and the shared 360x16 boss bar with the run's
+## three life hearts underneath (no 9/10 px label row, no node/core icon strip,
+## no second event line).  The boss bar's stage / node / core groups carry the
+## only persistent state.  The completion page, shared four-item DLC pause page
+## and game-over page remain the modal panels and hide all HUD chrome.
 
 signal resume_requested
 signal restart_requested
@@ -54,24 +47,10 @@ const HEALTH_POSITION: Vector2 = Vector2(14.0, 324.0)
 const HEALTH_LABEL_POSITION: Vector2 = Vector2(14.0, 310.0)
 
 var _root: Control
-var _header: CompactLevelHeader
-var _phase_icon: LoomPhaseIcon
-var _stage_icon: LoomStatusIcon
-var _node_icon: LoomStatusIcon
-var _core_icon: LoomStatusIcon
-var _stage_pips: HitPips
-var _node_pips: HitPips
-var _core_pips: HitPips
-var _life_pips: HitPips
-var _stage_label: Label
-var _node_label: Label
-var _core_label: Label
-var _life_label: Label
+var _header: HudObjective
+var _boss_bar: HudBossBar
 var _player_health_bar: LoomHealthBar
-var _health_label: Label
-var _event_label: Label
 var _gear_edge: LoomEdgeWarning
-var _event_left: float = 0.0
 var _recovery_cover: ColorRect
 var _completion_overlay: ColorRect
 var _completion_panel: Panel
@@ -118,9 +97,8 @@ func _ready() -> void:
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
 	_build_header()
-	_build_status()
+	_build_boss_bar()
 	_build_player_hit_overlay()
-	_build_event()
 	_build_gear_edge()
 	_build_recovery_cover()
 	_build_completion()
@@ -146,6 +124,10 @@ func _ready() -> void:
 	show_completion(false, 0.0)
 	show_pause(false)
 	show_game_over(false)
+	_root.modulate.a = 0.0
+	var intro_tween: Tween = create_tween()
+	intro_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	intro_tween.tween_property(_root, "modulate:a", 1.0, 0.15)
 
 
 ## Page keyboard fallback.  The pause page's four buttons form a closed ring:
@@ -205,16 +187,10 @@ func _handle_game_over_key(code: int) -> void:
 
 
 func _process(delta: float) -> void:
-	# The HUD is PROCESS_MODE_ALWAYS, so this follows the player and hides
-	# correctly even while a guide/popup/pause page has paused the tree.
+	# The HUD is PROCESS_MODE_ALWAYS, so the fixed health bar hides correctly
+	# even while a guide/popup/pause page has paused the tree.
 	_update_player_hit_overlay(delta)
-	if get_tree().paused:
-		return
-	if _event_left <= 0.0:
-		return
-	_event_left = maxf(_event_left - delta, 0.0)
-	if _event_left <= 0.0:
-		_event_label.visible = false
+	_update_chrome_visibility()
 
 
 func _load_font() -> Font:
@@ -297,111 +273,31 @@ func _focus_pause_relative(step: int) -> void:
 
 
 func _build_header() -> void:
-	_header = CompactLevelHeader.new()
-	_header.name = "CompactHeader"
+	_header = HudObjective.new()
+	_header.name = "HudObjective"
 	_root.add_child(_header)
 	_header.configure(TITLE, DEFAULT_OBJECTIVE, _font)
-	_header.set_polarity(false)
-	# The shared header draws a talisman plus a 辉相/澜相 text.  This chapter
-	# replaces both with one 20x20 sun/moon icon, keeping the shared script
-	# untouched.
-	for child_name: String in ["AffinityIcon", "AffinityText"]:
-		var node: Node = _header.find_child(child_name, true, false)
-		if node is CanvasItem:
-			(node as CanvasItem).visible = false
-	_phase_icon = LoomPhaseIcon.new()
-	_phase_icon.name = "PhaseIcon"
-	_phase_icon.position = Vector2(604.0, 6.0)
-	_root.add_child(_phase_icon)
-	_phase_icon.set_positive(true)
+	_header.set_polarity(true)
 
 
-## The permanent counter row is icon-only: stage (loom glyph + 3 diamonds),
-## live nodes (node glyph + 2 cyan diamonds), core damage (core glyph + 3 gold
-## diamonds) and lives (hearts).  Accepted hits moved above the player, so the
-## top row has no hit group at all.
-func _build_status() -> void:
-	_stage_icon = _status_icon(LoomStatusIcon.Kind.STAGE, Vector2(12.0, 41.0), GOLD)
-	_stage_icon.name = "StageIcon"
-	_root.add_child(_stage_icon)
-	_stage_pips = _status_pips(
-		HitPips.Kind.DIAMOND, 3, 1, 6.0, 2.0, GOLD,
-		Vector2(25.0, 42.0), "StagePips"
-	)
-
-	_node_icon = _status_icon(LoomStatusIcon.Kind.NODE, Vector2(64.0, 41.0), CYAN)
-	_node_icon.name = "NodeIcon"
-	_root.add_child(_node_icon)
-	_node_pips = _status_pips(
-		HitPips.Kind.DIAMOND, 2, 2, 7.0, 2.0, CYAN,
-		Vector2(77.0, 42.0), "NodePips"
-	)
-
-	_core_icon = _status_icon(LoomStatusIcon.Kind.CORE, Vector2(110.0, 41.0), MUTED)
-	_core_icon.name = "CoreIcon"
-	_root.add_child(_core_icon)
-	_core_pips = _status_pips(
-		HitPips.Kind.DIAMOND, 3, 0, 7.0, 2.0, GOLD,
-		Vector2(123.0, 42.0), "CorePips"
-	)
-
-	_life_pips = _status_pips(
-		HitPips.Kind.HEART, 3, 3, 10.0, 3.0, LIFE_FILLED,
-		Vector2(172.0, 41.0), "LifePips"
-	)
-
-	# 9 px labels sit under each icon group so the row is not a bare icon strip.
-	# The event ticker moved down to y=64 to clear them.
-	_stage_label = _status_label("阶段", Vector2(12.0, 52.0), GOLD)
-	_node_label = _status_label("节点", Vector2(64.0, 52.0), CYAN)
-	_core_label = _status_label("核心", Vector2(110.0, 52.0), MUTED)
-	_life_label = _status_label("生命", Vector2(172.0, 52.0), LIFE_FILLED)
+## Shared 360x16 boss bar.  The stage cells are the three loom stages, the two
+## node diamonds are the live nodes, the three core diamonds are accepted core
+## hits, and the three life hearts sit centred under the bar (no text count).
+func _build_boss_bar() -> void:
+	_boss_bar = HudBossBar.new()
+	_boss_bar.name = "BossBar"
+	_boss_bar.configure("织机", 3, 3, _font)
+	_boss_bar.position = HudBossBar.HUD_POSITION
+	_root.add_child(_boss_bar)
+	_boss_bar.set_nodes(2, 2, true)
+	_boss_bar.set_lives(3, 3, true)
+	_boss_bar.set_active(false)
 
 
-func _status_label(
-	text_value: String, position_value: Vector2, color: Color
-) -> Label:
-	var label: Label = _label(
-		text_value, position_value, Vector2(44.0, 14.0), 12, color
-	)
-	label.name = "StatusLabel" + text_value
-	label.add_theme_constant_override("outline_size", 0)
-	_root.add_child(label)
-	return label
-
-
-func _status_icon(
-	kind: int, position_value: Vector2, color: Color
-) -> LoomStatusIcon:
-	var icon: LoomStatusIcon = LoomStatusIcon.new()
-	icon.kind = kind
-	icon.color = color
-	icon.position = position_value
-	return icon
-
-
-func _status_pips(
-	kind: int, max_value: int, current_value: int,
-	pip_size: float, gap_value: float, filled: Color,
-	position_value: Vector2, node_name: String
-) -> HitPips:
-	var pips: HitPips = HitPips.new()
-	pips.kind = kind
-	pips.max_pips = max_value
-	pips.pip_size = pip_size
-	pips.gap = gap_value
-	pips.filled_color = filled
-	pips.empty_color = Color(0.26, 0.32, 0.34, 0.95)
-	pips.name = node_name
-	pips.position = position_value
-	_root.add_child(pips)
-	pips.set_state(current_value, max_value)
-	return pips
-
-
-## Three-heart health VALUE fixed at the lower-left HUD corner, so it never
+## Three-cell red health VALUE fixed at the lower-left HUD corner, so it never
 ## covers the character.  The level supplies the suppression predicate (pause,
-## guide, popup, recovery, completion, game over).
+## guide, popup, recovery, completion, game over); the heart icon is the only
+## label, no "生命值" word.
 func _build_player_hit_overlay() -> void:
 	_player_health_bar = LoomHealthBar.new()
 	_player_health_bar.name = "PlayerHealthBar"
@@ -412,10 +308,6 @@ func _build_player_hit_overlay() -> void:
 	_player_health_bar.position = HEALTH_POSITION
 	_root.add_child(_player_health_bar)
 	_player_health_bar.pivot_offset = _player_health_bar.size * 0.5
-	_health_label = _label("生命值", HEALTH_LABEL_POSITION, Vector2(52.0, 14.0), 12, MUTED)
-	_health_label.name = "HealthValueLabel"
-	_health_label.visible = false
-	_root.add_child(_health_label)
 
 
 func bind_player_overhead(player: Node2D, suppress_check: Callable = Callable()) -> void:
@@ -428,23 +320,29 @@ func _update_player_hit_overlay(delta: float) -> void:
 		return
 	if _player == null or not is_instance_valid(_player):
 		_player_health_bar.visible = false
-		if _health_label != null:
-			_health_label.visible = false
 		return
 	var suppressed: bool = (
 		_player_hit_suppress.is_valid() and bool(_player_hit_suppress.call())
 	)
-	if suppressed:
+	var chrome_hidden: bool = (
+		_pause_visible
+		or _completion_visible
+		or _game_over_visible
+		or (get_tree() != null and get_tree().paused)
+		or (_recovery_cover != null and _recovery_cover.visible)
+	)
+	if suppressed or chrome_hidden:
 		_player_health_bar.visible = false
-		if _health_label != null:
-			_health_label.visible = false
 		_player_health_bar.scale = Vector2.ONE
 		_player_hit_pulse_left = 0.0
 		return
 	_player_health_bar.position = HEALTH_POSITION
-	_player_health_bar.visible = true
-	if _health_label != null:
-		_health_label.visible = true
+	if not _player_health_bar.visible:
+		_player_health_bar.visible = true
+		_player_health_bar.modulate.a = 0.0
+		var tween: Tween = create_tween()
+		tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		tween.tween_property(_player_health_bar, "modulate:a", 1.0, 0.15)
 	if _player_hit_pulse_left > 0.0:
 		_player_hit_pulse_left = maxf(_player_hit_pulse_left - delta, 0.0)
 		var progress: float = 1.0 - _player_hit_pulse_left
@@ -452,13 +350,6 @@ func _update_player_hit_overlay(delta: float) -> void:
 		_player_health_bar.scale = Vector2.ONE * (1.0 + 0.32 * bump)
 	else:
 		_player_health_bar.scale = Vector2.ONE
-
-
-func _build_event() -> void:
-	_event_label = _label("", Vector2(12.0, 66.0), Vector2(520.0, 16.0), 12, GOLD)
-	_event_label.name = "EventLine"
-	_event_label.visible = false
-	_root.add_child(_event_label)
 
 
 func _build_gear_edge() -> void:
@@ -722,30 +613,33 @@ func _build_game_over() -> void:
 func set_polarity(positive: bool) -> void:
 	if _header != null:
 		_header.set_polarity(positive)
-	if _phase_icon != null:
-		_phase_icon.set_positive(positive)
 
 
 func set_objective(text_value: String) -> void:
 	_subtitle = text_value
 	if _header != null:
-		_header.configure(TITLE, text_value, _font)
+		_header.set_objective(text_value)
 
 
+## Maps the existing loom state onto the shared bar.  Stage is 1-based; core
+## cells fill with the accepted core hits; the red bar shows remaining core
+## health.  The three life hearts sit under the bar and keep their own count.
 func set_boss_state(
 	stage: int, stage_max: int, nodes_alive: int,
 	core_hits: int, core_needed: int, exposed: bool,
 	player_hits: int = 0, hit_limit: int = 3,
 	lives: int = 3, life_limit: int = 3
 ) -> void:
-	if _stage_pips != null:
-		_stage_pips.set_state(stage, stage_max)
-	if _node_pips != null:
-		_node_pips.set_state(nodes_alive, 2)
-		_node_icon.set_color(CYAN if nodes_alive > 0 else MUTED)
-	if _core_pips != null:
-		_core_pips.set_state(core_hits if exposed else 0, core_needed)
-		_core_icon.set_color(GOLD if exposed else MUTED)
+	var phase_index: int = clampi(stage - 1, 0, maxi(stage_max - 1, 0))
+	var needed: int = maxi(core_needed, 1)
+	var remaining: int = clampi(needed - core_hits, 0, needed)
+	if _boss_bar != null:
+		_boss_bar.set_bar_values(
+			core_hits if exposed else 0, needed, phase_index, maxi(stage_max, 1),
+			float(remaining) / float(needed)
+		)
+		_boss_bar.set_nodes(nodes_alive, 2, true)
+		_boss_bar.set_lives(lives, life_limit, true)
 	if _player_health_bar != null:
 		var hit_increased: bool = player_hits > _last_player_hits
 		_last_player_hits = player_hits
@@ -756,10 +650,19 @@ func set_boss_state(
 			# A single 1.0 s sine pulse, scaled around the row's centre.
 			_player_hit_pulse_left = 1.0
 			_player_health_bar.pivot_offset = _player_health_bar.size * 0.5
-	if _life_pips != null:
-		_life_pips.set_state(lives, life_limit)
-		_life_pips.filled_color = LIFE_FILLED if lives > 1 else Color("#ff9a6a")
-		_life_pips.queue_redraw()
+
+
+func set_boss_visible(value: bool) -> void:
+	if _boss_bar != null:
+		_boss_bar.set_active(value)
+
+
+func is_boss_visible() -> bool:
+	return _boss_bar != null and _boss_bar.is_bar_visible()
+
+
+func get_boss_bar() -> HudBossBar:
+	return _boss_bar
 
 
 func set_gear_warning(active: bool, progress: float = 0.0) -> void:
@@ -772,17 +675,13 @@ func is_gear_warning_visible() -> bool:
 
 
 func show_event(text_value: String, seconds: float = 1.5) -> void:
-	if _event_label == null:
-		return
-	_event_label.text = text_value
-	_event_label.visible = true
-	_event_left = maxf(seconds, 0.1)
+	if _header != null:
+		_header.show_event(text_value, seconds)
 
 
 func hide_event() -> void:
-	_event_left = 0.0
-	if _event_label != null:
-		_event_label.visible = false
+	if _header != null:
+		_header.clear_event()
 
 
 func set_recovery_alpha(value: float) -> void:
@@ -791,14 +690,31 @@ func set_recovery_alpha(value: float) -> void:
 	var alpha: float = clampf(value, 0.0, 1.0)
 	_recovery_cover.visible = alpha > 0.0
 	_recovery_cover.color = Color(0.0, 0.0, 0.0, alpha)
+	_update_chrome_visibility()
+
+
+## Pause / guide / popup / recovery / completion / game over hide the chapter
+## row, boss bar (and its life hearts) and the fixed health bar.
+func _update_chrome_visibility() -> void:
+	var hidden: bool = (
+		_pause_visible
+		or _completion_visible
+		or _game_over_visible
+		or (get_tree() != null and get_tree().paused)
+		or (_recovery_cover != null and _recovery_cover.visible)
+	)
+	if _header != null:
+		_header.set_chrome_visible(not hidden)
+	if _boss_bar != null:
+		_boss_bar.set_modal_suppressed(hidden)
+	if hidden and _player_health_bar != null:
+		_player_health_bar.visible = false
 
 
 func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 	_completion_visible = value
 	if _header != null:
-		_header.visible = not value
-	if _event_label != null:
-		_event_label.visible = not value
+		_header.clear_event()
 	if _completion_overlay == null:
 		return
 	_completion_title.text = "织机停转 · 用时 %s" % _format_time(elapsed_seconds)
@@ -817,6 +733,7 @@ func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 			_completion_primary.release_focus()
 		if _completion_secondary != null:
 			_completion_secondary.release_focus()
+	_update_chrome_visibility()
 
 
 func show_pause(value: bool) -> void:
@@ -829,6 +746,7 @@ func show_pause(value: bool) -> void:
 			_pause_reveal.play_open()
 		else:
 			_pause_overlay.visible = true
+		_update_chrome_visibility()
 		call_deferred("_focus_pause")
 	else:
 		if _pause_reveal != null:
@@ -843,6 +761,7 @@ func show_pause(value: bool) -> void:
 		]:
 			if button != null:
 				button.release_focus()
+		_update_chrome_visibility()
 		if _completion_visible:
 			call_deferred("_focus_completion")
 
@@ -859,6 +778,7 @@ func show_game_over(value: bool, lives: int = 0) -> void:
 			_game_over_reveal.play_open()
 		else:
 			_game_over_overlay.visible = true
+		_update_chrome_visibility()
 		call_deferred("_focus_game_over")
 	else:
 		if _game_over_reveal != null:
@@ -872,6 +792,7 @@ func show_game_over(value: bool, lives: int = 0) -> void:
 			_game_over_retry.release_focus()
 		if _game_over_title_button != null:
 			_game_over_title_button.release_focus()
+		_update_chrome_visibility()
 
 
 func _focus_pause() -> void:
@@ -896,7 +817,7 @@ func _format_time(seconds: float) -> String:
 
 # --- test / capture accessors ---------------------------------------------
 
-func get_header() -> CompactLevelHeader:
+func get_header() -> HudObjective:
 	return _header
 
 
@@ -905,23 +826,25 @@ func get_title_text() -> String:
 
 
 func get_objective_text() -> String:
-	return _header.get_subtitle_text() if _header != null else _subtitle
+	return _subtitle
 
 
 func get_affinity_text() -> String:
 	return _header.get_affinity_text() if _header != null else ""
 
 
+# The old four icon rows are gone; these compatibility names expose the shared
+# boss bar data so older audits fail loudly if they still expect the old row.
 func get_stage_pips() -> HitPips:
-	return _stage_pips
+	return null
 
 
 func get_node_pips() -> HitPips:
-	return _node_pips
+	return null
 
 
 func get_core_pips() -> HitPips:
-	return _core_pips
+	return null
 
 
 func get_player_health_bar() -> LoomHealthBar:
@@ -936,6 +859,10 @@ func get_health_max() -> int:
 	return _player_health_bar.get_max() if _player_health_bar != null else 0
 
 
+func is_health_bar_visible() -> bool:
+	return _player_health_bar != null and _player_health_bar.visible
+
+
 func get_player_hit_position() -> Vector2:
 	return _player_health_bar.position if _player_health_bar != null else Vector2.ZERO
 
@@ -945,74 +872,68 @@ func get_player_hit_pulse_left() -> float:
 
 
 func get_life_pips() -> HitPips:
-	return _life_pips
+	return null
+
+
+func get_life_bar_current() -> int:
+	return _boss_bar.get_lives_current() if _boss_bar != null else 0
+
+
+func get_life_bar_max() -> int:
+	return _boss_bar.get_lives_max() if _boss_bar != null else 0
 
 
 func get_stage_icon() -> LoomStatusIcon:
-	return _stage_icon
+	return null
 
 
 func get_status_labels() -> Dictionary:
-	return {
-		"stage": _stage_label,
-		"node": _node_label,
-		"core": _core_label,
-		"life": _life_label,
-	}
+	return {}
 
 
 func get_status_label_texts() -> Array[String]:
-	var texts: Array[String] = []
-	for key: String in ["stage", "node", "core", "life"]:
-		var label: Label = get_status_labels().get(key) as Label
-		texts.append(label.text if label != null else "")
-	return texts
+	return []
 
 
 func get_status_label_font_size() -> int:
-	if _stage_label == null:
-		return 0
-	return _stage_label.get_theme_font_size("font_size")
+	return 0
 
 
 func get_stage_label() -> Label:
-	return _stage_label
+	return null
 
 
 func get_node_label() -> Label:
-	return _node_label
+	return null
 
 
 func get_core_label() -> Label:
-	return _core_label
+	return null
 
 
 func get_life_label() -> Label:
-	return _life_label
+	return null
 
 
-func get_phase_icon() -> LoomPhaseIcon:
-	return _phase_icon
+func get_phase_icon() -> PolarityPhaseIcon:
+	return _header.get_phase_icon() if _header != null else null
 
 
 func get_phase_icon_state() -> String:
-	return _phase_icon.get_state_name() if _phase_icon != null else ""
+	return _header.get_phase_kind() if _header != null else ""
 
 
 func get_phase_icon_rect() -> Rect2:
-	if _phase_icon == null:
-		return Rect2()
-	return Rect2(_phase_icon.position, _phase_icon.size)
+	return _header.get_icon_rect() if _header != null else Rect2()
 
 
-## The top row has no hit group any more; the health meter floats over the player.
+## The top row has no hit group any more; the fixed bar is lower-left.
 func has_top_hit_group() -> bool:
 	return false
 
 
 func is_phase_text_hidden() -> bool:
-	var label: Node = _header.find_child("AffinityText", true, false) if _header != null else null
-	return label == null or not (label as CanvasItem).visible
+	return true
 
 
 ## The permanent counter row is icon-only; this returns false for the old
@@ -1158,8 +1079,8 @@ func get_completion_title_label() -> Label:
 
 
 func get_event_text() -> String:
-	return _event_label.text if _event_label != null else ""
+	return _header.get_event_text() if _header != null else ""
 
 
 func is_event_visible() -> bool:
-	return _event_label != null and _event_label.visible
+	return _header != null and _header.is_event_visible()

@@ -22,12 +22,18 @@ extends Node2D
 signal level_completed
 
 @export var show_intro_guide: bool = true
+## The first-entry opening film.  It plays once per scene load and never on R or
+## a combat retry; tests may turn it off before add_child().
+@export var show_intro_cinematic: bool = true
 ## Automated routes that teleport through the chapter can turn the teaching
 ## popups off; a normal entry keeps this true.
 @export var show_mechanic_tips: bool = true
 
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const DLC_GUIDE_SCENE: PackedScene = preload("res://dlc/ui/dlc_guide.tscn")
+const INTRO_CINEMATIC_SCENE: PackedScene = preload(
+	"res://dlc/trial_chambers/trial_intro_cinematic.tscn"
+)
 const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popup.tscn")
 const MECHANIC_DEMO_DIR: String = "res://dlc/ui/demos"
 
@@ -107,6 +113,10 @@ var _recovery_alpha: float = 0.0
 var _recovery_elapsed: float = 0.0
 var _recovery_applying: bool = false
 var _intro_guide: DlcGuide = null
+var _intro_cinematic: DlcIntroCinematic = null
+var _intro_active: bool = false
+var _intro_played: bool = false
+var _intro_skipped: bool = false
 var _mechanic_popup: MechanicPopup = null
 var _gate_gold_passed: bool = false
 var _gate_cyan_passed: bool = false
@@ -158,6 +168,7 @@ func _ready() -> void:
 	_guard.set_player_target(_player)
 	_guard.reset_state(GUARD_SPAWN, true, true)
 	_guard.set_suspended(true)
+	_guard.set_health_bar_suppressed(true)
 	_player.set_strike_source(_guard)
 	_connect_guard()
 
@@ -193,6 +204,42 @@ func _ready() -> void:
 	# The chapter music is a PROCESS_MODE_ALWAYS player now: it starts on entry
 	# and keeps playing while the guide or a mechanic popup pauses the tree.
 	_ambience.play(true)
+	call_deferred("_start_intro_cinematic_or_guide")
+
+
+## The film owns the screen before the guide; the music was already started
+## above and keeps playing because the tree is never paused.
+func _start_intro_cinematic_or_guide() -> void:
+	if show_intro_cinematic and not _intro_played and not _completed and not _scene_leaving:
+		if _intro_cinematic == null or not is_instance_valid(_intro_cinematic):
+			_intro_cinematic = INTRO_CINEMATIC_SCENE.instantiate() as DlcIntroCinematic
+		if _intro_cinematic != null:
+			_intro_active = true
+			_intro_skipped = false
+			_hud.visible = false
+			_footsteps.stop()
+			_q_hint.hide_hint()
+			_guard.set_suspended(true)
+			_player.lock_for_cinematic()
+			add_child(_intro_cinematic)
+			_intro_cinematic.finished.connect(_on_intro_cinematic_finished)
+			_intro_cinematic.start()
+			return
+	if show_intro_guide:
+		_open_intro_guide()
+
+
+func _on_intro_cinematic_finished(skipped: bool) -> void:
+	_intro_active = false
+	_intro_played = true
+	_intro_skipped = skipped
+	_hud.visible = true
+	_attack_key_down = false
+	# The player lock is released first, then the existing three-tick opening
+	# hold keeps the skip key from becoming a jump/Q press.
+	_player.unlock_after_cinematic()
+	_player.begin_input_override()
+	_guard_ticks = 3
 	if show_intro_guide:
 		call_deferred("_open_intro_guide")
 
@@ -232,7 +279,7 @@ func _on_intro_guide_closed(_kind: String) -> void:
 func _footsteps_allowed() -> bool:
 	if get_tree() == null or get_tree().paused:
 		return false
-	if _scene_leaving or _completed or _pause_open:
+	if _scene_leaving or _completed or _pause_open or _intro_active:
 		return false
 	if _recovery_active or _retry_pending:
 		return false
@@ -263,6 +310,11 @@ func _on_gate_denied(_required_positive: bool) -> void:
 
 
 func _exit_tree() -> void:
+	_intro_active = false
+	if _intro_cinematic != null and is_instance_valid(_intro_cinematic):
+		_intro_cinematic.abort()
+		_intro_cinematic.queue_free()
+		_intro_cinematic = null
 	if _ambience != null:
 		_ambience.stop(0.0)
 	if _audio != null:
@@ -287,6 +339,8 @@ func _connect_guard() -> void:
 func _physics_process(delta: float) -> void:
 	if get_tree().paused or _completed or _scene_leaving or _recovery_active:
 		return
+	if _intro_active:
+		return
 	if _retry_pending:
 		_retry_pending_left = maxf(_retry_pending_left - delta, 0.0)
 		if _retry_pending_left <= 0.0:
@@ -308,12 +362,15 @@ func _physics_process(delta: float) -> void:
 		DemoAudio.play_record_save()
 	_apply_guard_force()
 	_update_objective()
+	_update_boss_bar()
 	if _guard_defeated and not _completed:
 		_check_finish()
 
 
 func _process(delta: float) -> void:
 	if get_tree().paused or _scene_leaving:
+		return
+	if _intro_active:
 		return
 	if not _completed:
 		_elapsed += delta
@@ -380,6 +437,8 @@ func is_mechanic_popup_blocked() -> bool:
 		return true
 	if _pause_open:
 		return true
+	if _intro_active:
+		return true
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
 		return true
 	return false
@@ -416,6 +475,17 @@ func _face_nearest_guard_on_attack() -> void:
 		_player.face_direction(1 if dx >= 0.0 else -1)
 
 
+# --- objective / boss bar --------------------------------------------------
+
+## The shared top boss bar appears with the arena guard and uses the guard's
+## existing three true-damage points; the old world-anchored bar is suppressed.
+func _update_boss_bar() -> void:
+	if _hud == null or _guard == null:
+		return
+	_hud.set_boss_visible(_arena_entered and not _guard_defeated and not _completed)
+	_hud.set_boss_state(_guard.get_remaining_marks(), _guard.get_max_true_damage())
+
+
 func _update_objective() -> void:
 	var text: String
 	var key: String
@@ -443,6 +513,8 @@ func _update_objective() -> void:
 # --- input -----------------------------------------------------------------
 
 func _input(event: InputEvent) -> void:
+	if _intro_active:
+		return
 	if _mechanic_popup != null and is_instance_valid(_mechanic_popup) and _mechanic_popup.is_open():
 		return
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
@@ -487,6 +559,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _intro_active:
+		return
 	if _mechanic_popup != null and is_instance_valid(_mechanic_popup) and _mechanic_popup.is_open():
 		return
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
@@ -515,7 +589,7 @@ func _on_hud_quit_requested() -> void:
 
 
 func _set_paused(value: bool) -> void:
-	if value == _pause_open:
+	if _intro_active or value == _pause_open:
 		return
 	_pause_open = value
 	_hud.show_pause(value)
@@ -898,6 +972,22 @@ func get_ambience() -> DlcChapterAmbience:
 
 func get_intro_guide() -> DlcGuide:
 	return _intro_guide
+
+
+func get_intro_cinematic() -> DlcIntroCinematic:
+	return _intro_cinematic
+
+
+func is_intro_active() -> bool:
+	return _intro_active
+
+
+func has_played_intro() -> bool:
+	return _intro_played
+
+
+func was_intro_skipped() -> bool:
+	return _intro_skipped
 
 
 func get_mechanic_popup() -> MechanicPopup:

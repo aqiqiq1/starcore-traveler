@@ -100,7 +100,7 @@ block_rect = Rect2(0, 0, 520, 40)
 position = Vector2(2220, 320)
 script = ExtResource("17_terrain")
 block_rect = Rect2(0, 0, 300, 40)
-tint = Color(0.99, 0.96, 0.9, 1)
+tint = Color(1, 0.99, 0.98, 1)
 
 [node name="Decorations" type="Node2D" parent="."]
 process_mode = 1

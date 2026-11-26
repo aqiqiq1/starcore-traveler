@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://dlc/rift_workshop/tests/quit_clean_test.gd" id="1_quit"]
+
+[node name="QuitCleanTest" type="Node"]
+script = ExtResource("1_quit")

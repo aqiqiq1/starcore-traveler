@@ -3,10 +3,11 @@ extends CanvasLayer
 
 ## Small trial-only HUD.
 ##
-## Only three permanent reads (title / one short objective / current phase) use
-## the shared compact header.  The completion page (two entries) and the
-## four-item pause page are the only modal panels; the full settings page is
-## deliberately not copied here.  Every colour is from the existing palette.
+## One top-left chapter/objective row, the shared 20x20 phase icon, the fixed
+## lower-left red health bar, the shared 360x16 guard boss bar, and no second
+## event line.  Events replace the objective over 0.15 s.  The completion page
+## (two entries) and the four-item pause page are the only modal panels; all of
+## them hide the HUD chrome.
 
 signal resume_requested
 signal title_requested
@@ -27,16 +28,13 @@ const HIT_PULSE_SECONDS: float = 1.0
 const HIT_PULSE_SCALE: float = 0.28
 
 var _root: Control
-var _header: CompactLevelHeader
-var _polarity_icon: TrialPolarityIcon
+var _header: HudObjective
+var _boss_bar: HudBossBar
 var _hit_pips: PlayerHealthBar
-var _health_label: Label
 var _player: Node2D = null
 var _pips_visible: bool = true
 var _hit_pulse_left: float = 0.0
 var _hit_pulse_duration: float = HIT_PULSE_SECONDS
-var _event_label: Label
-var _event_left: float = 0.0
 var _recovery_cover: ColorRect
 var _completion_overlay: ColorRect
 var _completion_panel: Panel
@@ -73,8 +71,8 @@ func _ready() -> void:
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
 	_build_header()
+	_build_boss_bar()
 	_build_hit_pips()
-	_build_event()
 	_build_recovery_cover()
 	_build_completion()
 	_build_pause()
@@ -83,6 +81,10 @@ func _ready() -> void:
 	set_objective("目标：触碰晶体，换辉相过金门")
 	show_completion(false, 0.0)
 	show_pause(false)
+	_root.modulate.a = 0.0
+	var intro_tween: Tween = create_tween()
+	intro_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	intro_tween.tween_property(_root, "modulate:a", 1.0, 0.15)
 
 
 ## Pause-page keyboard fallback.  The PixelMenuButton controls already handle
@@ -119,14 +121,7 @@ func _process(delta: float) -> void:
 	# HUD is ALWAYS: keep the fixed bar hidden and its pulse settled so resuming
 	# cannot flash it mid-scale.
 	_update_hit_pulse(delta)
-	_update_hit_pips_visibility()
-	if get_tree().paused:
-		return
-	if _event_left <= 0.0:
-		return
-	_event_left = maxf(_event_left - delta, 0.0)
-	if _event_left <= 0.0:
-		_event_label.visible = false
+	_update_chrome_visibility()
 
 
 func _load_font() -> Font:
@@ -160,8 +155,6 @@ func _label(
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
-	# 2026-11-26 parity rule: all notice/pause/completion text uses a 1 px
-	# outline; the title stays 24 px and the body 12 px.
 	label.add_theme_constant_override("outline_size", 1)
 	return label
 
@@ -180,30 +173,26 @@ func _menu_button(
 
 
 func _build_header() -> void:
-	_header = CompactLevelHeader.new()
-	_header.name = "CompactHeader"
+	_header = HudObjective.new()
+	_header.name = "HudObjective"
 	_root.add_child(_header)
 	_header.configure(TITLE, "目标：触碰晶体，换辉相过金门", _font)
 	_header.set_polarity(false)
-	# The shared header's talisman + "辉相/澜相" word are hidden in the trial:
-	# the right-top read is the same sun/moon icon as the gates, with no text.
-	var old_icon: Control = _header.get_node_or_null("AffinityIcon") as Control
-	if old_icon != null:
-		old_icon.visible = false
-	var old_text: Control = _header.get_node_or_null("AffinityText") as Control
-	if old_text != null:
-		old_text.visible = false
-	_polarity_icon = TrialPolarityIcon.new()
-	_polarity_icon.name = "TrialAffinityIcon"
-	_polarity_icon.position = Vector2(610.0, 7.0)
-	_root.add_child(_polarity_icon)
-	_polarity_icon.set_positive(false)
+
+
+func _build_boss_bar() -> void:
+	_boss_bar = HudBossBar.new()
+	_boss_bar.name = "BossBar"
+	_boss_bar.configure("守卫", 3, 1, _font)
+	_boss_bar.position = HudBossBar.HUD_POSITION
+	_root.add_child(_boss_bar)
+	_boss_bar.set_active(false)
 
 
 ## Shared two-segment red health VALUE bar, fixed at the lower-left HUD corner.
 ## The trial has no "受击 1 / 2" text: an accepted hit removes one segment, the
 ## second hit starts the existing failure recovery and both segments refill.
-## The row never follows the character.
+## The row never follows the character; the 10 px heart replaces the old word.
 func _build_hit_pips() -> void:
 	_hit_pips = PlayerHealthBar.new()
 	_hit_pips.name = "PlayerHealthBar"
@@ -213,13 +202,6 @@ func _build_hit_pips() -> void:
 	_hit_pips.visible = false
 	_root.add_child(_hit_pips)
 	_hit_pips.pivot_offset = _hit_pips.size * 0.5
-	_health_label = _label(
-		"生命值", PlayerHealthBar.LABEL_POSITION, Vector2(52.0, 14.0),
-		PlayerHealthBar.LABEL_FONT_SIZE, MUTED
-	)
-	_health_label.name = "HealthValueLabel"
-	_health_label.visible = false
-	_root.add_child(_health_label)
 
 
 ## Kept for the existing chapter call.  The bar is fixed at the lower-left, so
@@ -274,19 +256,42 @@ func get_hit_pulse_duration() -> float:
 func _update_hit_pips_visibility() -> void:
 	if _hit_pips == null:
 		return
-	# Pausing covers the guide, mechanic popup and pause page; the chapter's
-	# own flag covers failure recovery, completion and scene leaving.  The
-	# recovery cover is also checked directly so a direct alpha test hides it.
+	# Pausing covers the guide, mechanic popup and pause page; completion and
+	# recovery are explicit.  The recovery cover is checked directly so a direct
+	# alpha test hides the bar too.
 	var should_show: bool = (
 		_pips_visible
 		and not get_tree().paused
+		and not _completion_visible
+		and not _pause_visible
 		and not (_recovery_cover != null and _recovery_cover.visible)
 	)
-	_hit_pips.visible = should_show
-	if _health_label != null:
-		_health_label.visible = should_show
-	if not should_show:
-		_hit_pips.scale = Vector2.ONE
+	if should_show:
+		if not _hit_pips.visible:
+			_hit_pips.visible = true
+			_hit_pips.modulate.a = 0.0
+			var tween: Tween = create_tween()
+			tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+			tween.tween_property(_hit_pips, "modulate:a", 1.0, 0.15)
+		return
+	_hit_pips.visible = false
+	_hit_pips.scale = Vector2.ONE
+
+
+## Pause, guide/popup, recovery and completion own the screen: hide the
+## chapter/objective/event row, boss bar and health group; restore on close.
+func _update_chrome_visibility() -> void:
+	var hidden: bool = (
+		_pause_visible
+		or _completion_visible
+		or (get_tree() != null and get_tree().paused)
+		or (_recovery_cover != null and _recovery_cover.visible)
+	)
+	if _header != null:
+		_header.set_chrome_visible(not hidden)
+	if _boss_bar != null:
+		_boss_bar.set_modal_suppressed(hidden)
+	_update_hit_pips_visibility()
 
 
 func _update_hit_pulse(delta: float) -> void:
@@ -304,13 +309,6 @@ func _update_hit_pulse(delta: float) -> void:
 	_hit_pips.scale = Vector2.ONE * (1.0 + HIT_PULSE_SCALE * amount)
 	if _hit_pulse_left <= 0.0:
 		_hit_pips.scale = Vector2.ONE
-
-
-func _build_event() -> void:
-	_event_label = _label("", Vector2(12.0, 42.0), Vector2(430.0, 16.0), 12, GOLD)
-	_event_label.name = "EventLine"
-	_event_label.visible = false
-	_root.add_child(_event_label)
 
 
 func _build_recovery_cover() -> void:
@@ -523,29 +521,23 @@ func _activate_pause_entry(focused: PixelMenuButton) -> void:
 func set_polarity(positive: bool) -> void:
 	if _header != null:
 		_header.set_polarity(positive)
-	if _polarity_icon != null:
-		_polarity_icon.set_positive(positive)
 
 
-func get_affinity_icon() -> TrialPolarityIcon:
-	return _polarity_icon
+func get_affinity_icon() -> PolarityPhaseIcon:
+	return _header.get_phase_icon() if _header != null else null
 
 
 func get_affinity_icon_positive() -> bool:
-	return _polarity_icon.is_positive() if _polarity_icon != null else false
+	var icon: PolarityPhaseIcon = get_affinity_icon()
+	return icon.is_positive() if icon != null else false
 
 
 func is_affinity_text_visible() -> bool:
-	if _header == null:
-		return false
-	var text: Control = _header.get_node_or_null("AffinityText") as Control
-	return text != null and text.visible
+	return false
 
 
 func get_affinity_icon_rect() -> Rect2:
-	if _polarity_icon == null:
-		return Rect2()
-	return Rect2(_polarity_icon.position, _polarity_icon.get_icon_size())
+	return _header.get_icon_rect() if _header != null else Rect2()
 
 
 func set_player_hits(current_value: int, max_value: int = 2) -> void:
@@ -563,28 +555,50 @@ func get_hit_pips_max() -> int:
 	return _hit_pips.get_max() if _hit_pips != null else 0
 
 
+func is_health_bar_visible() -> bool:
+	return _hit_pips != null and _hit_pips.visible
+
+
 ## Compatibility name kept from the old heart row; the value is now the shared
 ## red health VALUE bar.
 func get_hit_pips() -> PlayerHealthBar:
 	return _hit_pips
 
 
+## Old 12 px "生命值" word is gone; the heart icon is the only label.
 func get_health_label() -> Label:
-	return _health_label
+	return null
+
+
+func set_boss_visible(value: bool) -> void:
+	if _boss_bar != null:
+		_boss_bar.set_active(value)
+
+
+## Trial guard uses the existing three true-damage points.
+func set_boss_state(core_current: int, core_max: int = 3) -> void:
+	if _boss_bar != null:
+		_boss_bar.set_bar_values(core_current, core_max, 0, 1)
+
+
+func get_boss_bar() -> HudBossBar:
+	return _boss_bar
+
+
+func is_boss_bar_visible() -> bool:
+	return _boss_bar != null and _boss_bar.is_bar_visible()
 
 
 func set_objective(text_value: String) -> void:
 	_subtitle = text_value
 	if _header != null:
-		_header.configure(TITLE, text_value, _font)
+		_header.set_objective(text_value)
 
 
 func show_event(text_value: String, seconds: float = 1.5) -> void:
-	if _event_label == null:
+	if _header == null:
 		return
-	_event_label.text = text_value
-	_event_label.visible = true
-	_event_left = maxf(seconds, 0.1)
+	_header.show_event(text_value, seconds)
 
 
 func set_recovery_alpha(value: float) -> void:
@@ -593,6 +607,7 @@ func set_recovery_alpha(value: float) -> void:
 	var alpha: float = clampf(value, 0.0, 1.0)
 	_recovery_cover.visible = alpha > 0.0
 	_recovery_cover.color = Color(0.0, 0.0, 0.0, alpha)
+	_update_chrome_visibility()
 
 
 func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
@@ -601,10 +616,7 @@ func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 		return
 	_completion_overlay.visible = value
 	if _header != null:
-		_header.visible = not value
-	if _event_label != null:
-		_event_label.visible = not value
-	set_hit_pips_visible(not value)
+		_header.clear_event()
 	_completion_title.text = "试炼完成 · 用时 %s" % _format_time(elapsed_seconds)
 	if value:
 		_completion_tween = _play_reveal(
@@ -615,6 +627,7 @@ func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 		_snap_reveal(_completion_tween, _completion_overlay, _completion_panel, _completion_panel_base)
 		_completion_tween = null
 		_release_completion_focus()
+	_update_chrome_visibility()
 
 
 func show_pause(value: bool) -> void:
@@ -633,6 +646,7 @@ func show_pause(value: bool) -> void:
 			button.release_focus()
 		if _completion_visible:
 			call_deferred("_focus_completion_primary")
+	_update_chrome_visibility()
 
 
 ## Same-frame overlay with a 0.18 s alpha/scale/slide entrance (see UiReveal).
@@ -677,7 +691,7 @@ func _format_time(seconds: float) -> String:
 
 # --- test / capture accessors ---------------------------------------------
 
-func get_header() -> CompactLevelHeader:
+func get_header() -> HudObjective:
 	return _header
 
 
@@ -769,10 +783,10 @@ func get_completion_title_label() -> Label:
 	return _completion_title
 
 
-## Current event-line text, whether or not its display timer has expired.
+## Current event text, whether or not the 0.15 s fade-out has finished.
 func get_event_text() -> String:
-	return _event_label.text if _event_label != null else ""
+	return _header.get_event_text() if _header != null else ""
 
 
 func is_event_visible() -> bool:
-	return _event_label != null and _event_label.visible
+	return _header != null and _header.is_event_visible()

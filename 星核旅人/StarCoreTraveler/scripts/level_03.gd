@@ -143,6 +143,7 @@ func _ready() -> void:
 	_build_checkpoint_mark()
 	_guard.set_player_target(_player)
 	_guard.reset_state(GUARD_SPAWN, true, false)
+	_guard.set_health_bar_suppressed(true)
 	_l3_player.set_strike_source(_guard)
 	_connect_guard()
 	_connect_link()
@@ -1463,6 +1464,18 @@ func _update_level_hud() -> void:
 	_hud03.set_objective(phase)
 	var combat: bool = _is_combat_active()
 	_hud03.set_combat(combat)
+	# Same 360x16 boss bar as every combat chapter; the guard's existing three
+	# true-damage points are the core cells, and its old overhead bar is
+	# suppressed in presentation only.
+	var show_boss: bool = (
+		_stable_stage >= STAGE_ARENA
+		and not _guard.is_defeated()
+		and not _guard.is_waiting_teaching_rubble()
+		and not _completed
+		and not _cine.is_active()
+	)
+	_hud03.set_boss_visible(show_boss)
+	_hud03.set_boss_state(_guard.get_remaining_marks(), _guard.get_max_true_damage())
 	if show_guide:
 		_hud03.set_guide(target, stage_key)
 	else:

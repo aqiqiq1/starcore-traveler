@@ -8,9 +8,9 @@
 [ext_resource type="Script" path="res://dlc/star_loom/loom_fx.gd" id="6_fx"]
 [ext_resource type="Script" path="res://dlc/star_loom/loom_audio.gd" id="7_audio"]
 [ext_resource type="Script" path="res://dlc/star_loom/loom_hud.gd" id="8_hud"]
-[ext_resource type="Texture2D" path="res://dlc/star_loom/assets/city/city_back_960x360.png" id="9_back"]
-[ext_resource type="Texture2D" path="res://dlc/star_loom/assets/city/city_fore_960x360.png" id="10_fore"]
-[ext_resource type="Texture2D" path="res://dlc/star_loom/assets/city/city_floor_960x40.png" id="11_floor"]
+[ext_resource type="Texture2D" path="res://dlc/star_loom/assets/city_v2/city_back_960x360.png" id="9_back"]
+[ext_resource type="Texture2D" path="res://dlc/star_loom/assets/city_v2/city_fore_960x360.png" id="10_fore"]
+[ext_resource type="Texture2D" path="res://dlc/star_loom/assets/city_v2/city_floor_960x40.png" id="11_floor"]
 [ext_resource type="Texture2D" path="res://dlc/star_loom/assets/city/vent_28x12_2f.png" id="12_vent"]
 [ext_resource type="Script" path="res://dlc/star_loom/loom_brazier.gd" id="13_brazier"]
 
@@ -71,11 +71,11 @@ hframes = 2
 frame = 0
 
 [node name="BrazierLeft" type="Node2D" parent="Props"]
-position = Vector2(260, 320)
+position = Vector2(236, 320)
 script = ExtResource("13_brazier")
 
 [node name="BrazierRight" type="Node2D" parent="Props"]
-position = Vector2(920, 320)
+position = Vector2(860, 320)
 script = ExtResource("13_brazier")
 
 [node name="Boss" type="Node2D" parent="."]

@@ -1,0 +1,15 @@
+# Godot 本地缓存与导出
+星核旅人/StarCoreTraveler/.godot/
+星核旅人/StarCoreTraveler/export/
+星核旅人/StarCoreTraveler/build/
+*.pck
+*.exe
+*.zip
+
+# 测试运行产物：日志与截图只作本机证据，不随代码提交
+星核旅人/StarCoreTraveler/**/tests/**/*.log
+星核旅人/StarCoreTraveler/**/tests/out/
+星核旅人/StarCoreTraveler/screenshots/
+
+# 研究用第三方参考截图，仅本机留存
+星核旅人/StarCoreTraveler/**/references/

@@ -1,10 +1,12 @@
 class_name L3HUD
 extends CanvasLayer
 
-## L3-only low HUD after the play-test: one short objective line, the polarity
-## talisman header, a transient world-space direction guide, small object-bound E
-## text and two tiny hit pips. No task/core black panel, no full-width toast bar.
-## The completion page and the shared pause menu remain the only modal panels.
+## L3-only low HUD after the play-test: one top-left chapter/objective row, the
+## shared 20x20 phase icon, a transient world-space direction guide, small
+## object-bound E text, the fixed lower-left red health bar and the shared
+## 360x16 guard boss bar.  No task/core black panel, no second event row, no
+## full-width toast bar.  The completion page and the shared pause menu remain
+## the only modal panels; all of them hide the HUD chrome.
 
 signal replay_requested
 signal return_to_menu_requested
@@ -17,18 +19,17 @@ const DIM: Color = Color("#728889")
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 
 var _root: Control
-var _header: CompactLevelHeader
-var _objective: Label
+var _header: HudObjective
 var _objective_base: String = ""
-var _event_left: float = 0.0
 var _control_hint: Label = null
 var _control_left: float = 0.0
 var _guide: L3Guide
+## Shared 360x16 boss bar for the L3 guard.
+var _boss_bar: HudBossBar
 ## Fixed lower-left health VALUE bar (shared with every chapter that has an
 ## enemy).  Hits taken are mirrored here; the old overhead talisman shards are
 ## no longer drawn by L3Guide.
 var _health_bar: PlayerHealthBar
-var _health_label: Label
 var _hits: int = 0
 ## Full-screen recovery cover. It sits above the ordinary HUD (header,
 ## objective, guide, prompts) but below the completion page, while the separate
@@ -58,7 +59,7 @@ func _ready() -> void:
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
 	_build_header()
-	_build_objective()
+	_build_boss_bar()
 	_build_guide()
 	_build_health_bar()
 	_build_recovery_cover()
@@ -68,6 +69,10 @@ func _ready() -> void:
 	set_hits(0)
 	set_pause_visible(false)
 	show_completion(false)
+	_root.modulate.a = 0.0
+	var intro_tween: Tween = create_tween()
+	intro_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	intro_tween.tween_property(_root, "modulate:a", 1.0, 0.15)
 
 
 func _load_font() -> Font:
@@ -101,25 +106,24 @@ func _label(
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
-	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_constant_override("outline_size", 1)
 	return label
 
 
 func _build_header() -> void:
 	_header = CompactLevelHeader.new()
-	_header.name = "CompactHeader"
+	_header.name = "HudObjective"
 	_root.add_child(_header)
-	_header.configure("断桥外郭", "第三关 · 入城之路", _font)
+	_header.configure("断桥外郭", "送核入符石仓", _font)
 	_header.set_polarity(true)
 
 
-func _build_objective() -> void:
-	# One dynamic line at y = 58: the short objective, replaced (never stacked)
-	# by a <=1.4 s event, then restored. No second event row.
-	_objective = _label("送核入符石仓", Vector2(15.0, 58.0), Vector2(430.0, 18.0), 12, GOLD)
-	_root.add_child(_objective)
-	# The old bottom "J 攻击 · Q 换相" strip is gone; bindings live only in the
-	# pause page. The compatibility label stays null so old callers are inert.
+func _build_boss_bar() -> void:
+	_boss_bar = HudBossBar.new()
+	_boss_bar.name = "BossBar"
+	_boss_bar.configure("守卫", 3, 1, _font)
+	_boss_bar.position = HudBossBar.HUD_POSITION
+	_root.add_child(_boss_bar)
 
 
 func _build_guide() -> void:
@@ -131,9 +135,9 @@ func _build_guide() -> void:
 	_root.add_child(_guide)
 
 
-## Two-segment red bar fixed at (14,324); the label is the same 12 px
-## 生命值 row used by the DLC chapters.  It is display-only and sits under the
-## recovery cover/completion page, never over the player.
+## Two-segment red bar fixed at (14,324), with the 10x10 heart at its left.
+## It is display-only and sits under the recovery cover/completion page, never
+## over the player, and never prints a "生命值" word.
 func _build_health_bar() -> void:
 	_health_bar = PlayerHealthBar.new()
 	_health_bar.name = "PlayerHealthBar"
@@ -141,13 +145,7 @@ func _build_health_bar() -> void:
 	_health_bar.position = PlayerHealthBar.HUD_POSITION
 	_health_bar.set_state(2, 2)
 	_root.add_child(_health_bar)
-	_health_label = _label(
-		"生命值", PlayerHealthBar.LABEL_POSITION, Vector2(52.0, 14.0),
-		PlayerHealthBar.LABEL_FONT_SIZE, MUTED
-	)
-	_health_label.name = "HealthValueLabel"
-	_root.add_child(_health_label)
-	_update_health_bar_visibility()
+	_update_chrome_visibility()
 
 
 ## The recovery cover is a plain black rectangle owned by this HUD. The level
@@ -249,8 +247,8 @@ func set_polarity(positive: bool) -> void:
 
 func set_objective(text_value: String) -> void:
 	_objective_base = text_value
-	if _objective != null and _event_left <= 0.0:
-		_objective.text = text_value
+	if _header != null:
+		_header.set_objective(text_value)
 
 
 func set_guide(target_world: Vector2, stage_key: String) -> void:
@@ -268,6 +266,17 @@ func set_prompt(text_value: String, world_position: Vector2, visible_value: bool
 		_guide.set_prompt(text_value, world_position, visible_value)
 
 
+func set_boss_visible(value: bool) -> void:
+	if _boss_bar != null:
+		_boss_bar.set_active(value)
+
+
+## Guard HP is the existing three true-damage points; keep those numbers.
+func set_boss_state(core_current: int, core_max: int) -> void:
+	if _boss_bar != null:
+		_boss_bar.set_bar_values(core_current, core_max, 0, 1)
+
+
 func set_hits(value: int) -> void:
 	_hits = clampi(value, 0, 2)
 	if _guide != null:
@@ -278,10 +287,9 @@ func set_hits(value: int) -> void:
 
 
 func show_event(text_value: String, duration: float = 1.4) -> void:
-	# Event replaces the objective on the same line for at most 1.4 s.
-	_event_left = clampf(duration, 0.2, 2.6)
-	if _objective != null:
-		_objective.text = text_value
+	# Event replaces the objective on the same one row for at most 2.6 s.
+	if _header != null:
+		_header.show_event(text_value, duration)
 	if _guide != null:
 		_guide.show_event(text_value, duration)
 
@@ -294,31 +302,45 @@ func show_control_hint(_duration: float = 3.0) -> void:
 
 
 func _process(delta: float) -> void:
-	_update_health_bar_visibility()
-	if _event_left > 0.0:
-		_event_left = maxf(_event_left - delta, 0.0)
-		if _event_left <= 0.0 and _objective != null:
-			_objective.text = _objective_base
+	_update_chrome_visibility()
 	if _control_left > 0.0:
 		_control_left = maxf(_control_left - delta, 0.0)
 		if _control_left <= 0.0 and _control_hint != null:
 			_control_hint.visible = false
 
 
-## Pause, mechanic popup, failure recovery and the completion page all own the
-## screen; the fixed bar and its label are hidden rather than dimmed.
-func _update_health_bar_visibility() -> void:
+## Pause, mechanic popup/guide, failure recovery and the completion page all
+## own the screen; the top row, boss bar and health group are hidden rather than
+## dimmed, then fade back in over 0.15 s.
+func _update_chrome_visibility() -> void:
+	var hidden: bool = (
+		_pause_visible
+		or _completion_active
+		or (get_tree() != null and get_tree().paused)
+		or (_recovery_cover != null and _recovery_cover.visible)
+	)
+	if _header != null:
+		_header.set_chrome_visible(not hidden)
+	if _boss_bar != null:
+		_boss_bar.set_modal_suppressed(hidden)
+	if _guide != null and not _completion_active:
+		_guide.visible = not hidden and not _pause_visible
+	_set_health_visible(not hidden)
+
+
+func _set_health_visible(value: bool) -> void:
 	if _health_bar == null:
 		return
-	var should_show: bool = (
-		not _pause_visible
-		and not _completion_active
-		and not get_tree().paused
-		and not (_recovery_cover != null and _recovery_cover.visible)
-	)
-	_health_bar.visible = should_show
-	if _health_label != null:
-		_health_label.visible = should_show
+	if value:
+		if _health_bar.visible:
+			return
+		_health_bar.visible = true
+		_health_bar.modulate.a = 0.0
+		var tween: Tween = create_tween()
+		tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		tween.tween_property(_health_bar, "modulate:a", 1.0, 0.15)
+		return
+	_health_bar.visible = false
 
 
 func show_world_text(text_value: String, world_position: Vector2, duration: float = 0.7) -> void:
@@ -336,7 +358,7 @@ func set_pause_visible(value: bool) -> void:
 	_pause_visible = value
 	if _guide != null:
 		_guide.visible = not value and not _completion_active
-	_update_health_bar_visibility()
+	_update_chrome_visibility()
 
 
 func set_gameplay_visible(value: bool) -> void:
@@ -352,7 +374,7 @@ func set_recovery_alpha(value: float) -> void:
 	_recovery_cover.color = Color(0.0, 0.0, 0.0, alpha)
 	_recovery_cover.visible = alpha > 0.0001
 	_recovery_cover.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_update_health_bar_visibility()
+	_update_chrome_visibility()
 
 
 func get_recovery_alpha() -> float:
@@ -366,17 +388,12 @@ func is_recovery_cover_visible() -> bool:
 func show_completion(value: bool, completion_count: int = 0) -> void:
 	if _completion_overlay == null:
 		return
-	if _header != null:
-		_header.visible = not value
-	if _objective != null:
-		_objective.visible = not value
 	if _control_hint != null and value:
 		_control_hint.visible = false
-	_completion_overlay.visible = value
 	_completion_active = value
 	if _guide != null:
 		_guide.visible = not value and not _pause_visible
-	_update_health_bar_visibility()
+	_completion_overlay.visible = value
 	if value:
 		# A failed scene change must never leave the page with dead buttons.
 		_play_completion_reveal()
@@ -385,6 +402,7 @@ func show_completion(value: bool, completion_count: int = 0) -> void:
 	else:
 		release_completion_focus()
 		_stop_completion_reveal()
+	_update_chrome_visibility()
 
 
 ## Same-frame page; only alpha/scale/slide animate (see UiReveal).
@@ -443,7 +461,11 @@ func get_compact_header() -> CompactLevelHeader:
 
 
 func get_objective_text() -> String:
-	return _objective.text if _objective != null else ""
+	return _objective_base
+
+
+func get_boss_bar() -> HudBossBar:
+	return _boss_bar
 
 
 func get_guide() -> L3Guide:
@@ -458,8 +480,9 @@ func get_player_health_bar() -> PlayerHealthBar:
 	return _health_bar
 
 
+## The old 12 px "生命值" word label is gone; the heart icon carries the read.
 func get_health_label() -> Label:
-	return _health_label
+	return null
 
 
 func is_health_bar_visible() -> bool:
@@ -485,9 +508,7 @@ func get_prompt_text() -> String:
 
 
 func get_event_text() -> String:
-	if _event_left > 0.0 and _objective != null:
-		return _objective.text
-	return ""
+	return _header.get_event_text() if _header != null else ""
 
 
 func get_control_hint_visible() -> bool:

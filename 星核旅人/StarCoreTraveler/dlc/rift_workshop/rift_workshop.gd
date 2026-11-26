@@ -41,9 +41,14 @@ extends Node2D
 signal level_completed
 
 @export var show_intro_guide: bool = true
+## First-entry opening film; R and combat retries never replay it.
+@export var show_intro_cinematic: bool = true
 
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const RIFT_GUIDE_SCRIPT: Script = preload("res://dlc/rift_workshop/rift_guide.gd")
+const INTRO_CINEMATIC_SCENE: PackedScene = preload(
+	"res://dlc/rift_workshop/rift_intro_cinematic.tscn"
+)
 const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popup.tscn")
 const MECHANIC_DEMO_DIR: String = "res://dlc/ui/demos"
 const FOOTSTEP_SCRIPT = preload("res://scripts/audio/player_footstep_audio.gd")
@@ -161,6 +166,10 @@ var _recovery_alpha: float = 0.0
 var _recovery_elapsed: float = 0.0
 var _recovery_applying: bool = false
 var _intro_guide: DlcGuide = null
+var _intro_cinematic: DlcIntroCinematic = null
+var _intro_active: bool = false
+var _intro_played: bool = false
+var _intro_skipped: bool = false
 var _mechanic_popup: MechanicPopup = null
 
 
@@ -278,6 +287,39 @@ func _ready() -> void:
 	LEVEL_FLOW.release_one_shot_actions()
 	_player.begin_input_override()
 	_start_lock_ticks = 3
+	call_deferred("_start_intro_cinematic_or_guide")
+
+
+## The film owns the screen before the guide.  The ambience player is ALWAYS and
+## was started above, so the music keeps running under every film beat.
+func _start_intro_cinematic_or_guide() -> void:
+	if show_intro_cinematic and not _intro_played and not _completed and not _scene_leaving:
+		if _intro_cinematic == null or not is_instance_valid(_intro_cinematic):
+			_intro_cinematic = INTRO_CINEMATIC_SCENE.instantiate() as DlcIntroCinematic
+		if _intro_cinematic != null:
+			_intro_active = true
+			_intro_skipped = false
+			_hud.visible = false
+			_footstep_stop()
+			_boss.set_suspended(true)
+			_player.lock_for_cinematic()
+			add_child(_intro_cinematic)
+			_intro_cinematic.finished.connect(_on_intro_cinematic_finished)
+			_intro_cinematic.start()
+			return
+	if show_intro_guide:
+		_open_intro_guide()
+
+
+func _on_intro_cinematic_finished(skipped: bool) -> void:
+	_intro_active = false
+	_intro_played = true
+	_intro_skipped = skipped
+	_hud.visible = true
+	_attack_key_down = false
+	_player.unlock_after_cinematic()
+	_player.begin_input_override()
+	_start_lock_ticks = 3
 	if show_intro_guide:
 		call_deferred("_open_intro_guide")
 
@@ -322,7 +364,7 @@ func _setup_footsteps() -> void:
 func _footstep_allowed() -> bool:
 	if _completed or _recovery_active or _retry_pending or _scene_leaving:
 		return false
-	if _pause_open or get_tree().paused:
+	if _pause_open or get_tree().paused or _intro_active:
 		return false
 	if _start_lock_ticks > 0 or _arena_intro_left > 0.0:
 		return false
@@ -395,6 +437,8 @@ func is_mechanic_popup_blocked() -> bool:
 		return true
 	if _pause_open:
 		return true
+	if _intro_active:
+		return true
 	if _start_lock_ticks > 0 or _arena_intro_left > 0.0:
 		return true
 	if _intro_guide != null and is_instance_valid(_intro_guide):
@@ -404,6 +448,11 @@ func is_mechanic_popup_blocked() -> bool:
 
 
 func _exit_tree() -> void:
+	_intro_active = false
+	if _intro_cinematic != null and is_instance_valid(_intro_cinematic):
+		_intro_cinematic.abort()
+		_intro_cinematic.queue_free()
+		_intro_cinematic = null
 	_footstep_stop()
 	_release_ambience()
 	if _audio != null:
@@ -419,6 +468,8 @@ func _exit_tree() -> void:
 
 func _physics_process(delta: float) -> void:
 	if get_tree().paused or _completed or _scene_leaving or _recovery_active:
+		return
+	if _intro_active:
 		return
 	if _retry_pending:
 		_retry_pending_left = maxf(_retry_pending_left - delta, 0.0)
@@ -457,6 +508,8 @@ func _physics_process(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	if get_tree().paused or _scene_leaving:
+		return
+	if _intro_active:
 		return
 	if not _completed:
 		_elapsed += delta
@@ -589,6 +642,8 @@ func _update_objective(force: bool = false) -> void:
 # --- input -----------------------------------------------------------------
 
 func _input(event: InputEvent) -> void:
+	if _intro_active:
+		return
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
 		return
 	if not (event is InputEventKey):
@@ -633,6 +688,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _intro_active:
+		return
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
 		return
 	if _scene_leaving or _recovery_active:
@@ -668,7 +725,7 @@ func _quit_after_audio_release() -> void:
 
 
 func _set_paused(value: bool) -> void:
-	if value == _pause_open:
+	if _intro_active or value == _pause_open:
 		return
 	_pause_open = value
 	_hud.show_pause(value)
@@ -1500,6 +1557,22 @@ func get_ambience() -> DlcChapterAmbience:
 
 func get_intro_guide() -> DlcGuide:
 	return _intro_guide
+
+
+func get_intro_cinematic() -> DlcIntroCinematic:
+	return _intro_cinematic
+
+
+func is_intro_active() -> bool:
+	return _intro_active
+
+
+func has_played_intro() -> bool:
+	return _intro_played
+
+
+func was_intro_skipped() -> bool:
+	return _intro_skipped
 
 
 func get_camera() -> Camera2D:
