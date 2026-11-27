@@ -38,6 +38,8 @@ import random
 
 from PIL import Image, ImageDraw
 
+TAU = math.tau
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 DLC = os.path.dirname(HERE)
 OUT = os.path.join(DLC, "assets", "interior")
@@ -102,11 +104,11 @@ FIRE_MID = (234, 142, 58, 255)
 FIRE_LIGHT = (255, 196, 108, 255)
 FIRE_HOT = (255, 235, 180, 255)
 
-GLASS_TOP = (45, 47, 51, 255)
-GLASS_MID = (35, 37, 41, 255)
-GLASS_LOW = (25, 27, 31, 255)
-GLASS_HI = (62, 62, 64, 255)
-GLASS_WARM = (72, 58, 46, 255)
+GLASS_TOP = (55, 53, 51, 255)
+GLASS_MID = (51, 50, 49, 255)
+GLASS_LOW = (48, 47, 46, 255)
+GLASS_HI = (72, 68, 62, 255)
+GLASS_WARM = (84, 66, 50, 255)
 
 # Recessed second-layer masonry.  One step darker than the outer wall, but the
 # 32x16 coursing stays readable; the dark gap around it is depth, not a hole.
@@ -510,61 +512,75 @@ def mirror_reflections(img: Image.Image, px0: int, py0: int, px1: int, py1: int)
     right, bottom = px1 - 4, py1 - 4
     if right - left < 10 or bottom - top < 10:
         return
-    # Reflected lower brick wall: 24x12, 1 px seams, low contrast.
-    for y in range(top + 54, bottom):
-        rel = y - (top + 54)
-        row = rel // 12
-        offset = 0 if row % 2 == 0 else 12
-        for x in range(left, right + 1):
-            if rel % 12 == 0:
-                px(draw, x, y, (46, 48, 51, 255))
-            elif rel % 12 == 11:
-                px(draw, x, y, (34, 36, 39, 255))
-            elif (x - left + offset) % 24 == 0:
-                px(draw, x, y, (34, 36, 39, 255))
-            else:
-                tone = (39, 41, 44, 255) if (row + (x // 24)) % 2 == 0 else (42, 44, 47, 255)
-                px(draw, x, y, tone)
+    # Broken patch of reflected masonry in the lower-left corner; deliberately
+    # partial, so it reads as a reflection rather than window muntins.
+    for row in range(3):
+        y = bottom - 38 + row * 10
+        for col in range(3):
+            x0 = left + 8 + col * 20 + (row % 2) * 6
+            x1 = min(right - 6, x0 + 18)
+            if x1 <= x0:
+                continue
+            rect(draw, x0, y, x1, y + 7, (40, 39, 39, 255))
+            rect(draw, x0, y, x1, y, (46, 44, 42, 255))
+            rect(draw, x0, y + 7, x1, y + 7, (34, 33, 33, 255))
+            px(draw, x0 + 4, y + 3, (43, 41, 40, 255))
+    # Reflected diagonal roof brace, broken at a joint: reads as a mirror
+    # reflection, not as a window transom.
+    for index in range(min(right - left - 20, 126)):
+        x = left + 8 + index
+        y = top + 18 + index // 4
+        if y >= bottom - 12:
+            break
+        if 58 <= index <= 64:
+            continue
+        rect(draw, x, y, x, y + 1, (43, 41, 39, 255))
+        px(draw, x, y, (48, 46, 43, 255))
     # Reflected broken gear at the upper right.
-    gcx, gcy, gr = right - 18, top + 30, 20
+    gcx, gcy, gr = right - 22, top + 34, 26
     draw.ellipse((gcx - gr, gcy - gr, gcx + gr, gcy + gr),
-                 outline=(43, 45, 48, 255), width=2)
-    for index in range(8):
-        angle = TAU * float(index) / 8.0
+                 outline=(46, 44, 41, 255), width=2)
+    for index in range(10):
+        angle = TAU * float(index) / 10.0
         tx = gcx + int(round(math.cos(angle) * (gr - 1)))
         ty = gcy + int(round(math.sin(angle) * (gr - 1)))
-        rect(draw, tx - 2, ty - 2, tx + 2, ty + 2, (41, 43, 46, 255))
-        px(draw, tx - 1, ty - 2, (48, 50, 52, 255))
-    draw.ellipse((gcx - 5, gcy - 5, gcx + 5, gcy + 5),
-                 outline=(46, 48, 51, 255), width=1)
+        rect(draw, tx - 2, ty - 2, tx + 2, ty + 2, (42, 40, 38, 255))
+        px(draw, tx - 1, ty - 2, (50, 48, 44, 255))
+    draw.ellipse((gcx - 6, gcy - 6, gcx + 6, gcy + 6),
+                 outline=(49, 47, 43, 255), width=1)
     # Reflected chain on the left margin of the glass.
     cx = left + 12
     for y in range(top + 18, min(bottom - 20, top + 116), 4):
         if (y // 4) % 2 == 0:
-            rect(draw, cx - 1, y, cx + 1, y, (43, 45, 48, 255))
+            rect(draw, cx - 1, y, cx + 1, y, (44, 42, 40, 255))
         else:
-            rect(draw, cx, y, cx, y + 2, (39, 41, 44, 255))
+            rect(draw, cx, y, cx, y + 2, (41, 39, 37, 255))
     # Reflected wood rack / pipe across the lower glass.
     rack_y = bottom - 34
-    rect(draw, left + 6, rack_y, right - 6, rack_y + 2, (42, 44, 47, 255))
-    rect(draw, left + 6, rack_y, right - 6, rack_y, (47, 49, 52, 255))
+    rect(draw, left + 6, rack_y, right - 6, rack_y + 2, (43, 41, 39, 255))
+    rect(draw, left + 6, rack_y, right - 6, rack_y, (48, 46, 43, 255))
     for bx in range(left + 10, right - 8, 28):
-        rect(draw, bx, rack_y + 2, bx + 2, bottom - 6, (39, 41, 44, 255))
-        px(draw, bx, rack_y + 2, (46, 48, 51, 255))
+        rect(draw, bx, rack_y + 2, bx + 2, bottom - 6, (41, 39, 37, 255))
+        px(draw, bx, rack_y + 2, (47, 45, 42, 255))
     # A faint vertical post reflection near the left third.
-    rect(draw, left + 30, top + 16, left + 32, bottom - 8, (36, 38, 41, 255))
-    px(draw, left + 30, top + 16, (44, 46, 49, 255))
+    rect(draw, left + 30, top + 16, left + 32, bottom - 8, (41, 40, 38, 255))
+    px(draw, left + 30, top + 16, (47, 45, 42, 255))
+    # A tiny reflected sconce flame in the lower-left, low alpha.
+    glow(img, left + 18, bottom - 54, 10, 17, FIRE_DARK, 12)
+    rect(draw, left + 17, bottom - 58, left + 18, bottom - 52, (69, 55, 41, 255))
+    px(draw, left + 18, bottom - 60, (84, 66, 46, 255))
 
 
 def ember_cluster(img: Image.Image, cx: int, cy: int, rx: int, ry: int) -> None:
     """Low-alpha furnace embers with a handful of 1 px hot points."""
-    glow(img, cx, cy, rx, ry, FIRE_DARK, 14)
-    glow(img, cx, cy - 3, max(8, rx // 2), max(6, ry // 2), FIRE_MID, 9)
+    glow(img, cx, cy, rx, ry, FIRE_DARK, 19)
+    glow(img, cx, cy - 3, max(8, rx // 2), max(6, ry // 2), FIRE_MID, 11)
     draw = ImageDraw.Draw(img)
     embers = (
         (-112, -2, FIRE_LIGHT), (-86, 4, FIRE_MID), (-54, -5, FIRE_LIGHT),
         (-26, 2, FIRE_MID), (4, -4, FIRE_HOT), (34, 3, FIRE_LIGHT),
         (62, -2, FIRE_MID), (92, 4, FIRE_LIGHT), (118, -1, FIRE_MID),
+        (-40, 7, FIRE_MID), (48, 8, FIRE_LIGHT),
     )
     for dx, dy, color in embers:
         px(draw, cx + dx, cy + dy, color)
@@ -927,7 +943,7 @@ def mirror_bay(img: Image.Image, x0: int, y0: int, x1: int, y1: int) -> None:
     arch_edges(draw, x0 + 3, y0 + 3, x1 - 3, y1, STONE_3, STONE_0)
     inner_brick_arch(img, x0 + 13, y0 + 13, x1 - 13, y1 - 6, inset=4)
     # Physical silhouettes sit behind the plate; only the margins stay visible.
-    dark_gear(img, x0 + 38, y0 + 32, 20, body=SIL_1, edge=SIL_2, hole=SIL_DARK, teeth=9)
+    dark_gear(img, x0 + 38, y0 + 33, 18, body=SIL_1, edge=SIL_2, hole=SIL_DARK, teeth=9)
     dark_pipe(img, x1 - 22, y0 + 22, x1 - 16, y1 - 12)
     dark_chain(img, x0 + 20, y0 + 28, y1 - 16)
     dark_rack(img, x0 + 18, y1 - 18, x1 - 18, y1 - 8)
@@ -955,8 +971,8 @@ def mirror_bay(img: Image.Image, x0: int, y0: int, x1: int, y1: int) -> None:
     # large diagonal in the plate, so the surface reads as glass.
     for y in range(py0 + 8, py1 - 6):
         sx = px0 + 12 + (y - py0) // 2
-        for dx, color in ((-1, (47, 48, 51, 255)), (0, (56, 56, 58, 255)),
-                          (1, (47, 48, 51, 255))):
+        for dx, color in ((-1, (54, 52, 49, 255)), (0, (66, 62, 57, 255)),
+                          (1, (54, 52, 49, 255))):
             if px0 + 5 < sx + dx < px1 - 5:
                 px(draw, sx + dx, y, color)
     # A short second reflection near the right edge, broken into segments.
@@ -965,7 +981,7 @@ def mirror_bay(img: Image.Image, x0: int, y0: int, x1: int, y1: int) -> None:
             continue
         sx = px0 + 82 + (y - py0) // 4
         if px0 + 5 < sx < px1 - 5:
-            px(draw, sx, y, (45, 46, 49, 255))
+            px(draw, sx, y, (60, 57, 53, 255))
     # Warm firelight reflection along the bottom edge.
     for y in range(py1 - 26, py1 - 2):
         for x in range(px0 + 4, px1 - 3):
@@ -976,6 +992,12 @@ def mirror_bay(img: Image.Image, x0: int, y0: int, x1: int, y1: int) -> None:
                     (old[1] * 7 + GLASS_WARM[1]) // 8,
                     (old[2] * 7 + GLASS_WARM[2]) // 8, 255,
                 ))
+    # A low, continuous floor-light band at the very bottom of the glass.
+    for y in range(py1 - 9, py1 - 3):
+        t = (y - (py1 - 9)) / 6.0
+        rect(draw, px0 + 4, y, px1 - 4, y,
+             lerp((42, 40, 38, 255), (68, 53, 40, 255), t))
+    rect(draw, px0 + 4, py1 - 9, px1 - 4, py1 - 9, (80, 63, 47, 255))
     # Corner clips, a small bottom bracket and a top crest.
     for cx, cy in ((px0, py0), (px1, py0), (px0, py1), (px1, py1)):
         rect(draw, cx - 2, cy - 1, cx + 2, cy + 1, IRON_2)

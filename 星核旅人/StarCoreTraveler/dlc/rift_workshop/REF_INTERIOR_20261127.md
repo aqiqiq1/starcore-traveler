@@ -56,6 +56,13 @@
 - 场景：`Background/CloudRuinsDS03` 已替换为 `Background/Back`、`Mid`、`Fore`；`Background` CanvasLayer 与 `RiftFog` 节点名保留；`RiftFog` 改为暖尘；新增世界坐标 `RiftFloor`（y=320，z=2）。地形/碰撞节点坐标未改，`Column*` 节点名与坐标未改，仅把装饰引用换成本章工坊支柱。
 - 旧云海：`scenes/backgrounds/cloud_ruins_ds03.tscn`、`assets/backgrounds/cloud_ruins_ds03/`、旧 `assets/rift_fog_640x360.png` 全部保留。
 - 截图（640×360，实际运行视口）：`screenshots/rift_interior_20261127/before/{start,mid,boss}.png` 与 `.../after/{start,mid,boss}.png`，逐张实际查看。改造前 `before/start.png` 的测试玩家在 x=96，改造后使用真实出生点 x=40；摄像机都在 0–640，背景对照不受影响（说明见该目录 README）。
+- 开场镜厅帧：`screenshots/rift_interior_20261127/after/intro_mirror_hall.png` 取自实际开场 2.35 s 的 `03b_phase_wave.png`（完整开场证据仍在 `screenshots/rift_opening_20261127/`）；另核看 0.72 s 的 `01_mirror_hall_wide.png`。
+- 拱洞内层（2026-11-27 追加）：入口拱、中段巨拱、镜厅三拱均改为“外层拱框 + 退进 7–10 px 的 32×16 暗砖内墙 + 1 px 内缘弱光 + 底部暖反射”；巨拱加双齿轮、管道/阀轮、木架与余烬光；镜厅三拱在镜面后加齿轮/管道/吊链/木架剪影，并在镜面玻璃里画低对比反射（齿轮、斜撑、木架、砖块、暖底光）。不再用纯黑填充。
+- 近黑实测（max(R,G,B)<24，阈值 40%）：
+  - 背景层拱洞：entry 0.00%、giant 0.00%、mirror1/2/3 1.84% / 0.45% / 1.84%。
+  - 游戏帧：start 5.51%、mid 2.27%、boss 1.19% / 0.71%。
+  - 开场：0.72 s（0.50 暗场）26.90% / 19.70%；2.35 s 4.34% / 2.14%。最差 26.90%，低于 40%。
+  - 复现：`D:/minic/envs/2024212971/python.exe dlc/rift_workshop/tools/verify_interior_arches.py`。
 - 导入：`dlc/rift_workshop/tests/import_interior_20261127.log`，0 ERROR。
 - 回归：`dlc/rift_workshop/tests/run_all_interior_20261127.log`，10 项 exit=0、problems=0；本体三关各 90 帧 0 错误。
 - 说明：跑测试前，工作树中的 DLC2 旧测试套件被删除；已从 HEAD 恢复。`route_test`/`parity_test` 与 `run_all.ps1` 只增加了退出前释放标题 BGM 的测试清理（raw `--quit-after` 会留下 `title_theme.ogg` 的引擎 teardown ERROR），未改任何断言、玩法或 HUD。
