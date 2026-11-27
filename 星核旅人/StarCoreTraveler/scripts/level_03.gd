@@ -11,6 +11,7 @@ signal level_completed
 const PAUSE_MENU_SCRIPT = preload("res://scripts/level03/l3_pause_menu.gd")
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
+const SIDE_ROUTE = preload("res://dlc/shared/side_route/side_route.gd")
 const FOOTSTEP_SCRIPT = preload("res://scripts/audio/player_footstep_audio.gd")
 const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popup.tscn")
 
@@ -50,6 +51,9 @@ const KEY_CORE_SHEET: Texture2D = preload("res://assets/level03_prototype/key_co
 ## Empty = the shared user://chapter_progress.cfg.  Tests may point this at a
 ## throwaway file before add_child(); gameplay never sets it.
 @export var chapter_progress_path: String = ""
+## One-shot seed used only by the hidden 试炼碑 return path.  Normal starts
+## leave it false; _ready also fills it from the SideRoute static hand-off.
+@export var resume_from_side: bool = false
 
 @onready var _l3_player: L3Player = $Player
 @onready var _camera: Camera2D = $Player/Camera2D
@@ -61,6 +65,7 @@ const KEY_CORE_SHEET: Texture2D = preload("res://assets/level03_prototype/key_co
 @onready var _cine: L3Cinematic = $Cine
 @onready var _audio = $Audio
 @onready var _checkpoint: LevelCheckpoint = $BufferCheckpoint
+@onready var _side_gate: HiddenRouteGate = $TrialSteleGate
 @onready var _link: BayRuneLink = $LinkController
 @onready var _rune_field: RuneStoneField = $RuneField
 @onready var _music: BaseLevelMusic = $BaseLevelMusic
@@ -128,12 +133,26 @@ var _mechanic_popup: MechanicPopup = null
 ## explicitly aborted by pause/focus. Reset by R. The guard popup must never
 ## open before this film, including while it is playing.
 var _guard_tip_ready: bool = false
+## Hidden 试炼碑 return: the entrance snapshots the real mainline state so a
+## completed side run does not reset the guard/key/door progress.
+var _side_resume_applied: bool = false
+var _side_resume_position: Vector2 = Vector2.ZERO
+var _side_resume_state: Dictionary = {}
 
 
 func _ready() -> void:
 	super._ready()
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	process_physics_priority = -10
+	var resume: Dictionary = SIDE_ROUTE.consume_resume(SIDE_ROUTE.ORIGIN_L3)
+	if not resume.is_empty():
+		resume_from_side = true
+		var position_value: Variant = resume.get("position", Vector2.ZERO)
+		if typeof(position_value) == TYPE_VECTOR2:
+			_side_resume_position = position_value
+		var state_value: Variant = resume.get("state", {})
+		if typeof(state_value) == TYPE_DICTIONARY:
+			_side_resume_state = state_value as Dictionary
 
 	_player = _l3_player
 	_player.allow_self_reset = false
@@ -202,8 +221,12 @@ func _ready() -> void:
 	_player.begin_input_override()
 	_replay_guard_ticks = 3
 	_elapsed = 0.0
+	if _side_gate != null:
+		_side_gate.set_chapter_progress_path(chapter_progress_path)
 	_update_level_hud()
 	_setup_footsteps()
+	if resume_from_side:
+		_apply_side_resume()
 
 
 func _setup_footsteps() -> void:
@@ -439,6 +462,15 @@ func _input(event: InputEvent) -> void:
 	var code: int = int(key_event.physical_keycode)
 	if code == 0:
 		code = int(key_event.keycode)
+	if code == int(KEY_E) and key_event.pressed and _side_gate != null:
+		# Direct key route for the hidden stele.  Only consumes the event when
+		# the route really starts; ordinary E interactions stay on the base
+		# physics `interact` route.
+		var viewport: Viewport = get_viewport()
+		if _side_gate.try_enter():
+			if viewport != null:
+				viewport.set_input_as_handled()
+			return
 	if code == int(KEY_J):
 		if key_event.pressed:
 			if not _attack_key_down:
@@ -455,6 +487,8 @@ func _try_interact() -> void:
 	if _cine.is_active() or _completed or _resetting or _recovery_active:
 		return
 	if _player == null:
+		return
+	if _side_gate != null and _side_gate.try_enter():
 		return
 	var player_pos: Vector2 = _player.global_position
 
@@ -1137,6 +1171,134 @@ func _retry_combat() -> void:
 	_update_level_hud()
 
 
+# --- hidden 试炼碑 return ---------------------------------------------------
+
+func get_side_route_return_position() -> Vector2:
+	if _player != null:
+		return _player.global_position
+	return GATE_TARGET
+
+
+## Snapshot of the real mainline state at the moment the player entered the
+## hidden trial.  The return seed restores these values instead of resetting
+## the guard/key/door progress that the player already earned.
+func get_side_route_origin_state() -> Dictionary:
+	return {
+		"key_taken": _key_taken,
+		"key_embedded": _key_embedded,
+		"gate_open": _gate.is_open(),
+		"guard_defeated": _guard.is_defeated(),
+		"checkpoint": _checkpoint.is_activated(),
+		"stable_stage": _stable_stage,
+		"stable_positive": _stable_player_positive,
+		"stable_core_positive": _stable_core_positive,
+		"player_hits": _player_hits,
+		"cine_played": _cine.has_played(),
+	}
+
+
+func is_side_route_gate_allowed() -> bool:
+	return (
+		not _completed and not _scene_leaving and not _resetting
+		and not _recovery_active and not _retrying
+		and not _cine.is_active() and not get_tree().paused
+	)
+
+
+func is_side_resume_active() -> bool:
+	return resume_from_side
+
+
+func get_hidden_trial_gate() -> HiddenRouteGate:
+	return _side_gate
+
+
+func _apply_side_resume() -> void:
+	if _side_resume_applied:
+		return
+	_side_resume_applied = true
+	var data: Dictionary = _side_resume_state
+	var key_taken: bool = bool(data.get("key_taken", true))
+	var key_embedded: bool = bool(data.get("key_embedded", true))
+	var gate_open: bool = bool(data.get("gate_open", key_embedded))
+	var guard_defeated: bool = bool(data.get("guard_defeated", true))
+	var checkpoint_active: bool = bool(data.get("checkpoint", true))
+	var cine_played: bool = bool(data.get("cine_played", true))
+
+	_completed = false
+	_scene_leaving = false
+	_resetting = true
+	_retrying = false
+	_clear_retry_pending()
+	_key_taken = key_taken
+	_key_embedded = key_embedded
+	_key_carried = key_taken and not key_embedded
+
+	if guard_defeated:
+		_guard.restore_defeated(GUARD_SPAWN)
+	else:
+		_guard.reset_state(GUARD_SPAWN, true, cine_played)
+		_guard.set_suspended(false)
+	if _key_pickup != null:
+		_key_pickup.visible = false
+		if key_taken and not key_embedded:
+			# Carried but not yet embedded: restore the small key-core sprite
+			# above the body so the resumed state matches the real inventory.
+			_key_pickup.global_position = (
+				_player.global_position + Vector2(float(_player.get_facing()) * 13.0, -23.0)
+			)
+			_key_pickup.visible = true
+		elif not key_taken and guard_defeated:
+			_key_pickup.global_position = _key_drop_position
+			_key_pickup.visible = true
+
+	if gate_open:
+		_gate.force_open()
+	else:
+		_gate.reset_state()
+	_checkpoint.set_activated(checkpoint_active)
+	if _checkpoint_mark != null:
+		_checkpoint_mark.visible = checkpoint_active
+		_checkpoint_mark.modulate.a = 0.75 if checkpoint_active else 0.0
+	if cine_played:
+		_cine.mark_played()
+	_guard_tip_ready = true
+
+	_stable_stage = maxi(int(data.get("stable_stage", STAGE_ARENA)), STAGE_ARENA)
+	_stable_player_positive = bool(data.get("stable_positive", true))
+	_stable_core_positive = bool(
+		data.get("stable_core_positive", _target_bay.get_recorded_positive())
+	)
+	_stable_spawn = (
+		_side_resume_position if not _side_resume_position.is_zero_approx()
+		else Vector2(2250.0, 320.0)
+	)
+	_player.set_spawn_point(_stable_spawn)
+	_player.reset_to_spawn("side_return", true)
+	_player.set_polarity_state(_stable_player_positive)
+	_player.global_position = _stable_spawn
+	_player.velocity = Vector2.ZERO
+	_player.clear_input_buffers()
+	_player.clear_external_force()
+	_player.face_direction(1)
+	_camera.reset_smoothing()
+	_resetting = false
+
+	_hud03.set_gameplay_visible(true)
+	_hud03.show_completion(false)
+	_hud03.set_pause_visible(false)
+	if _side_gate != null:
+		_side_gate.suppress_hints(3.0)
+	_update_level_hud()
+	call_deferred("_announce_side_resume")
+
+
+func _announce_side_resume() -> void:
+	if _completed or _scene_leaving:
+		return
+	_hud03.show_event("回到城门前 · 继续主线", 2.6)
+
+
 # --- restore / restart -----------------------------------------------------
 
 func _restore_stable(reason: String) -> void:
@@ -1585,6 +1747,10 @@ func get_camera() -> Camera2D:
 
 func get_guard() -> L3Guard:
 	return _guard
+
+
+func get_checkpoint() -> LevelCheckpoint:
+	return _checkpoint
 
 
 func get_gate() -> L3Gate:

@@ -368,6 +368,25 @@ func insert_core() -> bool:
 	return true
 
 
+## One-shot resume seed only (returning from a hidden side chapter): restore
+## the already-open gate without replaying the insert/rise cue.  Normal play
+## still goes through insert_core() and the real 1 s plate travel.
+func force_open() -> void:
+	_open = true
+	_inserted = true
+	_rise_progress = 1.0
+	_rise_delay = 0.0
+	_opened_emitted = true
+	if _plate != null:
+		_plate.texture = PLATE_FILLED_TEXTURE
+	_apply_plate()
+	_update_passage_shadow()
+	if _door_body != null:
+		_door_body.collision_layer = 0
+	if _door_shape != null:
+		_door_shape.set_deferred("disabled", true)
+
+
 func reset_state() -> void:
 	_open = false
 	_inserted = false

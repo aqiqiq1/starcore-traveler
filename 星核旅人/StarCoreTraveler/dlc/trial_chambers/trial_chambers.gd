@@ -34,6 +34,7 @@ signal level_completed
 
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
+const SIDE_ROUTE = preload("res://dlc/shared/side_route/side_route.gd")
 const DLC_GUIDE_SCENE: PackedScene = preload("res://dlc/ui/dlc_guide.tscn")
 const INTRO_CINEMATIC_SCENE: PackedScene = preload(
 	"res://dlc/trial_chambers/trial_intro_cinematic.tscn"
@@ -133,11 +134,19 @@ var _gate_cyan_passed: bool = false
 var _prev_player_x: float = START_SPAWN.x
 var _shell_shatter_pending: bool = false
 var _true_damage_pending: bool = false
+## True only when L3's 试炼碑 really loaded this chapter.  A title-page entry
+## leaves this false and keeps the normal 返回主界面 completion action.
+var _side_entry: bool = false
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	process_physics_priority = -10
+	_side_entry = SIDE_ROUTE.claim_entry(CHAPTER_PROGRESS.ID_TRIAL)
+	if _side_entry and chapter_progress_path.is_empty():
+		# Keep discovery and completion in the same file even when the origin
+		# level was opened with a test throwaway progress path.
+		chapter_progress_path = SIDE_ROUTE.get_progress_path()
 
 	for node: Node in [
 		$Background, $Terrain, $Decorations, $Player, $Guard,
@@ -185,6 +194,7 @@ func _ready() -> void:
 	_hud.resume_requested.connect(_on_hud_resume_requested)
 	_hud.restart_requested.connect(_on_hud_restart_requested)
 	_hud.title_requested.connect(_on_hud_title_requested)
+	_hud.mainline_requested.connect(_on_hud_mainline_requested)
 	_hud.quit_requested.connect(_on_hud_quit_requested)
 	_hud.set_player_node(_player)
 	_hud.set_hit_pips_visible(true)
@@ -573,10 +583,17 @@ func _input(event: InputEvent) -> void:
 		if key_event.pressed and not key_event.echo and (
 			code == int(KEY_E) or code == int(KEY_ENTER) or code == int(KEY_KP_ENTER)
 		):
-			# Mark handled before the scene change: _return_to_title() may free
+			# Enter on the focused 重玩本关 row belongs to that real button.
+			if (
+				code != int(KEY_E)
+				and get_viewport().gui_get_focus_owner()
+				== _hud.get_completion_replay_button()
+			):
+				return
+			# Mark handled before the scene change: the destination may free
 			# this node during the same dispatch, leaving get_viewport() null.
 			get_viewport().set_input_as_handled()
-			_return_to_title()
+			_activate_completion_primary()
 		return
 	if _recovery_active:
 		return
@@ -616,8 +633,24 @@ func _on_hud_restart_requested() -> void:
 	_restart_trial()
 
 
+## Pause page / game over page: a side run that did not complete (or the player
+## explicitly leaving) returns to the title and leaves no resume seed.
 func _on_hud_title_requested() -> void:
+	SIDE_ROUTE.abort()
 	_return_to_title()
+
+
+func _on_hud_mainline_requested() -> void:
+	if not _completed or not _side_entry:
+		return
+	_return_to_origin()
+
+
+func _activate_completion_primary() -> void:
+	if _side_entry:
+		_return_to_origin()
+	else:
+		_return_to_title()
 
 
 func _on_hud_quit_requested() -> void:
@@ -906,6 +939,8 @@ func _complete_trial() -> void:
 	_player.lock_completion_input()
 	_guard.set_suspended(true)
 	_hud.show_pause(false)
+	if _side_entry:
+		_hud.set_completion_primary_action("继续主线", true)
 	_hud.show_completion(true, _elapsed)
 	_hud.set_objective("目标：试炼完成")
 	_ambience.stop(DlcChapterAmbience.STOP_FADE_SECONDS)
@@ -932,6 +967,32 @@ func _return_to_title() -> void:
 	_player.clear_external_force()
 	_guard.set_suspended(true)
 	LEVEL_FLOW.return_to_title(get_tree())
+
+
+## Completed side run: the same clean hand-off, but the real scene change goes
+## back to the origin level with a one-shot resume seed instead of the title.
+func _return_to_origin() -> void:
+	if _scene_leaving:
+		return
+	get_tree().paused = false
+	_pause_open = false
+	_scene_leaving = true
+	_hud.set_hit_pips_visible(false)
+	_hud.show_pause(false)
+	_hud.show_completion(false, _elapsed)
+	_footsteps.stop()
+	_ambience.stop(0.0)
+	if is_instance_valid(DemoAudio):
+		DemoAudio.stop_world()
+	_player.reset_movement_input_state()
+	_player.clear_input_buffers()
+	_player.clear_external_force()
+	_guard.set_suspended(true)
+	if SIDE_ROUTE.return_to_origin(get_tree()) != OK:
+		# No stale seed and no dead page: fall back to the title if the origin
+		# scene genuinely cannot be loaded.
+		SIDE_ROUTE.abort()
+		LEVEL_FLOW.return_to_title(get_tree())
 
 
 # --- restart / accessors ---------------------------------------------------
@@ -1079,6 +1140,10 @@ func get_start_spawn() -> Vector2:
 
 func get_elapsed_seconds() -> float:
 	return _elapsed
+
+
+func is_side_entry() -> bool:
+	return _side_entry
 
 
 func is_completed() -> bool:

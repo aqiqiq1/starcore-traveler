@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=20 format=3]
 
 [ext_resource type="Script" path="res://dlc/star_loom/star_loom.gd" id="1_loom"]
 [ext_resource type="Script" path="res://scripts/level03/l3_terrain.gd" id="2_terrain"]
@@ -18,6 +18,7 @@
 [ext_resource type="Script" path="res://scripts/level_checkpoint.gd" id="16_checkpoint"]
 [ext_resource type="Script" path="res://dlc/shared/core_delivery/gate_power_proxy.gd" id="17_proxy"]
 [ext_resource type="PackedScene" path="res://dlc/shared/core_delivery/core_bay.tscn" id="18_bay"]
+[ext_resource type="Script" path="res://dlc/shared/side_route/mirror_rift_gate.gd" id="19_sidegate"]
 
 [node name="StarLoom" type="Node2D"]
 process_mode = 3
@@ -113,6 +114,18 @@ collision_layer = 0
 collision_mask = 1
 script = ExtResource("16_checkpoint")
 trigger_size = Vector2(40, 72)
+
+[node name="MirrorRiftGate" type="Node2D" parent="."]
+z_index = 1
+position = Vector2(420, 320)
+script = ExtResource("19_sidegate")
+target_id = "rift"
+scene_path = "res://dlc/rift_workshop/rift_workshop.tscn"
+origin_id = "loom"
+origin_path = "res://dlc/star_loom/star_loom.tscn"
+hint_text = "镜面裂隙 · 可进入支线"
+player_path = NodePath("../Player")
+hud_path = NodePath("../HUD")
 
 [node name="Boss" type="Node2D" parent="."]
 process_mode = 1

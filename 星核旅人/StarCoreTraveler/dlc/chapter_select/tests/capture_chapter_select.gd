@@ -9,8 +9,8 @@ extends Node
 ## Saves to res://screenshots/chapter_select_20261127/:
 ##   title_menu_no_direct_rows.png  default title: only 开始游戏/章节/设置/退出游戏
 ##   title_menu_chapter_row.png  the 章节 row under 开始游戏 (focused)
-##   chapter_select_locked.png   only L1 open; five rows greyed with 需先完成
-##   chapter_select_unlocked.png L1..L3 已通关; 城内/试炼/裂隙 可进入
+##   chapter_select_locked.png   only four mainline rows; side rows are hidden
+##   chapter_select_unlocked.png L1..L3 已通关 + side rows discovered; 3 / 6
 
 const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
 const LEVEL_01: String = "res://scenes/level_01.tscn"
@@ -69,6 +69,9 @@ func _run() -> void:
 	CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_L1, CAPTURE_PROGRESS)
 	CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_L2, CAPTURE_PROGRESS)
 	CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_L3, CAPTURE_PROGRESS)
+	# The side rows only exist after the real entrances were found.
+	CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_TRIAL, CAPTURE_PROGRESS)
+	CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_RIFT, CAPTURE_PROGRESS)
 	menu.get_chapter_button().pressed.emit()
 	await _wait_process(8)
 	await _save("chapter_select_unlocked")

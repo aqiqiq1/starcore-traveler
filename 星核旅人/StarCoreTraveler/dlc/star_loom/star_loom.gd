@@ -37,9 +37,13 @@ signal level_completed
 ## Empty = the shared user://chapter_progress.cfg.  Tests may point this at a
 ## throwaway file before add_child(); gameplay never sets it.
 @export var chapter_progress_path: String = ""
+## One-shot seed used only by the hidden 镜面裂隙 return path.  Normal starts
+## leave it false; _ready also fills it from the SideRoute static hand-off.
+@export var resume_from_side: bool = false
 
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
+const SIDE_ROUTE = preload("res://dlc/shared/side_route/side_route.gd")
 const DLC_GUIDE_SCENE: PackedScene = preload("res://dlc/ui/dlc_guide.tscn")
 const LOOM_GUIDE_SCRIPT: Script = preload("res://dlc/star_loom/loom_guide.gd")
 const INTRO_CINEMATIC_SCENE: PackedScene = preload(
@@ -138,6 +142,7 @@ enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 @onready var _core_carrier: CoreDeliveryCarrier = $CoreCarrier
 @onready var _core_bay: CoreDeliveryBay = $CoreBay
 @onready var _checkpoint: LevelCheckpoint = $Checkpoint
+@onready var _side_gate: HiddenRouteGate = $MirrorRiftGate
 
 var _footsteps: PlayerFootstepAudio = null
 var _nodes: Array[LoomNode] = []
@@ -218,11 +223,19 @@ var _recovery_active: bool = false
 var _recovery_phase: RecoveryPhase = RecoveryPhase.NONE
 var _recovery_alpha: float = 0.0
 var _recovery_elapsed: float = 0.0
+var _side_resume_position: Vector2 = Vector2.ZERO
+var _side_resume_applied: bool = false
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	process_physics_priority = -10
+	var resume: Dictionary = SIDE_ROUTE.consume_resume(SIDE_ROUTE.ORIGIN_LOOM)
+	if not resume.is_empty():
+		resume_from_side = true
+		var position_value: Variant = resume.get("position", Vector2.ZERO)
+		if typeof(position_value) == TYPE_VECTOR2:
+			_side_resume_position = position_value
 	# The shared popup table is static; registering is idempotent, so a chapter
 	# restart or a test reload uses the same single loom entry.
 	MechanicPopup.register_tips(LOOM_TIPS, "res://dlc/ui/demos")
@@ -276,6 +289,8 @@ func _ready() -> void:
 	_gate_first.opened.connect(_on_first_gate_opened)
 	_checkpoint.checkpoint_entered.connect(_on_checkpoint_entered)
 	_reset_loom_mechanics()
+	if _side_gate != null:
+		_side_gate.set_chapter_progress_path(chapter_progress_path)
 
 	_hud.resume_requested.connect(_on_hud_resume_requested)
 	_hud.restart_requested.connect(_on_hud_restart_requested)
@@ -293,6 +308,8 @@ func _ready() -> void:
 	_hud.show_pause(false)
 	_hud.show_game_over(false)
 	_hud.set_recovery_alpha(0.0)
+	if resume_from_side:
+		_apply_side_resume()
 	# The boss BGM is deliberately not started here: the opening film is a
 	# dormant hall and must play in silence.  The film's own lamp/wood/shuttle
 	# cues carry the room, and `_on_intro_cinematic_finished` starts the track
@@ -544,6 +561,11 @@ func _physics_process(delta: float) -> void:
 	_tick_loom_mechanics(delta)
 
 	if not _boss_active:
+		# The entrance is only a pre-arena option; once the fight starts the
+		# player cannot use it to abandon a live boss.
+		if _side_gate != null and Input.is_action_just_pressed(&"interact"):
+			if _side_gate.try_enter():
+				return
 		if _player.global_position.x >= ARENA_ENTER_X:
 			_start_boss()
 		_update_objective()
@@ -718,6 +740,63 @@ func _reset_loom_mechanics() -> void:
 	_gate_second_hint.reset()
 	_core_hint.reset()
 	_bay_was_powered = false
+
+
+## One-shot mainline restore for the 镜面裂隙 return.  The player must reappear
+## at the recorded checkpoint with the approach already solved: both gate
+## mechanisms back in their post-checkpoint state, the cyan core seated in the
+## bay, and the checkpoint recorded.  The gate still honours the real phase
+## rule (first gate opens to 辉相; the powered second gate is unlocked and its
+## 澜相 curtain opens for 澜相), so this seeds state, not a fake passable door.
+func _apply_side_resume() -> void:
+	if _side_resume_applied:
+		return
+	_side_resume_applied = true
+	_intro_played = true
+	_intro_active = false
+	show_intro_guide = false
+	var point: Vector2 = _checkpoint.global_position
+	_checkpoint_position = point
+	_checkpoint.set_activated(true)
+	_player.set_spawn_point(point)
+	_core_carrier.debug_set_x(_core_carrier.socket_x)
+	_core_bay.set_occupied(true)
+	# The seat is part of the restored state, so the normal "青核入仓" edge
+	# line must not overwrite the return confirmation on the first tick.
+	_bay_was_powered = true
+	_gate_first.set_required_positive(true)
+	_gate_second.set_required_positive(false)
+	_gate_proxy.set_positive_override(false)
+	_player.set_polarity_state(true)
+	_player.reset_to_spawn("side_return", true)
+	_player.global_position = point
+	_player.velocity = Vector2.ZERO
+	_player.clear_input_buffers()
+	_player.clear_external_force()
+	_player.face_direction(1)
+	_camera.reset_smoothing()
+	_lives = PLAYER_LIVES
+	_player_hits = 0
+	_stage = 1
+	_core_hits = 0
+	_boss_active = false
+	_hud.set_polarity(true)
+	_hud.set_boss_state(
+		1, MAX_STAGE, 2, 0, CORE_HITS_PER_STAGE, false, 0,
+		PLAYER_HIT_LIMIT, PLAYER_LIVES, PLAYER_LIVES
+	)
+	_hud.set_objective("目标：向右进入织机厅")
+	if _side_gate != null:
+		_side_gate.suppress_hints(3.0)
+	# Deferred so the event row is not overwritten by the generic HUD setup
+	# above during the same _ready.
+	call_deferred("_announce_side_resume")
+
+
+func _announce_side_resume() -> void:
+	if _completed or _scene_leaving:
+		return
+	_hud.show_event("回到检查点 · 继续主线", 2.6)
 
 
 # --- boss start / stage flow ----------------------------------------------
@@ -1427,6 +1506,18 @@ func _input(event: InputEvent) -> void:
 	if _pause_open:
 		# The pause page owns Enter/Space/arrows and its own buttons while open.
 		return
+	if (
+		key_event.pressed and not key_event.echo and code == int(KEY_E)
+		and not _scene_leaving and not _game_over and not _completed
+		and not _recovery_active and not _retry_pending
+		and not _pending_completion and not _boss_active
+	):
+		var viewport: Viewport = get_viewport()
+		if _side_gate != null and _side_gate.try_enter():
+			# The real scene change may already have freed this node.
+			if viewport != null:
+				viewport.set_input_as_handled()
+			return
 	if key_event.pressed and not key_event.echo and code == int(KEY_R):
 		_restart_chapter()
 		get_viewport().set_input_as_handled()
@@ -1730,6 +1821,37 @@ func get_gate_hint_count() -> int:
 
 func get_core_hint_count() -> int:
 	return _core_hint.get_shown_count()
+
+
+func get_hidden_rift_gate() -> HiddenRouteGate:
+	return _side_gate
+
+
+func is_side_resume_active() -> bool:
+	return resume_from_side
+
+
+## Keeps the optional entrance hint off the opening film, completion page,
+## pause page and active boss fight.
+func is_side_route_gate_allowed() -> bool:
+	return (
+		not _intro_active and not _completed and not _scene_leaving
+		and not _game_over and not _recovery_active and not _pause_open
+		and not _pending_completion and not _boss_active
+		and not get_tree().paused
+	)
+
+
+## DLC3 restores to the recorded checkpoint, which is the explicit mainline
+## restore rule for this route; the gate's own return spot is not used here.
+func get_side_route_return_position() -> Vector2:
+	if _checkpoint != null:
+		return _checkpoint.global_position
+	return _player.global_position
+
+
+func get_side_route_origin_state() -> Dictionary:
+	return {}
 
 
 func get_gate_proxy() -> CoreDeliveryGateProxy:

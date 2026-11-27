@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://dlc/hidden_levels_20261127/tests/capture_hidden_levels.gd" id="1_capture"]
+
+[node name="CaptureHiddenLevels" type="Node"]
+script = ExtResource("1_capture")

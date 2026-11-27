@@ -11,6 +11,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File dlc\rift_workshop\tests\run_
 追踪镜光）、真实路线 `route_test`、UI 对齐 `parity_test`、打磨 `polish_test`、标题
 `title_test`，本章 90 帧、本体三关 90 帧。
 
+`title_test` 的章节页现在要求先写 `discovered_rift`：未发现时裂隙工坊行不出现；测试在检查前置解锁后调用 `mark_discovered`，再验证行可进入。两条真实隐藏入口/返回由 `dlc/hidden_levels_20261127/tests/hidden_levels_test.tscn` 覆盖。
+
 ## 双面镜 v2 截图
 
 ```powershell

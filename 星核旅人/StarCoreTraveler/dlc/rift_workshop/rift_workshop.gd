@@ -53,6 +53,7 @@ signal level_completed
 
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
+const SIDE_ROUTE = preload("res://dlc/shared/side_route/side_route.gd")
 const RIFT_GUIDE_SCRIPT: Script = preload("res://dlc/rift_workshop/rift_guide.gd")
 const INTRO_CINEMATIC_SCENE: PackedScene = preload(
 	"res://dlc/rift_workshop/rift_intro_cinematic.tscn"
@@ -211,11 +212,17 @@ var _intro_skipped: bool = false
 var _post_intro_guide_pending: bool = false
 var _post_intro_guide_left: float = 0.0
 var _mechanic_popup: MechanicPopup = null
+## True only when DLC3's 镜面裂隙 really loaded this chapter.  A title-page
+## entry leaves this false and keeps the normal 返回主界面 completion action.
+var _side_entry: bool = false
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	process_physics_priority = -10
+	_side_entry = SIDE_ROUTE.claim_entry(CHAPTER_PROGRESS.ID_RIFT)
+	if _side_entry and chapter_progress_path.is_empty():
+		chapter_progress_path = SIDE_ROUTE.get_progress_path()
 	for node: Node in [
 		$Background, $Terrain, $Decorations, $Player, $MirrorBoss,
 		$InversionA, $CoreBay, $CoreCarrier, $GateMoonProxy, $GateMoon,
@@ -314,6 +321,7 @@ func _ready() -> void:
 	_hud.resume_requested.connect(_on_hud_resume_requested)
 	_hud.restart_requested.connect(_restart_chapter)
 	_hud.title_requested.connect(_on_hud_title_requested)
+	_hud.mainline_requested.connect(_on_hud_mainline_requested)
 	_hud.quit_requested.connect(_on_hud_quit_requested)
 	_hud.set_polarity(true)
 	_hud.set_player_hits(0, PLAYER_MAX_HITS)
@@ -752,12 +760,12 @@ func _input(event: InputEvent) -> void:
 		if key_event.pressed and not key_event.echo:
 			if code == int(KEY_E):
 				get_viewport().set_input_as_handled()
-				_return_to_title()
+				_activate_completion_primary()
 			elif code == int(KEY_ENTER) or code == int(KEY_KP_ENTER):
 				if get_viewport().gui_get_focus_owner() == _hud.get_completion_replay_button():
 					return
 				get_viewport().set_input_as_handled()
-				_return_to_title()
+				_activate_completion_primary()
 		return
 	if _recovery_active:
 		return
@@ -791,8 +799,25 @@ func _on_hud_resume_requested() -> void:
 	_set_paused(false)
 
 
+## Pause page / game over page: a side run that did not complete returns to the
+## title and leaves no resume seed.  The completion page uses mainline_requested
+## instead.
 func _on_hud_title_requested() -> void:
+	SIDE_ROUTE.abort()
 	_return_to_title()
+
+
+func _on_hud_mainline_requested() -> void:
+	if not _completed or not _side_entry:
+		return
+	_return_to_origin()
+
+
+func _activate_completion_primary() -> void:
+	if _side_entry:
+		_return_to_origin()
+	else:
+		_return_to_title()
 
 
 func _on_hud_quit_requested() -> void:
@@ -1669,6 +1694,8 @@ func _complete_chapter() -> void:
 			wisp.set_hum_enabled(false)
 	_hud.show_pause(false)
 	_hud.set_boss_visible(false)
+	if _side_entry:
+		_hud.set_completion_primary_action("继续主线", true)
 	_hud.show_completion(true, _elapsed)
 	_hud.set_objective("目标：裂隙封闭")
 	_ambience.stop(DlcChapterAmbience.STOP_FADE_SECONDS)
@@ -1701,6 +1728,34 @@ func _return_to_title() -> void:
 	_player.clear_input_buffers()
 	_player.clear_external_force()
 	LEVEL_FLOW.return_to_title(get_tree())
+
+
+## Completed side run: the same clean hand-off, but the real scene change goes
+## back to the origin level with a one-shot resume seed instead of the title.
+func _return_to_origin() -> void:
+	if _scene_leaving:
+		return
+	_post_intro_guide_pending = false
+	_footstep_stop()
+	get_tree().paused = false
+	_pause_open = false
+	_scene_leaving = true
+	_mirror_tip_pending = false
+	_core_tip_pending = false
+	_hud.show_pause(false)
+	_hud.show_completion(false, _elapsed)
+	_hud.show_game_over(false)
+	_boss_active = false
+	_audio.stop_music()
+	_release_ambience()
+	if is_instance_valid(DemoAudio):
+		DemoAudio.stop_world()
+	_player.reset_movement_input_state()
+	_player.clear_input_buffers()
+	_player.clear_external_force()
+	if SIDE_ROUTE.return_to_origin(get_tree()) != OK:
+		SIDE_ROUTE.abort()
+		LEVEL_FLOW.return_to_title(get_tree())
 
 
 # --- restart / accessors ---------------------------------------------------
@@ -1953,6 +2008,10 @@ func get_boss_center() -> Vector2:
 
 func get_elapsed_seconds() -> float:
 	return _elapsed
+
+
+func is_side_entry() -> bool:
+	return _side_entry
 
 
 func is_completed() -> bool:

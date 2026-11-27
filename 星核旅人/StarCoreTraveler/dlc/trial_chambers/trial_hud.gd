@@ -13,6 +13,10 @@ signal resume_requested
 signal title_requested
 signal restart_requested
 signal quit_requested
+## Emitted by the completion page's primary row only while this chapter was
+## entered from a hidden in-level entrance.  Normal title entry keeps
+## title_requested.
+signal mainline_requested
 
 const VIEW_SIZE: Vector2 = Vector2(640.0, 360.0)
 const GOLD: Color = Color("#f4cd63")
@@ -56,6 +60,7 @@ var _completion_subtitle: Label
 var _completion_note: Label
 var _completion_primary: PixelMenuButton
 var _completion_replay: PixelMenuButton
+var _completion_primary_mainline: bool = false
 var _pause_overlay: ColorRect
 var _pause_panel: Panel
 var _pause_panel_base: Vector2 = Vector2.ZERO
@@ -440,7 +445,7 @@ func _build_completion() -> void:
 		PixelMenuButton.Variant.STONE
 	)
 	_completion_primary.name = "CompletionReturn"
-	_completion_primary.pressed.connect(func() -> void: title_requested.emit())
+	_completion_primary.pressed.connect(_on_completion_primary_pressed)
 	panel.add_child(_completion_primary)
 
 	_completion_replay = _menu_button(
@@ -1011,6 +1016,25 @@ func get_completion_primary_button() -> PixelMenuButton:
 
 func get_completion_replay_button() -> PixelMenuButton:
 	return _completion_replay
+
+
+## Completion-page-only label/action swap used by a hidden side run.  The pause
+## page and game-over page keep their own 返回主界面 rows.
+func set_completion_primary_action(text_value: String, continue_mainline: bool) -> void:
+	_completion_primary_mainline = continue_mainline
+	if _completion_primary != null:
+		_completion_primary.text = text_value
+
+
+func is_completion_primary_mainline() -> bool:
+	return _completion_primary_mainline
+
+
+func _on_completion_primary_pressed() -> void:
+	if _completion_primary_mainline:
+		mainline_requested.emit()
+		return
+	title_requested.emit()
 
 
 func get_completion_subtitle_text() -> String:

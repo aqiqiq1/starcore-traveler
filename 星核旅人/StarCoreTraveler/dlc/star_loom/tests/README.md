@@ -10,6 +10,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File dlc\star_loom\tests\run_all.
 阶段 1 首轮浮灵 `core_wisp_test`、真实路线 `route_test`、说明页 `guide_test`、
 标题 `title_test`，本章 90 帧、本体三关 90 帧（`base_level_90_clean` 干净收尾）。
 
+检查点之后、竞技场之前的隐藏 `镜面裂隙`（x=420）和 `resume_from_side` 主线恢复由
+`dlc/hidden_levels_20261127/tests/hidden_levels_test.tscn` 覆盖；本目录的 90 帧冒烟只保证
+正常开局不触发隐藏路线。
+
 ## 只能开窗跑
 
 ```powershell

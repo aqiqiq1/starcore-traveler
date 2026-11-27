@@ -425,6 +425,8 @@ func get_start_target_chapter_id() -> String:
 			var candidate: String = String(chapter["id"])
 			if CHAPTER_PROGRESS.is_completed(candidate, completed):
 				continue
+			if not CHAPTER_PROGRESS.is_visible(candidate, completed):
+				continue
 			if not CHAPTER_PROGRESS.is_unlocked(candidate, completed):
 				continue
 			if not CHAPTER_PROGRESS.is_available(candidate):
@@ -699,7 +701,7 @@ func _build_chapters_layer() -> Control:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(title)
 	_chapters_progress_label = _label(
-		"已完成 0 / 6", Vector2(0.0, 40.0), Vector2(464.0, 14.0), 12, MUTED
+		"已完成 0 / 4", Vector2(0.0, 40.0), Vector2(464.0, 14.0), 12, MUTED
 	)
 	_chapters_progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(_chapters_progress_label)
@@ -1266,6 +1268,7 @@ func _set_main_menu_enabled(enabled: bool) -> void:
 func _refresh_chapters(grab_entry_focus: bool) -> void:
 	_chapters_progress = CHAPTER_PROGRESS.load_completed(chapter_progress_path)
 	var completed_count: int = 0
+	var visible_count: int = 0
 	for chapter: Dictionary in CHAPTER_PROGRESS.CHAPTERS:
 		var id: String = String(chapter["id"])
 		var row: PixelMenuButton = _chapter_rows.get(id) as PixelMenuButton
@@ -1274,13 +1277,22 @@ func _refresh_chapters(grab_entry_focus: bool) -> void:
 		var unlocked: bool = CHAPTER_PROGRESS.is_unlocked(id, _chapters_progress)
 		var available: bool = CHAPTER_PROGRESS.is_available(id)
 		var completed: bool = CHAPTER_PROGRESS.is_completed(id, _chapters_progress)
+		var discovered: bool = CHAPTER_PROGRESS.is_visible(id, _chapters_progress)
 		var can_enter: bool = unlocked and available
-		if completed:
-			completed_count += 1
-		# Missing scenes hide their row (the old DLC direct-row rule) and are
-		# never enterable; locking is still governed by chapter_progress only.
-		row.visible = available
-		row.disabled = not can_enter
+		# The four mainline rows are always part of the page, even if a scene
+		# is missing (the row then reads 章节场景缺失).  A side row appears only
+		# after its in-level entrance was entered, and a missing side scene
+		# still hides it under the old DLC rule.  A hidden row is never
+		# focusable or clickable.
+		var row_visible: bool = discovered and (
+			available or not CHAPTER_PROGRESS.is_side_chapter(id)
+		)
+		if row_visible:
+			visible_count += 1
+			if completed:
+				completed_count += 1
+		row.visible = row_visible
+		row.disabled = not can_enter or not row_visible
 		row.selected = false
 
 		var index_label: Label = _chapter_index_labels.get(id) as Label
@@ -1315,7 +1327,7 @@ func _refresh_chapters(grab_entry_focus: bool) -> void:
 
 	if _chapters_progress_label != null:
 		_chapters_progress_label.text = "已完成 %d / %d" % [
-			completed_count, CHAPTER_PROGRESS.chapter_count()
+			completed_count, visible_count
 		]
 	_refresh_chapter_focus_chain()
 	if grab_entry_focus:
@@ -1348,12 +1360,15 @@ func _focus_chapter_page_entry() -> void:
 		return
 	var preferred: String = CHAPTER_PROGRESS.first_uncompleted(_chapters_progress)
 	var row: PixelMenuButton = _chapter_rows.get(preferred) as PixelMenuButton
-	if row != null and row.focus_mode != Control.FOCUS_NONE:
+	if row != null and row.visible and row.focus_mode != Control.FOCUS_NONE:
 		row.grab_focus()
 		return
 	for chapter: Dictionary in CHAPTER_PROGRESS.CHAPTERS:
 		var candidate: PixelMenuButton = _chapter_rows.get(String(chapter["id"])) as PixelMenuButton
-		if candidate != null and candidate.focus_mode != Control.FOCUS_NONE:
+		if (
+			candidate != null and candidate.visible
+			and candidate.focus_mode != Control.FOCUS_NONE
+		):
 			candidate.grab_focus()
 			return
 

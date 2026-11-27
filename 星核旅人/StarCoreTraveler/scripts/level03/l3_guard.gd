@@ -1049,6 +1049,16 @@ func restore_waiting_rubble(spawn: Vector2) -> void:
 		_head.queue_redraw()
 
 
+## One-shot resume seed only: the guard was already defeated when the player
+## entered the hidden trial.  The real death visuals and rubble state are kept,
+## but no death signal or key drop side effect is repeated.
+func restore_defeated(spawn: Vector2) -> void:
+	reset_state(spawn, true, true)
+	debug_force_death()
+	global_position = spawn
+	position.y = floor_y
+
+
 func debug_force_death() -> void:
 	_state = State.DEAD
 	_state_time = 0.0

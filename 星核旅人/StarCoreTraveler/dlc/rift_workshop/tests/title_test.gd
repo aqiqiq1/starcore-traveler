@@ -196,25 +196,27 @@ func _run() -> void:
 	await _open_chapters(menu)
 	_check(menu.is_chapters_open(), "章节 page opens")
 	var locked_row: PixelMenuButton = menu.get_chapter_row(CHAPTER_PROGRESS.ID_RIFT)
-	_check(locked_row != null, "章节 page has the rift row")
+	_check(locked_row != null, "章节 page keeps a rift row node")
 	if locked_row != null:
-		_check(locked_row.disabled, "locked rift row is disabled")
+		_check(not locked_row.visible, "undiscovered rift row is hidden")
 		_check(locked_row.focus_mode == Control.FOCUS_NONE,
-			"locked rift row cannot take focus")
+			"hidden rift row cannot take focus")
 		_check(locked_row.mouse_filter == Control.MOUSE_FILTER_IGNORE,
-			"locked rift row cannot be clicked")
+			"hidden rift row cannot be clicked")
 	_check(menu.get_chapter_status_text(CHAPTER_PROGRESS.ID_RIFT) == "需先完成 沉寂回廊",
-		"locked rift row shows its prerequisite",
+		"locked rift row keeps its prerequisite text for after discovery",
 		menu.get_chapter_status_text(CHAPTER_PROGRESS.ID_RIFT))
 	menu.call("_close_chapters")
 	await _wait_process(2)
 	await _drop_current_scene()
 
-	# --- unlocked page ----------------------------------------------------
+	# --- discovered + unlocked page --------------------------------------
 	_check(CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_L1, PROGRESS) == OK,
 		"L1 completion writes the test progress file")
 	_check(CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_L2, PROGRESS) == OK,
 		"L2 completion writes the test progress file")
+	_check(CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_RIFT, PROGRESS) == OK,
+		"rift entrance writes the discovery flag")
 	var level2: Node = await _load_level_01()
 	_check(level2 != null, "level_01 loads for the unlocked chapter-page check")
 	if level2 == null:
@@ -224,8 +226,8 @@ func _run() -> void:
 		return
 	await _open_chapters(menu2)
 	var rift_row: PixelMenuButton = menu2.get_chapter_row(CHAPTER_PROGRESS.ID_RIFT)
-	_check(rift_row != null and not rift_row.disabled,
-		"L2 complete unlocks the rift row")
+	_check(rift_row != null and rift_row.visible and not rift_row.disabled,
+		"discovery + L2 complete reveal the unlockable rift row")
 	if rift_row == null:
 		return
 	_check(rift_row.focus_mode == Control.FOCUS_ALL,

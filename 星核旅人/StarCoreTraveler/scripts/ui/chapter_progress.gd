@@ -2,18 +2,25 @@ extends RefCounted
 
 ## Tiny, chapter-only progress store for the title's 章节 page.
 ##
-## It keeps exactly six booleans: one "completed" flag per chapter.  Unlocking
-## is derived from those flags, never stored:
+## It keeps six "completed" flags (one per chapter) plus two "discovered"
+## flags for the hidden side chapters.  Unlocking is derived from the
+## completion flags, never stored:
 ##   L1  always
 ##   L2  L1 complete        L3  L2 complete
 ##   loom (DLC3 / 4th) L3 complete
 ##   trial (DLC1)      L1 complete
 ##   rift (DLC2)       L2 complete
 ##
-## The file is written only from a chapter's real completion callback.  A
-## missing, unreadable or malformed file falls back to "nothing completed",
-## which leaves only L1 open.  Existing checkpoints/audio/display settings are
-## separate files and are never touched here.
+## Visibility is separate from unlocking: the four mainline rows are always
+## part of the chapter page, while trial/rift stay hidden until their in-level
+## entrances have really been entered.  Discovery is written by the entrance,
+## not by completion, and never changes the unlock rule.
+##
+## A missing, unreadable or malformed file falls back to "nothing completed,
+## nothing discovered", which leaves only L1 open and hides the two side rows.
+## Older files that only contain the six completion booleans still load: their
+## discovery flags default to false.  Existing checkpoints/audio/display
+## settings are separate files and are never touched here.
 
 const DEFAULT_PATH: String = "user://chapter_progress.cfg"
 const SECTION: String = "chapters"
@@ -24,6 +31,9 @@ const ID_L3: String = "l3"
 const ID_LOOM: String = "loom"
 const ID_TRIAL: String = "trial"
 const ID_RIFT: String = "rift"
+
+const DISCOVERY_KEY_PREFIX: String = "discovered_"
+const SIDE_CHAPTERS: Array[String] = [ID_TRIAL, ID_RIFT]
 
 ## Display order is also the "first unfinished chapter" order used by 开始游戏.
 const CHAPTERS: Array[Dictionary] = [
@@ -94,11 +104,15 @@ static func chapter_count() -> int:
 	return CHAPTERS.size()
 
 
-## Missing / unreadable / malformed files all resolve to "nothing completed".
+## Missing / unreadable / malformed files all resolve to "nothing completed,
+## nothing discovered".
 static func load_completed(path: String = "") -> Dictionary:
 	var completed: Dictionary = {}
 	for chapter: Dictionary in CHAPTERS:
-		completed[String(chapter["id"])] = false
+		var id: String = String(chapter["id"])
+		completed[id] = false
+		if is_side_chapter(id):
+			completed[discovery_key(id)] = false
 	var settings_path: String = resolve_path(path)
 	var config: ConfigFile = ConfigFile.new()
 	var error: Error = config.load(settings_path)
@@ -108,11 +122,40 @@ static func load_completed(path: String = "") -> Dictionary:
 		var id: String = String(chapter["id"])
 		var raw: Variant = config.get_value(SECTION, id, false)
 		completed[id] = typeof(raw) == TYPE_BOOL and bool(raw)
+		if not is_side_chapter(id):
+			continue
+		var raw_discovered: Variant = config.get_value(
+			SECTION, discovery_key(id), false
+		)
+		completed[discovery_key(id)] = (
+			typeof(raw_discovered) == TYPE_BOOL and bool(raw_discovered)
+		)
 	return completed
 
 
 static func is_completed(id: String, completed: Dictionary) -> bool:
 	return bool(completed.get(id, false))
+
+
+static func discovery_key(id: String) -> String:
+	return DISCOVERY_KEY_PREFIX + id
+
+
+static func is_side_chapter(id: String) -> bool:
+	return SIDE_CHAPTERS.has(id)
+
+
+## Mainline rows are always part of the page.  A side row appears only after
+## its in-level entrance has been entered; a legacy file therefore keeps both
+## side rows hidden until the player really finds them.
+static func is_discovered(id: String, completed: Dictionary) -> bool:
+	if not is_side_chapter(id):
+		return true
+	return bool(completed.get(discovery_key(id), false))
+
+
+static func is_visible(id: String, completed: Dictionary) -> bool:
+	return is_discovered(id, completed)
 
 
 static func is_unlocked(id: String, completed: Dictionary) -> bool:
@@ -142,12 +185,20 @@ static func required_title(id: String) -> String:
 	return String(get_chapter(requires).get("title", ""))
 
 
-## First chapter in display order that is not completed and whose scene exists.
-## Returns "" when everything is complete or no scene is available.
-static func first_uncompleted(completed: Dictionary, require_available: bool = true) -> String:
+## First chapter in display order that is not completed, visible and (by
+## default) whose scene exists.  Hidden side chapters are skipped so 开始游戏
+## never sends the player to an undiscovered row.  Returns "" when everything
+## visible is complete or no scene is available.
+static func first_uncompleted(
+	completed: Dictionary,
+	require_available: bool = true,
+	require_visible: bool = true
+) -> String:
 	for chapter: Dictionary in CHAPTERS:
 		var id: String = String(chapter["id"])
 		if is_completed(id, completed):
+			continue
+		if require_visible and not is_visible(id, completed):
 			continue
 		if require_available and not is_available(id):
 			continue
@@ -156,24 +207,38 @@ static func first_uncompleted(completed: Dictionary, require_available: bool = t
 
 
 ## Title-only unlock-all used by the hidden kskbl sequence.  Writes the same
-## six-boolean schema as a real completion, marking every chapter completed so
-## every derived unlock is true.
+## schema as a real completion, marking every chapter completed and discovered
+## so every derived unlock is true and both side rows are visible.
 static func complete_all(path: String = "") -> Error:
 	var completed: Dictionary = {}
 	for chapter: Dictionary in CHAPTERS:
-		completed[String(chapter["id"])] = true
+		var id: String = String(chapter["id"])
+		completed[id] = true
+		if is_side_chapter(id):
+			completed[discovery_key(id)] = true
 	return _save_completed(completed, resolve_path(path))
 
 
-## Writes one completion flag.  The file is always rewritten with all six
-## booleans (unreadable files become six false values plus this flag), so the
-## schema stays exactly six bools and partial/corrupt files self-heal.
+## Writes one completion flag.  The file is always rewritten with all
+## completion and discovery flags (unreadable files become false values plus
+## this flag), so partial/corrupt files self-heal without losing discovery.
 static func mark_completed(id: String, path: String = "") -> Error:
 	if get_chapter(id).is_empty():
 		return ERR_INVALID_PARAMETER
 	var settings_path: String = resolve_path(path)
 	var completed: Dictionary = load_completed(settings_path)
 	completed[id] = true
+	return _save_completed(completed, settings_path)
+
+
+## Written by a hidden entrance the moment the player really enters it; no
+## completion is required.  Mainline ids are ignored.
+static func mark_discovered(id: String, path: String = "") -> Error:
+	if not is_side_chapter(id):
+		return ERR_INVALID_PARAMETER
+	var settings_path: String = resolve_path(path)
+	var completed: Dictionary = load_completed(settings_path)
+	completed[discovery_key(id)] = true
 	return _save_completed(completed, settings_path)
 
 
@@ -191,6 +256,11 @@ static func _save_completed(completed: Dictionary, settings_path: String) -> Err
 	for chapter: Dictionary in CHAPTERS:
 		var chapter_id: String = String(chapter["id"])
 		config.set_value(SECTION, chapter_id, bool(completed.get(chapter_id, false)))
+		if is_side_chapter(chapter_id):
+			config.set_value(
+				SECTION, discovery_key(chapter_id),
+				bool(completed.get(discovery_key(chapter_id), false))
+			)
 	var error: Error = config.save(settings_path)
 	if error != OK:
 		push_warning("ChapterProgress: could not save %s (error %d)" % [settings_path, error])

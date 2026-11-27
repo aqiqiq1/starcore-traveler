@@ -27,6 +27,7 @@ const P_CORRUPT: String = "user://chapter_select_test_corrupt.cfg"
 const P_COMPLETE: String = "user://chapter_select_test_complete.cfg"
 const P_L3: String = "user://chapter_select_test_l3.cfg"
 const P_CHEAT: String = "user://chapter_select_test_cheat.cfg"
+const P_LEGACY: String = "user://chapter_select_test_legacy.cfg"
 
 var _checks: int = 0
 var _failures: Array[String] = []
@@ -38,6 +39,7 @@ func _ready() -> void:
 	await _wait_process(2)
 	_clear_paths()
 	_test_default_file()
+	_test_legacy_file()
 	_test_unlock_chain()
 	_test_corrupt_file()
 	await _test_locked_page()
@@ -118,6 +120,7 @@ func _push_click(position: Vector2) -> void:
 func _clear_paths() -> void:
 	for path: String in [
 		P_MISSING, P_ONE, P_FLOW, P_UNLOCKED, P_CORRUPT, P_COMPLETE, P_L3, P_CHEAT,
+		P_LEGACY,
 	]:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
@@ -142,6 +145,16 @@ func _assert_defaults(completed: Dictionary, context: String) -> void:
 			context + ": %s is locked by default" % id)
 	_check(CHAPTER_PROGRESS.first_uncompleted(completed) == CHAPTER_PROGRESS.ID_L1,
 		context + ": first unfinished is L1")
+	_check(CHAPTER_PROGRESS.is_visible(CHAPTER_PROGRESS.ID_L1, completed),
+		context + ": L1 is a visible mainline row")
+	_check(not CHAPTER_PROGRESS.is_discovered(CHAPTER_PROGRESS.ID_TRIAL, completed),
+		context + ": trial starts undiscovered")
+	_check(not CHAPTER_PROGRESS.is_discovered(CHAPTER_PROGRESS.ID_RIFT, completed),
+		context + ": rift starts undiscovered")
+	_check(not CHAPTER_PROGRESS.is_visible(CHAPTER_PROGRESS.ID_TRIAL, completed),
+		context + ": undiscovered trial row is hidden")
+	_check(not CHAPTER_PROGRESS.is_visible(CHAPTER_PROGRESS.ID_RIFT, completed),
+		context + ": undiscovered rift row is hidden")
 
 
 func _test_default_file() -> void:
@@ -149,6 +162,27 @@ func _test_default_file() -> void:
 	_assert_defaults(completed, "missing file")
 	_check(FileAccess.file_exists(P_MISSING) == false,
 		"missing file is not created by reading")
+
+
+## Files written before the two discovery flags existed must still load.  Their
+## six completion booleans are read normally and discovery defaults to false.
+func _test_legacy_file() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	config.set_value("chapters", "l1", true)
+	config.set_value("chapters", "l2", true)
+	config.set_value("chapters", "l3", false)
+	config.save(P_LEGACY)
+	var completed: Dictionary = CHAPTER_PROGRESS.load_completed(P_LEGACY)
+	_check(CHAPTER_PROGRESS.is_completed(CHAPTER_PROGRESS.ID_L1, completed),
+		"legacy file keeps l1")
+	_check(CHAPTER_PROGRESS.is_completed(CHAPTER_PROGRESS.ID_L2, completed),
+		"legacy file keeps l2")
+	_check(not CHAPTER_PROGRESS.is_completed(CHAPTER_PROGRESS.ID_L3, completed),
+		"legacy file keeps l3 false")
+	_check(not CHAPTER_PROGRESS.is_discovered(CHAPTER_PROGRESS.ID_TRIAL, completed),
+		"legacy file has no trial discovery")
+	_check(not CHAPTER_PROGRESS.is_discovered(CHAPTER_PROGRESS.ID_RIFT, completed),
+		"legacy file has no rift discovery")
 
 
 func _test_unlock_chain() -> void:
@@ -171,6 +205,22 @@ func _test_unlock_chain() -> void:
 		"L1 done: first unfinished is L2")
 	_check(CHAPTER_PROGRESS.required_title(CHAPTER_PROGRESS.ID_L2) == "断桥庭院",
 		"L2 names 断桥庭院 as its prerequisite")
+
+	# Discovery is written by the entrance, not by completion.
+	_check(CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_TRIAL, P_FLOW) == OK,
+		"entering the trial writes its discovery flag")
+	completed = CHAPTER_PROGRESS.load_completed(P_FLOW)
+	_check(CHAPTER_PROGRESS.is_discovered(CHAPTER_PROGRESS.ID_TRIAL, completed),
+		"trial discovery persists")
+	_check(not CHAPTER_PROGRESS.is_completed(CHAPTER_PROGRESS.ID_TRIAL, completed),
+		"discovery alone does not mark the trial completed")
+	_check(CHAPTER_PROGRESS.is_visible(CHAPTER_PROGRESS.ID_TRIAL, completed),
+		"discovered trial row becomes visible")
+	_check(not CHAPTER_PROGRESS.is_visible(CHAPTER_PROGRESS.ID_RIFT, completed),
+		"undiscovered rift row stays hidden")
+	_check(CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_L1, P_FLOW) \
+			== ERR_INVALID_PARAMETER,
+		"mainline chapters have no discovery flag")
 
 	CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_L2, P_FLOW)
 	completed = CHAPTER_PROGRESS.load_completed(P_FLOW)
@@ -270,8 +320,9 @@ func _test_locked_page() -> void:
 	_check(menu.is_chapters_open(), "鼠标点击 章节 opens the in-place list")
 	_check(menu.get_chapters_layer() != null and menu.get_chapters_layer().visible,
 		"the list layer is visible")
-	_check(menu.get_chapters_progress_text() == "已完成 0 / 6",
-		"locked page reports 0 / 6", menu.get_chapters_progress_text())
+	_check(menu.get_chapters_progress_text() == "已完成 0 / 4",
+		"locked page reports 0 / 4 visible mainline chapters",
+		menu.get_chapters_progress_text())
 
 	var l1: PixelMenuButton = menu.get_chapter_row(CHAPTER_PROGRESS.ID_L1)
 	_check(l1 != null and l1.focus_mode == Control.FOCUS_ALL,
@@ -280,13 +331,22 @@ func _test_locked_page() -> void:
 		"L1 row accepts the mouse")
 	for id: String in [
 		CHAPTER_PROGRESS.ID_L2, CHAPTER_PROGRESS.ID_L3, CHAPTER_PROGRESS.ID_LOOM,
-		CHAPTER_PROGRESS.ID_TRIAL, CHAPTER_PROGRESS.ID_RIFT,
 	]:
 		var row: PixelMenuButton = menu.get_chapter_row(id)
+		_check(row != null and row.visible,
+			"%s mainline row is always on the page" % id)
 		_check(row != null and row.focus_mode == Control.FOCUS_NONE,
 			"%s row cannot take focus" % id)
 		_check(row != null and row.mouse_filter == Control.MOUSE_FILTER_IGNORE,
 			"%s row cannot be clicked" % id)
+	for id: String in [CHAPTER_PROGRESS.ID_TRIAL, CHAPTER_PROGRESS.ID_RIFT]:
+		var side_row: PixelMenuButton = menu.get_chapter_row(id)
+		_check(side_row != null and not side_row.visible,
+			"%s undiscovered side row is hidden" % id)
+		_check(side_row != null and side_row.focus_mode == Control.FOCUS_NONE,
+			"%s hidden side row cannot take focus" % id)
+		_check(side_row != null and side_row.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"%s hidden side row cannot be clicked" % id)
 	_check(menu.get_chapter_status_text(CHAPTER_PROGRESS.ID_L2) == "需先完成 断桥庭院",
 		"L2 shows its prerequisite",
 		menu.get_chapter_status_text(CHAPTER_PROGRESS.ID_L2))
@@ -328,26 +388,32 @@ func _test_locked_focus_skip() -> void:
 		return
 	_check(menu.get_start_target_chapter_id() == CHAPTER_PROGRESS.ID_L2,
 		"L1 done: 开始游戏 targets L2", menu.get_start_target_chapter_id())
-	# Only L1/L2/trial are open; L3/城内/裂隙 are locked and must be skipped.
+	# Only L1/L2 are unlocked and visible; the undiscovered trial row and the
+	# locked L3/城内/裂隙 rows must all be skipped by the ring.
 	await _open_chapters(menu)
 	await _wait_process(2)
 	_check(_focused_row(menu, CHAPTER_PROGRESS.ID_L2),
 		"entry focus lands on L2, the first unfinished unlocked row",
 		_focus_name(menu))
 	await _tap_key(KEY_DOWN)
-	_check(_focused_row(menu, CHAPTER_PROGRESS.ID_TRIAL),
-		"Down jumps over locked L3/城内 to the trial", _focus_name(menu))
-	await _tap_key(KEY_DOWN)
 	_check(_focused_row(menu, CHAPTER_PROGRESS.ID_L1),
-		"Down wraps to L1", _focus_name(menu))
+		"Down wraps over hidden/locked rows to L1", _focus_name(menu))
 	await _tap_key(KEY_DOWN)
 	_check(_focused_row(menu, CHAPTER_PROGRESS.ID_L2),
 		"Down continues to L2", _focus_name(menu))
 	await _tap_key(KEY_UP)
 	_check(_focused_row(menu, CHAPTER_PROGRESS.ID_L1),
 		"Up wraps back to L1", _focus_name(menu))
-	# Mouse path into an unlocked chapter (试炼场).
+
+	# Discovery reveals the side row; it is then a real mouse/keyboard target.
+	menu.call("_close_chapters")
+	await _wait_process(2)
+	CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_TRIAL, P_ONE)
+	await _open_chapters(menu)
+	await _wait_process(3)
 	var trial_row: PixelMenuButton = menu.get_chapter_row(CHAPTER_PROGRESS.ID_TRIAL)
+	_check(trial_row != null and trial_row.visible and not trial_row.disabled,
+		"discovered trial row appears as an enterable side row")
 	await _push_click(trial_row.get_global_rect().get_center())
 	var clicked_entry: bool = await _wait_for_scene(TRIAL_PATH, 360)
 	_check(clicked_entry, "mouse click on 试炼场 loads the trial scene", _current_path())
@@ -396,16 +462,40 @@ func _test_unlocked_page_and_entry() -> void:
 
 	await _open_chapters(menu)
 	await _wait_process(2)
-	_check(menu.get_chapters_progress_text() == "已完成 3 / 6",
-		"unlocked page reports 3 / 6", menu.get_chapters_progress_text())
+	_check(menu.get_chapters_progress_text() == "已完成 3 / 4",
+		"unlocked page reports 3 / 4 before discovery",
+		menu.get_chapters_progress_text())
 	_check(menu.get_chapter_status_text(CHAPTER_PROGRESS.ID_L1) == "已通关",
 		"L1 row marks 已通关")
 	_check(menu.get_chapter_status_text(CHAPTER_PROGRESS.ID_LOOM) == "可进入",
 		"城内 row is enterable")
-	_check(menu.get_chapter_status_text(CHAPTER_PROGRESS.ID_TRIAL) == "可进入",
-		"trial row is enterable")
-	_check(menu.get_chapter_status_text(CHAPTER_PROGRESS.ID_RIFT) == "可进入",
-		"rift row is enterable")
+	# L1..L3 completion alone must not reveal the side chapters; only entering
+	# their in-level gates does.
+	for id: String in [CHAPTER_PROGRESS.ID_TRIAL, CHAPTER_PROGRESS.ID_RIFT]:
+		var hidden_row: PixelMenuButton = menu.get_chapter_row(id)
+		_check(hidden_row != null and not hidden_row.visible,
+			"%s row stays hidden until discovered" % id)
+		_check(hidden_row != null and hidden_row.focus_mode == Control.FOCUS_NONE,
+			"%s hidden row stays out of the focus ring" % id)
+
+	menu.call("_close_chapters")
+	await _wait_process(2)
+	CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_TRIAL, P_UNLOCKED)
+	CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_RIFT, P_UNLOCKED)
+	await _open_chapters(menu)
+	await _wait_process(3)
+	_check(menu.get_chapters_progress_text() == "已完成 3 / 6",
+		"discovery does not inflate the completed count",
+		menu.get_chapters_progress_text())
+	for id: String in [CHAPTER_PROGRESS.ID_TRIAL, CHAPTER_PROGRESS.ID_RIFT]:
+		var side_row: PixelMenuButton = menu.get_chapter_row(id)
+		_check(side_row != null and side_row.visible,
+			"%s discovered row is visible" % id)
+		_check(side_row != null and not side_row.disabled,
+			"%s discovered row is enterable" % id)
+		_check(menu.get_chapter_status_text(id) == "可进入",
+			"%s discovered row is marked 可进入" % id,
+			menu.get_chapter_status_text(id))
 
 	# All five non-L1 paths are real, distinct files.
 	var expected_paths: Dictionary = {
@@ -477,6 +567,8 @@ func _test_title_cheat_unlock() -> void:
 			"kskbl completes %s" % id)
 		_check(CHAPTER_PROGRESS.is_unlocked(id, after_cheat),
 			"kskbl unlocks %s" % id)
+		_check(CHAPTER_PROGRESS.is_visible(id, after_cheat),
+			"kskbl reveals %s" % id)
 	_check(menu.get_cheat_unlock_count() == 1,
 		"kskbl fires exactly once", str(menu.get_cheat_unlock_count()))
 	_check(menu.is_cheat_feedback_visible()
