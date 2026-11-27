@@ -6,13 +6,18 @@
 powershell -NoProfile -ExecutionPolicy Bypass -File dlc\rift_workshop\tests\run_all.ps1
 ```
 
-覆盖：开场电影契约 `intro_test`、机制 `mechanics_test`、真实路线 `route_test`、打磨 `polish_test`、标题 `title_test`，本章 90 帧、本体三关 90 帧。
+覆盖：开场电影契约 `intro_test`、机制 `mechanics_test`（含星核入仓/拉出/复推与月门供电）、真实路线 `route_test`、UI 对齐 `parity_test`、打磨 `polish_test`、标题 `title_test`，本章 90 帧、本体三关 90 帧。
 
 ## 只能开窗跑
 
 ```powershell
 D:/Godot/Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 res://dlc/rift_workshop/tests/capture_intro.tscn
+D:/Godot/Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 res://dlc/rift_workshop/tests/capture_core_delivery_20261127.tscn
 ```
+
+`capture_core_delivery_20261127` 输出到 `screenshots/rift_core_20261127/`：
+未入仓、推入中、入仓亮起/门开、拉出关门、复推开门五张 640×360 主图，
+每张附 3× 最近邻细节裁片。
 
 ## 截图
 

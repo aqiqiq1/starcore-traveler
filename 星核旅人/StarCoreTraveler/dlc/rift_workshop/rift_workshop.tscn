@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3]
+[gd_scene load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_workshop.gd" id="1_rift"]
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_hud.gd" id="2_hud"]
@@ -23,6 +23,9 @@
 [ext_resource type="Texture2D" path="res://dlc/rift_workshop/assets/interior/interior_mid_1880x360.png" id="21_mid"]
 [ext_resource type="Texture2D" path="res://dlc/rift_workshop/assets/interior/interior_fore_640x360.png" id="22_fore"]
 [ext_resource type="Texture2D" path="res://dlc/rift_workshop/assets/interior/interior_floor_1880x40.png" id="23_floor"]
+[ext_resource type="PackedScene" path="res://dlc/shared/core_delivery/core_carrier.tscn" id="24_carrier"]
+[ext_resource type="PackedScene" path="res://dlc/shared/core_delivery/core_bay.tscn" id="25_bay"]
+[ext_resource type="Script" path="res://dlc/shared/core_delivery/gate_power_proxy.gd" id="26_gate_proxy"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_checkpoint"]
 size = Vector2(40, 72)
@@ -139,11 +142,37 @@ process_mode = 1
 position = Vector2(160, 320)
 player_path = NodePath("../Player")
 
+[node name="GateMoonProxy" type="Node2D" parent="."]
+process_mode = 1
+position = Vector2(40, 320)
+script = ExtResource("26_gate_proxy")
+target_path = NodePath("../Player")
+
 [node name="GateMoon" parent="." instance=ExtResource("9_gate")]
 process_mode = 1
 position = Vector2(270, 320)
 required_positive = false
+player_path = NodePath("../GateMoonProxy")
+
+[node name="CoreBay" parent="." instance=ExtResource("25_bay")]
+process_mode = 1
+position = Vector2(244, 320)
+
+[node name="CoreCarrier" parent="." instance=ExtResource("24_carrier")]
+process_mode = 1
+position = Vector2(200, 304)
 player_path = NodePath("../Player")
+start_x = 200.0
+min_x = 188.0
+max_x = 244.0
+socket_x = 244.0
+move_speed = 140.0
+move_accel = 420.0
+stop_distance = 26.0
+field_range_override = 120.0
+inner_radius_override = 8.0
+full_radius_override = 24.0
+outer_fade_override = 24.0
 
 [node name="LowBeams" type="Node2D" parent="."]
 process_mode = 1

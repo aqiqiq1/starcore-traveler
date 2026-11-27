@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3]
 
-[ext_resource type="Script" path="res://dlc/star_loom/loom_core_carrier.gd" id="1_carrier"]
+[ext_resource type="Script" path="res://dlc/shared/core_delivery/core_carrier.gd" id="1_carrier"]
 [ext_resource type="PackedScene" path="res://scenes/rune_stone_field.tscn" id="2_field"]
 [ext_resource type="PackedScene" path="res://scenes/star_core_visual.tscn" id="3_core"]
 

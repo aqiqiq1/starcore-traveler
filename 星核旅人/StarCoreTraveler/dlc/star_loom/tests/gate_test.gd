@@ -134,8 +134,8 @@ func _run() -> void:
 		return
 	var gate_first: PolarityGate = _loom.get_gate_first()
 	var gate_second: PolarityGate = _loom.get_gate_second()
-	var carrier: LoomCoreCarrier = _loom.get_core_carrier()
-	var bay: LoomCoreBay = _loom.get_core_bay()
+	var carrier: CoreDeliveryCarrier = _loom.get_core_carrier()
+	var bay: CoreDeliveryBay = _loom.get_core_bay()
 	var checkpoint: LevelCheckpoint = _loom.get_checkpoint()
 	_check(gate_first != null and gate_second != null and carrier != null
 		and bay != null and checkpoint != null,

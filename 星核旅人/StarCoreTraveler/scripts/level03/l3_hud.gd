@@ -10,8 +10,10 @@ extends CanvasLayer
 
 signal replay_requested
 signal return_to_menu_requested
+signal next_level_requested
 
 const VIEW_SIZE: Vector2 = Vector2(640.0, 360.0)
+const STAR_LOOM_PATH: String = "res://dlc/star_loom/star_loom.tscn"
 const GOLD: Color = Color("#f4cd63")
 const TEXT: Color = Color("#e7eceb")
 const MUTED: Color = Color("#a4b3be")
@@ -44,6 +46,8 @@ var _completion_subtitle: Label
 var _completion_hint: Label
 var _completion_primary: PixelMenuButton
 var _completion_replay: PixelMenuButton
+var _completion_return: PixelMenuButton = null
+var _completion_has_next: bool = false
 var _completion_active: bool = false
 var _pause_visible: bool = false
 var _font: Font
@@ -204,18 +208,74 @@ func _build_completion() -> void:
 	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(divider)
 
-	_completion_primary = _menu_button("返回主界面", Vector2(110.0, 86.0), Vector2(180.0, 28.0), PixelMenuButton.Variant.STONE)
-	_completion_primary.pressed.connect(func() -> void: return_to_menu_requested.emit())
-	panel.add_child(_completion_primary)
-	_completion_replay = _menu_button("重玩本关", Vector2(120.0, 126.0), Vector2(160.0, 24.0), PixelMenuButton.Variant.OPTION)
-	_completion_replay.pressed.connect(func() -> void: replay_requested.emit())
-	panel.add_child(_completion_replay)
+	# 进入城内 appears only when the next chapter scene really exists.  With it,
+	# the page uses the same three-button layout as L1/L2; without it, the
+	# original two-button page is kept and 返回主界面 stays the primary row.
+	_completion_has_next = ResourceLoader.exists(STAR_LOOM_PATH)
+	if _completion_has_next:
+		_completion_primary = _menu_button(
+			"进入城内", Vector2(110.0, 86.0), Vector2(180.0, 28.0),
+			PixelMenuButton.Variant.STONE
+		)
+		_completion_primary.pressed.connect(
+			func() -> void: next_level_requested.emit()
+		)
+		panel.add_child(_completion_primary)
+		_completion_replay = _menu_button(
+			"重玩本关", Vector2(32.0, 126.0), Vector2(160.0, 24.0),
+			PixelMenuButton.Variant.OPTION
+		)
+		_completion_replay.pressed.connect(func() -> void: replay_requested.emit())
+		panel.add_child(_completion_replay)
+		_completion_return = _menu_button(
+			"返回主界面", Vector2(208.0, 126.0), Vector2(160.0, 24.0),
+			PixelMenuButton.Variant.OPTION
+		)
+		_completion_return.pressed.connect(
+			func() -> void: return_to_menu_requested.emit()
+		)
+		panel.add_child(_completion_return)
+	else:
+		_completion_primary = _menu_button(
+			"返回主界面", Vector2(110.0, 86.0), Vector2(180.0, 28.0),
+			PixelMenuButton.Variant.STONE
+		)
+		_completion_primary.pressed.connect(
+			func() -> void: return_to_menu_requested.emit()
+		)
+		panel.add_child(_completion_primary)
+		_completion_replay = _menu_button(
+			"重玩本关", Vector2(120.0, 126.0), Vector2(160.0, 24.0),
+			PixelMenuButton.Variant.OPTION
+		)
+		_completion_replay.pressed.connect(func() -> void: replay_requested.emit())
+		panel.add_child(_completion_replay)
 	var completion_footer: Label = _label(
 		"本章结算 · 暂停菜单可查看操作", Vector2(0.0, 158.0), Vector2(400.0, 16.0), 12, DIM
 	)
 	completion_footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(completion_footer)
 	_completion_hint = null
+	_chain_completion_focus()
+
+
+func _chain_completion_focus() -> void:
+	if _completion_primary == null or _completion_replay == null:
+		return
+	if _completion_has_next and _completion_return != null:
+		_completion_primary.focus_next = _completion_primary.get_path_to(_completion_replay)
+		_completion_primary.focus_previous = _completion_primary.get_path_to(_completion_return)
+		_completion_primary.focus_neighbor_bottom = _completion_primary.get_path_to(_completion_replay)
+		_completion_primary.focus_neighbor_top = _completion_primary.get_path_to(_completion_return)
+		_completion_replay.focus_next = _completion_replay.get_path_to(_completion_return)
+		_completion_replay.focus_previous = _completion_replay.get_path_to(_completion_primary)
+		_completion_replay.focus_neighbor_top = _completion_replay.get_path_to(_completion_primary)
+		_completion_replay.focus_neighbor_bottom = _completion_replay.get_path_to(_completion_return)
+		_completion_return.focus_next = _completion_return.get_path_to(_completion_primary)
+		_completion_return.focus_previous = _completion_return.get_path_to(_completion_replay)
+		_completion_return.focus_neighbor_top = _completion_return.get_path_to(_completion_replay)
+		_completion_return.focus_neighbor_bottom = _completion_return.get_path_to(_completion_primary)
+		return
 	_completion_primary.focus_next = _completion_primary.get_path_to(_completion_replay)
 	_completion_primary.focus_previous = _completion_primary.get_path_to(_completion_replay)
 	_completion_replay.focus_next = _completion_replay.get_path_to(_completion_primary)
@@ -386,7 +446,7 @@ func is_recovery_cover_visible() -> bool:
 	return _recovery_cover != null and _recovery_cover.visible
 
 
-func show_completion(value: bool, completion_count: int = 0) -> void:
+func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 	if _completion_overlay == null:
 		return
 	if _control_hint != null and value:
@@ -396,6 +456,7 @@ func show_completion(value: bool, completion_count: int = 0) -> void:
 		_guide.visible = not value and not _pause_visible
 	_completion_overlay.visible = value
 	if value:
+		_completion_title.text = "第三关完成 · 用时 %s" % _format_time(elapsed_seconds)
 		# A failed scene change must never leave the page with dead buttons.
 		_play_completion_reveal()
 		set_completion_buttons_enabled(true)
@@ -404,6 +465,11 @@ func show_completion(value: bool, completion_count: int = 0) -> void:
 		release_completion_focus()
 		_stop_completion_reveal()
 	_update_chrome_visibility()
+
+
+func _format_time(seconds: float) -> String:
+	var total: int = maxi(int(floor(seconds)), 0)
+	return "%02d:%02d" % [total / 60, total % 60]
 
 
 ## Same-frame page; only alpha/scale/slide animate (see UiReveal).
@@ -432,10 +498,14 @@ func release_completion_focus() -> void:
 		_completion_primary.release_focus()
 	if _completion_replay != null:
 		_completion_replay.release_focus()
+	if _completion_return != null:
+		_completion_return.release_focus()
 
 
 func set_completion_buttons_enabled(value: bool) -> void:
-	for button: PixelMenuButton in [_completion_primary, _completion_replay]:
+	for button: PixelMenuButton in [
+		_completion_primary, _completion_replay, _completion_return,
+	]:
 		if button != null:
 			button.disabled = not value
 
@@ -446,6 +516,14 @@ func get_completion_primary_button() -> PixelMenuButton:
 
 func get_completion_replay_button() -> PixelMenuButton:
 	return _completion_replay
+
+
+func get_completion_return_button() -> PixelMenuButton:
+	return _completion_return
+
+
+func has_next_level_button() -> bool:
+	return _completion_has_next and _completion_primary != null
 
 
 func is_completion_active() -> bool:

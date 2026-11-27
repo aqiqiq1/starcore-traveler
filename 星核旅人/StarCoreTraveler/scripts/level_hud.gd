@@ -284,12 +284,13 @@ func set_pause_visible(value: bool) -> void:
 	_update_chrome_visibility()
 
 
-func show_completion(value: bool, completion_count: int = 0) -> void:
+func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 	if _completion_overlay == null:
 		return
 	_completion_overlay.visible = value
 	_completion_active = value
 	if value:
+		_completion_title.text = "第一关完成 · 用时 %s" % _format_time(elapsed_seconds)
 		_play_completion_reveal()
 		_header.clear_event()
 		_pending_event_text = ""
@@ -304,6 +305,11 @@ func show_completion(value: bool, completion_count: int = 0) -> void:
 	_update_chrome_visibility()
 	if _completion_count_label != null:
 		_completion_count_label.text = "本关结算 · Esc 可打开暂停菜单" if value else ""
+
+
+func _format_time(seconds: float) -> String:
+	var total: int = maxi(int(floor(seconds)), 0)
+	return "%02d:%02d" % [total / 60, total % 60]
 
 
 ## The page shows on the same frame it is requested; only its alpha and 0.96

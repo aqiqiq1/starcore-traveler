@@ -240,23 +240,43 @@ func _run() -> void:
 	_check(_denied_q >= 1 and _player.is_positive(),
 		"Q is denied at the start without a phase change", str(_denied_q))
 
-	# --- room 1: field twice, then the gate -----------------------------
-	var gate: PolarityGate = _rift.get_node("GateMoon") as PolarityGate
+	# --- room 1: curtain, delivered star core, then the gate ------------
+	var gate: PolarityGate = _rift.get_gate_moon()
+	var carrier: CoreDeliveryCarrier = _rift.get_core_carrier()
+	var bay: CoreDeliveryBay = _rift.get_core_bay()
+	_check(carrier != null and bay != null and gate != null,
+		"the route scene exposes the star core, bay and GateMoon")
+	if carrier == null or bay == null or gate == null:
+		return
 	var reached: bool = await _walk_with_auto_jump(255.0, 1200)
 	_legs.append("gate_approach(255)=%.1f" % _player.global_position.x)
-	_check(reached, "real walk reaches GateMoon",
+	_check(reached, "real walk reaches the first gate",
 		"x=%.2f" % _player.global_position.x)
 	_check(_rift.get_field_a().get_trigger_count() == 1 and not _player.is_positive(),
 		"the first curtain pass turns 澜相",
 		"triggers=%d positive=%s" % [
 			_rift.get_field_a().get_trigger_count(), str(_player.is_positive())
 		])
-	_check(not gate.is_blocking(), "the moon gate is open for the post-curtain 澜相")
+	var core_seated: bool = await _wait_until(
+		func() -> bool: return carrier.is_on_socket(), 180
+	)
+	_check(core_seated and bay.is_lit() and not gate.is_blocking(),
+		"the 澜相 field delivers the star core and powers GateMoon open",
+		"core=%.1f glow=%.1f layer=%d" % [
+			carrier.global_position.x, bay.get_glow_strength(),
+			gate.get_collision_layer()
+		])
+	_check(_rift.get_hud().get_event_text().contains("星核入仓")
+		and _rift.get_hud().get_event_text().contains("第一道门"),
+		"the route HUD line names the star core and the first gate",
+		_rift.get_hud().get_event_text())
 	var through_gate: bool = await _move_until_x(300.0, 400)
 	_legs.append("gate_pass(300)=%.1f" % _player.global_position.x)
-	_check(through_gate and not gate.is_blocking(),
-		"the Q-less curtain pass opens GateMoon",
-		"x=%.2f" % _player.global_position.x)
+	_check(through_gate and not gate.is_blocking() and carrier.is_on_socket(),
+		"the powered gate lets the real route through and the bay holds the core",
+		"x=%.2f core=%.1f" % [
+			_player.global_position.x, carrier.global_position.x
+		])
 
 	# --- room 2: bridge head, kill each deck wisp -----------------------
 	reached = await _walk_with_auto_jump(682.0, 900)

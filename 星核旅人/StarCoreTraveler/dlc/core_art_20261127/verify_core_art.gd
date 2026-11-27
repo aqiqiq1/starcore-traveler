@@ -19,7 +19,7 @@ const CORE_STILLS: Array[String] = [
 const BAY_BASE: String = "res://assets/star_core_bay/star_core_bay_base.png"
 const BAY_GLASS: String = "res://assets/star_core_bay/star_core_bay_glass.png"
 const BAY_VISUAL: String = "res://scenes/star_core_bay_visual.tscn"
-const LOOM_BAY: String = "res://dlc/star_loom/loom_core_bay.tscn"
+const LOOM_BAY: String = "res://dlc/shared/core_delivery/core_bay.tscn"
 
 var _failures: int = 0
 
@@ -116,10 +116,10 @@ func _run() -> void:
 
 	# DLC3 bay: its own empty/lit contract still toggles the base and glass.
 	var loom_scene: PackedScene = load(LOOM_BAY) as PackedScene
-	_check(loom_scene != null, "LoomCoreBay scene loads")
+	_check(loom_scene != null, "CoreDeliveryBay scene loads")
 	if loom_scene == null:
 		return
-	var loom: LoomCoreBay = loom_scene.instantiate() as LoomCoreBay
+	var loom: CoreDeliveryBay = loom_scene.instantiate() as CoreDeliveryBay
 	add_child(loom)
 	await get_tree().process_frame
 	loom.set_occupied(false)

@@ -1,7 +1,11 @@
-class_name LoomCoreCarrier
+class_name CoreDeliveryCarrier
 extends Node2D
 
-## The loom's approach now delivers a true star core, not a rune stone.
+## Shared star-core delivery carrier used by DLC2 rift-workshop and DLC3
+## star-loom.  The follow-up sections describe the original loom use; the
+## component itself is chapter-neutral.
+##
+## The approach delivers a true star core, not a rune stone.
 ##
 ## The force rule is still the existing `RuneStoneField` sample: same phase
 ## pushes the core away, the other phase pulls it toward the player.  The
@@ -42,6 +46,15 @@ const TRAIL_STEP: float = 5.0
 ## Stop short of the player so the core never sits on the body sprite.
 @export_range(4.0, 80.0, 1.0, "suffix:px") var stop_distance: float = 26.0
 
+## Optional per-chapter field shaping.  -1 keeps the shared RuneStoneField
+## defaults (DLC3).  DLC2's corridor is tighter, so it raises the near-field
+## strength instead of letting a walking body overtake the core.
+@export_range(-1.0, 4096.0, 1.0, "suffix:px") var field_range_override: float = -1.0
+@export_range(-1.0, 4096.0, 1.0, "suffix:px") var inner_radius_override: float = -1.0
+@export_range(-1.0, 4096.0, 1.0, "suffix:px") var full_radius_override: float = -1.0
+@export_range(-1.0, 4096.0, 1.0, "suffix:px") var outer_fade_override: float = -1.0
+@export_range(-1.0, 20000.0, 10.0, "suffix:px/s^2") var full_acceleration_override: float = -1.0
+
 var _player: Node2D = null
 var _field: RuneStoneField = null
 var _core_visual: StarCoreVisual = null
@@ -58,6 +71,7 @@ func _ready() -> void:
 		_core_visual.state = StarCoreVisual.CoreState.POSITIVE
 		_core_visual.show_state_badge = false
 	_silence_rune_stone_visual()
+	_apply_field_overrides()
 	_resolve_player()
 	global_position.x = clampf(global_position.x, min_x, max_x)
 	_last_trail_x = global_position.x
@@ -66,9 +80,9 @@ func _ready() -> void:
 	queue_redraw()
 
 
-## The reused field prefab brings its own 32x32 rune-stone sprite.  The loom
-## delivers a star core, so that sprite is hidden; the field's force sample and
-## own state machine keep working unchanged.
+## The reused field prefab brings its own 32x32 rune-stone sprite.  The shared
+## delivery payload is a star core, so that sprite is hidden; the field's force
+## sample and own state machine keep working unchanged.
 func _silence_rune_stone_visual() -> void:
 	if _field == null:
 		return
@@ -77,6 +91,21 @@ func _silence_rune_stone_visual() -> void:
 	if rune_visual != null:
 		rune_visual.visible = false
 		rune_visual.show_polarity_hint = false
+
+
+func _apply_field_overrides() -> void:
+	if _field == null:
+		return
+	if field_range_override > 0.0:
+		_field.field_range = field_range_override
+	if inner_radius_override >= 0.0:
+		_field.inner_radius = inner_radius_override
+	if full_radius_override >= 0.0:
+		_field.full_radius = full_radius_override
+	if outer_fade_override >= 0.0:
+		_field.outer_fade = outer_fade_override
+	if full_acceleration_override >= 0.0:
+		_field.full_acceleration = full_acceleration_override
 
 
 func _resolve_player() -> void:

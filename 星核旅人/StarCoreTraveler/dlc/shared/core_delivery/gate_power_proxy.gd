@@ -1,10 +1,11 @@
-class_name LoomGateProxy
+class_name CoreDeliveryGateProxy
 extends Node2D
 
-## Phase proxy for the second loom gate.
+## Phase proxy for a core-delivery-powered PolarityGate.  Shared by DLC2's
+## first moon gate and DLC3's second gate.
 ##
 ## `PolarityGate` decides whether it is passable by asking its `player_path`
-## node for `is_positive()` and `get_collision_size()`.  The second gate is not
+## node for `is_positive()` and `get_collision_size()`.  A powered gate is not
 ## opened by the player's own phase: it is opened while the delivered star core
 ## is held by the floor bay.  This invisible proxy follows the real player (so
 ## the gate's deny pulse, anti-pinch latch and body rect still use the real

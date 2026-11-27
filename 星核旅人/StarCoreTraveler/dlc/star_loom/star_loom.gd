@@ -134,9 +134,9 @@ enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 @onready var _audio: LoomAudio = $Audio
 @onready var _gate_first: PolarityGate = $GateFirst
 @onready var _gate_second: PolarityGate = $GateSecond
-@onready var _gate_proxy: LoomGateProxy = $GateSecondProxy
-@onready var _core_carrier: LoomCoreCarrier = $CoreCarrier
-@onready var _core_bay: LoomCoreBay = $CoreBay
+@onready var _gate_proxy: CoreDeliveryGateProxy = $GateSecondProxy
+@onready var _core_carrier: CoreDeliveryCarrier = $CoreCarrier
+@onready var _core_bay: CoreDeliveryBay = $CoreBay
 @onready var _checkpoint: LevelCheckpoint = $Checkpoint
 
 var _footsteps: PlayerFootstepAudio = null
@@ -1422,7 +1422,7 @@ func _input(event: InputEvent) -> void:
 				and not _hud.is_completion_button_focused()
 			):
 				# Default state focuses 返回主界面, so Enter still returns to the
-				# title.  Once focus moves to 重玩本章, Enter activates that
+				# title.  Once focus moves to 重玩本关, Enter activates that
 				# button instead of being stolen here.
 				get_viewport().set_input_as_handled()
 				_return_to_title()
@@ -1699,15 +1699,15 @@ func get_gate_second() -> PolarityGate:
 	return _gate_second
 
 
-func get_gate_proxy() -> LoomGateProxy:
+func get_gate_proxy() -> CoreDeliveryGateProxy:
 	return _gate_proxy
 
 
-func get_core_carrier() -> LoomCoreCarrier:
+func get_core_carrier() -> CoreDeliveryCarrier:
 	return _core_carrier
 
 
-func get_core_bay() -> LoomCoreBay:
+func get_core_bay() -> CoreDeliveryBay:
 	return _core_bay
 
 

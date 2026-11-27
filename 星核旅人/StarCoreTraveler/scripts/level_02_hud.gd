@@ -417,12 +417,13 @@ func get_recovery_hint_text() -> String:
 	return _recovery_text
 
 
-func show_completion(value: bool, completion_count: int = 0) -> void:
+func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 	if _completion_overlay == null:
 		return
 	_completion_overlay.visible = value
 	_completion_active = value
 	if value:
+		_completion_title.text = "第二关完成 · 用时 %s" % _format_time(elapsed_seconds)
 		_play_completion_reveal()
 		_header.clear_event()
 		_object_prompt_visible = false
@@ -439,6 +440,11 @@ func show_completion(value: bool, completion_count: int = 0) -> void:
 	_update_chrome_visibility()
 	if _completion_count_label != null:
 		_completion_count_label.text = "本关结算 · Esc 可打开暂停菜单" if value else ""
+
+
+func _format_time(seconds: float) -> String:
+	var total: int = maxi(int(floor(seconds)), 0)
+	return "%02d:%02d" % [total / 60, total % 60]
 
 
 ## Same-frame page, animated alpha/scale only (see UiReveal.play_overlay_open).

@@ -56,6 +56,9 @@ var _pause_menu = null
 var _completed: bool = false
 var _resetting: bool = false
 var _completion_count: int = 0
+## Real gameplay time for the completion page; frozen by pause, reset by R,
+## exactly like the DLC chapters.
+var _elapsed: float = 0.0
 var _last_polarity_toggles: int = 0
 var _exit_was_inside: bool = false
 var _scene_leaving: bool = false
@@ -267,6 +270,8 @@ func is_special_wall_unlocked() -> bool:
 func _physics_process(delta: float) -> void:
 	if get_tree().paused:
 		return
+	if not _completed and not _scene_leaving:
+		_elapsed += delta
 	if _completed:
 		# Completed run: no target tint. The material fades on its own pausable
 		# clock; gameplay state is not modified here.
@@ -815,6 +820,7 @@ func _restart_level() -> void:
 		_pause_menu.set_completion_active(false)
 	get_tree().paused = false
 	_completed = false
+	_elapsed = 0.0
 	_exit_was_inside = false
 	_next_level_started = false
 	if _exit != null:
@@ -934,7 +940,7 @@ func _try_complete_at_exit() -> void:
 		_stele.set_suspended(true)
 	if _hud02 != null:
 		_hud02.set_pause_visible(false)
-		_hud02.show_completion(true, _completion_count)
+		_hud02.show_completion(true, _elapsed)
 	if _pause_menu != null:
 		_pause_menu.set_completion_active(true)
 	_update_level_hud()
@@ -1144,6 +1150,10 @@ func is_completed() -> bool:
 
 func get_completion_count() -> int:
 	return _completion_count
+
+
+func get_elapsed_seconds() -> float:
+	return _elapsed
 
 
 func is_scene_leaving() -> bool:

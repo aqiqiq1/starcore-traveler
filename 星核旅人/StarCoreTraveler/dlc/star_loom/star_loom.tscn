@@ -14,10 +14,10 @@
 [ext_resource type="Texture2D" path="res://dlc/star_loom/assets/city/vent_28x12_2f.png" id="12_vent"]
 [ext_resource type="Script" path="res://dlc/star_loom/loom_brazier.gd" id="13_brazier"]
 [ext_resource type="PackedScene" path="res://dlc/trial_chambers/polarity_gate.tscn" id="14_gate"]
-[ext_resource type="PackedScene" path="res://dlc/star_loom/loom_core_carrier.tscn" id="15_carrier"]
+[ext_resource type="PackedScene" path="res://dlc/shared/core_delivery/core_carrier.tscn" id="15_carrier"]
 [ext_resource type="Script" path="res://scripts/level_checkpoint.gd" id="16_checkpoint"]
-[ext_resource type="Script" path="res://dlc/star_loom/loom_gate_proxy.gd" id="17_proxy"]
-[ext_resource type="PackedScene" path="res://dlc/star_loom/loom_core_bay.tscn" id="18_bay"]
+[ext_resource type="Script" path="res://dlc/shared/core_delivery/gate_power_proxy.gd" id="17_proxy"]
+[ext_resource type="PackedScene" path="res://dlc/shared/core_delivery/core_bay.tscn" id="18_bay"]
 
 [node name="StarLoom" type="Node2D"]
 process_mode = 3

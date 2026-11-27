@@ -241,12 +241,12 @@ func _test_guide() -> void:
 		"page indicator starts at 1 / 3", guide.get_page_indicator_text())
 	var titles: Array[String] = ["裂隙回廊", "相性光桥", "双面镜"]
 	var bodies: Array[String] = [
-		"星核裂开时留下紫幕，穿过会把相性翻面。\n门只认同相；这一章无法自由换相。\n看清门上的日/月，让紫幕把相性翻成同相。",
+		"星核贴地滑行：同相推开，异相拉近。\n这一章无法自由换相；穿过紫幕翻面。\n把核送进星核仓，第一道门才会通电。",
 		"光桥只认同相，先用攻击熄灭桥上的光灵。\n光灵熄灭后，这座桥会一直亮着。\n俯冲的光灵会翻相，别停在桥上。",
 		"双面镜有三形态，金、青面盘护着核心。\n第二形态起面盘被光灵锚定，先熄光灵，\n六秒内用异相攻击击碎；核心有时限。",
 	]
 	var keys: Array[String] = [
-		"穿过紫幕翻相，同相才能过门。",
+		"把星核推进仓里，第一道门通电开启。",
 		"先熄桥上的光灵，再过桥；俯冲会翻相。",
 		"先熄锚定光灵，六秒内碎面盘，再打核心。",
 	]
@@ -345,10 +345,13 @@ func _test_pause_page_and_restart() -> void:
 		"pause footnote warns about progress")
 	var buttons: Array[PixelMenuButton] = [
 		_hud.get_continue_button(), _hud.get_restart_button(),
-		_hud.get_title_button(), _hud.get_quit_button()
+		_hud.get_title_button(), _hud.get_quit_button(),
+		_hud.get_pause_controls_button(),
 	]
-	var labels: Array[String] = ["继续游戏", "重新开始本章", "返回主界面", "退出游戏"]
-	for index: int in range(4):
+	var labels: Array[String] = [
+		"继续游戏", "重新开始本章", "返回主界面", "退出游戏", "操作",
+	]
+	for index: int in range(5):
 		_check(buttons[index].text == labels[index],
 			"pause row %d text" % (index + 1), buttons[index].text)
 	await _wait_process(2)
@@ -506,18 +509,18 @@ func _test_completion_page() -> void:
 		and primary.size == Vector2(180.0, 28.0)
 		and primary.variant == PixelMenuButton.Variant.STONE,
 		"completion primary is 180x28 STONE at (110,86)")
-	_check(replay.text == "重玩本章"
+	_check(replay.text == "重玩本关"
 		and replay.position == Vector2(110.0, 126.0)
 		and replay.size == Vector2(180.0, 24.0)
 		and replay.variant == PixelMenuButton.Variant.OPTION,
-		"completion secondary is 180x24 OPTION at (110,126)")
+		"completion secondary is 重玩本关 / 180x24 OPTION at (110,126)")
 	await _wait_process(4)
 	_check(primary.has_focus(), "completion focus starts on 返回主界面")
 	_push_key(KEY_DOWN, true)
 	await _wait_process(2)
 	_push_key(KEY_DOWN, false)
 	await _wait_process(2)
-	_check(replay.has_focus(), "Down reaches 重玩本章")
+	_check(replay.has_focus(), "Down reaches 重玩本关")
 	_push_key(KEY_UP, true)
 	await _wait_process(2)
 	_push_key(KEY_UP, false)

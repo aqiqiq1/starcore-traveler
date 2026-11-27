@@ -18,7 +18,7 @@ extends Node
 ##   - the 360x236 four-button pause page, its copy and focus ring, and the
 ##     real restart wiring (full chapter reset);
 ##   - the 400x210 completion page, its copy, two buttons, focus ring, real
-##     mouse click on 重玩本章, and the full chapter reset it performs.
+##     mouse click on 重玩本关, and the full chapter reset it performs.
 ## E/Enter back to the title from the completion page stays in mechanics_test.
 
 const LOOM_SCENE: String = "res://dlc/star_loom/star_loom.tscn"
@@ -468,27 +468,33 @@ func _run() -> void:
 	_check(hud.get_quit_button().text == "退出游戏"
 		and hud.get_quit_button().variant == PixelMenuButton.Variant.OPTION,
 		"pause button 4 is 退出游戏 / OPTION")
+	_check(hud.get_pause_controls_button().text == "操作"
+		and hud.get_pause_controls_button().variant == PixelMenuButton.Variant.OPTION,
+		"pause button 5 is 操作 / OPTION")
 	var pause_buttons: Array[PixelMenuButton] = [
 		hud.get_continue_button(), hud.get_restart_button(),
 		hud.get_title_button(), hud.get_quit_button(),
+		hud.get_pause_controls_button(),
 	]
 	var pause_positions: Array[Vector2] = [
 		Vector2(76.0, 56.0), Vector2(76.0, 90.0),
 		Vector2(76.0, 124.0), Vector2(76.0, 158.0),
+		Vector2(76.0, 192.0),
 	]
 	var pause_layout_ok: bool = true
 	for index: int in range(pause_buttons.size()):
 		var button: PixelMenuButton = pause_buttons[index]
 		if button.size != Vector2(208.0, 24.0) or button.position != pause_positions[index]:
 			pause_layout_ok = false
-	_check(pause_layout_ok, "pause buttons are 208x24 at x=76 / y=56,90,124,158")
+	_check(pause_layout_ok,
+		"pause buttons are 208x24 at x=76 / y=56,90,124,158,192")
 	var pause_ring_ok: bool = true
 	for index: int in range(pause_buttons.size()):
 		var current: PixelMenuButton = pause_buttons[index]
 		var next_button: PixelMenuButton = pause_buttons[(index + 1) % pause_buttons.size()]
 		if current.get_node(current.focus_next) != next_button:
 			pause_ring_ok = false
-	_check(pause_ring_ok, "the pause page has a four-item focus ring")
+	_check(pause_ring_ok, "the pause page has a five-item focus ring")
 	_check(hud.get_continue_button().has_focus(),
 		"pause focus starts on 继续游戏")
 	_check(hud.resume_requested.is_connected(Callable(_loom, "_on_hud_resume_requested")),
@@ -555,9 +561,9 @@ func _run() -> void:
 		_check(primary != null and primary.size == Vector2(180.0, 28.0)
 			and primary.position == Vector2(110.0, 86.0),
 			"completion primary is 180x28 at (110,86)")
-		_check(secondary != null and secondary.text == "重玩本章"
+		_check(secondary != null and secondary.text == "重玩本关"
 			and secondary.variant == PixelMenuButton.Variant.OPTION,
-			"completion secondary is 重玩本章 / OPTION")
+			"completion secondary is 重玩本关 / OPTION")
 		_check(secondary != null and secondary.size == Vector2(180.0, 24.0)
 			and secondary.position == Vector2(110.0, 126.0),
 			"completion secondary is 180x24 at (110,126)")
@@ -568,16 +574,16 @@ func _run() -> void:
 		_check(hud.title_requested.is_connected(Callable(_loom, "_on_hud_title_requested")),
 			"返回主界面 is wired to the title flow")
 		_check(hud.restart_requested.is_connected(Callable(_loom, "_on_hud_restart_requested")),
-			"重玩本章 is wired to the chapter reset")
+			"重玩本关 is wired to the chapter reset")
 		var click_rect: Rect2 = secondary.get_global_rect()
 		await _push_click(click_rect.get_center())
 		await _wait_process(6)
-		_check(not _loom.is_completed(), "mouse click on 重玩本章 leaves completion")
+		_check(not _loom.is_completed(), "mouse click on 重玩本关 leaves completion")
 		_check(not hud.is_completion_visible(), "completion page is hidden after replay")
 		_check(_loom.get_stage() == 1 and not _loom.is_boss_active(),
-			"重玩本章 resets the whole chapter to stage 1")
+			"重玩本关 resets the whole chapter to stage 1")
 		_check(absf(_player.global_position.x - _loom.get_start_spawn().x) < 4.0,
-			"重玩本章 returns the player to the hall entrance",
+			"重玩本关 returns the player to the hall entrance",
 			"x=%.1f" % _player.global_position.x)
 
 	# --- 6. game over page: keyboard retry --------------------------------

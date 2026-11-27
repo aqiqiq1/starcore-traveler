@@ -916,10 +916,10 @@ func _run() -> void:
 		and primary.variant == PixelMenuButton.Variant.STONE
 		and primary.size == Vector2(180.0, 28.0),
 		"completion primary is 返回主界面 / STONE / 180x28")
-	_check(secondary != null and secondary.text == "重玩本章"
+	_check(secondary != null and secondary.text == "重玩本关"
 		and secondary.variant == PixelMenuButton.Variant.OPTION
 		and secondary.size == Vector2(180.0, 24.0),
-		"completion secondary is 重玩本章 / OPTION / 180x24")
+		"completion secondary is 重玩本关 / OPTION / 180x24")
 	_check(primary.get_node(primary.focus_next) == secondary
 		and secondary.get_node(secondary.focus_next) == primary,
 		"completion buttons form a two-item focus ring")

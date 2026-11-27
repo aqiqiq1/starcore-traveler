@@ -69,8 +69,12 @@ var _pause_menu = null
 var _completed: bool = false
 var _resetting: bool = false
 var _scene_leaving: bool = false
+var _next_level_started: bool = false
 var _footsteps: Node = null
 var _completion_count: int = 0
+## Real gameplay time for the completion page; frozen by pause and the opening
+## film, reset by a full restart, exactly like the three DLC chapters.
+var _elapsed: float = 0.0
 var _last_polarity_toggles: int = 0
 var _stable_stage: int = STAGE_START
 ## Pending record chime token (a new stable stage may complete while the core
@@ -188,6 +192,8 @@ func _ready() -> void:
 		_hud03.replay_requested.connect(_on_hud_replay_requested)
 	if not _hud03.return_to_menu_requested.is_connected(_on_hud_return_to_menu_requested):
 		_hud03.return_to_menu_requested.connect(_on_hud_return_to_menu_requested)
+	if not _hud03.next_level_requested.is_connected(_on_hud_next_level_requested):
+		_hud03.next_level_requested.connect(_on_hud_next_level_requested)
 	# A Space/Enter that activated the level-02 completion page (or any menu) is
 	# still in the current input dispatch when this scene is created. Release the
 	# one-shot actions and hold the approved input override for three ticks so
@@ -195,6 +201,7 @@ func _ready() -> void:
 	LEVEL_FLOW.release_one_shot_actions()
 	_player.begin_input_override()
 	_replay_guard_ticks = 3
+	_elapsed = 0.0
 	_update_level_hud()
 	_setup_footsteps()
 
@@ -397,6 +404,8 @@ func _physics_process(delta: float) -> void:
 func _process(delta: float) -> void:
 	if get_tree().paused:
 		return
+	if not _completed and not _scene_leaving and not _cine.is_active():
+		_elapsed += delta
 	_advance_recovery(delta)
 	if _checkpoint_mark != null and _checkpoint_mark.visible:
 		_checkpoint_mark_time += delta
@@ -1032,7 +1041,7 @@ func _check_city_entry() -> void:
 
 
 func _complete_city() -> void:
-	if _completed:
+	if _completed or _next_level_started:
 		return
 	_cancel_recovery()
 	_footstep_stop()
@@ -1050,7 +1059,7 @@ func _complete_city() -> void:
 	_player.clear_external_force()
 	_player.lock_completion_input()
 	_hud03.set_pause_visible(false)
-	_hud03.show_completion(true, _completion_count)
+	_hud03.show_completion(true, _elapsed)
 	if _pause_menu != null:
 		_pause_menu.set_completion_active(true)
 	_update_level_hud()
@@ -1284,7 +1293,7 @@ func _reset_room_state() -> void:
 
 
 func _restart_level() -> void:
-	if _scene_leaving:
+	if _scene_leaving or _next_level_started:
 		return
 	_cancel_recovery()
 	_footstep_stop()
@@ -1308,6 +1317,7 @@ func _restart_level() -> void:
 	_hud03.set_completion_buttons_enabled(true)
 	_hud03.set_pause_visible(false)
 	_completed = false
+	_elapsed = 0.0
 	_attack_key_down = false
 	_reset_room_state()
 	_player.set_spawn_point(START_SPAWN)
@@ -1338,7 +1348,7 @@ func _restart_level() -> void:
 ## any key still held) must be fully consumed before the body can move again,
 ## otherwise the same press would become a jump on the fresh run.
 func _on_hud_replay_requested() -> void:
-	if _scene_leaving or _resetting or _replay_pending:
+	if _scene_leaving or _next_level_started or _resetting or _replay_pending:
 		return
 	_replay_pending = true
 	LEVEL_FLOW.release_one_shot_actions()
@@ -1354,6 +1364,34 @@ func _finish_replay() -> void:
 	_restart_level()
 
 
+## The L3 completion page shows 进入城内 only when the loom scene exists.  The
+## real scene change writes l3 in _complete_city before this signal can fire, so
+## the fourth chapter is already unlocked if the player returns to the title.
+func _on_hud_next_level_requested() -> void:
+	if not _completed or _next_level_started or _scene_leaving:
+		return
+	_next_level_started = true
+	_cancel_recovery(false)
+	_footstep_stop()
+	_clear_retry_pending()
+	_player.clear_hit_feedback()
+	_music.stop(0.0)
+	_audio.stop_all()
+	if _cine.is_active():
+		_cine.abort()
+	_player.reset_movement_input_state()
+	_player.clear_input_buffers()
+	_player.clear_external_force()
+	_attack_key_down = false
+	_guard.set_suspended(true)
+	if _pause_menu != null:
+		_pause_menu.prepare_scene_change()
+	_hud03.set_completion_buttons_enabled(false)
+	_hud03.release_completion_focus()
+	_hud03.set_pause_visible(false)
+	LEVEL_FLOW.start_star_loom(get_tree())
+
+
 ## Demo-end page: "返回主界面". Real SceneTree change to the level-flow title
 ## scene; the test harness may stay alive as a separate root child.
 func _on_hud_return_to_menu_requested() -> void:
@@ -1361,7 +1399,7 @@ func _on_hud_return_to_menu_requested() -> void:
 
 
 func _return_to_main_menu() -> void:
-	if _scene_leaving:
+	if _scene_leaving or _next_level_started:
 		return
 	# Freeze the body and clear the cover without re-enabling physics: if the
 	# scene change fails, _verify_title_transition restores control safely.
@@ -1615,6 +1653,14 @@ func is_completed() -> bool:
 
 func get_completion_count() -> int:
 	return _completion_count
+
+
+func get_elapsed_seconds() -> float:
+	return _elapsed
+
+
+func is_next_level_started() -> bool:
+	return _next_level_started
 
 
 func is_scene_leaving() -> bool:

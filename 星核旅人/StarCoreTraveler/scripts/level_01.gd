@@ -72,6 +72,9 @@ var _intro_elapsed: float = 0.0
 var _completed: bool = false
 var _resetting: bool = false
 var _completion_count: int = 0
+## Real gameplay time for the completion page; frozen by pause and the opening
+## film, reset by the menu hand-off/restart, exactly like the DLC chapters.
+var _elapsed: float = 0.0
 var _last_polarity_toggles: int = 0
 var _last_force: Vector2 = Vector2.ZERO
 var _intro_start_count: int = 0
@@ -153,10 +156,18 @@ func _exit_tree() -> void:
 		DemoAudio.stop_world()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_refresh_exit_gate_available()
 	if _menu != null and _menu.is_gameplay_blocked():
 		return
+	if (
+		not get_tree().paused
+		and not _intro_active
+		and not _completed
+		and not _resetting
+		and not _scene_leaving
+	):
+		_elapsed += delta
 	# The local opening controller owns bar easing, the scripted run, the
 	# echo's pages, the F advance and the Space skip hold. This level keeps only
 	# compatibility state and the safe pause/focus/reset hand-offs.
@@ -317,6 +328,7 @@ func _begin_intro(reset_player: bool) -> void:
 	_intro_active = true
 	_refresh_exit_gate_available()
 	_intro_elapsed = 0.0
+	_elapsed = 0.0
 	_intro_start_count += 1
 	_checkpoint_position = _start_position
 	_checkpoint.set_activated(false)
@@ -357,6 +369,7 @@ func _begin_play(reset_player: bool, reason: String = START_REASON) -> void:
 		_opening.abort()
 	_intro_active = false
 	_intro_elapsed = 0.0
+	_elapsed = 0.0
 	_opening_played = true
 	_exit.set_completed(false)
 	_checkpoint.set_activated(false)
@@ -635,7 +648,7 @@ func _on_exit_reached() -> void:
 	_player.velocity = Vector2.ZERO
 	if _pause_menu != null:
 		_pause_menu.set_completion_active(true)
-	_hud.show_completion(true, _completion_count)
+	_hud.show_completion(true, _elapsed)
 
 
 func _on_window_focus_exited() -> void:
@@ -802,6 +815,10 @@ func is_completed() -> bool:
 
 func get_completion_count() -> int:
 	return _completion_count
+
+
+func get_elapsed_seconds() -> float:
+	return _elapsed
 
 
 func get_intro_start_count() -> int:

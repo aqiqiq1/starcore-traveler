@@ -9,6 +9,7 @@ extends RefCounted
 const LEVEL_01_PATH: String = "res://scenes/level_01.tscn"
 const LEVEL_02_PATH: String = "res://scenes/level_02.tscn"
 const LEVEL_03_PATH: String = "res://scenes/level_03.tscn"
+const STAR_LOOM_PATH: String = "res://dlc/star_loom/star_loom.tscn"
 
 const GAMEPLAY_ACTIONS: Array[StringName] = [
 	&"move_left",
@@ -99,3 +100,7 @@ static func start_level_02(tree: SceneTree) -> void:
 
 static func start_level_03(tree: SceneTree) -> void:
 	change_scene(tree, LEVEL_03_PATH)
+
+
+static func start_star_loom(tree: SceneTree) -> Error:
+	return change_scene(tree, STAR_LOOM_PATH)

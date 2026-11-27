@@ -303,32 +303,91 @@ func _run() -> void:
 	await _wait_physics(60)
 	_check(not hud.is_q_denied_visible(), "cross-Q icon expires after its short window")
 
-	# --- room 1: field / gate -------------------------------------------
+	# --- room 1: inversion / star-core delivery / gate -------------------
 	var field: RiftInversionField = _rift.get_field_a()
-	await _place(120.0, 320.0, false)
+	var carrier: CoreDeliveryCarrier = _rift.get_core_carrier()
+	var bay: CoreDeliveryBay = _rift.get_core_bay()
+	var gate: PolarityGate = _rift.get_gate_moon()
+	var proxy: CoreDeliveryGateProxy = _rift.get_gate_moon_proxy()
+	_check(carrier != null and bay != null and gate != null and proxy != null,
+		"the core carrier, bay and moon gate exist")
+	if carrier == null or bay == null or gate == null or proxy == null:
+		return
+	await _place(40.0, 320.0, true)
+	carrier.reset_state()
+	await _wait_physics(3)
+	_check(absf(carrier.global_position.x - carrier.get_start_x()) < 0.5,
+		"the star core waits at its authored start",
+		"core=%.1f" % carrier.global_position.x)
+	_check(not bay.is_occupied() and bay.get_glow_strength() == 0.0,
+		"the bay starts dark before delivery")
+	_check(gate.is_blocking() and gate.get_collision_layer() == 1,
+		"the first moon gate starts unpowered and solid")
+	_check(proxy.is_positive() and gate.get_required_positive() == false,
+		"the unpowered proxy feeds the gate its opposite phase")
+	_check(carrier.get_node_or_null("CollisionShape2D") == null
+		and bay.get_node_or_null("CollisionShape2D") == null,
+		"the core and bay own no collision body (no pinch / no platform)")
+
+	# The curtain is the only phase control.  Its 澜相 is the core's own phase,
+	# so the same-phase field pushes the core toward the bay.
+	await _place(120.0, 320.0, true)
 	var walked: bool = await _move_until_x(165.0, 240)
 	_check(walked and field.get_trigger_count() == 1,
 		"walking through the violet curtain flips once",
 		"x=%.1f triggers=%d" % [_player.global_position.x, field.get_trigger_count()])
-	_check(_player.is_positive(), "curtain flips the start to 辉相")
-	_check(field.get_trigger_count() == 1, "first curtain pass counts once",
-		str(field.get_trigger_count()))
-	# The gate wants the post-curtain phase (澜相).  Walk back through the same
-	# curtain to prove it re-arms, then set the gate-facing phase explicitly.
+	_check(not _player.is_positive(), "the post-curtain body is 澜相")
+	var seated: bool = await _wait_until(
+		func() -> bool: return carrier.is_on_socket(), 240
+	)
+	_check(seated, "same-phase field pushes the core into the bay",
+		"core=%.1f" % carrier.global_position.x)
+	_check(bay.is_occupied() and bay.is_lit()
+		and bay.get_glow_strength() == 1.0,
+		"the bay lights when the core is seated",
+		"glow=%.1f" % bay.get_glow_strength())
+	_check(not gate.is_blocking() and gate.get_collision_layer() == 0,
+		"the seated core powers the first moon gate open",
+		"layer=%d" % gate.get_collision_layer())
+	_check(hud.get_event_text().contains("星核入仓")
+		and hud.get_event_text().contains("第一道门"),
+		"the HUD event line explains the core powering the gate",
+		hud.get_event_text())
+	_check(hud.get_objective_text().contains("相性桥"),
+		"the objective advances after the gate is powered",
+		hud.get_objective_text())
+
+	# Step out of the curtain first: exiting does not flip.  Walking back in
+	# from the right is the real second pass and returns the body to 辉相.
 	await _move_until_x(235.0, 240)
 	_check(not field.is_player_inside(), "leaving the curtain re-arms it")
-	await _place(200.0, 320.0, true)
 	await _move_left_until_x(140.0, 240)
-	_check(field.get_trigger_count() == 2, "re-entering the same curtain flips again",
+	_check(field.get_trigger_count() == 2, "the same curtain re-arms and flips again",
 		str(field.get_trigger_count()))
-	_check(not _player.is_positive(), "second curtain pass returns 澜相")
-	var gate: PolarityGate = _rift.get_node("GateMoon") as PolarityGate
+	_check(_player.is_positive(), "the body returns to 辉相 for the pull")
+	var pulled: bool = await _wait_until(
+		func() -> bool: return not carrier.is_on_socket(), 240
+	)
+	_check(pulled, "opposite-phase field pulls the core out of the bay",
+		"core=%.1f" % carrier.global_position.x)
+	_check(not bay.is_occupied() and not bay.is_lit()
+		and bay.get_glow_strength() == 0.0,
+		"pulling the core out darkens the bay")
+	_check(gate.is_blocking() and gate.get_collision_layer() == 1,
+		"the unpowered first moon gate closes again",
+		"layer=%d" % gate.get_collision_layer())
+	_check(hud.get_event_text().contains("星核离仓")
+		and hud.get_event_text().contains("第一道门"),
+		"the HUD event line also explains the power loss",
+		hud.get_event_text())
+
+	# Power, not phase, owns this gate now: even the moon phase is blocked while
+	# the core is out.  Then re-arm the curtain and push it back in.
 	await _place(240.0, 320.0, false)
-	await _wait_physics(3)
-	_check(not gate.is_blocking(), "moon gate is open for 澜相")
-	await _place(240.0, 320.0, true)
-	await _wait_physics(3)
-	_check(gate.is_blocking(), "moon gate is solid for 辉相")
+	await _wait_physics(4)
+	_check(gate.is_blocking() and _player.global_position.x < 266.0,
+		"the moon phase alone cannot open the unpowered gate",
+		"x=%.2f layer=%d" % [_player.global_position.x, gate.get_collision_layer()])
 	Input.action_press(&"move_right")
 	Input.action_press(&"jump")
 	await _wait_physics(3)
@@ -336,8 +395,32 @@ func _run() -> void:
 	await _wait_physics(36)
 	Input.action_release(&"move_right")
 	_check(_player.global_position.x < 266.0,
-		"wrong-phase gate stops a running jump",
+		"the unpowered gate also stops a running jump",
 		"x=%.2f" % _player.global_position.x)
+	await _place(140.0, 320.0, true)
+	await _move_until_x(165.0, 240)
+	_check(field.get_trigger_count() == 3,
+		"the curtain re-arms for the recovery push",
+		str(field.get_trigger_count()))
+	_check(not _player.is_positive(), "the recovery push starts in 澜相")
+	var reseated: bool = await _wait_until(
+		func() -> bool: return carrier.is_on_socket(), 300
+	)
+	_check(reseated, "the core can always be pushed back into the bay",
+		"core=%.1f" % carrier.global_position.x)
+	_check(bay.is_lit() and not gate.is_blocking(),
+		"reseating relights the bay and reopens the gate")
+	# The bay holds a seated core once the body is on its right, so crossing
+	# cannot pull it back out from the far side.
+	await _place(255.0, 320.0, true)
+	await _wait_physics(6)
+	_check(carrier.is_on_socket() and not gate.is_blocking(),
+		"the bay holds the core while the body is on its right (no far-side softlock)",
+		"core=%.1f" % carrier.global_position.x)
+	await _move_until_x(300.0, 240)
+	_check(_player.global_position.x > 280.0 and not gate.is_blocking(),
+		"the powered gate lets the body through",
+		"x=%.1f" % _player.global_position.x)
 
 	# --- low truss / bridge fall ----------------------------------------
 	var beams: RiftLowBeams = _rift.get_low_beams()

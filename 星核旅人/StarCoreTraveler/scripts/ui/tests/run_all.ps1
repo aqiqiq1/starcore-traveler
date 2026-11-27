@@ -35,6 +35,7 @@ $summary += Invoke-Case "ui_reveal" "res://scripts/ui/tests/ui_reveal_test.tscn"
 $summary += Invoke-Case "completion_reveal" "res://scripts/ui/tests/completion_reveal_test.tscn" "completion_reveal_test"
 $summary += Invoke-Case "prompt_footer" "res://scripts/ui/tests/prompt_footer_test.tscn" "prompt_footer_test"
 $summary += Invoke-Case "level03_health" "res://scripts/level03/tests/health_bar_test.tscn" "health_bar_test"
+$summary += Invoke-Case "pause_completion" "res://scripts/ui/tests/pause_completion_alignment_test.tscn" "pause_completion_alignment_test"
 
 Write-Host ""
 Write-Host "SHARED_UI_RUN_ALL"

@@ -28,8 +28,8 @@ const OUT_DIR: String = "res://screenshots/loom_core_wisp_20261127"
 
 var _loom: StarLoom
 var _player: L3Player
-var _carrier: LoomCoreCarrier
-var _bay: LoomCoreBay
+var _carrier: CoreDeliveryCarrier
+var _bay: CoreDeliveryBay
 var _gate_second: PolarityGate
 var _saved: Array[String] = []
 

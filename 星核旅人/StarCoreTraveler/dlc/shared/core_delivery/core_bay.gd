@@ -1,7 +1,9 @@
-class_name LoomCoreBay
+class_name CoreDeliveryBay
 extends Node2D
 
-## Star-core bay that receives the delivered core at x = 330.
+## Shared star-core bay used by DLC2 rift-workshop and DLC3 star-loom.
+## The original loom placement received the core at x = 330; the chapter owns
+## the real world position, the bay only exposes its lit/empty state.
 ##
 ## The bay borrows the project's existing star-core bay art: the white 32x32
 ## pedestal (`assets/star_core_bay/star_core_bay_base.png`) and its pale-cyan

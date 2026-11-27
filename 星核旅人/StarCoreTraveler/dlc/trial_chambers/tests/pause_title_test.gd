@@ -103,14 +103,20 @@ func _run() -> void:
 	_check(hud.get_continue_button().text == "继续游戏"
 		and hud.get_restart_button().text == "重新开始本章"
 		and hud.get_title_button().text == "返回主界面"
-		and hud.get_quit_button().text == "退出游戏",
-		"pause page exposes all four entries")
+		and hud.get_quit_button().text == "退出游戏"
+		and hud.get_pause_controls_button().text == "操作",
+		"pause page exposes all five entries")
 	_check(hud.get_continue_button().get_node(hud.get_continue_button().focus_next)
 		== hud.get_restart_button(),
 		"continue focus_next reaches restart")
 	_check(hud.get_quit_button().get_node(hud.get_quit_button().focus_next)
-		== hud.get_continue_button(),
-		"quit focus_next cycles to continue")
+		== hud.get_pause_controls_button(),
+		"quit focus_next reaches 操作")
+	_check(hud.get_pause_controls_button().get_node(
+		hud.get_pause_controls_button().focus_next) == hud.get_continue_button(),
+		"操作 focus_next cycles to continue")
+	_check(hud.get_pause_controls_button().position == Vector2(76.0, 192.0),
+		"操作 row sits at (76,192)")
 
 	# Down once reaches 重新开始本章 and really resets the chapter.
 	await _tap_key(KEY_DOWN)

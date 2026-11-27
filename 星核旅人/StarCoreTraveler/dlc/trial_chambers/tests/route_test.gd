@@ -319,10 +319,10 @@ func _run() -> void:
 			break
 	_check(not has_hit_text, "no HUD label repeats a 受击 text count")
 
-	# --- Esc pause: four entries, aligned with the base pause page ---------
+	# --- Esc pause: five entries, aligned with the base pause page ---------
 	await _tap_key(KEY_ESCAPE)
 	await _wait_process(5)
-	_check(_trial.is_pause_open(), "Esc opens the four-entry pause page")
+	_check(_trial.is_pause_open(), "Esc opens the five-entry pause page")
 	_check(get_tree().paused, "pause page pauses the tree")
 	_check(hud.is_pause_visible(), "HUD pause overlay is visible")
 	_check(not hud.is_hit_pips_visible(), "pause page hides the fixed health bar")
@@ -343,6 +343,10 @@ func _run() -> void:
 		"return button text is 返回主界面")
 	_check(hud.get_quit_button().text == "退出游戏",
 		"quit button text is 退出游戏")
+	_check(hud.get_pause_controls_button().text == "操作",
+		"controls button text is 操作")
+	_check(not hud.get_pause_controls_button().pressed.get_connections().is_empty(),
+		"操作 button opens the in-panel table")
 	_check(not hud.get_quit_button().pressed.get_connections().is_empty()
 		and not hud.get_signal_connection_list("quit_requested").is_empty(),
 		"quit button is wired to the chapter quit handler")
@@ -351,7 +355,8 @@ func _run() -> void:
 		"continue row is 208x24 at (76,56)")
 	_check(hud.get_restart_button().position == Vector2(76.0, 90.0)
 		and hud.get_title_button().position == Vector2(76.0, 124.0)
-		and hud.get_quit_button().position == Vector2(76.0, 158.0),
+		and hud.get_quit_button().position == Vector2(76.0, 158.0)
+		and hud.get_pause_controls_button().position == Vector2(76.0, 192.0),
 		"pause rows step by 34 px")
 	_check(hud.get_pause_note_text() == "返回主界面不保存本章进度",
 		"pause footnote is the base note", hud.get_pause_note_text())
@@ -494,7 +499,8 @@ func _run() -> void:
 	_check(hud.get_completion_subtitle_text() == "试炼场的门重新合拢，星核记住了你的相性。",
 		"completion subtitle is the trial epilogue", hud.get_completion_subtitle_text())
 	_check(hud.get_completion_note_text() == "本章结算 · 暂停菜单可查看操作",
-		"completion footnote names Esc pause", hud.get_completion_note_text())
+		"completion footnote names the real pause control table",
+		hud.get_completion_note_text())
 	var completion_primary: PixelMenuButton = hud.get_completion_primary_button()
 	var completion_replay: PixelMenuButton = hud.get_completion_replay_button()
 	_check(completion_primary.text == "返回主界面"
@@ -502,11 +508,11 @@ func _run() -> void:
 		and completion_primary.get_size() == Vector2(180.0, 28.0)
 		and completion_primary.position == Vector2(110.0, 86.0),
 		"completion primary is 返回主界面 STONE 180x28 at (110,86)")
-	_check(completion_replay.text == "重玩本章"
+	_check(completion_replay.text == "重玩本关"
 		and completion_replay.variant == PixelMenuButton.Variant.OPTION
 		and completion_replay.get_size() == Vector2(180.0, 24.0)
 		and completion_replay.position == Vector2(110.0, 126.0),
-		"completion secondary is 重玩本章 OPTION 180x24 at (110,126)")
+		"completion secondary is 重玩本关 OPTION 180x24 at (110,126)")
 	_check(completion_primary.has_focus(), "completion primary owns focus")
 	await _try_save_completion_shot()
 
@@ -522,15 +528,15 @@ func _run() -> void:
 	_check(not _trial.is_pause_open(), "second Esc closes the pause page")
 	_check(completion_primary.has_focus(), "completion focus returns after pause")
 
-	# --- 重玩本章 really restarts the chapter -----------------------------
+	# --- 重玩本关 really restarts the chapter -----------------------------
 	await _push_click(completion_replay.get_global_rect().get_center())
 	await _wait_process(6)
-	_check(not _trial.is_completed(), "重玩本章 clears completion")
-	_check(not hud.is_completion_visible(), "重玩本章 hides the completion page")
-	_check(hud.is_hit_pips_visible(), "重玩本章 shows the health bar again")
-	_check(not get_tree().paused, "重玩本章 leaves the tree unpaused")
+	_check(not _trial.is_completed(), "重玩本关 clears completion")
+	_check(not hud.is_completion_visible(), "重玩本关 hides the completion page")
+	_check(hud.is_hit_pips_visible(), "重玩本关 shows the health bar again")
+	_check(not get_tree().paused, "重玩本关 leaves the tree unpaused")
 	_check(absf(_player.global_position.x - _trial.get_start_spawn().x) < 2.0,
-		"重玩本章 returns to the trial entrance",
+		"重玩本关 returns to the trial entrance",
 		"x=%.2f" % _player.global_position.x)
 
 	# --- complete again (state-only) so E can be checked ------------------

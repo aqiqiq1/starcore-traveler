@@ -5,10 +5,13 @@ extends Node2D
 ##
 ## Three connected rooms on one 1880 x 360 scene:
 ##   1. 反转回廊  x 0..560    : InversionA@160 flips the positive start to 澜相.
-##                              Q is LOCKED in this chapter.  GateMoon requires
-##                              the post-curtain 澜相, so the curtain itself is
-##                              the key.  The duplicate GateCyan/InversionB pair
-##                              is gone.
+##                              Q is LOCKED in this chapter.  A star core slides
+##                              on the floor between x=188 and the bay at x=244:
+##                              same phase pushes it away, the other phase pulls
+##                              it in.  Seating it powers GateMoon@270; pulling
+##                              it back closes the gate.  The curtain is the only
+##                              phase control.  The duplicate GateCyan/InversionB
+##                              pair is gone.
 ##   2. 相性桥    x 560..1080 : raised terrace, three 64x10 PhaseBridges
 ##                              alternating gold/cyan with stone landings, five
 ##                              hazard wisps and a checkpoint.  Each bridge wisp
@@ -34,8 +37,9 @@ extends Node2D
 ##                              after it finishes does the finish core activate.
 ##
 ## Reused, never modified: L3Player (J / hurt / fall recovery / locked Q),
-## the shared PolarityGate scene from the trial chapter, DS03, the L2 stone
-## strip, the project fonts and palette.  New content lives only in
+## the shared PolarityGate scene from the trial chapter, the shared core
+## delivery carrier/bay/proxy (dlc/shared/core_delivery/), DS03, the L2 stone
+## strip, the project fonts and palette.  Chapter-specific content lives in
 ## dlc/rift_workshop/.
 
 signal level_completed
@@ -121,6 +125,10 @@ enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 @onready var _camera: Camera2D = $Player/Camera2D
 @onready var _boss: RiftMirrorBoss = $MirrorBoss
 @onready var _field_a: RiftInversionField = $InversionA
+@onready var _core_carrier: CoreDeliveryCarrier = $CoreCarrier
+@onready var _core_bay: CoreDeliveryBay = $CoreBay
+@onready var _gate_proxy: CoreDeliveryGateProxy = $GateMoonProxy
+@onready var _gate_moon: PolarityGate = $GateMoon
 @onready var _bridge_a: RiftPhaseBridge = $BridgeA
 @onready var _bridge_b: RiftPhaseBridge = $BridgeB
 @onready var _bridge_c: RiftPhaseBridge = $BridgeC
@@ -149,6 +157,9 @@ var _boss_defeated: bool = false
 var _boss_collapse_active: bool = false
 var _boss_defeat_cue_played: bool = false
 var _arena_intro_left: float = 0.0
+## Last power state written to GateMoon.  The bay is the only source; the
+## proxy lets the shared PolarityGate stay a phase gate without editing it.
+var _first_gate_powered: bool = false
 var _mirror_tip_pending: bool = false
 var _core_tip_pending: bool = false
 var _checkpoint_active: bool = false
@@ -191,7 +202,8 @@ func _ready() -> void:
 	process_physics_priority = -10
 	for node: Node in [
 		$Background, $Terrain, $Decorations, $Player, $MirrorBoss,
-		$InversionA, $BridgeA, $BridgeB, $BridgeC, $LowBeams,
+		$InversionA, $CoreBay, $CoreCarrier, $GateMoonProxy, $GateMoon,
+		$BridgeA, $BridgeB, $BridgeC, $LowBeams,
 		$WispA, $WispB, $WispC, $WispD, $WispE,
 		$CrystalLeft, $CrystalRight, $RiftCheckpoint, $FinishPoint,
 	]:
@@ -225,6 +237,17 @@ func _ready() -> void:
 
 	_field_a.set_player_node(_player)
 	_field_a.field_triggered.connect(_on_field_triggered)
+
+	# The first moon gate is powered by the delivered core, not by the player's
+	# own phase.  The proxy keeps PolarityGate's real blocking, deny, anti-pinch
+	# and drawing behaviour while the bay supplies the phase it compares.
+	_gate_proxy.bind_target(_player)
+	_gate_moon.set_player_node(_gate_proxy)
+	_gate_moon.denied.connect(_on_gate_moon_denied)
+	_core_carrier.reset_state()
+	_core_bay.set_occupied(false)
+	_gate_proxy.set_positive_override(true)
+	_first_gate_powered = false
 
 	_bridge_a.set_player_node(_player)
 	_bridge_b.set_player_node(_player)
@@ -278,7 +301,7 @@ func _ready() -> void:
 	_hud.set_player_hits(0, PLAYER_MAX_HITS)
 	_hud.set_health_target(_player)
 	_hud.set_player_health_visible(true)
-	_hud.set_objective("目标：穿过反转回廊")
+	_hud.set_objective("目标：送星核入仓，为月门供电")
 	_hud.set_boss_visible(false)
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
@@ -522,6 +545,7 @@ func _physics_process(delta: float) -> void:
 			_wake_boss()
 	# The intro hover is not the fight; BGM starts only in _wake_boss().
 
+	_tick_core_delivery(delta)
 	_tick_bridge_edge_hints()
 
 	if not _arena_entered and _player.global_position.x >= ARENA_ENTER_X:
@@ -661,12 +685,12 @@ func _update_objective(force: bool = false) -> void:
 	elif _player.global_position.x >= 560.0:
 		text = "目标：跨过三相性光桥"
 		key = "bridge"
-	elif _player.global_position.x >= 150.0:
-		text = "目标：穿过紫幕，让门同相"
-		key = "corridor"
+	elif not is_first_gate_powered():
+		text = "目标：送星核入仓，为月门供电"
+		key = "core_delivery"
 	else:
-		text = "目标：穿过反转回廊"
-		key = "start"
+		text = "目标：穿过月门，前往相性桥"
+		key = "corridor_clear"
 	if key == _objective_key and not force:
 		return
 	_objective_key = key
@@ -790,6 +814,44 @@ func _set_paused(value: bool) -> void:
 
 
 # --- room 1: inversion / gate / wisps --------------------------------------
+
+## The star core uses the shared RuneStoneField sample exactly like DLC3:
+## same phase pushes it away, the other phase pulls it in.  The carrier owns
+## no player force and no collision, so it can never pinch, launch, or carry
+## the body.  GateMoon reads the bay through an invisible phase proxy; the
+## shared PolarityGate itself is unchanged.
+func _tick_core_delivery(delta: float) -> void:
+	if _core_carrier == null or _core_bay == null or _gate_proxy == null:
+		return
+	_core_carrier.tick_stone(delta)
+	var powered: bool = _core_carrier.is_on_socket()
+	_core_bay.set_occupied(powered)
+	_gate_proxy.set_positive_override(not powered)
+	if powered == _first_gate_powered:
+		return
+	_first_gate_powered = powered
+	if powered:
+		_audio.play_bridge(true)
+		_hud.show_event("星核入仓 · 第一道门通电开启", 2.0)
+	else:
+		_audio.play_bridge(false)
+		_hud.show_event("星核离仓 · 第一道门断电关闭", 1.8)
+
+
+## The bay is the only pressure source.  Unlike DLC3 there is no checkpoint
+## before this gate, but the bay holds a seated core while the body is on its
+## right, so a player who has crossed cannot pull it out from the far side.
+func is_first_gate_powered() -> bool:
+	return _core_bay != null and _core_bay.is_occupied()
+
+
+func _on_gate_moon_denied(_required_positive: bool) -> void:
+	if _completed or _scene_leaving or _recovery_active:
+		return
+	if is_first_gate_powered():
+		return
+	_hud.show_event("第一道门断电 · 把星核送进仓里", 1.8)
+
 
 func _on_field_triggered(positive: bool) -> void:
 	_audio.play_inversion()
@@ -1513,7 +1575,7 @@ func _restart_chapter() -> void:
 	_hud.set_recovery_alpha(0.0)
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
-	_hud.set_objective("目标：穿过反转回廊")
+	_hud.set_objective("目标：送星核入仓，为月门供电")
 	_hud.set_polarity(true)
 	_hud.set_player_hits(0, PLAYER_MAX_HITS)
 	_hud.set_health_target(_player)
@@ -1535,6 +1597,10 @@ func _restart_chapter() -> void:
 	_crystal_left.reset_state()
 	_crystal_right.reset_state()
 	_field_a.reset_inside_state()
+	_core_carrier.reset_state()
+	_core_bay.set_occupied(false)
+	_gate_proxy.set_positive_override(true)
+	_first_gate_powered = false
 	_checkpoint.set_activated(false)
 	_update_finish_marker()
 	_sync_boss_hud()
@@ -1570,6 +1636,22 @@ func get_crystal_right() -> RiftInversionCrystal:
 
 func get_field_a() -> RiftInversionField:
 	return _field_a
+
+
+func get_core_carrier() -> CoreDeliveryCarrier:
+	return _core_carrier
+
+
+func get_core_bay() -> CoreDeliveryBay:
+	return _core_bay
+
+
+func get_gate_moon() -> PolarityGate:
+	return _gate_moon
+
+
+func get_gate_moon_proxy() -> CoreDeliveryGateProxy:
+	return _gate_proxy
 
 
 func get_bridge_a() -> RiftPhaseBridge:

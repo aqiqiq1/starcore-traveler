@@ -25,7 +25,7 @@ const PANEL_BG: Color = Color(0.014, 0.032, 0.040, 0.97)
 const PANEL_BORDER: Color = Color(0.45, 0.66, 0.63, 0.9)
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 const TITLE: String = "裂隙工坊"
-const DEFAULT_OBJECTIVE: String = "目标：穿过反转回廊"
+const DEFAULT_OBJECTIVE: String = "目标：送星核入仓，为月门供电"
 const PAUSE_PANEL_POSITION: Vector2 = Vector2(140.0, 56.0)
 const PAUSE_PANEL_SIZE: Vector2 = Vector2(360.0, 236.0)
 const COMPLETION_PANEL_POSITION: Vector2 = Vector2(120.0, 75.0)
@@ -35,6 +35,17 @@ const COMPLETION_SUBTITLE: String = "双面镜碎裂，裂隙核心重新入睡�
 const PAUSE_FOOTER: String = "返回主界面不保存本章进度"
 const COMPLETION_FOOTER: String = "本章结算 · 暂停菜单可查看操作"
 const PANEL_ANIM_TIME: float = UiReveal.OPEN_DURATION
+## Six-row in-panel reference, keyed to the real route.  This chapter flips
+## polarity through crystals/fields, so the shared Q toggle is locked.
+const PAUSE_CONTROLS_HEADER: String = "本关操作"
+const PAUSE_CONTROLS_ROWS: Array = [
+	["移动", "A / D · ← / →"],
+	["跳跃", "{SPACE}"],
+	["攻击", "{J}"],
+	["换相", "本章锁 Q"],
+	["暂停", "{ESC}"],
+	["重开", "{R}"],
+]
 
 var _root: Control
 var _header: HudObjective
@@ -59,8 +70,13 @@ var _pause_continue: PixelMenuButton
 var _pause_restart: PixelMenuButton
 var _pause_title: PixelMenuButton
 var _pause_quit: PixelMenuButton
+var _pause_controls: PixelMenuButton
+var _pause_controls_root: Control
+var _pause_controls_back: PixelMenuButton
+var _pause_controls_labels: Array[Control] = []
 var _pause_footer: Label
 var _pause_reveal: UiReveal
+var _controls_visible: bool = false
 
 const HEALTH_PULSE_TIME: float = 1.0
 
@@ -128,6 +144,26 @@ func _unhandled_input(event: InputEvent) -> void:
 	var code: int = int(key_event.physical_keycode)
 	if code == 0:
 		code = int(key_event.keycode)
+	# The operation reference is a sub-page of the pause panel.  While it is
+	# open, Enter/Space only closes that sub-page; it must never resume or
+	# restart the chapter behind the table.
+	if _controls_visible:
+		if code == int(KEY_ESCAPE) or code == int(KEY_F) \
+				or code == int(KEY_ENTER) or code == int(KEY_KP_ENTER) \
+				or code == int(KEY_SPACE):
+			close_controls()
+			get_viewport().set_input_as_handled()
+			return
+		if code == int(KEY_DOWN) or code == int(KEY_TAB) or code == int(KEY_UP):
+			if _pause_controls_back != null:
+				_pause_controls_back.grab_focus()
+			get_viewport().set_input_as_handled()
+			return
+		return
+	if code == int(KEY_F):
+		open_controls()
+		get_viewport().set_input_as_handled()
+		return
 	if code == int(KEY_ENTER) or code == int(KEY_KP_ENTER) or code == int(KEY_SPACE):
 		var focused: Control = get_viewport().gui_get_focus_owner()
 		get_viewport().set_input_as_handled()
@@ -251,6 +287,30 @@ func _menu_button(
 	return button
 
 
+## Key column for the in-panel control reference.  Same 16x16 inline caps and
+## 12 px pixel font as the shared pause page.
+func _keys_label(
+	text_value: String, position_value: Vector2, size_value: Vector2
+) -> RichTextLabel:
+	var label: RichTextLabel = RichTextLabel.new()
+	label.bbcode_enabled = true
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.scroll_active = false
+	label.fit_content = false
+	label.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	label.position = position_value
+	label.size = size_value
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if _font != null:
+		label.add_theme_font_override("normal_font", _font)
+	label.add_theme_font_size_override("normal_font_size", 12)
+	label.add_theme_color_override("default_color", TEXT)
+	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
+	label.add_theme_constant_override("outline_size", 1)
+	label.text = KeyGlyph.decorate(text_value)
+	return label
+
+
 func _build_header() -> void:
 	_header = HudObjective.new()
 	_header.name = "HudObjective"
@@ -362,7 +422,7 @@ func _build_completion() -> void:
 	panel.add_child(_completion_primary)
 
 	_completion_replay = _menu_button(
-		"重玩本章", Vector2(110.0, 126.0), Vector2(180.0, 24.0),
+		"重玩本关", Vector2(110.0, 126.0), Vector2(180.0, 24.0),
 		PixelMenuButton.Variant.OPTION
 	)
 	_completion_replay.name = "CompletionReplay"
@@ -410,10 +470,10 @@ func _build_pause() -> void:
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = PANEL_BG
-	style.border_width_left = 1
-	style.border_width_top = 1
-	style.border_width_right = 1
-	style.border_width_bottom = 1
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
 	style.border_color = PANEL_BORDER
 	style.set_corner_radius_all(0)
 	style.anti_aliasing = false
@@ -467,15 +527,28 @@ func _build_pause() -> void:
 	_pause_quit.pressed.connect(func() -> void: quit_requested.emit())
 	panel.add_child(_pause_quit)
 
+	# The four existing entries keep their order; 操作 is appended so the real
+	# route reference stays one click/F away without adding a settings page.
+	_pause_controls = _menu_button(
+		"操作", Vector2(76.0, 192.0), Vector2(208.0, 24.0),
+		PixelMenuButton.Variant.OPTION
+	)
+	_pause_controls.name = "ControlsButton"
+	_pause_controls.pressed.connect(_on_controls_pressed)
+	panel.add_child(_pause_controls)
+
 	_pause_footer = _label(
-		PAUSE_FOOTER, Vector2(0.0, 190.0), Vector2(360.0, 16.0), 12, DIM
+		PAUSE_FOOTER, Vector2(0.0, 220.0), Vector2(360.0, 14.0), 12, DIM
 	)
 	_pause_footer.name = "PauseFooter"
 	_pause_footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(_pause_footer)
 
+	_build_pause_controls(panel)
+
 	var order: Array[PixelMenuButton] = [
-		_pause_continue, _pause_restart, _pause_title, _pause_quit
+		_pause_continue, _pause_restart, _pause_title, _pause_quit,
+		_pause_controls,
 	]
 	for index: int in range(order.size()):
 		var current: PixelMenuButton = order[index]
@@ -485,6 +558,103 @@ func _build_pause() -> void:
 		current.focus_previous = current.get_path_to(previous)
 		current.focus_neighbor_bottom = current.get_path_to(next)
 		current.focus_neighbor_top = current.get_path_to(previous)
+
+
+## One-page 12 px control reference inside the existing 360x236 pause panel.
+## It replaces the five buttons and footnote while open; Esc, F or the in-panel
+## 返回 button closes it and returns to the unchanged pause menu.
+func _build_pause_controls(panel: Panel) -> void:
+	_pause_controls_root = Control.new()
+	_pause_controls_root.name = "PauseControls"
+	_pause_controls_root.position = Vector2(0.0, 56.0)
+	_pause_controls_root.size = Vector2(360.0, 174.0)
+	_pause_controls_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_pause_controls_root.visible = false
+	panel.add_child(_pause_controls_root)
+
+	var header: Label = _label(
+		PAUSE_CONTROLS_HEADER, Vector2(0.0, 0.0), Vector2(360.0, 14.0), 12, CYAN
+	)
+	header.name = "ControlsHeader"
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_pause_controls_root.add_child(header)
+	_pause_controls_labels.append(header)
+
+	var divider: ColorRect = ColorRect.new()
+	divider.position = Vector2(40.0, 16.0)
+	divider.size = Vector2(280.0, 1.0)
+	divider.color = Color(0.45, 0.66, 0.63, 0.35)
+	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_pause_controls_root.add_child(divider)
+
+	for index: int in range(PAUSE_CONTROLS_ROWS.size()):
+		var row: Array = PAUSE_CONTROLS_ROWS[index]
+		var row_y: float = 24.0 + float(index) * 18.0
+		var keys_label: RichTextLabel = _keys_label(
+			String(row[1]), Vector2(54.0, row_y), Vector2(110.0, 16.0)
+		)
+		_pause_controls_root.add_child(keys_label)
+		_pause_controls_labels.append(keys_label)
+		var name_label: Label = _label(
+			String(row[0]), Vector2(178.0, row_y), Vector2(128.0, 16.0), 12, MUTED
+		)
+		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_pause_controls_root.add_child(name_label)
+		_pause_controls_labels.append(name_label)
+
+	var hint: Label = _label(
+		"Esc / F 返回", Vector2(0.0, 134.0), Vector2(360.0, 14.0), 12, DIM
+	)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_pause_controls_root.add_child(hint)
+	_pause_controls_labels.append(hint)
+
+	_pause_controls_back = _menu_button(
+		"返回", Vector2(76.0, 150.0), Vector2(208.0, 24.0),
+		PixelMenuButton.Variant.OPTION
+	)
+	_pause_controls_back.name = "ControlsBackButton"
+	_pause_controls_back.pressed.connect(close_controls)
+	_pause_controls_root.add_child(_pause_controls_back)
+
+
+func _on_controls_pressed() -> void:
+	open_controls()
+
+
+func open_controls() -> void:
+	if not _pause_visible or _controls_visible:
+		return
+	_controls_visible = true
+	_set_pause_menu_rows_visible(false)
+	_pause_footer.visible = false
+	_pause_controls_root.visible = true
+	call_deferred("_focus_controls_back")
+
+
+func close_controls() -> void:
+	if not _controls_visible:
+		return
+	_controls_visible = false
+	_pause_controls_root.visible = false
+	_set_pause_menu_rows_visible(true)
+	_pause_footer.visible = true
+	if _pause_visible and _pause_controls != null:
+		_pause_controls.grab_focus()
+
+
+func _set_pause_menu_rows_visible(value: bool) -> void:
+	for button: PixelMenuButton in [
+		_pause_continue, _pause_restart, _pause_title, _pause_quit,
+		_pause_controls,
+	]:
+		if button != null:
+			button.visible = value
+
+
+func _focus_controls_back() -> void:
+	if _controls_visible and _pause_controls_back != null:
+		_pause_controls_back.grab_focus()
 
 
 # --- public state ----------------------------------------------------------
@@ -656,12 +826,16 @@ func show_pause(value: bool) -> void:
 	if _pause_root == null:
 		return
 	if value:
+		# Every fresh pause opens on the unchanged four-item menu, never on a
+		# table left over from the previous pause.
+		_set_controls_open_immediate(false)
 		if changed:
 			_pause_reveal.play_open()
 		_update_chrome_visibility()
 		_update_health_overlay(0.0)
 		call_deferred("_focus_pause")
 		return
+	_set_controls_open_immediate(false)
 	if changed:
 		_pause_reveal.play_close()
 	_release_pause_focus()
@@ -671,9 +845,19 @@ func show_pause(value: bool) -> void:
 		call_deferred("_focus_completion")
 
 
+func _set_controls_open_immediate(value: bool) -> void:
+	_controls_visible = value
+	if _pause_controls_root != null:
+		_pause_controls_root.visible = value
+	_set_pause_menu_rows_visible(not value)
+	if _pause_footer != null:
+		_pause_footer.visible = not value
+
+
 func _move_pause_focus(step: int) -> void:
 	var order: Array[PixelMenuButton] = [
-		_pause_continue, _pause_restart, _pause_title, _pause_quit
+		_pause_continue, _pause_restart, _pause_title, _pause_quit,
+		_pause_controls,
 	]
 	var focused: Control = get_viewport().gui_get_focus_owner()
 	var index: int = order.find(focused as PixelMenuButton)
@@ -690,7 +874,8 @@ func _focus_pause() -> void:
 
 func _release_pause_focus() -> void:
 	for button: PixelMenuButton in [
-		_pause_continue, _pause_restart, _pause_title, _pause_quit
+		_pause_continue, _pause_restart, _pause_title, _pause_quit,
+		_pause_controls, _pause_controls_back,
 	]:
 		if button != null:
 			button.release_focus()
@@ -788,6 +973,46 @@ func get_title_button() -> PixelMenuButton:
 
 func get_quit_button() -> PixelMenuButton:
 	return _pause_quit
+
+
+func get_pause_controls_button() -> PixelMenuButton:
+	return _pause_controls
+
+
+func get_pause_controls_back_button() -> PixelMenuButton:
+	return _pause_controls_back
+
+
+func is_controls_visible() -> bool:
+	return _controls_visible
+
+
+func has_controls_section() -> bool:
+	return _pause_controls_root != null
+
+
+func get_controls_text() -> String:
+	var lines: Array[String] = []
+	for row: Array in PAUSE_CONTROLS_ROWS:
+		lines.append("%s  %s" % [
+			KeyGlyph.plain(String(row[1])),
+			String(row[0]),
+		])
+	return "\n".join(lines)
+
+
+func get_control_label_font_sizes() -> Array[int]:
+	var sizes: Array[int] = []
+	for control: Control in _pause_controls_labels:
+		if control == null:
+			continue
+		if control is RichTextLabel:
+			sizes.append(
+				(control as RichTextLabel).get_theme_font_size("normal_font_size")
+			)
+		else:
+			sizes.append(control.get_theme_font_size("font_size"))
+	return sizes
 
 
 func get_pause_panel_rect() -> Rect2:

@@ -7,7 +7,7 @@ extends Node
 ##   - the popup cannot open during the guide, pause page, failure recovery or
 ##     completion page, and opening it never opens the pause page as a side
 ##     effect;
-##   - the pause page is 360x236 with four entries and the completion page is
+##   - the pause page is 360x236 with five entries and the completion page is
 ##     400x210 with two entries.
 ##
 ##   ... --headless --path . res://dlc/trial_chambers/tests/teaching_test.tscn

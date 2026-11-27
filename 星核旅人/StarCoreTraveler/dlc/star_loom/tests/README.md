@@ -45,10 +45,11 @@ D:/Godot/Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 res://d
 
 ## 第九轮（2026-11-27）：运送星核 + 阶段 1 浮灵提前
 
-入口段不再用符文石：`LoomCoreCarrier` 用 `StarCoreVisual` 的
+入口段不再用符文石：`CoreDeliveryCarrier`（2026-11-27 起位于
+`dlc/shared/core_delivery/`，DLC2/DLC3 共用）用 `StarCoreVisual` 的
 `star_core_positive_12f` 金色 12 帧（16×16，1:1）运送真星核；`RuneStoneField`
 的 160 px 场、同相斥/异相吸、250–330 行程与无实体碰撞规则不变。x=330 改为
-`LoomCoreBay`：现有 `star_core_bay_base/glass` 基座/玻璃罩 + 低石座、暗龛口、
+`CoreDeliveryBay`：现有 `star_core_bay_base/glass` 基座/玻璃罩 + 低石座、暗龛口、
 金色核心环、槽唇和通往 x=380 月门的短导线；空仓暗、入仓基座变白/玻璃罩合上/
 金环与导线亮起。星核可拉回、门关；检查点 x=410 与同相门 x=150 未动。
 

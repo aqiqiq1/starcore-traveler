@@ -200,7 +200,7 @@ func _run() -> void:
 	# player's own body, not a teleport.
 	var gate_first: PolarityGate = _loom.get_gate_first()
 	var gate_second: PolarityGate = _loom.get_gate_second()
-	var carrier: LoomCoreCarrier = _loom.get_core_carrier()
+	var carrier: CoreDeliveryCarrier = _loom.get_core_carrier()
 	var checkpoint: LevelCheckpoint = _loom.get_checkpoint()
 	Input.action_press(&"move_right")
 	await _wait_until(
