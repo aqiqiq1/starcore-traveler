@@ -43,6 +43,18 @@ func _ready() -> void:
 	await _wait_and_save("07_doubt_question.png", 9.95)
 	await _wait_and_save("04_echo_page1.png", 12.05)
 	await _wait_and_save("08_echo_manifest.png", 12.60)
+	var echo: GuideEcho = _opening.get_dialogue_echo()
+	if echo != null:
+		await _wait_page_ready(echo)
+		_press_f()
+		await _wait_process(3)
+		await _wait_page_ready(echo)
+		await _save("04b_echo_page2_after_f.png")
+		# Finish the remaining pages with the same real F route.
+		while echo.is_dialogue_open():
+			await _wait_page_ready(echo)
+			_press_f()
+			await _wait_process(3)
 	await _wait_and_save("05_star_core_handoff.png", 18.85)
 	await _wait_for_finish()
 	await _wait_process(8)
@@ -64,6 +76,29 @@ func _wait_and_save(file_name: String, at_time: float) -> void:
 			break
 		await get_tree().process_frame
 	await _save(file_name)
+
+
+func _wait_page_ready(echo: GuideEcho) -> void:
+	var deadline: int = Time.get_ticks_msec() + 12000
+	while Time.get_ticks_msec() < deadline:
+		if echo == null or not echo.is_dialogue_open():
+			return
+		if echo.get_revealed_count() >= echo.get_full_page_text().length():
+			return
+		await get_tree().process_frame
+
+
+func _press_f() -> void:
+	var down: InputEventKey = InputEventKey.new()
+	down.physical_keycode = KEY_F
+	down.keycode = KEY_F
+	down.pressed = true
+	get_viewport().push_input(down)
+	var up: InputEventKey = InputEventKey.new()
+	up.physical_keycode = KEY_F
+	up.keycode = KEY_F
+	up.pressed = false
+	get_viewport().push_input(up)
 
 
 func _wait_for_finish() -> void:

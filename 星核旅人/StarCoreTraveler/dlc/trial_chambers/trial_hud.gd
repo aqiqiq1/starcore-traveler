@@ -411,6 +411,7 @@ func _build_completion() -> void:
 	_completion_overlay.add_child(panel)
 	_completion_panel = panel
 	_completion_panel_base = panel.position
+	CompletionEmblem.attach_to(panel)
 
 	_completion_title = _label(
 		"试炼完成 · 用时 00:00", Vector2(0.0, 12.0), Vector2(400.0, 34.0), 24, GOLD

@@ -94,6 +94,7 @@ position = Vector2(330, 320)
 [node name="CoreCarrier" parent="." instance=ExtResource("15_carrier")]
 position = Vector2(270, 304)
 player_path = NodePath("../Player")
+core_positive = false
 
 [node name="GateSecondProxy" type="Node2D" parent="."]
 position = Vector2(40, 320)

@@ -23,11 +23,14 @@ extends Node
 ##   19.90-20.15 HUD fades in over 0.25 s; 20.15-20.40 standing lock
 ##   20.40 control returns, with one-shot jump/polarity cleared
 ##
-## Input: F (or the shared tutorial_next action) skips the whole film at once.
-## Holding Space for 0.6 s also skips. A short Space tap is inert. If the skip
-## happens with Space still held, the film keeps the movement lock until that
-## key is released, so the same press cannot become a jump. The film is
-## PAUSABLE and never pauses or stops the level music.
+## Input: F (or the shared tutorial_next action) continues. While the current
+## line is still typing it completes that line; a press on a completed line
+## turns to the next page; only a completed last page closes the echo and plays
+## the short core hand-off. F never skips the film. Holding Space for 0.6 s
+## skips the whole film. A short Space tap is inert. If the skip happens with
+## Space still held, the film keeps the movement lock until that key is
+## released, so the same press cannot become a jump. The film is PAUSABLE and
+## never pauses or stops the level music.
 
 signal finished(skipped: bool)
 signal aborted
@@ -82,7 +85,10 @@ const HANDOFF_TIME: float = 20.40
 
 const ENTRY_POSITION: Vector2 = Vector2(656.0, 300.0)
 const HANDOFF_X: float = 286.0
-const PAGE_HOLD: float = 1.15
+## Pages wait for F.  If the reader takes longer than the scripted page window,
+## the film holds just before the core beat so the final camera/HUD hand-off is
+## never spent behind an open page.
+const DIALOGUE_HOLD_TIME: float = CORE_TIME - 0.001
 const DIALOGUE_RETRY: float = 1.0
 const SKIP_HOLD: float = 0.6
 const LETTERBOX_HEIGHT: float = 44.0
@@ -185,7 +191,6 @@ var _elapsed: float = 0.0
 var _play_count: int = 0
 
 var _page_index: int = -1
-var _page_hold: float = 0.0
 var _dialogue_started: bool = false
 var _dialogue_attempt_time: float = 0.0
 var _dialogue_warned: bool = false
@@ -377,7 +382,6 @@ func start() -> bool:
 	_space_time = 0.0
 	_space_action_done = false
 	_page_index = -1
-	_page_hold = 0.0
 	_dialogue_started = false
 	_dialogue_attempt_time = 0.0
 	_dialogue_warned = false
@@ -486,7 +490,16 @@ func _process(delta: float) -> void:
 		_hide_prompt_footer()
 		return
 
+	var waiting_for_page: bool = (
+		_dialogue_started
+		and _echo != null
+		and _echo.is_dialogue_open()
+	)
 	_elapsed += delta
+	if waiting_for_page and _elapsed > DIALOGUE_HOLD_TIME:
+		# Hold the scripted camera/letterbox just before the core beat while the
+		# reader is still on a page.  F closes the page and resumes at 17.2 s.
+		_elapsed = DIALOGUE_HOLD_TIME
 	if _space_held and not _space_action_done:
 		_space_time += delta
 		if _space_time >= SKIP_HOLD:
@@ -504,7 +517,7 @@ func _process(delta: float) -> void:
 	_update_return(time)
 	_update_prompt_footer()
 
-	if time >= HANDOFF_TIME:
+	if time >= HANDOFF_TIME and _core_started:
 		_complete_finish()
 
 
@@ -637,7 +650,6 @@ func _tick_pages(time: float, delta: float) -> void:
 			_dialogue_started = true
 			_dialogue_attempt_time = 0.0
 			_page_index = _echo.get_page_index()
-			_page_hold = 0.0
 		else:
 			_dialogue_attempt_time += delta
 			if _dialogue_attempt_time >= DIALOGUE_RETRY:
@@ -653,30 +665,40 @@ func _tick_pages(time: float, delta: float) -> void:
 	var index: int = _echo.get_page_index()
 	if index != _page_index:
 		_page_index = index
-		_page_hold = 0.0
 		_page_pulse = 1.0
-	var full: String = _echo.get_full_page_text()
-	if full.is_empty():
+	# A completed page waits for F.  There is no auto-advance and no page timer:
+	# F owns complete-line / next-page / last-page.
+	if _echo.get_full_page_text().is_empty():
 		return
-	if _echo.get_revealed_count() < full.length():
-		_page_hold = 0.0
+
+
+## F continuation. GuideEcho.advance_page() already implements the shared
+## complete-first rule: a press on an unfinished line only completes it.  A
+## completed non-last page turns; a completed last page closes the echo and
+## starts the short core hand-off.  This never marks the film skipped.
+func _continue_pages() -> void:
+	if _echo == null or not _echo.is_dialogue_open():
 		return
-	_page_hold += delta
-	if _page_hold < PAGE_HOLD:
+	var before_index: int = _echo.get_page_index()
+	if not _echo.advance_page():
 		return
-	if index + 1 < _echo.get_page_count():
-		_echo.advance_page()
-		_page_hold = 0.0
-	else:
-		_echo.force_close()
-		_begin_core(time)
+	if not _echo.is_dialogue_open():
+		# Last page was complete: skip the remaining wait, but keep the real
+		# 3.2 s core + return + HUD hand-off.
+		_elapsed = maxf(_elapsed, CORE_TIME)
+		_begin_core(_elapsed)
+		return
+	var after_index: int = _echo.get_page_index()
+	if after_index != before_index:
+		_page_index = after_index
+		_page_pulse = 1.0
+	_hide_prompt_footer()
 
 
 func _begin_core(time: float) -> void:
 	if _core_started:
 		return
 	_core_started = true
-	_page_hold = 0.0
 	_hide_prompt_footer()
 	if _echo != null:
 		_echo.force_close()
@@ -1235,7 +1257,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if physical == int(KEY_F) or key_event.is_action_pressed(&"tutorial_next"):
 		if key_event.pressed and not _await_release:
-			_request_skip()
+			_continue_pages()
 		get_viewport().set_input_as_handled()
 		return
 

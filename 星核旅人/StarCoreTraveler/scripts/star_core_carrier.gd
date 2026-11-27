@@ -20,7 +20,6 @@ extends CharacterBody2D
 @export var ground_drag: float = 420.0
 
 @onready var visual: StarCoreVisual = $Visual
-@onready var polarity_mark: PolarityBadge = $PolarityMark
 
 var _active: bool = false
 var _positive: bool = true
@@ -56,9 +55,6 @@ func activate_at(world_position: Vector2, positive: bool) -> void:
 		else StarCoreVisual.CoreState.NEGATIVE
 	)
 	visual.refresh()
-	if polarity_mark != null:
-		polarity_mark.visible = true
-		polarity_mark.set_positive(positive)
 
 
 func deactivate() -> void:
@@ -72,8 +68,6 @@ func deactivate() -> void:
 	_external_force_pending = false
 	if visual != null:
 		visual.visible = false
-	if polarity_mark != null:
-		polarity_mark.visible = false
 
 
 func is_active() -> bool:

@@ -481,6 +481,7 @@ func _build_completion() -> void:
 	panel.add_theme_stylebox_override("panel", style)
 	_completion_overlay.add_child(panel)
 	_completion_panel = panel
+	CompletionEmblem.attach_to(panel)
 
 	_completion_title = _label(
 		"织机停转 · 用时 00:00",

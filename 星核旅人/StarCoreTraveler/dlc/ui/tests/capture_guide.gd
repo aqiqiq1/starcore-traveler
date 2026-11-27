@@ -4,7 +4,7 @@ extends Node
 ##   Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 \
 ##     res://dlc/ui/tests/capture_guide.tscn
 ##
-## Saves dlc/ui/tests/out/trial_guide_1..3.png and rift_guide_1..3.png.
+## Saves dlc/ui/tests/out/trial_guide_1..2.png and rift_guide_1..3.png.
 ## The guide itself pauses the tree; each page is a real live viewport shot.
 
 const TRIAL_SCENE: String = "res://dlc/trial_chambers/trial_chambers.tscn"
@@ -63,22 +63,26 @@ func _capture_chapter(path: String, prefix: String) -> void:
 	_level = packed.instantiate()
 	get_tree().root.add_child(_level)
 	get_tree().current_scene = _level
-	await _wait_process(8)
 	var guide: DlcGuide = null
-	if _level.has_method("get_intro_guide"):
-		guide = _level.call("get_intro_guide") as DlcGuide
+	var deadline: int = Time.get_ticks_msec() + 12000
+	while Time.get_ticks_msec() < deadline:
+		if _level.has_method("get_intro_guide"):
+			guide = _level.call("get_intro_guide") as DlcGuide
+		if guide != null and guide.is_open():
+			break
+		await get_tree().process_frame
 	if guide == null or not guide.is_open():
 		print("CAPTURE_FAIL %s guide not open" % prefix)
 		return
 	# Let the real gameplay loop reach a readable action frame on every page.
-	await _wait_seconds(1.6)
-	await _save("%s_guide_1.png" % prefix)
-	await _tap_f()
-	await _wait_seconds(1.6)
-	await _save("%s_guide_2.png" % prefix)
-	await _tap_f()
-	await _wait_seconds(1.6)
-	await _save("%s_guide_3.png" % prefix)
+	# The trial guide now has two pages and the rift guide three; save exactly
+	# the pages the current guide reports.
+	var page_count: int = maxi(guide.get_page_count(), 1)
+	for page_index: int in range(page_count):
+		await _wait_seconds(1.6)
+		await _save("%s_guide_%d.png" % [prefix, page_index + 1])
+		if page_index < page_count - 1:
+			await _tap_f()
 	await _tap_f()
 	await _wait_process(4)
 	get_tree().current_scene = null

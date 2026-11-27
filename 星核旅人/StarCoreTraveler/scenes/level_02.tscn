@@ -23,7 +23,6 @@
 [ext_resource type="Texture2D" uid="uid://b8r7n3xn8hk87" path="res://assets/level02_conductive_stone/return_platform_48x12.png" id="24_return"]
 [ext_resource type="Script" path="res://scripts/l2_edge_decor.gd" id="25_edge_decor"]
 [ext_resource type="Script" path="res://scripts/audio/base_level_music.gd" id="26_music"]
-[ext_resource type="PackedScene" path="res://dlc/rift_workshop/rift_inversion_field.tscn" id="27_inversion"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ground"]
 size = Vector2(1792, 40)
@@ -170,11 +169,6 @@ bay_name = "联动仓"
 [node name="TargetBay" parent="Bays" unique_id=767300810 instance=ExtResource("4_bay")]
 position = Vector2(1568, 304)
 bay_name = "最终仓"
-
-[node name="InversionField" parent="." unique_id=170211027 instance=ExtResource("27_inversion")]
-process_mode = 1
-position = Vector2(760, 320)
-player_path = NodePath("../Player")
 
 [node name="Core" parent="." unique_id=141646277 instance=ExtResource("5_core")]
 process_mode = 1

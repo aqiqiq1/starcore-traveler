@@ -6,7 +6,7 @@ extends Node
 ##   - the reused RuneStoneField moves the delivered **star core** onto the bay
 ##     (real Q and field sample), lights the bay, opens the second gate, and
 ##     can be pulled back;
-##   - the payload really is the project's animated gold star core, and the
+##   - the payload really is the project's animated cyan star core, and the
 ##     field's old rune-stone sprite never draws over it;
 ##   - the bay holds the core while the player walks past it;
 ##   - the base LevelCheckpoint records a spawn and failure returns there;
@@ -53,6 +53,12 @@ func _wait_physics(count: int) -> void:
 
 func _wait_process(count: int) -> void:
 	for _index: int in range(count):
+		await get_tree().process_frame
+
+
+func _wait_seconds(seconds: float) -> void:
+	var deadline: int = Time.get_ticks_msec() + int(seconds * 1000.0)
+	while Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
 
 
@@ -149,8 +155,8 @@ func _run() -> void:
 	_check(core_visual != null,
 		"the carrier exposes a StarCoreVisual payload")
 	if core_visual != null:
-		_check(core_visual.state == StarCoreVisual.CoreState.POSITIVE,
-			"the payload is the gold POSITIVE star core")
+		_check(core_visual.state == StarCoreVisual.CoreState.NEGATIVE,
+			"the payload is the cyan NEGATIVE star core for the moon gate")
 		_check(carrier.is_using_star_core_art()
 			and core_visual.is_using_animated_sheet(),
 			"the payload uses the 12-frame star_core sheet")
@@ -195,6 +201,49 @@ func _run() -> void:
 		"bay, glow and checkpoint start clear/dark")
 
 	# --- wrong phase blocks, Q opens, real walk passes -------------------
+	# Spawn is 114 px from the gate: one second of standing stays silent.
+	await _wait_seconds(1.0)
+	_check(_loom.get_gate_hint_count() == 0
+		and _loom.get_hud().get_event_text().is_empty(),
+		"DLC3 spawn shows no gate hint",
+		_loom.get_hud().get_event_text())
+
+	# 60 px is still outside the 56 px window.
+	var gate_x: float = gate_first.global_position.x
+	var at_60: bool = await _walk_right_until(
+		func() -> bool: return _player.global_position.x >= gate_x - 60.0,
+		220
+	)
+	_check(at_60 and gate_first.get_deny_count() == 0
+		and _loom.get_gate_hint_count() == 0,
+		"60 px before the DLC3 gate shows no hint",
+		"x=%.1f" % _player.global_position.x)
+
+	# 56 px while facing away stays silent; turning toward the gate fires only
+	# the short phase reminder, never the L1 lesson.
+	_player.global_position = Vector2(gate_x - 56.0, 320.0)
+	_player.velocity = Vector2.ZERO
+	_player.face_direction(-1)
+	await _wait_physics(3)
+	await _wait_seconds(0.2)
+	_check(_loom.get_gate_hint_count() == 0,
+		"56 px while facing away shows no DLC3 hint",
+		_loom.get_hud().get_event_text())
+	_player.face_direction(1)
+	await _wait_physics(3)
+	await _wait_seconds(0.2)
+	_check(_loom.get_gate_hint_count() == 1,
+		"the 56 px approach fires the DLC3 reminder",
+		"x=%.1f" % _player.global_position.x)
+	_check(_loom.get_hud().get_event_text() == "同相门 · 需辉相（日）",
+		"DLC3 only says 需辉相（日）",
+		_loom.get_hud().get_event_text())
+	_check(not _loom.get_hud().get_event_text().contains("只认同相")
+		and not _loom.get_hud().get_event_text().contains("看门上"),
+		"DLC3 does not repeat the L1 lesson",
+		_loom.get_hud().get_event_text())
+	var hint_count_before_contact: int = _loom.get_gate_hint_count()
+
 	var blocked: bool = await _walk_right_until(
 		func() -> bool: return gate_first.get_deny_count() > 0,
 		220
@@ -205,6 +254,9 @@ func _run() -> void:
 		"x=%.1f" % _player.global_position.x)
 	_check(not gate_first.is_open() and gate_first.get_collision_layer() == 1,
 		"wrong phase keeps the gate solid")
+	_check(_loom.get_gate_hint_count() == hint_count_before_contact,
+		"contact does not repeat the DLC3 reminder",
+		str(_loom.get_gate_hint_count()))
 	_check(_loom.get_hud().get_event_text().contains("同相门")
 		and _loom.get_hud().get_event_text().contains("辉相"),
 		"the HUD event line names the required 辉相",
@@ -232,8 +284,9 @@ func _run() -> void:
 		"x=%.1f" % _player.global_position.x)
 	await _tap_polarity()
 	_check(not _player.is_positive(), "Q returns the body to 澜相")
-	_check(_loom.get_hud().get_objective_text() == "目标：将星核送入星核仓",
-		"the HUD objective names the star-core bay",
+	_check(_loom.get_hud().get_objective_text().contains("入仓")
+		and _loom.get_hud().get_objective_text().contains("第二道月门"),
+		"the HUD objective names the star-core bay and the moon gate it powers",
 		_loom.get_hud().get_objective_text())
 
 	# --- push the core into the bay -------------------------------------
@@ -254,8 +307,8 @@ func _run() -> void:
 		"core in the bay opens the second gate",
 		"layer=%d" % gate_second.get_collision_layer())
 	await _wait_physics(2)
-	_check(_loom.get_hud().get_event_text().contains("星核入仓")
-		and _loom.get_hud().get_event_text().contains("第二道门"),
+	_check(_loom.get_hud().get_event_text().contains("青核入仓")
+		and _loom.get_hud().get_event_text().contains("第二道月门"),
 		"the HUD event line reports the core seating and the door",
 		_loom.get_hud().get_event_text())
 	_check(core_visual.is_animating(),

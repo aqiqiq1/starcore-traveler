@@ -280,6 +280,39 @@ func _run() -> void:
 		"walking emits real footsteps",
 		str(footstep.call("get_step_count")) if footstep != null else "null")
 	await _place(40.0, 320.0, true)
+	await _wait_ms(1000)
+	_check(_rift.get_field_hint_count() == 0 and _rift.get_gate_hint_count() == 0
+		and hud.get_event_text().is_empty(),
+		"DLC2 spawn shows no field or gate hint",
+		hud.get_event_text())
+
+	# The moon gate's own reminder is proximity-only: 60 px is silent, 56 px
+	# speaks once and contact does not repeat it.
+	await _place(210.0, 320.0, true)
+	_player.face_direction(1)
+	await _wait_ms(1000)
+	_check(_rift.get_gate_hint_count() == 0,
+		"60 px before the DLC2 gate shows no reminder",
+		hud.get_event_text())
+	await _place(214.0, 320.0, true)
+	_player.face_direction(1)
+	await _wait_physics(4)
+	_check(_rift.get_gate_hint_count() == 1
+		and hud.get_event_text() == "送青核入仓，为月门供电",
+		"the DLC2 gate only reminds 送青核入仓，为月门供电",
+		hud.get_event_text())
+	_check(not hud.get_event_text().contains("推") and not hud.get_event_text().contains("拉"),
+		"DLC2 does not restate the full push/pull lesson",
+		hud.get_event_text())
+	var gate_hint_before: int = _rift.get_gate_hint_count()
+	Input.action_press(&"move_right")
+	await _wait_physics(20)
+	Input.action_release(&"move_right")
+	await _wait_physics(2)
+	_check(_rift.get_gate_hint_count() == gate_hint_before,
+		"contact does not repeat the DLC2 gate reminder",
+		str(_rift.get_gate_hint_count()))
+	await _place(40.0, 320.0, true)
 
 	# --- locked Q --------------------------------------------------------
 	var q_before: bool = _player.is_positive()
@@ -313,6 +346,11 @@ func _run() -> void:
 		"the core carrier, bay and moon gate exist")
 	if carrier == null or bay == null or gate == null or proxy == null:
 		return
+	var core_visual: StarCoreVisual = carrier.get_core_visual()
+	_check(core_visual != null
+		and core_visual.state == StarCoreVisual.CoreState.NEGATIVE
+		and not carrier.is_core_positive(),
+		"the delivered core is the cyan 澜相 core of the moon gate")
 	await _place(40.0, 320.0, true)
 	carrier.reset_state()
 	await _wait_physics(3)
@@ -329,14 +367,44 @@ func _run() -> void:
 		and bay.get_node_or_null("CollisionShape2D") == null,
 		"the core and bay own no collision body (no pinch / no platform)")
 
-	# The curtain is the only phase control.  Its 澜相 is the core's own phase,
-	# so the same-phase field pushes the core toward the bay.
-	await _place(120.0, 320.0, true)
+	# The curtain is the only phase control.  Its lesson is proximity-only:
+	# 60 px is silent, 56 px shows the first inversion prompt, and crossing does
+	# not repeat it.
+	await _place(100.0, 320.0, true)
+	_player.face_direction(1)
+	await _wait_ms(1000)
+	_check(_rift.get_field_hint_count() == 0 and field.get_trigger_count() == 0,
+		"60 px before the inversion field shows no hint",
+		hud.get_event_text())
+	_player.global_position = Vector2(104.0, 320.0)
+	_player.velocity = Vector2.ZERO
+	_player.set_polarity_state(true)
+	_player.face_direction(-1)
+	await _wait_physics(4)
+	await _wait_ms(220)
+	_check(_rift.get_field_hint_count() == 0,
+		"56 px while facing away shows no field hint",
+		hud.get_event_text())
+	_player.face_direction(1)
+	await _wait_physics(3)
+	await _wait_ms(120)
+	_check(_rift.get_field_hint_count() == 1,
+		"the 56 px approach shows the inversion hint",
+		"x=%.1f" % _player.global_position.x)
+	_check(hud.get_event_text() == "紫幕反转 · 穿过换相",
+		"the first inversion hint teaches crossing",
+		hud.get_event_text())
+	var field_hint_before: int = _rift.get_field_hint_count()
+
+	# Its 澜相 is the core's own phase, so the same-phase field pushes the core
+	# toward the bay.
 	var walked: bool = await _move_until_x(165.0, 240)
 	_check(walked and field.get_trigger_count() == 1,
 		"walking through the violet curtain flips once",
 		"x=%.1f triggers=%d" % [_player.global_position.x, field.get_trigger_count()])
 	_check(not _player.is_positive(), "the post-curtain body is 澜相")
+	_check(_rift.get_field_hint_count() == field_hint_before,
+		"crossing the field does not repeat its hint")
 	var seated: bool = await _wait_until(
 		func() -> bool: return carrier.is_on_socket(), 240
 	)
@@ -349,8 +417,8 @@ func _run() -> void:
 	_check(not gate.is_blocking() and gate.get_collision_layer() == 0,
 		"the seated core powers the first moon gate open",
 		"layer=%d" % gate.get_collision_layer())
-	_check(hud.get_event_text().contains("星核入仓")
-		and hud.get_event_text().contains("第一道门"),
+	_check(hud.get_event_text().contains("青核入仓")
+		and hud.get_event_text().contains("月门"),
 		"the HUD event line explains the core powering the gate",
 		hud.get_event_text())
 	_check(hud.get_objective_text().contains("相性桥"),
@@ -376,8 +444,8 @@ func _run() -> void:
 	_check(gate.is_blocking() and gate.get_collision_layer() == 1,
 		"the unpowered first moon gate closes again",
 		"layer=%d" % gate.get_collision_layer())
-	_check(hud.get_event_text().contains("星核离仓")
-		and hud.get_event_text().contains("第一道门"),
+	_check(hud.get_event_text().contains("青核离仓")
+		and hud.get_event_text().contains("月门"),
 		"the HUD event line also explains the power loss",
 		hud.get_event_text())
 
@@ -421,6 +489,19 @@ func _run() -> void:
 	_check(_player.global_position.x > 280.0 and not gate.is_blocking(),
 		"the powered gate lets the body through",
 		"x=%.1f" % _player.global_position.x)
+
+	# Leave more than 200 px and return inside the 10 s cooldown: the same field
+	# line must stay silent.
+	var field_hint_after_cross: int = _rift.get_field_hint_count()
+	await _place(380.0, 320.0, true)
+	await _wait_physics(3)
+	await _place(104.0, 320.0, true)
+	_player.face_direction(1)
+	await _wait_ms(220)
+	_check(_rift.get_field_hint_count() == field_hint_after_cross,
+		"the same field hint does not repeat within 10 s",
+		str(_rift.get_field_hint_count()))
+	await _place(300.0, 320.0, true)
 
 	# --- low truss / bridge fall ----------------------------------------
 	var beams: RiftLowBeams = _rift.get_low_beams()

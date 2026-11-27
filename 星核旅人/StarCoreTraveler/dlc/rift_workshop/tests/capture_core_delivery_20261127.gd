@@ -201,7 +201,7 @@ func _run() -> void:
 	await _save("03_core_seated_lit.png")
 	_check_state("03_core_seated_lit",
 		seated and _bay.is_lit() and not _gate.is_blocking()
-		and _rift.get_hud().get_event_text().contains("星核入仓"),
+		and _rift.get_hud().get_event_text().contains("青核入仓"),
 		"core=%.1f bay=%s gate=%s event=%s" % [
 			_carrier.global_position.x, str(_bay.is_lit()),
 			str(_gate.is_blocking()), _rift.get_hud().get_event_text()
@@ -227,7 +227,7 @@ func _run() -> void:
 	_check_state("04_core_pulled_door_closed",
 		walked_left and pulled and not _bay.is_lit()
 		and _gate.is_blocking() and _player.is_positive()
-		and _rift.get_hud().get_event_text().contains("星核离仓"),
+		and _rift.get_hud().get_event_text().contains("青核离仓"),
 		"core=%.1f bay=%s gate=%s positive=%s event=%s" % [
 			_carrier.global_position.x, str(_bay.is_lit()),
 			str(_gate.is_blocking()), str(_player.is_positive()),

@@ -20,6 +20,11 @@ const BAY_BASE: String = "res://assets/star_core_bay/star_core_bay_base.png"
 const BAY_GLASS: String = "res://assets/star_core_bay/star_core_bay_glass.png"
 const BAY_VISUAL: String = "res://scenes/star_core_bay_visual.tscn"
 const LOOM_BAY: String = "res://dlc/shared/core_delivery/core_bay.tscn"
+## The 2026-11-27 sheet had a fixed 1 px gold ring at radius ~6.9.  That band
+## held ~580 opaque pixels across the 12 frames; after the removal only a few
+## gem-edge/debris pixels may touch it.  < 60 proves the ring layer is gone.
+const RING_BAND_BEFORE: int = 580
+const RING_BAND_LIMIT: int = 60
 
 var _failures: int = 0
 
@@ -45,6 +50,9 @@ func _run() -> void:
 		_check(texture != null, "sheet loads", path)
 		if texture != null:
 			_check(texture.get_size() == Vector2(192, 16), "sheet is 192x16", path)
+			var band: int = _count_ring_band(texture.get_image())
+			_check(band < RING_BAND_LIMIT, "free core has no outer ring band",
+				"%d px (was %d) %s" % [band, RING_BAND_BEFORE, path])
 	for path: String in CORE_STILLS:
 		var texture: Texture2D = load(path) as Texture2D
 		_check(texture != null, "still loads", path)
@@ -141,3 +149,22 @@ func _run() -> void:
 func _wait_process(count: int) -> void:
 	for _index: int in range(count):
 		await get_tree().process_frame
+
+
+## Opaque pixels whose centre distance from the 16x16 gem centre falls in the
+## old outer-ring band (6.3..7.3 px).  The sheet is 192x16, 12 frames across.
+func _count_ring_band(image: Image) -> int:
+	if image == null or image.is_empty():
+		return -1
+	var count: int = 0
+	for frame: int in range(12):
+		for y: int in range(16):
+			for x: int in range(16):
+				if image.get_pixel(frame * 16 + x, y).a <= 0.0:
+					continue
+				var dx: float = (float(x) + 0.5) - 7.5
+				var dy: float = (float(y) + 0.5) - 7.5
+				var distance: float = sqrt(dx * dx + dy * dy)
+				if distance >= 6.3 and distance <= 7.3:
+					count += 1
+	return count

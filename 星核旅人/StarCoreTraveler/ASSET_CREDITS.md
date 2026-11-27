@@ -77,7 +77,8 @@ Public domain and free to use, personal or commercial. Credit is not required bu
 - 动态文件：同目录 `star_core_locked_12f.png`、`star_core_positive_12f.png`、`star_core_negative_12f.png`，每表192×16、12帧，单帧16×16，默认12FPS。紫色动态表复制源表，金青两表沿用调色方法逐帧修改；静帧文件保留为回退，动画不改变来源或CC BY 4.0署名义务。
 - 修改：从 `gem_round_16x16_12f_0d.png` 截取第0帧；紫色锁定态保留源帧RGBA，正/负态分别调为金色/青色。详细来源、SHA256和生成参数见项目根目录 `自制素材/星核三态/manifest.json`。这些是第三方素材的派生资源，不是完全原创资源。
 - 2026-11-27 二次改造：保留原 12 帧旋转节奏/192×16 布局，重绘内芯光、切面和外层金环；生成器 `dlc/core_art_20261127/gen_core_assets.py`，升级前文件备份在 `dlc/core_art_20261127/original/`。仍属 Frakassets 源素材的 CC BY 4.0 派生资源；署名与“已修改”说明义务不变。
-- 正负/锁定标识由 `scripts/star_core_visual.gd` 独立绘制，不修改宝石图；仅用于组件和独立预览，尚未实现星核运输或星核仓。
+- 2026-11-27 同日第三次修正：自由核去掉固定 1 px 金外环，只留切面/内芯/碎屑；金属环只保留在仓体/装置上。改写前文件备份在 `dlc/core_badge_20261127/original/`。仍是 Frakassets CC BY 4.0 派生资源，署名义务不变。
+- 正负/锁定只由 12 帧表的颜色和切面表达；世界里的飞行/被搬运核不再绘制 +/− 标识。相性图标只由共享 HUD/仓体的日/月图标承担。
 
 ## 星核仓（项目自制、首版）
 
@@ -85,6 +86,13 @@ Public domain and free to use, personal or commercial. Credit is not required bu
 - 2026-11-27 重绘：石座倒角/暗缝/黄铜嵌条、玻璃黄铜框/斜反光/内侧暗角；重绘脚本 `dlc/core_art_20261127/gen_core_assets.py`，升级前文件备份在同目录 `original/`。仍是项目自制资产，不含第三方像素。
 - 底座、玻璃与既有紫色星核分层。锁定标识由 `scripts/star_core_bay_lock_mark.gd` 绘制；空仓PNG不包含第三方星核。满仓预览中的星核仍属于上述Frakassets CC BY 4.0派生素材，不因组合进仓体而改变其署名义务。
 - 这是待用户确认的原型美术，未接入存取玩法。
+
+## 结算城门徽记（项目自制，2026-11-27）
+
+- `assets/ui/icons/completion_gate_emblem_32.png`：32×32 透明 PNG，深冷石圆牌 + 金线城门 + 一圈细光。由 `dlc/core_badge_20261127/gen_completion_emblem.py`（Python + Pillow）程序化绘制，没有读取或采样任何第三方图像。
+- 用途：六个章节结算面板右上角的统一标识；不是守卫核心，也不是星核。运行中 1:1 最近邻显示。
+- 参考只用于 HUD 小图标的“深底 + 细金线 + 单一剪影”读法；参考截图/链接见 `dlc/core_badge_20261127/REFERENCE_20261127.md`，没有把参考像素或调色板放进游戏。
+- 许可：项目自制。若单独作为素材包分发，由项目组另行决定许可与署名。
 
 ## 裂隙符石与极性联动视觉（项目自制、概念 sprite 直接转换）
 

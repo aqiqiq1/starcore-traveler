@@ -26,6 +26,7 @@ const P_UNLOCKED: String = "user://chapter_select_test_unlocked.cfg"
 const P_CORRUPT: String = "user://chapter_select_test_corrupt.cfg"
 const P_COMPLETE: String = "user://chapter_select_test_complete.cfg"
 const P_L3: String = "user://chapter_select_test_l3.cfg"
+const P_CHEAT: String = "user://chapter_select_test_cheat.cfg"
 
 var _checks: int = 0
 var _failures: Array[String] = []
@@ -43,6 +44,7 @@ func _ready() -> void:
 	await _test_locked_focus_skip()
 	await _test_start_route_to_l2()
 	await _test_unlocked_page_and_entry()
+	await _test_title_cheat_unlock()
 	await _test_l1_completion_hook()
 	await _test_l3_completion_hook()
 	_clear_paths()
@@ -70,6 +72,12 @@ func _wait_process(count: int) -> void:
 func _wait_physics(count: int) -> void:
 	for _index: int in range(count):
 		await get_tree().physics_frame
+
+
+func _wait_seconds(seconds: float) -> void:
+	var deadline: int = Time.get_ticks_msec() + int(seconds * 1000.0)
+	while Time.get_ticks_msec() < deadline:
+		await get_tree().process_frame
 
 
 func _push_key(code: int, pressed: bool) -> void:
@@ -109,7 +117,7 @@ func _push_click(position: Vector2) -> void:
 
 func _clear_paths() -> void:
 	for path: String in [
-		P_MISSING, P_ONE, P_FLOW, P_UNLOCKED, P_CORRUPT, P_COMPLETE, P_L3,
+		P_MISSING, P_ONE, P_FLOW, P_UNLOCKED, P_CORRUPT, P_COMPLETE, P_L3, P_CHEAT,
 	]:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
@@ -427,6 +435,77 @@ func _test_unlocked_page_and_entry() -> void:
 	var entered: bool = await _wait_for_scene(LOOM_PATH, 360)
 	_check(entered, "Enter on 城内 loads the loom scene",
 		_current_path())
+	await _drop_current_scene()
+
+
+## Title-only hidden sequence: k s k b l fills every completion flag.  A wrong
+## character clears the buffer, and the chapter page blocks the sequence.
+func _test_title_cheat_unlock() -> void:
+	print("=== TITLE CHEAT UNLOCK ===")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(P_CHEAT))
+	var level: Node = await _load_level_with_menu(P_CHEAT)
+	_check(level != null, "L1 loads for the title cheat")
+	if level == null:
+		return
+	var menu: StartMenu = level.get_node_or_null("StartMenu") as StartMenu
+	if menu == null:
+		await _drop_current_scene()
+		return
+	menu.get_start_button().grab_focus()
+	await _wait_process(2)
+
+	# Wrong sequence: k s x b l.  The x clears the buffer; nothing unlocks.
+	for key: int in [KEY_K, KEY_S, KEY_X, KEY_B, KEY_L]:
+		await _tap_key(key)
+	await _wait_process(2)
+	var after_wrong: Dictionary = CHAPTER_PROGRESS.load_completed(P_CHEAT)
+	for id: String in CHAPTER_PROGRESS.chapter_ids():
+		_check(not CHAPTER_PROGRESS.is_completed(id, after_wrong),
+			"wrong title sequence leaves %s incomplete" % id)
+	_check(menu.get_cheat_unlock_count() == 0,
+		"wrong title sequence does not fire the unlock")
+	_check(not menu.is_cheat_feedback_visible(),
+		"wrong title sequence shows no feedback")
+
+	# Correct sequence: k s k b l.
+	for key: int in [KEY_K, KEY_S, KEY_K, KEY_B, KEY_L]:
+		await _tap_key(key)
+	await _wait_process(2)
+	var after_cheat: Dictionary = CHAPTER_PROGRESS.load_completed(P_CHEAT)
+	for id: String in CHAPTER_PROGRESS.chapter_ids():
+		_check(CHAPTER_PROGRESS.is_completed(id, after_cheat),
+			"kskbl completes %s" % id)
+		_check(CHAPTER_PROGRESS.is_unlocked(id, after_cheat),
+			"kskbl unlocks %s" % id)
+	_check(menu.get_cheat_unlock_count() == 1,
+		"kskbl fires exactly once", str(menu.get_cheat_unlock_count()))
+	_check(menu.is_cheat_feedback_visible()
+		and menu.get_cheat_feedback_text() == "全部章节已解锁",
+		"kskbl shows the 1.5 s feedback line",
+		menu.get_cheat_feedback_text())
+	await _wait_seconds(1.7)
+	_check(not menu.is_cheat_feedback_visible(),
+		"the cheat feedback clears after 1.5 s")
+
+	await _open_chapters(menu)
+	await _wait_process(3)
+	_check(menu.get_chapters_progress_text() == "已完成 6 / 6",
+		"all six chapters show as complete",
+		menu.get_chapters_progress_text())
+	for id: String in CHAPTER_PROGRESS.chapter_ids():
+		_check(menu.get_chapter_status_text(id) == "已通关",
+			"%s row reads 已通关" % id, menu.get_chapter_status_text(id))
+		var row: PixelMenuButton = menu.get_chapter_row(id)
+		_check(row != null and row.focus_mode != Control.FOCUS_NONE,
+			"%s row is enterable after kskbl" % id)
+
+	# Chapter page open: the same keys must not unlock again.
+	for key: int in [KEY_K, KEY_S, KEY_K, KEY_B, KEY_L]:
+		await _tap_key(key)
+	await _wait_process(2)
+	_check(menu.get_cheat_unlock_count() == 1,
+		"the chapter page blocks the title cheat",
+		str(menu.get_cheat_unlock_count()))
 	await _drop_current_scene()
 
 

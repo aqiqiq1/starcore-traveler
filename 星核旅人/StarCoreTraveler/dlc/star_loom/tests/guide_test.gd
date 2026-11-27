@@ -139,9 +139,9 @@ func _run() -> void:
 		guide.get_page_indicator_text())
 	_check(guide.get_title_text() == "星核织机",
 		"page 1 title is 星核织机", guide.get_title_text())
-	_check(guide.get_body_text() == "织机以星核为梭，把全城命脉织进经线。\n打停两节点→打暴露核心；核心受创换相。",
+	_check(guide.get_body_text() == "入口青核供第二道月门；同相推、异相拉。\n织机以星核为梭，把全城命脉织进经线。\n打停两节点→打暴露核心；核心受创换相。",
 		"page 1 body matches the condensed spec", guide.get_body_text())
-	_check(guide.get_key_text() == "先看清相位，再绕到节点的异相一侧挥剑。",
+	_check(guide.get_key_text() == "先送青核入仓，再看相位打节点与核心。",
 		"page 1 key is a natural sentence", guide.get_key_text())
 	_check(not _has_bare_key_letter(guide.get_body_text()),
 		"page 1 body has no bare Q/J/E/F", guide.get_body_text())

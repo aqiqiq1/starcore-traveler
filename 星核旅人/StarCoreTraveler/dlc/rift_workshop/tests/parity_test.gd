@@ -239,14 +239,14 @@ func _test_guide() -> void:
 		str(guide.get_page_count()))
 	_check(guide.get_page_indicator_text() == "1 / 3",
 		"page indicator starts at 1 / 3", guide.get_page_indicator_text())
-	var titles: Array[String] = ["裂隙回廊", "相性光桥", "双面镜"]
+	var titles: Array[String] = ["紫幕与月门", "相性光桥", "双面镜"]
 	var bodies: Array[String] = [
-		"星核贴地滑行：同相推开，异相拉近。\n这一章无法自由换相；穿过紫幕翻面。\n把核送进星核仓，第一道门才会通电。",
+		"星核裂开时留下紫幕，穿过会把相性翻面。\n这一章无法自由换相；同相才能过门。\n送澜相青核入仓，月门才会通电。",
 		"光桥只认同相，先用攻击熄灭桥上的光灵。\n光灵熄灭后，这座桥会一直亮着。\n俯冲的光灵会翻相，别停在桥上。",
 		"双面镜有三形态，金、青面盘护着核心。\n第二形态起面盘被光灵锚定，先熄光灵，\n六秒内用异相攻击击碎；核心有时限。",
 	]
 	var keys: Array[String] = [
-		"把星核推进仓里，第一道门通电开启。",
+		"穿过紫幕翻相；送青核入仓，月门通电。",
 		"先熄桥上的光灵，再过桥；俯冲会翻相。",
 		"先熄锚定光灵，六秒内碎面盘，再打核心。",
 	]

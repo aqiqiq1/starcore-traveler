@@ -6,10 +6,10 @@ extends Node
 ##     res://scripts/tests/capture_base_dlc_mechanics.tscn
 ##
 ## Saves screenshots/base_dlc_mechanics_20261127/:
-##   l1_gate_blocked.png  wrong-phase player held outside the moon gate
-##   l1_gate_open.png     matching-phase player on the far side of the open gate
-##   l2_veil_before.png   sun player approaching the violet inversion curtain
-##   l2_veil_after.png    moon player past the curtain, HUD event row visible
+##   l1_gate_hint_56px.png  full same-phase lesson at the 56 px approach
+##   l1_gate_blocked.png    wrong-phase player held outside the moon gate
+##   l1_gate_open.png       matching-phase player beyond the open gate
+##   l2_no_veil.png         L2's former violet-curtain spot, now empty
 ##
 ## Every shot is the real level state; only test positioning/input is used.
 
@@ -112,12 +112,19 @@ func _capture_l1() -> void:
 		await _cleanup()
 		return
 
-	# Blocked: press the sun player into the moon gate with real movement.
-	player.global_position = Vector2(1700.0, 300.0)
+	# Full lesson: stand exactly at the 56 px approach, still outside contact.
+	player.global_position = Vector2(gate.global_position.x - 60.0, 300.0)
 	player.velocity = Vector2.ZERO
 	player.set_polarity_state(true)
+	player.set_facing_direction(1)
 	camera.reset_smoothing()
 	await _wait_physics(5)
+	await _wait_seconds(0.35)
+	await _hold_right_until_x(player, gate.global_position.x - 56.0, 40)
+	await _wait_physics(3)
+	await _save("l1_gate_hint_56px.png")
+
+	# Blocked: press the sun player into the moon gate with real movement.
 	var deny_before: int = gate.get_deny_count()
 	Input.action_press(&"move_right")
 	for _index: int in range(90):
@@ -143,29 +150,22 @@ func _capture_l2() -> void:
 	var level: Node = await _load(L2_SCENE)
 	await _wait_physics(8)
 	var player: PrototypePlayer = level.call("get_player") as PrototypePlayer
-	var field: RiftInversionField = level.call("get_inversion_field") as RiftInversionField
 	var camera: Camera2D = level.call("get_camera") as Camera2D
-	if player == null or field == null or camera == null:
-		print("CAPTURE_FAIL l2 missing player/field/camera")
+	if player == null or camera == null:
+		print("CAPTURE_FAIL l2 missing player/camera")
+		await _cleanup()
+		return
+	if level.get_node_or_null("InversionField") != null:
+		print("CAPTURE_FAIL l2 still has an InversionField")
 		await _cleanup()
 		return
 
-	# Before: sun player 40 px before the violet curtain.
-	player.global_position = Vector2(720.0, 320.0)
+	# Stand where the removed violet curtain used to be; the frame must show the
+	# plain corridor with no purple pillar.
+	player.global_position = Vector2(760.0, 320.0)
 	player.velocity = Vector2.ZERO
 	player.set_polarity_state(true)
 	camera.reset_smoothing()
 	await _wait_physics(5)
-	await _save("l2_veil_before.png")
-
-	# After: one real pass flips to moon and keeps the HUD event row visible.
-	Input.action_press(&"move_right")
-	for _index: int in range(120):
-		await get_tree().physics_frame
-		if field.get_trigger_count() > 0 \
-				and player.global_position.x > field.global_position.x + 20.0:
-			break
-	Input.action_release(&"move_right")
-	await _wait_physics(2)
-	await _save("l2_veil_after.png")
+	await _save("l2_no_veil.png")
 	await _cleanup()

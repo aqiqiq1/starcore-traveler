@@ -162,6 +162,7 @@ position = Vector2(244, 320)
 process_mode = 1
 position = Vector2(200, 304)
 player_path = NodePath("../Player")
+core_positive = false
 start_x = 200.0
 min_x = 188.0
 max_x = 244.0

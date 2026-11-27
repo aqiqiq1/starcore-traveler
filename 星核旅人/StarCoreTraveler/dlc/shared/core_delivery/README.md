@@ -5,9 +5,12 @@ DLC2「裂隙工坊」与 DLC3「星核织机」共用的星核/星核仓实现�
 
 ## 文件
 
-- `core_carrier.tscn` / `core_carrier.gd`：可推拉的 16×16 金色 `StarCoreVisual`
-  星核。力样本来自子节点 `RuneStoneField`；同相斥、异相吸。根节点是没有碰撞体的
-  `Node2D`，所以不能夹人、顶飞或当踏板。
+- `core_carrier.tscn` / `core_carrier.gd`：可推拉的 16×16 `StarCoreVisual`
+  星核。`core_positive` 固定这枚核自己的相性（true=辉相/金，false=澜相/青）；
+  DLC2 与 DLC3 的仓都供月门，因此场景里设为 `false`。核色不随玩家 Q 变化，
+  只有推/拉仍按玩家相性判定。力样本来自子节点 `RuneStoneField`；同相斥、
+  异相吸。根节点是没有碰撞体的 `Node2D`，所以不能夹人、顶飞或当踏板。
+  自由核不画外金环，也不带 +/− 徽记；金属环只保留在仓体上。
 - `core_bay.tscn` / `core_bay.gd`：现有 `star_core_bay_base/glass` 基座/玻璃罩 +
   低石座、暗龛口、金色核心环、槽唇和朝右短导线。空仓暗，入仓基座/玻璃/金环/
   导线亮起。

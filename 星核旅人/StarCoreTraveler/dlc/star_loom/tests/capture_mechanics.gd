@@ -6,7 +6,7 @@ extends Node
 ##     res://dlc/star_loom/tests/capture_mechanics.tscn
 ##
 ## Saves to res://screenshots/loom_core_wisp_20261127/:
-##  01_core_before_bay.png       gold star core at its start, bay dark, moon
+##  01_core_before_bay.png       cyan star core at its start, bay dark, moon
 ##                               gate still closed
 ##  02_core_in_transit.png       core between start and the bay, bay still dark
 ##  03_core_seated_lit.png       core inside the lit bay, moon gate open

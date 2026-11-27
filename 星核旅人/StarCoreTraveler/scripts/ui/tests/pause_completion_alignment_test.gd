@@ -134,6 +134,26 @@ func _all_twelve(sizes: Array[int]) -> bool:
 	return true
 
 
+## Every completion page owns the same 32x32 gate emblem; it must not reuse a
+## guard weakpoint or a star-core texture.
+func _check_completion_emblem(hud: Node, tag: String) -> void:
+	var emblem: CompletionEmblem = hud.find_child(
+		"CompletionEmblem", true, false
+	) as CompletionEmblem
+	_check(emblem != null, tag + " completion page has the shared gate emblem")
+	if emblem == null:
+		return
+	_check(emblem.get_texture_path() == CompletionEmblem.TEXTURE_PATH,
+		tag + " emblem path is the dedicated gate art",
+		emblem.get_texture_path())
+	_check(emblem.is_dedicated_emblem(),
+		tag + " emblem is not a guard/star core texture")
+	_check(emblem.size == CompletionEmblem.ICON_SIZE,
+		tag + " emblem is shown at 32x32", str(emblem.size))
+	_check(emblem.position == CompletionEmblem.DEFAULT_POSITION,
+		tag + " emblem is in the top-right panel slot", str(emblem.position))
+
+
 func _run() -> void:
 	await _test_dlc_pause(TRIAL, "trial", "{Q}")
 	await _test_dlc_pause(RIFT, "rift", "本章锁 Q")
@@ -247,6 +267,7 @@ func _test_completion_wording_only() -> void:
 			== "本章结算 · 暂停菜单可查看操作",
 			"trial footnote keeps the true table promise",
 			String(trial_hud.call("get_completion_note_text")))
+		_check_completion_emblem(trial_hud, "trial")
 		await _cleanup_level(trial)
 
 	var rift: Node = await _load_level(RIFT, false, true)
@@ -262,6 +283,7 @@ func _test_completion_wording_only() -> void:
 		_check(String(rift_hud.call("get_completion_footer_text"))
 			== "本章结算 · 暂停菜单可查看操作",
 			"rift footnote keeps the true table promise")
+		_check_completion_emblem(rift_hud, "rift")
 		await _cleanup_level(rift)
 
 	var loom: Node = await _load_level(LOOM, false, true)
@@ -277,6 +299,7 @@ func _test_completion_wording_only() -> void:
 		_check(String(loom_hud.call("get_completion_note_text"))
 			== "本章结算 · 暂停菜单可查看操作",
 			"loom footnote keeps the true table promise")
+		_check_completion_emblem(loom_hud, "loom")
 		await _cleanup_level(loom)
 
 
@@ -306,6 +329,7 @@ func _test_l1_completion() -> void:
 	_check(not text.contains("00:00"), "L1 completion time is greater than zero", text)
 	_check(_completion_buttons_match(hud, "进入第二关"),
 		"L1 buttons are 进入第二关 / 重玩本关 / 返回主界面")
+	_check_completion_emblem(hud, "L1")
 	var completed: Dictionary = CHAPTER_PROGRESS.load_completed(P_L1)
 	_check(CHAPTER_PROGRESS.is_completed(CHAPTER_PROGRESS.ID_L1, completed),
 		"L1 completion still writes l1 progress")
@@ -361,6 +385,7 @@ func _test_l2_completion() -> void:
 	_check(not text.contains("00:00"), "L2 completion time is greater than zero", text)
 	_check(_completion_buttons_match(hud, "进入第三关"),
 		"L2 buttons are 进入第三关 / 重玩本关 / 返回主界面")
+	_check_completion_emblem(hud, "L2")
 	var completed: Dictionary = CHAPTER_PROGRESS.load_completed(P_L2)
 	_check(CHAPTER_PROGRESS.is_completed(CHAPTER_PROGRESS.ID_L2, completed),
 		"L2 completion still writes l2 progress")
@@ -385,6 +410,7 @@ func _test_l3_completion() -> void:
 	_check(not text.contains("00:00"), "L3 completion time is greater than zero", text)
 	_check(hud.has_next_level_button() and _completion_buttons_match(hud, "进入城内"),
 		"L3 buttons are 进入城内 / 重玩本关 / 返回主界面")
+	_check_completion_emblem(hud, "L3")
 	var completed: Dictionary = CHAPTER_PROGRESS.load_completed(P_L3)
 	_check(CHAPTER_PROGRESS.is_completed(CHAPTER_PROGRESS.ID_L3, completed),
 		"L3 completion still writes l3 progress")

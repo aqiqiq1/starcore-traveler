@@ -180,6 +180,10 @@ var _q_denial_count: int = 0
 var _fall_origin_x: float = 0.0
 var _edge_hints_shown: Dictionary = {}
 var _edge_hint_count: int = 0
+## Room-1 device hints: the inversion field teaches once on approach; the moon
+## gate only reminds that the star core powers it.  Contact repeats neither.
+var _field_hint: ApproachHint = ApproachHint.new()
+var _gate_hint: ApproachHint = ApproachHint.new()
 
 var _recovery_active: bool = false
 var _recovery_phase: RecoveryPhase = RecoveryPhase.NONE
@@ -301,7 +305,7 @@ func _ready() -> void:
 	_hud.set_player_hits(0, PLAYER_MAX_HITS)
 	_hud.set_health_target(_player)
 	_hud.set_player_health_visible(true)
-	_hud.set_objective("目标：送星核入仓，为月门供电")
+	_hud.set_objective("目标：送澜相青核入仓，为月门供电")
 	_hud.set_boss_visible(false)
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
@@ -547,6 +551,7 @@ func _physics_process(delta: float) -> void:
 
 	_tick_core_delivery(delta)
 	_tick_bridge_edge_hints()
+	_tick_room_hints()
 
 	if not _arena_entered and _player.global_position.x >= ARENA_ENTER_X:
 		_arena_entered = true
@@ -686,7 +691,7 @@ func _update_objective(force: bool = false) -> void:
 		text = "目标：跨过三相性光桥"
 		key = "bridge"
 	elif not is_first_gate_powered():
-		text = "目标：送星核入仓，为月门供电"
+		text = "目标：送澜相青核入仓，为月门供电"
 		key = "core_delivery"
 	else:
 		text = "目标：穿过月门，前往相性桥"
@@ -832,10 +837,10 @@ func _tick_core_delivery(delta: float) -> void:
 	_first_gate_powered = powered
 	if powered:
 		_audio.play_bridge(true)
-		_hud.show_event("星核入仓 · 第一道门通电开启", 2.0)
+		_hud.show_event("青核入仓 · 月门通电开启", 2.0)
 	else:
 		_audio.play_bridge(false)
-		_hud.show_event("星核离仓 · 第一道门断电关闭", 1.8)
+		_hud.show_event("青核离仓 · 月门断电关闭", 1.8)
 
 
 ## The bay is the only pressure source.  Unlike DLC3 there is no checkpoint
@@ -845,19 +850,47 @@ func is_first_gate_powered() -> bool:
 	return _core_bay != null and _core_bay.is_occupied()
 
 
+## 56 px approach only, facing the room-1 device.  The field gets the one-time
+## inversion lesson; the moon gate gets only the power reminder.
+func _tick_room_hints() -> void:
+	if _intro_active or _completed or _scene_leaving or _recovery_active:
+		return
+	if _player == null or _field_a == null or _gate_moon == null:
+		return
+	var now: int = Time.get_ticks_msec()
+	var player_x: float = _player.global_position.x
+	var player_y: float = _player.global_position.y
+	var field_dx: float = _field_a.global_position.x - player_x
+	var field_toward: bool = (
+		absf(player_y - _field_a.global_position.y) <= 120.0
+		and signf(field_dx) == float(_player.get_facing())
+	)
+	if _field_hint.tick(absf(field_dx), field_toward, now):
+		_hud.show_event("紫幕反转 · 穿过换相", 1.8)
+	var gate_dx: float = _gate_moon.global_position.x - player_x
+	var gate_toward: bool = (
+		absf(player_y - _gate_moon.global_position.y) <= 72.0
+		and gate_dx > 0.0
+		and signf(gate_dx) == float(_player.get_facing())
+	)
+	if _gate_hint.tick(
+		absf(gate_dx),
+		not is_first_gate_powered() and gate_toward,
+		now
+	):
+		_hud.show_event("送青核入仓，为月门供电", 1.8)
+
+
 func _on_gate_moon_denied(_required_positive: bool) -> void:
 	if _completed or _scene_leaving or _recovery_active:
 		return
-	if is_first_gate_powered():
-		return
-	_hud.show_event("第一道门断电 · 把星核送进仓里", 1.8)
+	# The approach reminder owns the line; contact adds no duplicate.
 
 
-func _on_field_triggered(positive: bool) -> void:
+func _on_field_triggered(_positive: bool) -> void:
+	# The field still flips the body and plays its cue.  The HUD lesson was
+	# already shown on approach; crossing never repeats it.
 	_audio.play_inversion()
-	_hud.show_event(
-		"紫幕翻相 · " + ("辉相" if positive else "澜相"), 1.6
-	)
 
 
 func _on_player_polarity_changed(positive: bool) -> void:
@@ -1575,7 +1608,7 @@ func _restart_chapter() -> void:
 	_hud.set_recovery_alpha(0.0)
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
-	_hud.set_objective("目标：送星核入仓，为月门供电")
+	_hud.set_objective("目标：送澜相青核入仓，为月门供电")
 	_hud.set_polarity(true)
 	_hud.set_player_hits(0, PLAYER_MAX_HITS)
 	_hud.set_health_target(_player)
@@ -1597,6 +1630,8 @@ func _restart_chapter() -> void:
 	_crystal_left.reset_state()
 	_crystal_right.reset_state()
 	_field_a.reset_inside_state()
+	_field_hint.reset()
+	_gate_hint.reset()
 	_core_carrier.reset_state()
 	_core_bay.set_occupied(false)
 	_gate_proxy.set_positive_override(true)
@@ -1636,6 +1671,14 @@ func get_crystal_right() -> RiftInversionCrystal:
 
 func get_field_a() -> RiftInversionField:
 	return _field_a
+
+
+func get_field_hint_count() -> int:
+	return _field_hint.get_shown_count()
+
+
+func get_gate_hint_count() -> int:
+	return _gate_hint.get_shown_count()
 
 
 func get_core_carrier() -> CoreDeliveryCarrier:

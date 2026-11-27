@@ -14,14 +14,17 @@ extends Node2D
 ## never applies force to the player.
 ##
 ## Presentation:
-##   - the payload is `StarCoreVisual` in its POSITIVE (12-frame gold) state,
-##     so it spins and reads as the project's star core, not a stone;
+##   - the payload is `StarCoreVisual` in the chapter's chosen affinity
+##     (`core_positive`): gold 辉相 for a sun gate, cyan 澜相 for a moon gate.
+##     The core's own colour never follows the player; only push/pull does;
 ##   - the field child keeps owning the force sample, but its 32x32 rune-stone
 ##     visual is hidden at runtime: only the core is drawn;
-##   - a small cyan field halo keeps the field's 澜相 readable while the core
-##     itself stays gold;
+##   - a small field halo keeps the field's phase readable independently of
+##     the core's affinity;
 ##   - a floor shadow and a short 1 px trail make the core's hover and travel
-##     legible without inventing a second art style.
+##     legible without wrapping a metal ring around the core.  The core sheet
+##     itself carries only cut facets, inner light and debris; the bay owns the
+##     only gold ring.
 ##
 ## Gameplay is unchanged: the core slides on the floor between min_x and
 ## max_x.  Once seated in the bay it is held while the player is on its right,
@@ -37,6 +40,10 @@ const TRAIL_LIFE: float = 0.30
 const TRAIL_STEP: float = 5.0
 
 @export var player_path: NodePath = NodePath("../Player")
+## The core's own affinity.  true = 辉相/gold (sun gate); false = 澜相/cyan
+## (moon gate).  This is fixed per placement and is never changed by the
+## player's Q; the delivered colour must match the gate it powers.
+@export var core_positive: bool = true
 @export var start_x: float = 270.0
 @export var min_x: float = 250.0
 @export var max_x: float = 330.0
@@ -68,7 +75,10 @@ func _ready() -> void:
 	_field = get_node_or_null("Field") as RuneStoneField
 	_core_visual = get_node_or_null("Core") as StarCoreVisual
 	if _core_visual != null:
-		_core_visual.state = StarCoreVisual.CoreState.POSITIVE
+		_core_visual.state = (
+			StarCoreVisual.CoreState.POSITIVE if core_positive
+			else StarCoreVisual.CoreState.NEGATIVE
+		)
 		_core_visual.show_state_badge = false
 	_silence_rune_stone_visual()
 	_apply_field_overrides()
@@ -199,6 +209,14 @@ func get_core_visual() -> StarCoreVisual:
 	return _core_visual
 
 
+func is_core_positive() -> bool:
+	return core_positive
+
+
+func get_core_accent() -> Color:
+	return GOLD if core_positive else CYAN
+
+
 func get_player() -> Node2D:
 	return _player
 
@@ -207,7 +225,7 @@ func get_start_x() -> float:
 	return start_x
 
 
-## Visual read for captures/tests: the payload really is the animated gold core.
+## Visual read for captures/tests: the payload really is the animated core.
 func is_using_star_core_art() -> bool:
 	return (
 		_core_visual != null
@@ -247,40 +265,30 @@ func debug_set_x(value: float) -> void:
 
 func _draw() -> void:
 	var field_positive: bool = _field != null and _field.is_positive()
-	var accent: Color = GOLD if field_positive else CYAN
+	var field_accent: Color = GOLD if field_positive else CYAN
+	var core_accent: Color = get_core_accent()
+	var spark_accent: Color = core_accent.lerp(Color(1.0, 0.98, 0.90), 0.72)
 	var pulse: float = 0.5 + 0.5 * sin(_time * 3.2)
 	var seated: bool = is_on_socket()
 
 	# Soft floor shadow: the core hovers over the floor so it never reads as a
-	# solid stone rolling on the ground.  The 1 px gold tick is its reflection.
+	# solid stone rolling on the ground.  The 1 px tick is its own reflection.
 	draw_rect(Rect2(-8.0, 15.0, 16.0, 1.0), FLOOR_SHADOW)
 	draw_rect(Rect2(-6.0, 16.0, 12.0, 1.0), Color(FLOOR_SHADOW, 0.26))
-	draw_rect(Rect2(-3.0, 15.0, 6.0, 1.0), Color(GOLD, 0.16 + 0.08 * pulse))
+	draw_rect(Rect2(-3.0, 15.0, 6.0, 1.0), Color(core_accent, 0.16 + 0.08 * pulse))
 
-	# Short trail: three fading 1 px gold points behind a moving core.
+	# Short trail: three fading 1 px points behind a moving core.
 	for point: Dictionary in _trail:
 		var age: float = float(point["age"])
 		var fade: float = clampf(1.0 - age / TRAIL_LIFE, 0.0, 1.0)
 		var local: Vector2 = to_local(point["pos"] as Vector2)
 		draw_rect(Rect2(round(local.x) - 1.0, round(local.y) + 1.0, 2.0, 2.0),
-			Color(GOLD, 0.22 * fade))
+			Color(core_accent, 0.22 * fade))
 		draw_rect(Rect2(round(local.x), round(local.y), 1.0, 1.0),
-			Color(1.0, 0.96, 0.82, 0.70 * fade))
+			Color(spark_accent, 0.70 * fade))
 
-	# Gold core halo: a thin 1 px ring plus a few rising sparks.  The core's
-	# 12-frame sheet can reach a narrow edge-on frame, so the halo keeps the
-	# "live core" read even in a still.
-	var halo_alpha: float = 0.30 + 0.12 * pulse + (0.18 if seated else 0.0)
-	for index: int in range(24):
-		var angle: float = TAU * float(index) / 24.0 + _time * 0.55
-		draw_rect(
-			Rect2(
-				round(cos(angle) * 12.0),
-				round(sin(angle) * 12.0),
-				1.0, 1.0
-			),
-			Color(GOLD, halo_alpha)
-		)
+	# Debris only: three rising sparks.  There is deliberately no 1 px ring
+	# around the free core; the bay's own gold ring is the only metal circle.
 	for index: int in range(3):
 		var rise: float = fmod(_time * 14.0 + float(index) * 6.0, 15.0)
 		draw_rect(
@@ -289,38 +297,41 @@ func _draw() -> void:
 				-10.0 - rise,
 				1.0, 1.0
 			),
-			Color(1.0, 0.97, 0.84, 0.42 + 0.30 * pulse)
+			Color(spark_accent, 0.42 + 0.30 * pulse)
 		)
 
 	# The field's phase stays readable as a dotted halo with a dark under-pixel
 	# so the cyan reads against the blue window.  It is not a second body: no
-	# collision, no range, no hint glyph.
+	# collision, no range, no hint glyph, and it belongs to the field rather
+	# than to the core's own colour.
 	var dots: int = 28
 	var field_alpha: float = 0.30 + 0.10 * pulse
 	if seated:
-		# The bay already owns a bright gold ring; keep the field sign present
-		# but quiet so the lit chamber stays readable.
-		field_alpha *= 0.45
-	for index: int in range(dots):
-		var angle: float = TAU * float(index) / float(dots) + _time * 0.18
-		var radius: float = 22.0 + (1.0 if index % 2 == 0 else 0.0)
-		var dot_x: float = round(cos(angle) * radius)
-		var dot_y: float = round(sin(angle) * radius)
-		draw_rect(Rect2(dot_x, dot_y + 1.0, 1.0, 1.0),
-			Color(0.01, 0.02, 0.03, 0.50))
-		draw_rect(Rect2(dot_x, dot_y, 1.0, 1.0),
-			Color(accent, field_alpha))
-	for index: int in range(4):
-		var angle: float = TAU * float(index) / 4.0 - PI * 0.5
-		var tick_x: float = round(cos(angle) * 25.0)
-		var tick_y: float = round(sin(angle) * 25.0)
-		draw_rect(Rect2(tick_x - 1.0, tick_y + 1.0, 2.0, 1.0),
-			Color(0.01, 0.02, 0.03, 0.55))
-		draw_rect(Rect2(tick_x - 1.0, tick_y, 2.0, 1.0),
-			Color(accent, (0.62 + 0.20 * pulse) * (0.55 if seated else 1.0)))
+		# Once the bay holds the core, the bay's own gold ring is the only ring
+		# on screen.  The field sign is no longer needed and would read as a
+		# second halo around the core, so it is suppressed while seated.
+		field_alpha = 0.0
+	if field_alpha > 0.01:
+		for index: int in range(dots):
+			var angle: float = TAU * float(index) / float(dots) + _time * 0.18
+			var radius: float = 22.0 + (1.0 if index % 2 == 0 else 0.0)
+			var dot_x: float = round(cos(angle) * radius)
+			var dot_y: float = round(sin(angle) * radius)
+			draw_rect(Rect2(dot_x, dot_y + 1.0, 1.0, 1.0),
+				Color(0.01, 0.02, 0.03, 0.50))
+			draw_rect(Rect2(dot_x, dot_y, 1.0, 1.0),
+				Color(field_accent, field_alpha))
+		for index: int in range(4):
+			var angle: float = TAU * float(index) / 4.0 - PI * 0.5
+			var tick_x: float = round(cos(angle) * 25.0)
+			var tick_y: float = round(sin(angle) * 25.0)
+			draw_rect(Rect2(tick_x - 1.0, tick_y + 1.0, 2.0, 1.0),
+				Color(0.01, 0.02, 0.03, 0.55))
+			draw_rect(Rect2(tick_x - 1.0, tick_y, 2.0, 1.0),
+				Color(field_accent, 0.62 + 0.20 * pulse))
 
 	# Four tiny orbit sparks keep the 16x16 sheet legible as a live core even
-	# when the spin reaches an edge-on frame.
+	# when the spin reaches an edge-on frame.  These are debris, never a ring.
 	for index: int in range(4):
 		var angle: float = _time * 1.9 + TAU * float(index) / 4.0
 		draw_rect(
@@ -329,19 +340,5 @@ func _draw() -> void:
 				round(sin(angle) * 11.0),
 				1.0, 1.0
 			),
-			Color(1.0, 0.98, 0.90, 0.55 + 0.25 * pulse)
+			Color(spark_accent, 0.55 + 0.25 * pulse)
 		)
-
-	if seated:
-		# One extra gold ring when the core is held by the bay; the bay itself
-		# owns the strong light.  This keeps the core visibly "live" inside.
-		for index: int in range(16):
-			var angle: float = TAU * float(index) / 16.0 - _time * 0.7
-			draw_rect(
-				Rect2(
-					round(cos(angle) * 13.0),
-					round(sin(angle) * 13.0),
-					1.0, 1.0
-				),
-				Color(GOLD, 0.42 + 0.18 * pulse)
-			)

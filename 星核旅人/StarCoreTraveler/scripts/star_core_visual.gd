@@ -7,8 +7,14 @@ extends Node2D
 ## This node deliberately owns no physics, collision, attraction, pickup,
 ## interaction, or star-core-bay logic. Drop the scene into a room and choose
 ## LOCKED / POSITIVE / NEGATIVE in the inspector; the matching 12-frame sheet
-## and the code-drawn state badge update immediately, including in the editor.
+## updates immediately, including in the editor.
 ##
+## Presentation rule (2026-11-27): a world core carries no +/− badge and no
+## outer metal ring.  Its affinity is read from the sheet itself (gold / cyan /
+## purple) plus the cut facets, inner light and the few debris pixels.  If a
+## chapter needs a labelled affinity, use the shared sun/moon icon in the bay
+## or HUD, never on the free core.  show_state_badge remains as a compatibility
+## property only; nothing is drawn for it.
 ## The 12-frame sheets are loaded lazily (never preloaded), so opening this scene
 ## before the art pass has produced them cannot break script parsing. Each frame
 ## is shown through an AtlasTexture at native 16x16 with nearest filtering; the
@@ -50,16 +56,6 @@ const SOURCE_SHEET_SIZE: Vector2i = Vector2i(192, 16)
 const FRAME_COUNT: int = 12
 const DEFAULT_FPS: float = 12.0
 const GEM_RECT: Rect2 = Rect2(-8.0, -8.0, 16.0, 16.0)
-## The badge sits diagonally outside the gem bounds so it can never obscure
-## the gem's centre or facets. It is drawn by this script, never baked into
-## the source PNG and never rotated or mirrored with the frames.
-const BADGE_RECT: Rect2 = Rect2(9.0, 9.0, 7.0, 7.0)
-
-const BADGE_BG: Color = Color(0.02, 0.04, 0.05, 0.96)
-const BADGE_OUTLINE: Color = Color(0.80, 0.87, 0.85, 0.90)
-const POSITIVE_COLOR: Color = Color("#f4cd63")
-const NEGATIVE_COLOR: Color = Color("#5fe1e6")
-const LOCKED_COLOR: Color = Color("#c8a7f2")
 const PLACEHOLDER_COLOR: Color = Color(0.55, 0.68, 0.68, 0.95)
 
 @export var state: CoreState = CoreState.LOCKED:
@@ -82,7 +78,9 @@ const PLACEHOLDER_COLOR: Color = Color(0.55, 0.68, 0.68, 0.95)
 		animate = value
 		_update_process()
 
-@export var show_state_badge: bool = true:
+## Compatibility no-op.  World cores never draw a +/− badge; affinity lives in
+## the sheet and in the shared bay/HUD sun-moon icon.
+@export var show_state_badge: bool = false:
 	set(value):
 		show_state_badge = value
 		queue_redraw()
@@ -185,22 +183,8 @@ func get_missing_texture_path() -> String:
 	return _missing_path
 
 
-func get_badge_kind() -> StringName:
-	match state:
-		CoreState.POSITIVE:
-			return &"plus"
-		CoreState.NEGATIVE:
-			return &"minus"
-		_:
-			return &"lock"
-
-
 func get_gem_rect() -> Rect2:
 	return GEM_RECT
-
-
-func get_badge_rect() -> Rect2:
-	return BADGE_RECT
 
 
 func get_source_size() -> Vector2i:
@@ -443,8 +427,6 @@ func _warn_sheet_size_once(path: String, size: Vector2i) -> void:
 func _draw() -> void:
 	if _art_missing and show_missing_placeholder:
 		_draw_missing_placeholder()
-	if show_state_badge:
-		_draw_badge()
 
 
 func _draw_missing_placeholder() -> void:
@@ -456,33 +438,3 @@ func _draw_missing_placeholder() -> void:
 		draw_rect(Rect2(-8.0, float(offset), 1.0, 2.0), PLACEHOLDER_COLOR)
 		draw_rect(Rect2(7.0, float(offset), 1.0, 2.0), PLACEHOLDER_COLOR)
 	draw_rect(Rect2(-1.0, -1.0, 2.0, 2.0), Color(PLACEHOLDER_COLOR, 0.55))
-
-
-func _draw_badge() -> void:
-	var accent: Color = _accent_for_state()
-	draw_rect(BADGE_RECT, BADGE_BG)
-	draw_rect(BADGE_RECT, BADGE_OUTLINE, false, 1.0)
-
-	match state:
-		CoreState.LOCKED:
-			# Tiny padlock: shackle, body, keyhole.
-			draw_rect(Rect2(11.0, 10.0, 3.0, 1.0), accent)
-			draw_rect(Rect2(11.0, 10.0, 1.0, 2.0), accent)
-			draw_rect(Rect2(13.0, 10.0, 1.0, 2.0), accent)
-			draw_rect(Rect2(10.0, 12.0, 5.0, 3.0), accent)
-			draw_rect(Rect2(12.0, 13.0, 1.0, 1.0), BADGE_BG)
-		CoreState.POSITIVE:
-			draw_rect(Rect2(10.0, 12.0, 5.0, 1.0), accent)
-			draw_rect(Rect2(12.0, 10.0, 1.0, 5.0), accent)
-		CoreState.NEGATIVE:
-			draw_rect(Rect2(10.0, 12.0, 5.0, 1.0), accent)
-
-
-func _accent_for_state() -> Color:
-	match state:
-		CoreState.POSITIVE:
-			return POSITIVE_COLOR
-		CoreState.NEGATIVE:
-			return NEGATIVE_COLOR
-		_:
-			return LOCKED_COLOR

@@ -187,8 +187,11 @@ var _last_polarity_toggles: int = 0
 ## old arena spawn; before the checkpoint is touched the old stage entrance is
 ## kept as the fallback.
 var _checkpoint_position: Vector2 = ARENA_SPAWN
-var _gate_hint_shown: bool = false
-var _core_hint_shown: bool = false
+## Both approach lines are proximity-only.  The gate is a short reminder, not a
+## repeat of the L1 lesson; the core line is the mainline delivery lesson.
+var _gate_hint: ApproachHint = ApproachHint.new()
+var _gate_second_hint: ApproachHint = ApproachHint.new()
+var _core_hint: ApproachHint = ApproachHint.new()
 var _bay_was_powered: bool = false
 
 var _attack_state: AttackState = AttackState.IDLE
@@ -612,35 +615,57 @@ func is_second_gate_powered() -> bool:
 
 
 func _update_mechanics_hints(powered: bool) -> void:
-	var x: float = _player.global_position.x
-	if (
-		not _gate_hint_shown
-		and x >= 80.0
-		and x <= _gate_first.global_position.x + 6.0
+	var now: int = Time.get_ticks_msec()
+	var player_x: float = _player.global_position.x
+	var player_y: float = _player.global_position.y
+	var gate_x: float = _gate_first.global_position.x
+	var gate_dx: float = gate_x - player_x
+	var gate_toward: bool = (
+		absf(player_y - _gate_first.global_position.y) <= 72.0
+		and gate_dx > 0.0
+		and signf(gate_dx) == float(_player.get_facing())
+	)
+	if _gate_hint.tick(
+		absf(gate_dx),
+		not _gate_first.is_open() and gate_toward,
+		now
 	):
-		_gate_hint_shown = true
-		_hud.show_event("同相门 · 日纹为辉相", 2.2)
-	if (
-		not _core_hint_shown
-		and x >= 180.0
-		and x <= _gate_second.global_position.x
-	):
-		_core_hint_shown = true
-		_hud.show_event("星核 · 青环为澜相：同相推开，异相拉近", 2.8)
+		# DLC3 has already met the door in L1.  Keep only the phase reminder.
+		_hud.show_event("同相门 · 需辉相（日）", 1.8)
+	if _gate_second != null:
+		var gate_second_dx: float = _gate_second.global_position.x - player_x
+		var gate_second_toward: bool = (
+			absf(player_y - _gate_second.global_position.y) <= 72.0
+			and gate_second_dx > 0.0
+			and signf(gate_second_dx) == float(_player.get_facing())
+		)
+		if _gate_second_hint.tick(
+			absf(gate_second_dx),
+			not _gate_second.is_open() and gate_second_toward,
+			now
+		):
+			_hud.show_event("第二道月门 · 送青核入仓供电", 1.8)
+	if _core_carrier != null:
+		var core_dx: float = _core_carrier.global_position.x - player_x
+		var core_toward: bool = (
+			absf(player_y - _core_carrier.global_position.y) <= 84.0
+			and signf(core_dx) == float(_player.get_facing())
+		)
+		if _core_hint.tick(absf(core_dx), core_toward, now):
+			# First mainline star-core delivery: full push/pull and bay-power
+			# lesson lives here; DLC2 later only reminds.
+			_hud.show_event("澜相青核 · 同相推、异相拉 · 入仓供月门", 2.8)
 	if powered and not _bay_was_powered:
-		_hud.show_event("星核入仓 · 第二道门开启", 1.8)
+		_hud.show_event("青核入仓 · 第二道月门开启", 1.8)
 	elif not powered and _bay_was_powered and not _checkpoint.is_activated():
-		_hud.show_event("星核离仓 · 第二道门关闭", 1.6)
+		_hud.show_event("青核离仓 · 第二道月门关闭", 1.6)
 
 
-func _on_first_gate_denied(required_positive: bool) -> void:
+func _on_first_gate_denied(_required_positive: bool) -> void:
 	if _completed or _scene_leaving:
 		return
-	_gate_hint_shown = true
-	_hud.show_event(
-		"同相门 · 需辉相（日）" if required_positive else "同相门 · 需澜相（月）",
-		1.6
-	)
+	# The approach line already carries the reminder; contact never repeats it.
+	# The gate's own emblem/padlock and the Q keycap remain the feedback.
 
 
 ## The gate itself already draws the sun/moon and padlock.  This short line
@@ -660,8 +685,7 @@ func _on_first_gate_opened() -> void:
 func _on_second_gate_denied(_required_positive: bool) -> void:
 	if _completed or _scene_leaving:
 		return
-	_core_hint_shown = true
-	_hud.show_event("第二道门 · 将星核送入仓中", 1.8)
+	# Proximity owns the reminder; contact is silent here too.
 
 
 func _on_checkpoint_entered(checkpoint: LevelCheckpoint) -> void:
@@ -690,8 +714,9 @@ func _reset_loom_mechanics() -> void:
 	_checkpoint.set_activated(false)
 	_checkpoint_position = ARENA_SPAWN
 	_player.set_spawn_point(START_SPAWN)
-	_gate_hint_shown = false
-	_core_hint_shown = false
+	_gate_hint.reset()
+	_gate_second_hint.reset()
+	_core_hint.reset()
 	_bay_was_powered = false
 
 
@@ -854,7 +879,7 @@ func _update_objective(force: bool = false) -> void:
 				text = "目标：换辉相，过同相门"
 				key = "gate"
 		else:
-			text = "目标：将星核送入星核仓"
+			text = "目标：送澜相青核入仓，供第二道月门"
 			key = "core_delivery"
 	elif _core.is_exposed():
 		text = "目标：异相攻击暴露的核心"
@@ -1697,6 +1722,14 @@ func get_gate_first() -> PolarityGate:
 
 func get_gate_second() -> PolarityGate:
 	return _gate_second
+
+
+func get_gate_hint_count() -> int:
+	return _gate_hint.get_shown_count()
+
+
+func get_core_hint_count() -> int:
+	return _core_hint.get_shown_count()
 
 
 func get_gate_proxy() -> CoreDeliveryGateProxy:

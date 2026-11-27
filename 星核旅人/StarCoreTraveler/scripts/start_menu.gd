@@ -81,6 +81,12 @@ const CHAPTER_ROW_GAP: float = 3.0
 const CHAPTERS_RETURN_RECT: Rect2 = Rect2(430.0, 292.0, 110.0, 24.0)
 const CHAPTERS_HINT_RECT: Rect2 = Rect2(104.0, 294.0, 300.0, 14.0)
 
+## Title-only hidden unlock.  Keys are matched by physical/key code so Shift or
+## Caps Lock cannot change the sequence; no text box or caret is created.
+const CHEAT_CODE: Array[int] = [KEY_K, KEY_S, KEY_K, KEY_B, KEY_L]
+const CHEAT_FEEDBACK: String = "全部章节已解锁"
+const CHEAT_FEEDBACK_SECONDS: float = 1.5
+
 const MASTER_BUS_NAME: StringName = &"Master"
 const DEFAULT_AUDIO_PATH: String = "user://audio_settings.cfg"
 const DEFAULT_DISPLAY_PATH: String = "user://display_settings.cfg"
@@ -160,6 +166,12 @@ var _pending_cancel_button: PixelMenuButton = null
 var _draft_mode: int = DisplayOptions.Mode.WINDOWED
 var _draft_window_size: Vector2i = DisplayOptions.DEFAULT_WINDOW_SIZE
 
+var _cheat_label: Label = null
+var _cheat_index: int = 0
+var _cheat_feedback_serial: int = 0
+var _cheat_feedback_tween: Tween = null
+var _cheat_unlock_count: int = 0
+
 var _pause_overlay: Control = null
 var _start_black: ColorRect = null
 var _scene_change_alpha: float = -1.0
@@ -222,6 +234,14 @@ func activate(level: Node, menu_camera: Camera2D) -> void:
 	_settings_open = false
 	_chapters_open = false
 	_hover_kind = ""
+	_cheat_index = 0
+	_cheat_unlock_count = 0
+	if _cheat_feedback_tween != null and _cheat_feedback_tween.is_valid():
+		_cheat_feedback_tween.kill()
+	_cheat_feedback_tween = null
+	if _cheat_label != null:
+		_cheat_label.visible = false
+		_cheat_label.text = ""
 	_root.visible = true
 	_fade_group.visible = true
 	_fade_group.modulate = Color(1.0, 1.0, 1.0, 1.0)
@@ -362,6 +382,18 @@ func get_chapters_layer() -> Control:
 
 func get_chapters_progress_text() -> String:
 	return _chapters_progress_label.text if _chapters_progress_label != null else ""
+
+
+func is_cheat_feedback_visible() -> bool:
+	return _cheat_label != null and _cheat_label.visible
+
+
+func get_cheat_feedback_text() -> String:
+	return _cheat_label.text if _cheat_label != null and _cheat_label.visible else ""
+
+
+func get_cheat_unlock_count() -> int:
+	return _cheat_unlock_count
 
 
 func get_chapter_row(id: String) -> PixelMenuButton:
@@ -591,6 +623,14 @@ func _build_ui() -> void:
 	_quit_button.focus_exited.connect(_deferred_refresh_focus)
 	_quit_button.mouse_entered.connect(_on_hover.bind("quit"))
 	_quit_button.mouse_exited.connect(_on_unhover.bind("quit"))
+
+	# One small line directly under the baked title, only for the hidden unlock.
+	# It never expands into a panel and never takes focus or mouse input.
+	_cheat_label = _label("", Vector2(0.0, 114.0), Vector2(VIEW_SIZE.x, 16.0), 12, GOLD)
+	_cheat_label.name = "CheatFeedback"
+	_cheat_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_cheat_label.visible = false
+	_fade_group.add_child(_cheat_label)
 
 	_refresh_menu_focus_chain()
 
@@ -1574,11 +1614,83 @@ func _on_window_focus_exited() -> void:
 		_set_transition_paused(true)
 
 
+## The title page is the only place the sequence works.  It never consumes the
+## event, so arrows, Enter, Esc and the mouse keep their normal routes.
+func _handle_cheat_key(event: InputEvent) -> void:
+	if not (event is InputEventKey):
+		return
+	var key_event: InputEventKey = event as InputEventKey
+	if key_event.echo or not key_event.pressed:
+		return
+	if (
+		_phase != Phase.MENU
+		or _settings_open
+		or _chapters_open
+		or _start_locked
+		or _quit_locked
+	):
+		_cheat_index = 0
+		return
+	var code: int = int(key_event.physical_keycode)
+	if code == 0:
+		code = int(key_event.keycode)
+	# Case-insensitive by normalising ASCII lower-case key codes.
+	if code >= int(KEY_A) + 32 and code <= int(KEY_Z) + 32:
+		code -= 32
+	var is_letter: bool = code >= int(KEY_A) and code <= int(KEY_Z)
+	var is_printable: bool = is_letter or (code >= 32 and code <= 126)
+	# Arrows / Enter / Esc / Shift are not characters and never clear the buffer.
+	# A real wrong character (letter, digit or punctuation) does.
+	if not is_printable and key_event.unicode <= 0:
+		return
+	if is_letter and code == CHEAT_CODE[_cheat_index]:
+		_cheat_index += 1
+		if _cheat_index >= CHEAT_CODE.size():
+			_cheat_index = 0
+			_unlock_all_chapters()
+		return
+	# A wrong character clears the buffer; a fresh `k` may begin again.
+	_cheat_index = 1 if is_letter and code == CHEAT_CODE[0] else 0
+
+
+func _unlock_all_chapters() -> void:
+	var error: Error = CHAPTER_PROGRESS.complete_all(chapter_progress_path)
+	if error != OK:
+		return
+	_chapters_progress = CHAPTER_PROGRESS.load_completed(chapter_progress_path)
+	_refresh_chapters(false)
+	_cheat_unlock_count += 1
+	_show_cheat_feedback()
+
+
+func _show_cheat_feedback() -> void:
+	if _cheat_label == null:
+		return
+	_cheat_feedback_serial += 1
+	var serial: int = _cheat_feedback_serial
+	_cheat_label.text = CHEAT_FEEDBACK
+	_cheat_label.visible = true
+	_cheat_label.modulate.a = 1.0
+	if _cheat_feedback_tween != null and _cheat_feedback_tween.is_valid():
+		_cheat_feedback_tween.kill()
+	_cheat_feedback_tween = create_tween()
+	_cheat_feedback_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_cheat_feedback_tween.tween_interval(CHEAT_FEEDBACK_SECONDS)
+	_cheat_feedback_tween.tween_callback(func() -> void:
+		if serial != _cheat_feedback_serial or _cheat_label == null:
+			return
+		_cheat_label.visible = false
+		_cheat_label.text = ""
+		_cheat_feedback_tween = null
+	)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if settings_host_mode:
 		# The pause page owns Esc routing in host mode (display pending ->
 		# settings -> pause root -> resume).  Do not consume it twice here.
 		return
+	_handle_cheat_key(event)
 	if not event.is_action_pressed(&"pause"):
 		return
 	if _chapters_open:

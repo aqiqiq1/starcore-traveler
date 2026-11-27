@@ -159,10 +159,10 @@ func _run_trial() -> void:
 	var reveal: UiReveal = guide.get_reveal()
 	_check(reveal != null, "trial guide uses the shared UiReveal")
 	_check(reveal != null and reveal.is_root_visible(), "trial guide root is visible")
-	_check(guide.get_page_count() == 3, "trial guide has 3 pages",
+	_check(guide.get_page_count() == 2, "trial guide has 2 pages",
 		str(guide.get_page_count()))
-	_check(guide.get_page_indicator_text() == "1 / 3",
-		"trial page indicator starts at 1 / 3", guide.get_page_indicator_text())
+	_check(guide.get_page_indicator_text() == "1 / 2",
+		"trial page indicator starts at 1 / 2", guide.get_page_indicator_text())
 	_check(guide.get_panel_rect().size == Vector2(560.0, 236.0),
 		"guide panel is 560x236", str(guide.get_panel_rect().size))
 	_check_demo(guide, "trial_gate")
@@ -212,26 +212,15 @@ func _run_trial() -> void:
 	_check(_near(guide.get_content_alpha(), 1.0),
 		"page content returns to alpha 1 after 0.12 s",
 		"%.3f" % guide.get_content_alpha())
-	_check(guide.get_page_indicator_text() == "2 / 3",
-		"page indicator is 2 / 3", guide.get_page_indicator_text())
+	_check(guide.get_page_indicator_text() == "2 / 2",
+		"page indicator is 2 / 2", guide.get_page_indicator_text())
 	_check(guide.get_demo_frame() == 0, "page 2 demo restarts at frame 0",
-		"frame=%d" % guide.get_demo_frame())
-	_check_demo(guide, "trial_gate_inside")
-	await _wait_seconds(0.4)
-	_check(guide.get_demo_frame() > 0, "page 2 demo is playing",
-		"frame=%d" % guide.get_demo_frame())
-	_press_f_now()
-	_check(guide.get_page_index() == 2 and guide.is_open(), "F advances to page 3")
-	await _wait_page_transition(guide)
-	_check(guide.get_page_indicator_text() == "3 / 3",
-		"page indicator is 3 / 3", guide.get_page_indicator_text())
-	_check(guide.get_demo_frame() == 0, "page 3 demo restarts at frame 0",
 		"frame=%d" % guide.get_demo_frame())
 	_check_demo(guide, "trial_guard_hit")
 	_check(guide.get_footer_text() == "F 关闭 · 长按空格 跳过",
 		"last page footer says F closes", guide.get_footer_text())
 	await _wait_seconds(0.4)
-	_check(guide.get_demo_frame() > 0, "page 3 demo is playing",
+	_check(guide.get_demo_frame() > 0, "page 2 demo is playing",
 		"frame=%d" % guide.get_demo_frame())
 
 	# A 0.5 s Space hold closes the whole guide from the last page.
@@ -275,10 +264,8 @@ func _run_trial() -> void:
 	_check(guide.get_page_index() == 1 and not guide.has_demo(),
 		"missing demo fallback advances pages during the reveal")
 	await _wait_page_transition(guide)
-	_press_f_now()
-	_check(guide.get_page_index() == 2 and guide.is_open(),
+	_check(guide.get_page_index() == 1 and guide.is_open(),
 		"missing demo fallback reaches the last page")
-	await _wait_page_transition(guide)
 	_press_f_now()
 	_check(not guide.is_open(), "missing demo guide closes with F")
 	_check(not get_tree().paused, "missing demo close unpauses the tree")

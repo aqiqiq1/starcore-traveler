@@ -266,8 +266,8 @@ func _run() -> void:
 			carrier.global_position.x, bay.get_glow_strength(),
 			gate.get_collision_layer()
 		])
-	_check(_rift.get_hud().get_event_text().contains("星核入仓")
-		and _rift.get_hud().get_event_text().contains("第一道门"),
+	_check(_rift.get_hud().get_event_text().contains("青核入仓")
+		and _rift.get_hud().get_event_text().contains("月门"),
 		"the route HUD line names the star core and the first gate",
 		_rift.get_hud().get_event_text())
 	var through_gate: bool = await _move_until_x(300.0, 400)

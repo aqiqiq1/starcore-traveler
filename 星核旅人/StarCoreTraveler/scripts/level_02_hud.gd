@@ -172,6 +172,7 @@ func _build_completion() -> void:
 	_completion_overlay.add_child(panel)
 	_completion_panel = panel
 	_completion_panel_base = panel.position
+	CompletionEmblem.attach_to(panel)
 
 	var title: Label = _label("第二关完成", Vector2(0.0, 12.0), Vector2(400.0, 34.0), 24, GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

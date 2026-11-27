@@ -42,9 +42,6 @@ PALETTES = {
         "light": (255, 229, 140, 255),
         "hi": (255, 246, 205, 255),
         "core": (255, 250, 220, 255),
-        "ring_dim": (146, 102, 34, 255),
-        "ring_mid": (205, 156, 62, 255),
-        "ring_hi": (255, 226, 144, 255),
         "dust": (255, 239, 181, 255),
     },
     "negative": {
@@ -56,9 +53,6 @@ PALETTES = {
         "light": (126, 239, 243, 255),
         "hi": (218, 255, 255, 255),
         "core": (241, 255, 255, 255),
-        "ring_dim": (146, 102, 34, 255),
-        "ring_mid": (205, 156, 62, 255),
-        "ring_hi": (255, 226, 144, 255),
         "dust": (169, 247, 250, 255),
     },
     "locked": {
@@ -70,9 +64,6 @@ PALETTES = {
         "light": (242, 174, 252, 255),
         "hi": (255, 232, 255, 255),
         "core": (255, 241, 255, 255),
-        "ring_dim": (146, 102, 34, 255),
-        "ring_mid": (205, 156, 62, 255),
-        "ring_hi": (255, 226, 144, 255),
         "dust": (238, 188, 255, 255),
     },
 }
@@ -118,7 +109,11 @@ def mix(a, b, t: float):
 
 
 # ---------------------------------------------------------------------------
-# Star core: 12-frame rotating cut gem + fixed outer gold ring + inner light.
+# Star core: 12-frame rotating cut gem + inner light + drifting debris.
+#
+# Presentation rule (2026-11-27 second pass): a free core never carries an
+# outer metal ring.  The bay owns the only gold ring; the core shows cut
+# facets, its white-hot inner light and a couple of detached dust pixels.
 # ---------------------------------------------------------------------------
 
 
@@ -211,36 +206,17 @@ def core_frame(state: str, frame: int) -> Image.Image:
         if (x, 10) in body:
             px[x, 10] = pal["light"]
 
-    # Fixed thin gold orbit ring, radius 6.9.  One continuous pixel circle with
-    # two brighter arcs; it never translates, so the spin stays inside it.
-    ring_r = 6.9
-    steps = 96
-    ring_points = []
-    for i in range(steps):
-        angle = math.tau * i / steps
-        x = int(round(7.5 + math.cos(angle) * ring_r - 0.5))
-        y = int(round(7.5 + math.sin(angle) * ring_r - 0.5))
-        if (x, y) not in ring_points:
-            ring_points.append((x, y))
-    for x, y in ring_points:
-        angle = math.atan2(y - 7.5, x - 7.5)
-        bead = max(0.0, math.cos(angle + 2.2)) ** 3
-        bead += 0.35 * max(0.0, math.cos(angle - 1.2)) ** 4
-        ring_color = mix(
-            pal["ring_dim"], pal["ring_hi"],
-            0.04 + 0.58 * min(1.0, bead) * (0.30 + 0.70 * pulse),
-        )
-        px[x, y] = ring_color
-
     # Two tiny orbiting specks, one pixel each.  They rotate while the gem
-    # stays centred, so the loop breathes instead of translating.
+    # stays centred, so the loop breathes instead of translating.  These are
+    # detached debris, not a ring: no continuous circle is drawn around the
+    # free core.  The bay's own gold ring lives in build_base()/CoreDeliveryBay.
     for index, base_angle in enumerate((-2.0, 1.15)):
         angle = base_angle + math.tau * frame / (FRAME_COUNT * 2.0)
         radius = 7.7
         x = int(round(7.5 + math.cos(angle) * radius - 0.5))
         y = int(round(7.5 + math.sin(angle) * radius - 0.5))
         if (x, y) not in body and 0 <= x < CORE_SIZE and 0 <= y < CORE_SIZE:
-            px[x, y] = pal["dust"] if index == 0 else mix(pal["dust"], pal["ring_dim"], 0.40)
+            px[x, y] = pal["dust"] if index == 0 else mix(pal["dust"], pal["deep"], 0.40)
 
     return image
 

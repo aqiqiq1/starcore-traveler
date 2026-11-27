@@ -3,7 +3,9 @@ extends Node
 ## Contract checks for the reworked level-01 opening:
 ##   - it plays on the first new game with HUD hidden and input locked;
 ##   - movement / polarity / jump / damage cannot happen during the film;
-##   - F skips immediately, hold Space for 0.6 s also skips;
+##   - F continues (complete line -> next page -> last page ends), it never
+##     skips the film; holding Space for 0.6 s still skips;
+##   - opening-film HUD hints are discarded, never queued to hand-off;
 ##   - the skip snaps to the hand-off point and does not leave half a film;
 ##   - the natural film hands control back, HUD appears and camera returns;
 ##   - failure recovery and R never replay the film.
@@ -20,7 +22,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	await _test_menu_entry()
 	await _test_first_play_locks_and_finish()
-	await _test_f_skip()
+	await _test_f_continue()
 	await _test_space_skip()
 	await _test_r_during_film()
 	await _cleanup()
@@ -96,6 +98,14 @@ func _test_first_play_locks_and_finish() -> void:
 	_check(opening.get_shake_amplitude() <= 2.0,
 		"earthquake shake is <= 2 px", str(opening.get_shake_amplitude()))
 
+	# A mechanism line raised behind the film is dropped.  It must not sit in a
+	# pending slot and pop when control returns.
+	hud.show_toast("远处机关提示 · 不应排队", 1.6)
+	await _wait_process(3)
+	_check(not hud.is_toast_visible() and String(hud.get_toast_text()).is_empty(),
+		"opening film discards HUD hints instead of queueing",
+		String(hud.get_toast_text()))
+
 	# The 0-1.95 s black hold must have no lit pixel at all.  Sampling through
 	# 2.45 s is stricter: not even one ember may appear before the scene fade.
 	var dust_seen_early: bool = opening.is_dust_visible()
@@ -167,6 +177,10 @@ func _test_first_play_locks_and_finish() -> void:
 			"page letterbox is 44 px", str(opening.get_letterbox_height()))
 
 	await _wait_pages_and_finish(level, opening, echo, player)
+	await _wait_seconds(1.0)
+	_check(not hud.is_toast_visible() and String(hud.get_toast_text()).is_empty(),
+		"no distant hint appears in the first second after the film",
+		String(hud.get_toast_text()))
 	_check(not level.is_intro_active(), "natural film ends")
 	_check(opening.get_end_transition_duration() >= 1.5
 		and opening.get_end_transition_duration() <= 1.8,
@@ -234,39 +248,59 @@ func _test_first_play_locks_and_finish() -> void:
 	await _wait_process(8)
 
 
-func _test_f_skip() -> void:
-	print("=== L1 OPENING F SKIP ===")
+func _test_f_continue() -> void:
+	print("=== L1 OPENING F CONTINUE ===")
 	var level: Level01 = await _spawn()
 	var opening: OpeningCinematic = level.get_opening()
 	var player: PrototypePlayer = level.get_player()
-	var hud: Level01HUD = level.get_hud()
-	_check(opening != null and opening.is_playing(), "F skip: film started")
+	_check(opening != null and opening.is_playing(), "F continue: film started")
 	if opening == null or player == null:
 		level.queue_free()
 		await get_tree().process_frame
 		return
+
+	# F during the prologue is inert; it is not a whole-film skip.
 	_push_key(KEY_F, true)
 	_push_key(KEY_F, false)
 	await _wait_process(6)
-	_check(not level.is_intro_active(), "F skips the whole film immediately")
-	_check(opening.is_skipped(), "F marks the film skipped")
-	_check(not opening.is_ui_visible(), "F leaves no cinematic UI")
-	_check(not opening.is_prompt_footer_visible(), "F leaves no footer")
-	_check(not opening.is_skip_bar_visible(), "F leaves no hold bar")
-	_check(hud.is_objective_visible(), "F shows the HUD")
-	_check(get_viewport().get_camera_2d() == level.get_camera(),
-		"F returns the player camera")
-	_check(not player.is_input_override_active(), "F releases the player lock")
-	_check(player.global_position.x > 240.0 and player.global_position.x < 340.0,
-		"F snaps to the stele hand-off", str(player.global_position.x))
-	_check(level.get_music().is_playing(), "F did not stop the music")
+	_check(opening.is_active() and level.is_intro_active(),
+		"F during the prologue does not skip the film")
+	_check(not opening.is_skipped() and opening.get_skip_count() == 0,
+		"F never marks the film skipped")
 
-	var start_x: float = player.global_position.x
-	Input.action_press(&"move_right")
-	await _wait_physics(8)
-	Input.action_release(&"move_right")
-	_check(player.global_position.x > start_x + 1.0, "F skip resumes control")
+	var echo: GuideEcho = opening.get_dialogue_echo()
+	var first_page: bool = await _wait_for_first_page(opening, echo, 15000)
+	_check(first_page, "F continue: first page opened")
+	if not first_page:
+		opening.abort()
+		level.queue_free()
+		await _wait_process(8)
+		return
 
+	# First press on an unfinished line only completes that line.
+	_push_key(KEY_F, true)
+	_push_key(KEY_F, false)
+	await _wait_process(2)
+	_check(echo.get_page_index() == 0,
+		"F on a typing line completes it without turning the page",
+		str(echo.get_page_index()))
+	_check(echo.get_revealed_count() >= echo.get_full_page_text().length(),
+		"the unfinished line is fully revealed")
+	_check(opening.is_active(), "completing a line does not end the film")
+
+	# Second press on the completed line turns exactly one page.
+	_push_key(KEY_F, true)
+	_push_key(KEY_F, false)
+	await _wait_process(3)
+	_check(echo.get_page_index() == 1,
+		"F on a completed line advances exactly one page",
+		str(echo.get_page_index()))
+	_check(opening.is_active() and level.is_intro_active(),
+		"one page turn does not end the opening film")
+	_check(not opening.is_skipped(), "page turn is not a skip")
+
+	opening.abort()
+	await _wait_process(6)
 	level.queue_free()
 	await _wait_process(8)
 
@@ -390,8 +424,11 @@ func _wait_pages_and_finish(
 ) -> void:
 	# Wait on real elapsed time so the film reaches its natural end independently
 	# of the headless frame rate. Every page must show the translucent projection,
-	# the 1.6-1.8x camera and the 44 px letterbox.
+	# the 1.6-1.8x camera and the 44 px letterbox. F is the only page control;
+	# the first completed-page press must advance exactly one page and leave the
+	# film running.
 	var pages_seen: Array[int] = []
+	var pressed_page: int = -1
 	var hud_fade_checked: bool = false
 	var input_probe_done: bool = false
 	var probe_toggles: int = player.get_polarity_toggle_count()
@@ -411,6 +448,22 @@ func _wait_pages_and_finish(
 				and absf(opening.get_letterbox_height() - 44.0) < 0.1,
 				"page %d letterbox is 44 px" % (index + 1),
 				str(opening.get_letterbox_height()))
+		if (
+			index >= 0
+			and pressed_page != index
+			and echo.is_dialogue_open()
+			and echo.get_revealed_count() >= echo.get_full_page_text().length()
+		):
+			pressed_page = index
+			_push_key(KEY_F, true)
+			_push_key(KEY_F, false)
+			await _wait_process(2)
+			if index == 0:
+				_check(echo.get_page_index() == 1,
+					"one F advances exactly one page",
+					str(echo.get_page_index()))
+				_check(opening.is_active() and level.is_intro_active(),
+					"one F does not end the opening film")
 		if not hud_fade_checked and opening.get_elapsed() >= (
 			OpeningCinematic.HUD_RETURN_TIME + 0.10
 		):
@@ -456,6 +509,12 @@ func _wait_process(count: int) -> void:
 func _wait_physics(count: int) -> void:
 	for _index: int in range(count):
 		await get_tree().physics_frame
+
+
+func _wait_seconds(seconds: float) -> void:
+	var deadline: int = Time.get_ticks_msec() + int(seconds * 1000.0)
+	while Time.get_ticks_msec() < deadline:
+		await get_tree().process_frame
 
 
 func _push_key(code: int, pressed: bool) -> void:

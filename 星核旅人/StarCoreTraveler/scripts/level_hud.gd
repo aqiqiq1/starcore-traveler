@@ -24,8 +24,6 @@ var _header: HudObjective
 var _health_bar: PlayerHealthBar
 var _objective_base: String = "前往庭院出口"
 var _opening_active: bool = false
-var _pending_event_text: String = ""
-var _pending_event_left: float = 0.0
 var _completion_overlay: ColorRect
 var _completion_panel: Panel
 var _completion_panel_base: Vector2 = Vector2.ZERO
@@ -149,6 +147,7 @@ func _build_completion() -> void:
 	_completion_overlay.add_child(panel)
 	_completion_panel = panel
 	_completion_panel_base = panel.position
+	CompletionEmblem.attach_to(panel)
 
 	var title: Label = _label("第一关完成", Vector2(0.0, 12.0), Vector2(400.0, 34.0), 24, GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -228,18 +227,15 @@ func set_objective(text_value: String) -> void:
 
 ## Opening-film state: the whole chrome row (chapter/objective/icon) and the
 ## health bar are hidden from the first bar frame until control is handed back.
-## A restart event raised during the film is held and shown once the slot
-## returns.
+## A mechanism hint raised during the film is discarded, never held for the
+## hand-off: after control returns the player must be near the device themselves.
 func set_opening_active(value: bool, fade_duration: float = 0.15) -> void:
 	var was_opening_active: bool = _opening_active
 	_opening_active = value
 	if value:
 		_chrome_fade_duration = 0.15
-		var active_event: String = _header.get_event_text() if _header != null else ""
-		if not active_event.is_empty() and _header.is_event_visible():
-			_pending_event_text = active_event
-			_pending_event_left = 1.2
-		_header.clear_event()
+		if _header != null:
+			_header.clear_event()
 	else:
 		_chrome_fade_duration = clampf(fade_duration, 0.0, 1.0)
 		_restore_objective_after_opening()
@@ -250,13 +246,6 @@ func set_opening_active(value: bool, fade_duration: float = 0.15) -> void:
 
 func _restore_objective_after_opening() -> void:
 	if _header == null:
-		return
-	if not _pending_event_text.is_empty():
-		var pending_text: String = _pending_event_text
-		var pending_left: float = maxf(_pending_event_left, 0.2)
-		_pending_event_text = ""
-		_pending_event_left = 0.0
-		_header.show_event(pending_text, pending_left)
 		return
 	_header.set_objective(_objective_base)
 
@@ -269,12 +258,11 @@ func show_toast(text_value: String, duration: float = 1.6) -> void:
 		if not _opening_active and not _completion_active:
 			_header.set_objective(_objective_base)
 		return
-	var event_duration: float = clampf(duration, 0.2, 2.6)
 	if _opening_active:
-		_pending_event_text = text_value
-		_pending_event_left = event_duration
+		# Hints produced behind the opening film are dropped, not queued.  The
+		# old pending slot made a distant gate line pop on hand-off.
 		return
-	_header.show_event(text_value, event_duration)
+	_header.show_event(text_value, clampf(duration, 0.2, 2.6))
 
 
 func set_pause_visible(value: bool) -> void:
@@ -293,8 +281,6 @@ func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 		_completion_title.text = "第一关完成 · 用时 %s" % _format_time(elapsed_seconds)
 		_play_completion_reveal()
 		_header.clear_event()
-		_pending_event_text = ""
-		_pending_event_left = 0.0
 		call_deferred("focus_completion_primary")
 	else:
 		release_completion_focus()

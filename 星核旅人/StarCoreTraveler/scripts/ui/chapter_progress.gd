@@ -155,6 +155,16 @@ static func first_uncompleted(completed: Dictionary, require_available: bool = t
 	return ""
 
 
+## Title-only unlock-all used by the hidden kskbl sequence.  Writes the same
+## six-boolean schema as a real completion, marking every chapter completed so
+## every derived unlock is true.
+static func complete_all(path: String = "") -> Error:
+	var completed: Dictionary = {}
+	for chapter: Dictionary in CHAPTERS:
+		completed[String(chapter["id"])] = true
+	return _save_completed(completed, resolve_path(path))
+
+
 ## Writes one completion flag.  The file is always rewritten with all six
 ## booleans (unreadable files become six false values plus this flag), so the
 ## schema stays exactly six bools and partial/corrupt files self-heal.

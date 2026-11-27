@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://dlc/core_badge_20261127/capture_core_badge.gd" id="1_capture"]
+
+[node name="CaptureCoreBadge" type="Node"]
+script = ExtResource("1_capture")

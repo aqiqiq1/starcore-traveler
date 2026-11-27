@@ -23,6 +23,10 @@ const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
 const FOOTSTEP_SCRIPT = preload("res://scripts/audio/player_footstep_audio.gd")
 const OPENING_SCRIPT = preload("res://scripts/narrative/opening_cinematic.gd")
 const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popup.tscn")
+## The full gate lesson lives here, at the first same-phase door in the game.
+## Later chapters only repeat the short phase reminder.
+const GATE_FULL_HINT: String = "同相门只认同相 · 看门上日/月 · 按 Q 换相"
+const GATE_SHORT_HINT: String = "按 Q 换相"
 
 @export_range(2.0, 15.0, 0.05, "suffix:s") var intro_max_duration: float = 9.0
 ## Legacy safety cap for callers that inspect it. The opening itself hands off
@@ -55,6 +59,7 @@ const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popu
 @onready var _exit: LevelExit = $World/Exit
 @onready var _narrative_guide: GuideEcho = $World/GuideEchoMeeting
 @onready var _mechanism_guide: GuideEcho = $World/GuideEchoHighstep
+@onready var _gate_stele: GuideEcho = $World/GuideEchoGate
 @onready var _rune_stones: Array[RuneStoneField] = [
 	$World/RuneStoneHigh as RuneStoneField,
 	$World/RuneStonePit as RuneStoneField,
@@ -86,6 +91,12 @@ var _mechanic_popup: MechanicPopup = null
 ## The new opening plays once per Level01 instance. R and failure recovery
 ## never call the film again; a fresh new game is a fresh scene instance.
 var _opening_played: bool = false
+## Gate teaching: the full line fires once on a 56 px approach; contact only
+## shortens it to the Q reminder.  The helper re-arms after 200 px and refuses
+## the same full line again inside 10 s.
+var _exit_gate_hint: ApproachHint = ApproachHint.new()
+var _exit_gate_short_pending: bool = false
+var _exit_gate_short_hint_count: int = 0
 
 
 ## Raw keyboard forwarding for left-Shift and double-tap intent. The movement
@@ -173,6 +184,14 @@ func _process(delta: float) -> void:
 	# compatibility state and the safe pause/focus/reset hand-offs.
 	if _intro_active and _opening != null:
 		_intro_elapsed = _opening.get_elapsed()
+	if (
+		not get_tree().paused
+		and not _intro_active
+		and not _completed
+		and not _resetting
+		and not _scene_leaving
+	):
+		_tick_exit_gate_hint()
 
 
 func _physics_process(_delta: float) -> void:
@@ -343,6 +362,8 @@ func _begin_intro(reset_player: bool) -> void:
 	# far away and waits for the hand-off.
 	if _mechanism_guide != null and is_instance_valid(_mechanism_guide):
 		_mechanism_guide.set_suspended(true)
+	if _gate_stele != null and is_instance_valid(_gate_stele):
+		_gate_stele.set_suspended(true)
 	if _narrative_guide != null and is_instance_valid(_narrative_guide):
 		_narrative_guide.set_suspended(false)
 		_narrative_guide.set_cinematic_owned(true)
@@ -371,6 +392,9 @@ func _begin_play(reset_player: bool, reason: String = START_REASON) -> void:
 	_intro_elapsed = 0.0
 	_elapsed = 0.0
 	_opening_played = true
+	_exit_gate_hint.reset()
+	_exit_gate_short_pending = false
+	_exit_gate_short_hint_count = 0
 	_exit.set_completed(false)
 	_checkpoint.set_activated(false)
 	_checkpoint_position = _start_position
@@ -387,6 +411,8 @@ func _begin_play(reset_player: bool, reason: String = START_REASON) -> void:
 	_player.set_spawn_point(_start_position)
 	_narrative_guide.on_player_reset(reason)
 	_mechanism_guide.on_player_reset(reason)
+	if _gate_stele != null and is_instance_valid(_gate_stele):
+		_gate_stele.on_player_reset(reason)
 	_set_guides_suspended(false)
 	_hud.set_polarity(true)
 	_hud.show_completion(false)
@@ -593,6 +619,8 @@ func _on_player_reset_performed(reason: String, _count: int) -> void:
 	_player.clear_external_force()
 	_narrative_guide.on_player_reset(reason)
 	_mechanism_guide.on_player_reset(reason)
+	if _gate_stele != null and is_instance_valid(_gate_stele):
+		_gate_stele.on_player_reset(reason)
 	_camera.reset_smoothing()
 	match reason:
 		"fall":
@@ -604,14 +632,41 @@ func _on_player_reset_performed(reason: String, _count: int) -> void:
 			pass
 
 
-## The exit-side polarity gate only reads the player's phase. A refused contact
-## reuses the existing HUD event row: no new UI, no key injection, and Q always
-## remains the player's own toggle.
-func _on_exit_polarity_gate_denied(required_positive: bool) -> void:
+## The full teaching is proximity-only: 56 px in front, facing the closed door,
+## never during the opening film or after the run has left gameplay.
+func _tick_exit_gate_hint() -> void:
+	if _exit_polarity_gate == null or _player == null:
+		return
+	var dx: float = _exit_polarity_gate.global_position.x - _player.global_position.x
+	var distance: float = absf(dx)
+	var in_scene: bool = absf(
+		_player.global_position.y - _exit_polarity_gate.global_position.y
+	) <= 72.0
+	var facing_toward: bool = (
+		in_scene
+		and dx > 0.0
+		and signf(dx) == float(_player.get_facing())
+	)
+	var can_show: bool = not _exit_polarity_gate.is_open()
+	if _exit_gate_hint.tick(
+		distance, can_show and facing_toward, Time.get_ticks_msec()
+	):
+		_exit_gate_short_pending = true
+		_hud.show_toast(GATE_FULL_HINT, 2.4)
+
+
+## The exit-side polarity gate only reads the player's phase.  Contact never
+## repeats the full line; after a real approach it leaves only the short Q
+## reminder.  No new UI, no key injection, and Q always remains the player's
+## own toggle.
+func _on_exit_polarity_gate_denied(_required_positive: bool) -> void:
 	if _completed or _scene_leaving or _resetting:
 		return
-	var phase_text: String = "辉相" if required_positive else "澜相"
-	_hud.show_toast("此门只认%s · 按 Q 换相" % phase_text, 1.4)
+	if not _exit_gate_short_pending:
+		return
+	_exit_gate_short_pending = false
+	_exit_gate_short_hint_count += 1
+	_hud.show_toast(GATE_SHORT_HINT, 1.4)
 
 
 func _on_checkpoint_entered(checkpoint: LevelCheckpoint) -> void:
@@ -695,6 +750,8 @@ func _set_guides_suspended(value: bool) -> void:
 		_narrative_guide.set_suspended(value)
 	if is_instance_valid(_mechanism_guide):
 		_mechanism_guide.set_suspended(value)
+	if is_instance_valid(_gate_stele):
+		_gate_stele.set_suspended(value)
 
 
 # --- Test / documentation accessors ---------------------------------------
@@ -731,6 +788,14 @@ func get_exit_polarity_gate() -> PolarityGate:
 	return _exit_polarity_gate
 
 
+func get_exit_gate_full_hint_count() -> int:
+	return _exit_gate_hint.get_shown_count()
+
+
+func get_exit_gate_short_hint_count() -> int:
+	return _exit_gate_short_hint_count
+
+
 func _refresh_exit_gate_available() -> void:
 	if _exit == null:
 		return
@@ -755,6 +820,10 @@ func get_narrative_guide() -> GuideEcho:
 
 func get_mechanism_guide() -> GuideEcho:
 	return _mechanism_guide
+
+
+func get_gate_stele() -> GuideEcho:
+	return _gate_stele
 
 
 ## Deprecated compatibility alias. The old stone shell is gone; this returns the

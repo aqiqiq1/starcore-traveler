@@ -6,7 +6,8 @@
 
 ## 文件
 
-- `dlc/ui/dlc_guide.tscn` / `dlc_guide.gd`：560×236、3 页共用开场说明；
+- `dlc/ui/dlc_guide.tscn` / `dlc_guide.gd`：560×236、最多 3 页共用开场说明
+  （试炼 2 页 / 裂隙 3 页 / 织机 2 页）；
   左侧 **256×144 实机演示窗**，播放 24 帧 / 8 fps 的真实关卡循环（横向帧条 +
   `AtlasTexture`，与基础 `mechanic_popup.gd` 一致）；右侧标题+2–3 行说明+按键提示；
   右上 `n / 3`，底部 `F 下一页 · 长按空格 跳过`；打开暂停，长按空格 0.5 s
@@ -28,8 +29,8 @@
 - `tests/real_j_damage_test.tscn` / `.gd`：真实物理 J（`Input.parse_input_event`）
   对 trial 单守卫、rift 金/青各一次，以及双守卫同一 swing 分发；
   不使用 `request_attack()` 冒充。
-- `tests/capture_guide.tscn` / `.gd`：两关各 3 页 640×360 实机截图（每页等待 1.6 s，
-  让演示进入动作帧）。
+- `tests/capture_guide.tscn` / `.gd`：试炼 2 页 / 裂隙 3 页 640×360 实机截图
+  （每页等待 1.6 s，让演示进入动作帧）。
 - `tests/j_damage_diag.*`、`tests/j_distance_diag.*`：真实 J 伤害诊断脚本与日志。
 
 ## 运行

@@ -73,6 +73,18 @@ func _run() -> void:
 	await _wait_process(8)
 	await _save("chapter_select_unlocked")
 
+	# Real k s k b l on the title, then reopen the same page: all six rows are
+	# 已通关 / enterable.
+	menu.call("_close_chapters")
+	await _wait_process(3)
+	for key: int in [KEY_K, KEY_S, KEY_K, KEY_B, KEY_L]:
+		await _tap_key(key)
+	await _wait_process(3)
+	await _save("title_menu_cheat_feedback")
+	menu.get_chapter_button().pressed.emit()
+	await _wait_process(8)
+	await _save("chapter_select_cheat_all")
+
 	menu.call("_close_chapters")
 	await _wait_process(4)
 	get_tree().current_scene = null
@@ -84,6 +96,21 @@ func _run() -> void:
 func _wait_process(count: int) -> void:
 	for _index: int in range(count):
 		await get_tree().process_frame
+
+
+func _tap_key(code: int) -> void:
+	var down: InputEventKey = InputEventKey.new()
+	down.physical_keycode = code as Key
+	down.keycode = code as Key
+	down.pressed = true
+	get_viewport().push_input(down)
+	await _wait_process(1)
+	var up: InputEventKey = InputEventKey.new()
+	up.physical_keycode = code as Key
+	up.keycode = code as Key
+	up.pressed = false
+	get_viewport().push_input(up)
+	await _wait_process(2)
 
 
 func _save(shot_name: String) -> void:

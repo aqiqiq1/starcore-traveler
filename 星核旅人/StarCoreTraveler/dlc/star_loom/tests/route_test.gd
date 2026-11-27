@@ -233,7 +233,7 @@ func _run() -> void:
 	await _wait_physics(4)
 	await _tap_polarity()
 	_check(not _player.is_positive(),
-		"Q returns the body to 澜相 for the cyan field around the gold core")
+		"Q returns the body to 澜相 to push the cyan core into the moon-gate bay")
 	var socketed: bool = await _wait_until(
 		func() -> bool: return carrier.is_on_socket(), 420
 	)

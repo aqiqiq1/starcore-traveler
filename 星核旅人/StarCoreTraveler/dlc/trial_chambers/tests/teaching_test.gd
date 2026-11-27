@@ -18,20 +18,13 @@ extends Node
 
 const TRIAL_SCENE: String = "res://dlc/trial_chambers/trial_chambers.tscn"
 
-const GATE_PAGE_TITLE: String = "门只放同相的人"
+const GATE_PAGE_TITLE: String = "金晶体与两道门"
 const GATE_PAGE_BODY: String = (
-	"试炼场的门由星核的辉、澜两面铸成。\n"
-	+ "只放同相的人通过，门前立着相性晶体。\n"
-	+ "第一道门靠晶体翻相；第二道门靠换相。"
+	"门前立着金、青两枚相性晶体。\n"
+	+ "金晶体先醒，第一道门靠它翻相；\n"
+	+ "第二道门靠换相。"
 )
-const GATE_PAGE_KEY: String = "与门同色时按 {Q} 换相，门就会打开。"
-const INSIDE_PAGE_TITLE: String = "门内的相性"
-const INSIDE_PAGE_BODY: String = (
-	"门只认相性：同相放行，异相拦停。\n"
-	+ "门上大号日/月图标就是所需相性。\n"
-	+ "门内换相不会被夹住，离开后才恢复。"
-)
-const INSIDE_PAGE_KEY: String = "门里换相不会被夹住，走出去后门才重新合拢。"
+const GATE_PAGE_KEY: String = "同相门与本体一致。"
 const GUARD_PAGE_TITLE: String = "守卫的胸口余烬"
 const GUARD_PAGE_BODY: String = (
 	"守卫胸口锁着星核余烬，蓄力时以引力拖近。\n"
@@ -290,17 +283,18 @@ func _check_guide() -> void:
 		and _hud.get_hit_pips_position() == Vector2(14.0, 324.0),
 		"the health value stays a bar fixed at (14,324) under the guide")
 	_check(_trial.is_mechanic_popup_blocked(), "guide blocks the popup")
-	_check(guide.get_page_count() == 3, "guide has three trial pages",
+	_check(guide.get_page_count() == 2, "guide has two trial pages",
 		str(guide.get_page_count()))
+	_check(
+		not (GATE_PAGE_BODY + GUARD_PAGE_BODY).contains("门只认同相")
+		and not (GATE_PAGE_BODY + GUARD_PAGE_BODY).contains("门只认相性"),
+		"the trial guide no longer repeats the generic same-phase lesson"
+	)
 
 	var pages: Array[Dictionary] = [
 		{
 			"title": GATE_PAGE_TITLE, "body": GATE_PAGE_BODY,
 			"key": GATE_PAGE_KEY, "demo": "trial_gate",
-		},
-		{
-			"title": INSIDE_PAGE_TITLE, "body": INSIDE_PAGE_BODY,
-			"key": INSIDE_PAGE_KEY, "demo": "trial_gate_inside",
 		},
 		{
 			"title": GUARD_PAGE_TITLE, "body": GUARD_PAGE_BODY,

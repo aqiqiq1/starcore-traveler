@@ -2,11 +2,11 @@ extends Node
 
 ## Headless acceptance for the two base-story DLC mechanics.
 ##
-## L1: the exit-side PolarityGate rejects the wrong phase, opens for the matching
-## phase, never locks Q, and cannot block the checkpoint.
-## L2: the entry inversion field flips exactly once per entry, shows the existing
-## HUD event row, re-arms only after the body leaves, and leaves the first linked
-## bay solvable with the real E / core / rune-link APIs.
+## L1: the exit-side PolarityGate teaches on a 56 px approach, rejects the wrong
+## phase, opens for the matching phase, never locks Q, and cannot block the
+## checkpoint.
+## L2: the removed entry inversion field really is absent, and the first linked
+## bay remains solvable with the real E / core / rune-link APIs.
 ##
 ## Run:
 ##   Godot_v4.7.2-stable_win64_console.exe --headless --path . \
@@ -14,8 +14,8 @@ extends Node
 
 const L1_SCENE: String = "res://scenes/level_01.tscn"
 const L2_SCENE: String = "res://scenes/level_02.tscn"
-const L1_GATE_DENY_TEXT: String = "此门只认澜相 · 按 Q 换相"
-const L2_FIELD_TEXT: String = "紫幕翻相 · 按 Q 换回来"
+const L1_GATE_FULL_TEXT: String = "同相门只认同相 · 看门上日/月 · 按 Q 换相"
+const L1_GATE_SHORT_TEXT: String = "按 Q 换相"
 
 var _checks: int = 0
 var _failures: Array[String] = []
@@ -61,6 +61,12 @@ func _wait_physics(count: int) -> void:
 
 func _wait_process(count: int) -> void:
 	for _index: int in range(count):
+		await get_tree().process_frame
+
+
+func _wait_seconds(seconds: float) -> void:
+	var deadline: int = Time.get_ticks_msec() + int(seconds * 1000.0)
+	while Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
 
 
@@ -159,15 +165,61 @@ func _test_l1() -> void:
 	_check(not gate.get_required_positive(), "gate requires the moon 澜相")
 	_check(gate.get_emblem_kind() == "moon", "gate carries the moon emblem")
 	_check(player.is_positive(), "L1 starts in the sun 辉相")
+	var gate_stele: GuideEcho = _l1.call("get_gate_stele") as GuideEcho
+	var stele_text: String = String(gate_stele.pages[0]) if gate_stele != null \
+		and gate_stele.pages.size() > 0 else "missing"
+	_check(gate_stele != null and gate_stele.get_page_count() == 1
+		and stele_text.contains("同相门只认同相"),
+		"the stele before the gate repeats the same lesson", stele_text)
 
-	# Wrong phase: real contact is rejected and keeps the body outside.
-	player.global_position = Vector2(1700.0, 300.0)
+	# Spawn is far from the door: one second of standing must stay silent.
+	await _wait_seconds(1.0)
+	_check(int(_l1.call("get_exit_gate_full_hint_count")) == 0
+		and String(hud.call("get_toast_text")).is_empty(),
+		"L1 spawn shows no gate hint",
+		String(hud.call("get_toast_text")))
+
+	# 60 px is still outside the 56 px approach window.
+	player.global_position = Vector2(gate.global_position.x - 60.0, 300.0)
 	player.velocity = Vector2.ZERO
 	player.set_polarity_state(true)
+	player.set_facing_direction(1)
 	await _wait_physics(4)
+	await _wait_seconds(1.0)
 	_check(gate.is_blocking(), "gate starts solid for the wrong phase")
-	_check(gate.get_collision_layer() == 1, "wrong-phase gate blocker is on layer 1",
-		str(gate.get_collision_layer()))
+	_check(int(_l1.call("get_exit_gate_full_hint_count")) == 0,
+		"60 px before the gate still shows no full hint",
+		String(hud.call("get_toast_text")))
+
+	# At 56 px but facing away, the gate stays silent; turning toward it fires
+	# the one-time full lesson before any contact.
+	player.global_position = Vector2(gate.global_position.x - 56.0, 300.0)
+	player.velocity = Vector2.ZERO
+	player.set_polarity_state(true)
+	player.set_facing_direction(-1)
+	await _wait_physics(3)
+	await _wait_seconds(0.2)
+	_check(gate.get_deny_count() == 0
+		and int(_l1.call("get_exit_gate_full_hint_count")) == 0,
+		"56 px while facing away shows no gate hint",
+		String(hud.call("get_toast_text")))
+	player.set_facing_direction(1)
+	await _wait_physics(3)
+	await _wait_seconds(0.2)
+	_check(gate.get_deny_count() == 0,
+		"the 56 px sample is taken before the gate contact",
+		"x=%.2f" % player.global_position.x)
+	_check(int(_l1.call("get_exit_gate_full_hint_count")) == 1,
+		"the full gate lesson fires at 56 px",
+		String(hud.call("get_toast_text")))
+	_check(String(hud.call("get_toast_text")) == L1_GATE_FULL_TEXT,
+		"L1 teaches same-phase / sun-moon / Q in one line",
+		String(hud.call("get_toast_text")))
+	_check(bool(hud.call("is_toast_visible")), "the full gate hint is visible")
+
+	# Wrong phase: real contact is rejected and keeps the body outside.  Contact
+	# replaces the full lesson with only the short Q reminder.
+	var full_before_contact: int = int(_l1.call("get_exit_gate_full_hint_count"))
 	var deny_before: int = gate.get_deny_count()
 	Input.action_press(&"move_right")
 	var denied: bool = false
@@ -184,10 +236,15 @@ func _test_l1() -> void:
 		"x=%.2f" % player.global_position.x)
 	_check(gate.is_blocking(), "gate remains blocked after the rejected push")
 	_check(gate.get_collision_layer() == 1, "gate stays solid after the rejected push")
-	_check(String(hud.call("get_toast_text")) == L1_GATE_DENY_TEXT,
-		"the existing HUD event row explains the phase requirement",
+	_check(int(_l1.call("get_exit_gate_full_hint_count")) == full_before_contact,
+		"contact does not repeat the full lesson")
+	_check(int(_l1.call("get_exit_gate_short_hint_count")) == 1,
+		"contact leaves exactly one short reminder",
+		str(_l1.call("get_exit_gate_short_hint_count")))
+	_check(String(hud.call("get_toast_text")) == L1_GATE_SHORT_TEXT,
+		"the short contact reminder is only 按 Q 换相",
 		String(hud.call("get_toast_text")))
-	_check(bool(hud.call("is_toast_visible")), "the phase hint is actually visible")
+	_check(bool(hud.call("is_toast_visible")), "the short reminder is visible")
 
 	# A normal jump apex is 64 px; the gate is 88 px tall.  Repeated jumps while
 	# pushing right must not bypass the band either.
@@ -204,6 +261,22 @@ func _test_l1() -> void:
 	_check(player.global_position.x <= gate.global_position.x - 6.0,
 		"wrong-phase player cannot jump over the gate",
 		"x=%.2f" % player.global_position.x)
+
+	# Leave 200 px, come straight back: the same full line is still inside its
+	# 10 s cooldown and must not repeat.
+	var full_before_reapproach: int = int(_l1.call("get_exit_gate_full_hint_count"))
+	player.global_position = Vector2(gate.global_position.x - 240.0, 300.0)
+	player.velocity = Vector2.ZERO
+	player.set_facing_direction(1)
+	await _wait_physics(4)
+	player.global_position = Vector2(gate.global_position.x - 56.0, 300.0)
+	player.velocity = Vector2.ZERO
+	player.set_facing_direction(1)
+	await _wait_physics(3)
+	await _wait_seconds(0.2)
+	_check(int(_l1.call("get_exit_gate_full_hint_count")) == full_before_reapproach,
+		"the same full hint does not repeat within 10 s",
+		str(_l1.call("get_exit_gate_full_hint_count")))
 
 	# Matching phase: Q opens the gate without injecting movement or a scripted flip.
 	var toggles_before: int = player.get_polarity_toggle_count()
@@ -255,92 +328,30 @@ func _test_l2() -> void:
 	get_tree().paused = false
 
 	var player: PrototypePlayer = _l2.call("get_player") as PrototypePlayer
-	var field: RiftInversionField = _l2.call("get_inversion_field") as RiftInversionField
 	var linked: StarCoreBayInteractable = _l2.call("get_linked_bay") as StarCoreBayInteractable
 	var hud: Level02HUD = _l2.call("get_hud") as Level02HUD
-	var spawn: Vector2 = _l2.call("get_spawn_position")
 	var bays: Array = _l2.call("get_bays")
 	var camera: Camera2D = _l2.call("get_camera") as Camera2D
 	var start_bay: StarCoreBayInteractable = null
 	if not bays.is_empty():
 		start_bay = bays[0] as StarCoreBayInteractable
 	_check(
-		player != null and field != null and linked != null and hud != null and start_bay != null,
-		"L2 exposes player, inversion field, linked bay, start bay and HUD"
+		player != null and linked != null and hud != null and start_bay != null,
+		"L2 exposes player, linked bay, start bay and HUD"
 	)
-	if player == null or field == null or linked == null or hud == null or start_bay == null:
+	if player == null or linked == null or hud == null or start_bay == null:
 		await _unload(_l2)
 		_l2 = null
 		return
 
-	_check(field.global_position.x > spawn.x + 100.0
-			and field.global_position.x < linked.global_position.x - 100.0,
-		"curtain sits between spawn and the first linked bay",
-		"spawn=%.0f field=%.0f linked=%.0f" % [
-			spawn.x, field.global_position.x, linked.global_position.x
-		])
+	# The old violet entry curtain is gone in this chapter; only DLC2 keeps its
+	# inversion field.  No node, no script wiring and no prompt may remain here.
+	_check(_l2.get_node_or_null("InversionField") == null,
+		"L2 scene has no InversionField")
+	_check(_l2.find_children("*", "RiftInversionField", true, false).is_empty(),
+		"L2 scene contains no RiftInversionField instance")
 	_check(player.is_positive(), "L2 starts in 辉相")
 	_check(player.allow_polarity_toggle, "Q remains available in L2")
-	_check(field.get_trigger_count() == 0, "curtain starts armed and untriggered")
-
-	# Before: approach without touching the curtain.
-	player.global_position = Vector2(720.0, 320.0)
-	player.velocity = Vector2.ZERO
-	player.set_polarity_state(true)
-	if camera != null:
-		camera.reset_smoothing()
-	await _wait_physics(4)
-	_check(field.get_trigger_count() == 0, "standing before the curtain does not trigger it")
-
-	# Enter once: one flip, HUD icon and event row update.
-	Input.action_press(&"move_right")
-	var entered: bool = false
-	for _index: int in range(90):
-		await get_tree().physics_frame
-		if field.get_trigger_count() > 0:
-			entered = true
-			break
-	Input.action_release(&"move_right")
-	await _wait_physics(2)
-	_check(entered and field.get_trigger_count() == 1,
-		"entering the curtain flips exactly once",
-		str(field.get_trigger_count()))
-	_check(not player.is_positive(), "curtain flipped the player to 澜相")
-	_check(hud.get_compact_header().get_phase_kind() == "moon",
-		"HUD phase icon follows the curtain flip")
-	_check(String(hud.call("get_toast_text")) == L2_FIELD_TEXT,
-		"the existing HUD event row explains the inversion",
-		String(hud.call("get_toast_text")))
-	_check(bool(hud.call("is_toast_visible")), "the inversion hint is actually visible")
-
-	# Staying inside must not flip again.
-	player.global_position = Vector2(field.global_position.x, 320.0)
-	player.velocity = Vector2.ZERO
-	await _wait_physics(24)
-	_check(field.get_trigger_count() == 1, "staying inside the curtain does not flip again",
-		str(field.get_trigger_count()))
-	_check(not player.is_positive(), "the body keeps the single flipped phase")
-
-	# Q always returns the player.
-	await _tap_polarity(player)
-	_check(player.is_positive(), "Q flips the player back inside the curtain")
-	_check(hud.get_compact_header().get_phase_kind() == "sun",
-		"HUD phase icon returns with Q")
-	_check(field.get_trigger_count() == 1, "Q inside the curtain is not a new entry")
-
-	# Leaving and re-entering re-arms exactly one more flip.
-	player.global_position = Vector2(field.global_position.x - 30.0, 320.0)
-	player.velocity = Vector2.ZERO
-	await _wait_physics(5)
-	player.global_position = Vector2(field.global_position.x, 320.0)
-	player.velocity = Vector2.ZERO
-	await _wait_physics(5)
-	_check(field.get_trigger_count() == 2,
-		"leaving and re-entering flips once more",
-		str(field.get_trigger_count()))
-	_check(not player.is_positive(), "the re-entry flipped the player again")
-	await _tap_polarity(player)
-	_check(player.is_positive(), "Q returns the player after re-entry")
 
 	# First linked bay: release from StartBay, then store in LinkedBay with real E.
 	var core: StarCoreCarrier = _l2.call("get_core") as StarCoreCarrier
@@ -363,26 +374,15 @@ func _test_l2() -> void:
 	var core_positive: bool = core.is_positive()
 	_check(not core_positive, "released core takes the opposite phase")
 
-	# The curtain is player-only: the transported core can occupy the same x
-	# without triggering another flip or losing its own phase.
-	var field_triggers_before_core: int = field.get_trigger_count()
-	core.global_position = Vector2(field.global_position.x, 312.0)
-	player.global_position = Vector2(field.global_position.x - 150.0, 320.0)
-	player.velocity = Vector2.ZERO
-	await _wait_physics(4)
-	_check(field.get_trigger_count() == field_triggers_before_core,
-		"the curtain ignores the core; it is a player-only trigger",
-		str(field.get_trigger_count()))
-	_check(core.is_active() and core.is_positive() == core_positive,
-		"the core keeps its own phase while crossing the curtain")
-
 	core.global_position = linked.get_store_center()
 	player.global_position = Vector2(linked.global_position.x - 40.0, 320.0)
 	player.velocity = Vector2.ZERO
+	if camera != null:
+		camera.reset_smoothing()
 	await _wait_physics(3)
 	await _press_interact()
 	var stored: bool = await _wait_until(func() -> bool: return linked.is_locked(), 120)
-	_check(stored, "first linked bay still accepts the core after the curtain")
+	_check(stored, "the linked bay accepts the transported core")
 	_check(linked.has_record(), "first linked bay records the core phase")
 	_check(linked.get_recorded_positive() == core_positive,
 		"first linked bay keeps the core's own phase")

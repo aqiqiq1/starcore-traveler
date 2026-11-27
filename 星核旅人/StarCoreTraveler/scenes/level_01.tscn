@@ -323,6 +323,11 @@ z_index = -1
 position = Vector2(1682, 300)
 z_index = -1
 
+[node name="GuideEchoGate" parent="World" instance=ExtResource("4_guide")]
+position = Vector2(1560, 300)
+player_path = NodePath("../Player")
+pages = PackedStringArray("同相门只认同相。\n看门上日·月，按 Q 换相。")
+
 [node name="HUD" type="CanvasLayer" parent="."]
 process_mode = 3
 layer = 10
