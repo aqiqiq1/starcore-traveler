@@ -607,7 +607,10 @@ func _on_first_gate_denied(required_positive: bool) -> void:
 func _on_first_gate_opened() -> void:
 	if _completed or _scene_leaving:
 		return
-	if absf(_player.global_position.x - _gate_first.global_position.x) > 150.0:
+	# Only announce the opening when the body is actually at this gate; the
+	# same Q in the stone section must not overwrite the stone hint with a
+	# "gate opened" line from a door behind the player.
+	if absf(_player.global_position.x - _gate_first.global_position.x) > 20.0:
 		return
 	_hud.show_event("同相门已开 · 通过", 1.4)
 
