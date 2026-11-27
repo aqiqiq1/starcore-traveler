@@ -9,7 +9,9 @@ extends Node2D
 ## world-space overlays on that same boss and the real arena floor, and the
 ## camera then pulls left through the real rooms to the real L3Player standing
 ## at the chapter start.  Only the dark grade, vignette and skip footer are
-## screen-space; they never draw the world.
+## screen-space; they never draw the world.  The held mirror shot has a fixed
+## centre and zoom; a pre-open pupil contraction, real 8 fps chain step, one
+## rim-light sweep and one post-wave mirror lift carry the motion instead.
 ##
 ## Input: F (or the shared tutorial_next action) skips at once; holding Space
 ## for SKIP_HOLD skips too.  A skip snaps the camera to the player's gameplay
@@ -25,12 +27,31 @@ const VIEW_SIZE: Vector2 = Vector2(640.0, 360.0)
 const FLOOR_Y: float = 320.0
 const ARENA_LEFT: float = 1240.0
 const ARENA_RIGHT: float = 1880.0
-## Approved window is 3.6-4.2 s.  The last 0.20 s is a settled player view so
+## Approved window is 4.0-4.6 s.  The last 0.32 s is a settled player view so
 ## the HUD can begin its fade without a camera step.
-const DURATION: float = 4.0
+##
+## Jitter contract: the mirror shot has NO camera drift.  Centre and zoom stay
+## bit-for-bit identical until the final pull; the eye, pupil, chain glints,
+## rim sweep and mirror flash carry the life instead.  Chain sway and all
+## sparkle positions use whole-pixel steps at a quantised clock rate.
+const DURATION: float = 4.50
 const SKIP_HOLD: float = 0.60
-const BOSS_HOLD_END: float = 2.60
-const PULL_END: float = 3.80
+const BOSS_HOLD_END: float = 3.36
+const PULL_END: float = 4.18
+const EYE_OPEN_START: float = 1.18
+const EYE_OPEN_END: float = 1.80
+const PUPIL_PRE_START: float = 1.00
+const PUPIL_PRE_PEAK: float = 1.09
+const PUPIL_PRE_END: float = 1.20
+const GOLD_LIT_START: float = 1.48
+const CYAN_LIT_START: float = 1.70
+const RIM_SWEEP_START: float = 1.68
+const RIM_SWEEP_END: float = 2.10
+const WAVE_START: float = 2.04
+const WAVE_END: float = 2.56
+const MIRROR_FLASH_START: float = 2.56
+const MIRROR_FLASH_PEAK: float = 2.68
+const MIRROR_FLASH_END: float = 2.96
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 const AUDIO_POOL_SIZE: int = 6
 
@@ -97,6 +118,10 @@ var _face_gold: Sprite2D = null
 var _face_cyan: Sprite2D = null
 var _face_gold_original: Color = Color.WHITE
 var _face_cyan_original: Color = Color.WHITE
+var _base_sprite: Sprite2D = null
+var _base_original: Color = Color.WHITE
+var _chain_sway_original: float = 0.0
+var _chain_sway_saved: bool = false
 
 var _chain_a: AudioStream = null
 var _chain_b: AudioStream = null
@@ -122,6 +147,8 @@ var _gold_lit: float = 0.0
 var _cyan_lit: float = 0.0
 var _eye_open: float = 0.0
 var _wave_progress: float = 0.0
+var _rim_sweep: float = 0.0
+var _mirror_flash: float = 0.0
 var _grade_alpha: float = 1.0
 
 var _played_cues: Dictionary = {}
@@ -156,10 +183,13 @@ func configure(
 	if _boss != null:
 		_face_gold = _boss.get_face_sprite(true)
 		_face_cyan = _boss.get_face_sprite(false)
+		_base_sprite = _boss.get_node_or_null("MirrorBase") as Sprite2D
 		if _face_gold != null:
 			_face_gold_original = _face_gold.modulate
 		if _face_cyan != null:
 			_face_cyan_original = _face_cyan.modulate
+		if _base_sprite != null:
+			_base_original = _base_sprite.modulate
 
 
 func _build_camera() -> void:
@@ -377,11 +407,20 @@ func start() -> bool:
 	_cyan_lit = 0.0
 	_eye_open = 0.0
 	_wave_progress = 0.0
+	_rim_sweep = 0.0
+	_mirror_flash = 0.0
 
 	if _face_gold == null and _boss != null:
 		_face_gold = _boss.get_face_sprite(true)
 	if _face_cyan == null and _boss != null:
 		_face_cyan = _boss.get_face_sprite(false)
+	if _base_sprite == null and _boss != null:
+		_base_sprite = _boss.get_node_or_null("MirrorBase") as Sprite2D
+		if _base_sprite != null:
+			_base_original = _base_sprite.modulate
+	if _boss != null and not _chain_sway_saved:
+		_chain_sway_original = float(_boss.get("_sway_time"))
+		_chain_sway_saved = true
 	if _face_gold != null:
 		_face_gold_original = Color.WHITE
 		_face_gold.modulate = Color(0.18, 0.22, 0.22, 1.0)
@@ -447,11 +486,13 @@ func _apply_time(value: float) -> void:
 			roundf(camera_center.x), roundf(camera_center.y)
 		)
 
-	_eye_open = smoothstep(1.20, 1.82, value)
-	_gold_lit = smoothstep(1.46, 1.72, value)
-	_cyan_lit = smoothstep(1.72, 1.98, value)
+	_eye_open = smoothstep(EYE_OPEN_START, EYE_OPEN_END, value)
+	_gold_lit = smoothstep(GOLD_LIT_START, GOLD_LIT_START + 0.24, value)
+	_cyan_lit = smoothstep(CYAN_LIT_START, CYAN_LIT_START + 0.26, value)
 	_grade_alpha = _grade_alpha_at(value)
-	_wave_progress = smoothstep(2.00, 2.55, value)
+	_wave_progress = smoothstep(WAVE_START, WAVE_END, value)
+	_rim_sweep = smoothstep(RIM_SWEEP_START, RIM_SWEEP_END, value)
+	_mirror_flash = _mirror_flash_at(value)
 
 	if _grade != null:
 		_grade.color = Color(DARK_GRADE, _grade_alpha)
@@ -466,6 +507,20 @@ func _apply_time(value: float) -> void:
 		_face_cyan.modulate = Color(0.18, 0.22, 0.22, 1.0).lerp(
 			_face_cyan_original, _cyan_lit
 		)
+	if _base_sprite != null and is_instance_valid(_base_sprite):
+		# One subtle surface lift after the phase wave; it never changes the
+		# sprite's frame, position or the boss state.
+		_base_sprite.modulate = _base_original.lerp(
+			Color(_base_original.r * 1.16, _base_original.g * 1.14,
+				_base_original.b * 1.08, _base_original.a),
+			_mirror_flash
+		)
+	if _boss != null and is_instance_valid(_boss) and _boss.is_suspended():
+		# The boss's own `_draw_chains` uses `_sway_time`; feeding it an
+		# 8 fps-quantised clock makes the REAL chain links step 1-2 px.  The
+		# boss is suspended, so this cannot start an attack or a sprite orbit.
+		_boss.set("_sway_time", floorf(value * 8.0) / 8.0)
+		_boss.queue_redraw()
 
 	if _eye_layer != null:
 		_eye_layer.visible = _active or _capture_mode
@@ -474,7 +529,8 @@ func _apply_time(value: float) -> void:
 		_plate_layer.visible = _active or _capture_mode
 		_plate_layer.queue_redraw()
 	if _wave_layer != null:
-		_wave_layer.visible = (_active or _capture_mode) and value >= 2.0 and value < 2.75
+		_wave_layer.visible = (_active or _capture_mode) \
+			and value >= WAVE_START and value < WAVE_END + 0.16
 		_wave_layer.queue_redraw()
 
 	if _footer != null:
@@ -490,14 +546,14 @@ func _camera_center_at(value: float) -> Vector2:
 	if _boss == null:
 		return gameplay
 	var boss_center: Vector2 = _boss_view_center()
+	# Absolutely no drift while the mirror is held.  Any 1 px camera step at
+	# this zoom reads as shimmer on the chain links and 1 px plate rings, so
+	# the held shot stays fixed until the final pull.
 	if value <= BOSS_HOLD_END:
-		# A slow 14 px drift is enough to keep the held shot alive without
-		# changing the read of the mirror.
-		var drift: float = smoothstep(0.0, BOSS_HOLD_END, value)
-		return Vector2(boss_center.x - 14.0 * drift, boss_center.y)
+		return boss_center
 	var pull: float = smoothstep(BOSS_HOLD_END, PULL_END, value)
 	return Vector2(
-		lerpf(boss_center.x - 14.0, gameplay.x, pull),
+		lerpf(boss_center.x, gameplay.x, pull),
 		lerpf(boss_center.y, gameplay.y, pull)
 	)
 
@@ -525,6 +581,16 @@ func _gameplay_camera_center() -> Vector2:
 	)
 
 
+func _mirror_flash_at(value: float) -> float:
+	if value < MIRROR_FLASH_START or value > MIRROR_FLASH_END:
+		return 0.0
+	if value < MIRROR_FLASH_PEAK:
+		return smoothstep(MIRROR_FLASH_START, MIRROR_FLASH_PEAK, value)
+	return 1.0 - smoothstep(
+		MIRROR_FLASH_PEAK, MIRROR_FLASH_END, value
+	)
+
+
 func _grade_alpha_at(value: float) -> float:
 	# The first beat is dark but never black: the stone wall, the two tall
 	# windows and the chains stay readable behind the mirror from frame one.
@@ -532,14 +598,16 @@ func _grade_alpha_at(value: float) -> float:
 	# the background parallax above.
 	if value < 0.30:
 		return lerpf(0.62, 0.50, smoothstep(0.0, 0.30, value))
-	if value < 1.14:
+	if value < EYE_OPEN_START:
 		return 0.50
-	if value < 1.90:
-		return lerpf(0.50, 0.27, smoothstep(1.14, 1.90, value))
-	if value < 2.60:
-		return lerpf(0.27, 0.12, smoothstep(1.90, 2.60, value))
-	if value < 3.10:
-		return lerpf(0.12, 0.0, smoothstep(2.60, 3.10, value))
+	if value < WAVE_START:
+		return lerpf(0.50, 0.24,
+			smoothstep(EYE_OPEN_START, WAVE_START, value))
+	if value < MIRROR_FLASH_END:
+		return lerpf(0.24, 0.0,
+			smoothstep(WAVE_START, MIRROR_FLASH_END, value))
+	# Fully lit for the whole held shot: the grade itself must not change
+	# between the two static comparison frames.
 	return 0.0
 
 
@@ -600,6 +668,12 @@ func _restore_boss_looks() -> void:
 		_face_gold.modulate = _face_gold_original
 	if _face_cyan != null and is_instance_valid(_face_cyan):
 		_face_cyan.modulate = _face_cyan_original
+	if _base_sprite != null and is_instance_valid(_base_sprite):
+		_base_sprite.modulate = _base_original
+	if _boss != null and is_instance_valid(_boss) and _chain_sway_saved:
+		_boss.set("_sway_time", _chain_sway_original)
+		_boss.queue_redraw()
+		_chain_sway_saved = false
 
 
 func _restore_player_camera() -> void:
@@ -737,11 +811,11 @@ func _tick_cues() -> void:
 		_setup_cues()
 	_play_cue("chain_a", 0.16, _chain_a, -12.0)
 	_play_cue("chain_b", 0.62, _chain_b, -13.0)
-	_play_cue("eye_open", 1.22, _eye_stream, -9.0)
-	_play_cue("heart_a", 1.38, _heart_stream, -10.0)
-	_play_cue("gold_plate", 1.48, _gold_plate_stream, -9.0)
-	_play_cue("cyan_plate", 1.74, _cyan_plate_stream, -9.0)
-	_play_cue("phase_wave", 2.02, _wave_stream, -7.0)
+	_play_cue("eye_open", EYE_OPEN_START + 0.02, _eye_stream, -9.0)
+	_play_cue("heart_a", EYE_OPEN_START + 0.18, _heart_stream, -10.0)
+	_play_cue("gold_plate", GOLD_LIT_START, _gold_plate_stream, -9.0)
+	_play_cue("cyan_plate", CYAN_LIT_START, _cyan_plate_stream, -9.0)
+	_play_cue("phase_wave", WAVE_START + 0.02, _wave_stream, -7.0)
 
 
 func _play_cue(id: String, at_time: float, stream: AudioStream, volume_db: float) -> void:
@@ -843,6 +917,43 @@ func _draw_eye(canvas: Node2D) -> void:
 			Vector2(center.x + 17.0, center.y - 1.0),
 			Color(GOLD, 0.28), 1.0
 		)
+		# Pre-open contraction: the seam parts by 2 px and a slit pupil visibly
+		# narrows before the lids actually open.  Whole-pixel rects only.
+		var pre: float = _preopen_at(_time)
+		if pre > 0.001:
+			var slit: float = 1.5 + 2.0 * pre
+			canvas.draw_rect(
+				Rect2(center.x - 12.0, center.y - slit * 0.5 - 1.0,
+					24.0, slit + 2.0),
+				Color(0.008, 0.016, 0.018, 0.98)
+			)
+			canvas.draw_rect(
+				Rect2(center.x - 10.0, center.y - slit * 0.5, 20.0, slit),
+				Color(0.20, 0.34, 0.32, 0.96)
+			)
+			canvas.draw_rect(
+				Rect2(center.x - 9.0, center.y - slit * 0.5, 18.0, 1.0),
+				Color(0.46, 0.68, 0.62, 0.90)
+			)
+			var pupil_w: float = roundf(lerpf(11.0, 3.0, pre))
+			canvas.draw_rect(
+				Rect2(center.x - pupil_w * 0.5, center.y - slit * 0.5,
+					pupil_w, maxf(slit - 1.0, 1.0)),
+				Color(0.78, 0.62, 0.24, 0.96)
+			)
+			canvas.draw_rect(
+				Rect2(center.x - 1.0, center.y - slit * 0.5,
+					2.0, maxf(slit - 1.0, 1.0)),
+				Color(PUPIL, 0.99)
+			)
+			canvas.draw_rect(
+				Rect2(center.x - 12.0, center.y - slit * 0.5 - 1.0, 24.0, 1.0),
+				Color(GOLD_PALE, 0.50 * pre)
+			)
+			canvas.draw_rect(
+				Rect2(center.x - 12.0, center.y + slit * 0.5, 24.0, 1.0),
+				Color(CYAN_PALE, 0.42 * pre)
+			)
 		return
 
 	# A faint split gold/cyan halo marks the real mirror's centre as awake.
@@ -891,9 +1002,14 @@ func _draw_eye(canvas: Node2D) -> void:
 		var outer: Vector2 = center + Vector2(cos(angle), sin(angle)) * (iris_radius * 0.90)
 		canvas.draw_line(inner, outer, Color(0.33, 0.24, 0.09, 0.55 * open), 1.0)
 
-	# The readable beat is the pupil dilation after the lid parts.
-	var pupil_t: float = smoothstep(1.50, 1.98, _time)
-	var pupil_radius: float = lerpf(3.0, 7.0, pupil_t) * open
+	# The readable beat: as the lid parts the pupil first snaps down (focus),
+	# then slowly dilates.  The contraction is the pre-open beat carried into
+	# the open eye; it is a radius change only, never a position slide.
+	var contract_t: float = smoothstep(1.22, 1.38, _time)
+	var dilate_t: float = smoothstep(1.44, 1.96, _time)
+	var pupil_radius: float = lerpf(
+		lerpf(8.0, 4.0, contract_t), 7.0, dilate_t
+	) * open
 	canvas.draw_circle(center, pupil_radius, Color(PUPIL, 0.99 * open))
 	canvas.draw_circle(
 		center + Vector2(-1.5, -1.5), maxf(pupil_radius * 0.32, 0.5),
@@ -910,11 +1026,76 @@ func _draw_eye(canvas: Node2D) -> void:
 	canvas.draw_polyline(bottom_points, Color(CYAN, 0.42 * open), 1.0)
 
 
+## 0 at the closed lid, 1 at the widest pre-open slit, back to 0 just before
+## the real lid-open beat.
+func _preopen_at(value: float) -> float:
+	if value < PUPIL_PRE_START or value >= PUPIL_PRE_END:
+		return 0.0
+	if value < PUPIL_PRE_PEAK:
+		return smoothstep(PUPIL_PRE_START, PUPIL_PRE_PEAK, value)
+	return 1.0 - smoothstep(PUPIL_PRE_PEAK + 0.05, PUPIL_PRE_END, value)
+
+
+## Peak displacement of the REAL chain links at an 8 fps-quantised clock.
+## The boss's `_draw_chains` uses `sin(_sway_time * 1.15 + y * 0.02) * 1.8`, so
+## the links step in whole pixels and never exceed 2 px.
+func _chain_sway_at(value: float) -> int:
+	var step_t: float = floorf(value * 8.0) / 8.0
+	return int(round(sin(step_t * 1.15) * 1.8))
+
+
 func _draw_plate_glow(canvas: Node2D) -> void:
 	if _boss == null or not is_instance_valid(_boss):
 		return
+	_draw_rim_sweep(canvas)
 	_draw_one_plate(canvas, true, _gold_lit, GOLD, GOLD_PALE)
 	_draw_one_plate(canvas, false, _cyan_lit, CYAN, CYAN_PALE)
+	_draw_mirror_flash(canvas)
+
+
+func _draw_mirror_flash(canvas: Node2D) -> void:
+	if _mirror_flash <= 0.001:
+		return
+	var center: Vector2 = canvas.to_local(_boss.get_boss_center())
+	canvas.draw_arc(
+		center, 63.0, 0.0, TAU, 40,
+		Color(0.92, 0.96, 0.92, 0.26 * _mirror_flash), 1.0
+	)
+	canvas.draw_arc(
+		center, 67.0, 0.0, TAU, 40,
+		Color(GOLD_PALE, 0.12 * _mirror_flash), 1.0
+	)
+
+
+## One 0.42 s comet of light travels once around the real mirror rim while both
+## plates come up.  It is an ellipse on the 128x112 silhouette, not a new ring.
+func _draw_rim_sweep(canvas: Node2D) -> void:
+	if _rim_sweep <= 0.001 or _rim_sweep >= 0.999:
+		return
+	var center: Vector2 = canvas.to_local(_boss.get_boss_center())
+	var tail: float = 0.62
+	var segments: int = 18
+	var head: float = -PI * 0.5 + TAU * _rim_sweep
+	for index: int in range(segments):
+		var t0: float = float(index) / float(segments)
+		var t1: float = float(index + 1) / float(segments)
+		var a0: float = head - tail * t0
+		var a1: float = head - tail * t1
+		var p0: Vector2 = center + Vector2(cos(a0) * 66.0, sin(a0) * 60.0)
+		var p1: Vector2 = center + Vector2(cos(a1) * 66.0, sin(a1) * 60.0)
+		var fade: float = 1.0 - t0
+		var color: Color = GOLD if sin((a0 + a1) * 0.5) < 0.0 else CYAN
+		canvas.draw_line(p0, p1, Color(0.02, 0.03, 0.03, 0.55 * fade), 3.0)
+		canvas.draw_line(p0, p1, Color(color, 0.88 * fade), 2.0)
+	var lead: Vector2 = center + Vector2(cos(head) * 66.0, sin(head) * 60.0)
+	canvas.draw_rect(
+		Rect2(roundf(lead.x) - 1.0, roundf(lead.y) - 1.0, 3.0, 3.0),
+		Color(0.98, 0.98, 0.90, 0.84)
+	)
+	canvas.draw_rect(
+		Rect2(roundf(lead.x), roundf(lead.y), 1.0, 1.0),
+		Color.WHITE
+	)
 
 
 func _draw_one_plate(
@@ -930,7 +1111,8 @@ func _draw_one_plate(
 	# The plate itself is still the boss's own Sprite2D; this is only the light
 	# around it.  The two rings sit just outside the 48x48 plate so no pixel of
 	# the real face is painted over.
-	var pulse: float = 0.78 + 0.22 * sin(_time * 14.0 + (0.0 if positive else 1.3))
+	var step_t: float = floorf(_time * 12.0) / 12.0
+	var pulse: float = 0.78 + 0.22 * sin(step_t * 14.0 + (0.0 if positive else 1.3))
 	for layer: int in range(2):
 		var radius: float = 27.0 + float(layer) * 2.0 + (1.0 - lit) * 8.0
 		canvas.draw_arc(
@@ -945,7 +1127,7 @@ func _draw_one_plate(
 		canvas.draw_line(inner, outer, Color(pale, 0.78 * lit), 1.0)
 	# A few short inward rays; they stop before the plate edge.
 	for ray: int in range(6):
-		var angle: float = TAU * float(ray) / 6.0 + _time * 0.22
+		var angle: float = TAU * float(ray) / 6.0 + step_t * 0.22
 		var start: Vector2 = center + Vector2(cos(angle), sin(angle)) * 31.0
 		var end: Vector2 = center + Vector2(cos(angle), sin(angle)) * (26.0 + 2.0 * lit)
 		canvas.draw_line(start, end, Color(color, 0.33 * lit), 1.0)
@@ -956,7 +1138,7 @@ func _draw_one_plate(
 	var to: Vector2 = core - direction * 26.0
 	canvas.draw_line(from, to, Color(color, 0.12 * lit), 1.0)
 	for dot: int in range(2):
-		var q: float = fposmod(_time * 1.8 + float(dot) * 0.5, 1.0)
+		var q: float = fposmod(step_t * 1.8 + float(dot) * 0.5, 1.0)
 		var point: Vector2 = from.lerp(to, q)
 		canvas.draw_rect(Rect2(roundf(point.x), roundf(point.y), 1.0, 1.0),
 			Color(pale, 0.55 * lit))
@@ -981,12 +1163,14 @@ func _draw_phase_wave(canvas: Node2D) -> void:
 		var rise: float = 3.0 + 5.0 * absf(sin(_wave_progress * PI + float(index) * 0.67))
 		canvas.draw_rect(Rect2(x, y - rise, 1.0, rise),
 			Color(GOLD if index % 2 == 0 else CYAN, 0.62 * fade))
-	# Dust motes lift off the real floor in the wave's path.
+	# Dust motes lift off the real floor in the wave's path.  The clock is
+	# quantised and the positions are rounded so the 1 px dust cannot crawl.
+	var step_t: float = floorf(_time * 12.0) / 12.0
 	for index: int in range(16):
 		var spread: float = (float(index) - 7.5) / 7.5
 		var x: float = center_x + spread * (30.0 + 300.0 * _wave_progress)
-		var lift: float = fposmod(_time * 34.0 + float(index) * 17.0, 26.0)
-		canvas.draw_rect(Rect2(roundf(x), y - 2.0 - lift, 1.0, 1.0),
+		var lift: float = fposmod(step_t * 34.0 + float(index) * 17.0, 26.0)
+		canvas.draw_rect(Rect2(roundf(x), roundf(y - 2.0 - lift), 1.0, 1.0),
 			Color(0.78, 0.92, 0.88, (1.0 - _wave_progress) * 0.50))
 
 
@@ -1046,7 +1230,7 @@ func set_time_for_capture(value: float) -> void:
 	_footer.modulate.a = 1.0 if _footer.visible else 0.0
 	_eye_layer.visible = true
 	_plate_layer.visible = true
-	_wave_layer.visible = _time >= 2.0 and _time < 2.75
+	_wave_layer.visible = _time >= WAVE_START and _time < WAVE_END + 0.16
 	if _vignette != null:
 		_vignette.modulate.a = 1.0
 
@@ -1148,11 +1332,11 @@ func get_wave_progress() -> float:
 func get_phase_name() -> String:
 	if not _active and not _capture_mode:
 		return "DONE"
-	if _time < 1.20:
+	if _time < EYE_OPEN_START:
 		return "MIRROR_HELD"
-	if _time < 2.00:
+	if _time < RIM_SWEEP_START:
 		return "EYE_OPEN"
-	if _time < 2.60:
+	if _time < WAVE_END:
 		return "PHASE_WAVE"
 	if _time < PULL_END:
 		return "PULL_BACK"
@@ -1181,6 +1365,12 @@ func get_camera_center() -> Vector2:
 	return _opening_camera.get_screen_center_position()
 
 
+func get_camera_zoom() -> float:
+	if _opening_camera == null:
+		return 1.0
+	return _opening_camera.zoom.x
+
+
 func get_eye_world_position() -> Vector2:
 	if _boss == null:
 		return Vector2.ZERO
@@ -1195,3 +1385,89 @@ func get_face_world_position(positive: bool) -> Vector2:
 
 func get_wave_floor_y() -> float:
 	return FLOOR_Y
+
+
+func get_rim_sweep_amount() -> float:
+	return _rim_sweep
+
+
+func get_rim_sweep_at(value: float) -> float:
+	return smoothstep(RIM_SWEEP_START, RIM_SWEEP_END, value)
+
+
+func get_mirror_flash_amount() -> float:
+	return _mirror_flash
+
+
+func get_mirror_flash_at(value: float) -> float:
+	return _mirror_flash_at(value)
+
+
+func get_chain_sway_offset() -> int:
+	return _chain_sway_at(_time)
+
+
+func get_chain_sway_at(value: float) -> int:
+	return _chain_sway_at(value)
+
+
+func get_preopen_amount() -> float:
+	return _preopen_at(_time)
+
+
+func get_preopen_at(value: float) -> float:
+	return _preopen_at(value)
+
+
+func get_pupil_scale_at(value: float) -> float:
+	var contract_t: float = smoothstep(1.22, 1.38, value)
+	var dilate_t: float = smoothstep(1.44, 1.96, value)
+	return lerpf(lerpf(8.0, 4.0, contract_t), 7.0, dilate_t)
+
+
+func get_pupil_radius_at(value: float) -> float:
+	var open: float = smoothstep(EYE_OPEN_START, EYE_OPEN_END, value)
+	return get_pupil_scale_at(value) * open
+
+
+func get_world_layer_positions() -> Dictionary:
+	var result: Dictionary = {}
+	if _eye_layer != null:
+		result["eye_layer"] = _eye_layer.global_position
+	if _plate_layer != null:
+		result["plate_layer"] = _plate_layer.global_position
+	if _wave_layer != null:
+		result["wave_layer"] = _wave_layer.global_position
+	if _boss != null:
+		result["boss"] = _boss.global_position
+		result["eye"] = _boss.get_boss_center()
+		result["face_gold"] = _boss.get_face_center_global(true)
+		result["face_cyan"] = _boss.get_face_center_global(false)
+		result["chain_top_left"] = _boss.global_position + Vector2(-10.0, -254.0)
+		result["chain_top_right"] = _boss.global_position + Vector2(10.0, -254.0)
+	return result
+
+
+## Rounded screen anchors for the eye/plates/chains.  The held shot must keep
+## this array bit-for-bit identical for 10 consecutive frames.
+func get_overlay_anchor_screen_points() -> PackedVector2Array:
+	var points: PackedVector2Array = PackedVector2Array()
+	if _eye_layer == null or _boss == null:
+		return points
+	var world_points: Array[Vector2] = [
+		_boss.get_boss_center(),
+		_boss.get_face_center_global(true),
+		_boss.get_face_center_global(false),
+		_boss.global_position + Vector2(-10.0, -254.0),
+		_boss.global_position + Vector2(10.0, -254.0),
+		Vector2(_boss.global_position.x, FLOOR_Y),
+	]
+	var transform: Transform2D = _eye_layer.get_global_transform_with_canvas()
+	for world_point: Vector2 in world_points:
+		points.append((transform * world_point).round())
+	return points
+
+
+## (held_start, held_end): the camera is bit-for-bit static in this window.
+func get_static_hold_span() -> Vector2:
+	return Vector2(0.0, BOSS_HOLD_END)

@@ -47,8 +47,8 @@ func _test_first_play_and_locks() -> void:
 		return
 	_check(rift.is_intro_active(), "rift: intro active on first load")
 	_check(cine.is_playing(), "rift: film is playing")
-	_check(cine.get_duration() >= 3.6 and cine.get_duration() <= 4.2,
-		"rift: duration in 3.6-4.2 s", str(cine.get_duration()))
+	_check(cine.get_duration() >= 4.0 and cine.get_duration() <= 4.6,
+		"rift: duration in 4.0-4.6 s", str(cine.get_duration()))
 	_check(cine.get_phase_name() == "MIRROR_HELD",
 		"rift: opens on the real mirror hall", cine.get_phase_name())
 
@@ -112,8 +112,41 @@ func _test_first_play_and_locks() -> void:
 	_check(rift.get_player().get_hit_count() == hits, "rift: no damage during film")
 	_check(not rift.get_player().is_attacking(), "rift: J did not start a swing")
 
+	# One pre-open pupil contraction, then a wider pupil after the lid parts.
+	_check(cine.get_preopen_at(1.09) > 0.9,
+		"rift: lid seam parts for the pre-open contraction",
+		str(cine.get_preopen_at(1.09)))
+	_check(cine.get_pupil_scale_at(1.36) < cine.get_pupil_scale_at(1.22) * 0.8,
+		"rift: pupil contracts before the eye is fully open",
+		"%.2f < %.2f" % [
+			cine.get_pupil_scale_at(1.36), cine.get_pupil_scale_at(1.22)
+		])
+	_check(cine.get_pupil_scale_at(1.96) > cine.get_pupil_scale_at(1.36) * 1.3,
+		"rift: pupil dilates after the contraction")
+	# Chain glints are whole-pixel and never exceed 2 px.
+	var chain_bad: int = 0
+	var chain_moved: bool = false
+	var sample: float = 0.0
+	while sample < 4.4:
+		var offset: int = cine.get_chain_sway_at(sample)
+		if absi(offset) > 2:
+			chain_bad += 1
+		if offset != 0:
+			chain_moved = true
+		sample += 0.05
+	_check(chain_bad == 0 and chain_moved,
+		"rift: chain sway is 1-2 whole pixels", str(chain_bad))
+	_check(cine.get_rim_sweep_at(1.90) > 0.2
+		and cine.get_rim_sweep_at(1.90) < 0.9,
+		"rift: rim sweep is crossing while both plates light")
+	_check(cine.get_mirror_flash_at(2.68) > 0.9
+		and cine.get_mirror_flash_at(3.10) == 0.0,
+		"rift: one mirror brighten after the phase wave")
+
+	await _assert_static_hold(cine)
+
 	# Headless runs faster than 60 fps; the wait is a frame budget with margin,
-	# not a duration assertion.  The film itself owns the 4.0 s timing.
+	# not a duration assertion.  The film itself owns the 4.5 s timing.
 	await _wait_until_finished(rift, 900)
 	_check(not rift.is_intro_active(), "rift: film ends on its own")
 	_check(rift.has_played_intro(), "rift: first play recorded")
@@ -258,11 +291,12 @@ func _test_mid_pull_skip() -> void:
 		rift.queue_free()
 		await get_tree().process_frame
 		return
-	for _index: int in range(400):
-		if cine.get_elapsed() >= 2.9:
+	for _index: int in range(600):
+		if cine.get_elapsed() >= 3.76:
 			break
 		await get_tree().process_frame
-	var was_pulling: bool = cine.get_camera_center().x > 400.0
+	var was_pulling: bool = cine.get_camera_center().x > 400.0 \
+		and cine.get_camera_center().x < 1500.0
 	_check(was_pulling, "rift pull skip: skip really starts inside the pan",
 		str(cine.get_camera_center().x))
 	_push_key(KEY_F, true)
@@ -279,6 +313,43 @@ func _test_mid_pull_skip() -> void:
 		str(current_camera.get_screen_center_position().x if current_camera else -1.0))
 	rift.queue_free()
 	await get_tree().process_frame
+
+
+## The mirror shot has no camera drift: ten consecutive process frames with a
+## zero camera delta, zero world-layer delta and zero rounded anchor jump.
+func _assert_static_hold(cine: RiftIntroCinematic) -> void:
+	var camera: Camera2D = cine.get_opening_camera()
+	var center: Vector2 = camera.global_position
+	var zoom: Vector2 = camera.zoom
+	var world_positions: Dictionary = cine.get_world_layer_positions()
+	var anchors: PackedVector2Array = cine.get_overlay_anchor_screen_points()
+	var camera_delta: float = 0.0
+	var layer_delta: float = 0.0
+	var anchor_delta: float = 0.0
+	for _index: int in range(10):
+		await get_tree().process_frame
+		camera_delta = maxf(camera_delta,
+			(camera.global_position - center).length())
+		var current_positions: Dictionary = cine.get_world_layer_positions()
+		for key: String in world_positions.keys():
+			if current_positions.get(key) != world_positions.get(key):
+				layer_delta = maxf(layer_delta, 1.0)
+		var current_anchors: PackedVector2Array = \
+			cine.get_overlay_anchor_screen_points()
+		if current_anchors.size() != anchors.size():
+			anchor_delta = maxf(anchor_delta, 1.0)
+		else:
+			for point_index: int in range(anchors.size()):
+				anchor_delta = maxf(
+					anchor_delta,
+					(current_anchors[point_index] - anchors[point_index]).length()
+				)
+	_check(camera_delta == 0.0 and zoom == camera.zoom,
+		"rift: static hold 10 frames camera delta 0", str(camera_delta))
+	_check(layer_delta == 0.0,
+		"rift: static hold 10 frames world layers delta 0", str(layer_delta))
+	_check(anchor_delta == 0.0,
+		"rift: static hold overlays no +/-1 px jump", str(anchor_delta))
 
 
 func _wait_for_guide(rift: RiftWorkshop, max_frames: int) -> DlcGuide:

@@ -47,8 +47,8 @@ func _test_first_play_and_locks() -> void:
 		return
 	_check(loom.is_intro_active(), "loom: intro active on first load")
 	_check(cine.is_playing(), "loom: film is playing")
-	_check(cine.get_duration() >= 3.6 and cine.get_duration() <= 4.2,
-		"loom: duration in 3.6-4.2 s", str(cine.get_duration()))
+	_check(cine.get_duration() >= 4.0 and cine.get_duration() <= 4.6,
+		"loom: duration in 4.0-4.6 s", str(cine.get_duration()))
 	_check(cine.get_phase_name() == "LOOM_SILHOUETTE",
 		"loom: opens on the real loom hall", cine.get_phase_name())
 
@@ -124,9 +124,23 @@ func _test_first_play_and_locks() -> void:
 		str(cine.get_core_sprite_frame()))
 	_check(not loom.get_core().is_active(),
 		"loom: real core still inactive at the shuttle beat")
+	_check(cine.get_gear_frame_at(1.70) == 0,
+		"loom: gears are still before their beat")
+	_check(cine.get_gear_frame_at(1.90) != 0,
+		"loom: real gear sheet advances after its beat")
+	_check(cine.is_gear_running(), "loom: gears are turning at the shuttle beat")
+	_check(cine.get_core_level_at(2.40) < cine.get_core_level_at(2.62),
+		"loom: core dims, then pulses bright",
+		"%.2f < %.2f" % [
+			cine.get_core_level_at(2.40), cine.get_core_level_at(2.62)
+		])
+	_check(cine.get_core_flash_at(2.62) > cine.get_core_flash_at(1.98),
+		"loom: core pulse ring peaks on the bright beat")
+
+	await _assert_static_hold(cine)
 
 	# Headless runs faster than 60 fps; the wait is a frame budget with margin,
-	# not a duration assertion.  The film itself owns the 4.0 s timing.
+	# not a duration assertion.  The film itself owns the 4.5 s timing.
 	await _wait_until_finished(loom, 900)
 	_check(not loom.is_intro_active(), "loom: film ends on its own")
 	_check(loom.has_played_intro(), "loom: first play recorded")
@@ -279,10 +293,11 @@ func _test_mid_pull_skip() -> void:
 		return
 	var pull_deadline: int = Time.get_ticks_msec() + 10000
 	while Time.get_ticks_msec() < pull_deadline:
-		if cine.get_elapsed() >= 3.15:
+		if cine.get_elapsed() >= 3.72:
 			break
 		await get_tree().process_frame
-	var was_pulling: bool = cine.get_camera_center().x > 360.0
+	var was_pulling: bool = cine.get_camera_center().x > 360.0 \
+		and cine.get_camera_center().x < 690.0
 	_check(was_pulling, "loom pull skip: skip really starts inside the pan",
 		str(cine.get_camera_center().x))
 	_push_key(KEY_F, true)
@@ -299,6 +314,52 @@ func _test_mid_pull_skip() -> void:
 		str(current_camera.get_screen_center_position().x if current_camera else -1.0))
 	loom.queue_free()
 	await get_tree().process_frame
+
+
+## The held shot must not creep: ten consecutive process frames with a zero
+## position delta on the camera, every world layer and the rounded screen
+## anchors of the lamp rows / orbs / core / chains.
+func _assert_static_hold(cine: LoomIntroCinematic) -> void:
+	var span: Vector2 = cine.get_static_hold_span()
+	var deadline: int = Time.get_ticks_msec() + 8000
+	while Time.get_ticks_msec() < deadline:
+		if cine.get_elapsed() >= span.x + 0.25:
+			break
+		await get_tree().process_frame
+	var camera: Camera2D = cine.get_opening_camera()
+	var center: Vector2 = camera.global_position
+	var zoom: Vector2 = camera.zoom
+	var world_positions: Dictionary = cine.get_world_overlay_positions()
+	var anchors: PackedVector2Array = cine.get_overlay_anchor_screen_points()
+	var camera_delta: float = 0.0
+	var layer_delta: float = 0.0
+	var anchor_delta: float = 0.0
+	for _index: int in range(10):
+		await get_tree().process_frame
+		camera_delta = maxf(camera_delta,
+			(camera.global_position - center).length())
+		var current_positions: Dictionary = cine.get_world_overlay_positions()
+		for key: String in world_positions.keys():
+			if current_positions.get(key) != world_positions.get(key):
+				layer_delta = maxf(layer_delta, 1.0)
+		var current_anchors: PackedVector2Array = \
+			cine.get_overlay_anchor_screen_points()
+		if current_anchors.size() != anchors.size():
+			anchor_delta = maxf(anchor_delta, 1.0)
+		else:
+			for point_index: int in range(anchors.size()):
+				anchor_delta = maxf(
+					anchor_delta,
+					(current_anchors[point_index] - anchors[point_index]).length()
+				)
+	_check(camera_delta == 0.0 and zoom == camera.zoom,
+		"loom: static hold 10 frames camera delta 0",
+		str(camera_delta))
+	_check(layer_delta == 0.0,
+		"loom: static hold 10 frames world layers delta 0",
+		str(layer_delta))
+	_check(anchor_delta == 0.0,
+		"loom: static hold overlays no +/-1 px jump", str(anchor_delta))
 
 
 func _wait_for_guide(loom: StarLoom, _max_frames: int) -> DlcGuide:
