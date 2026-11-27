@@ -75,6 +75,9 @@ var _scene_leaving: bool = false
 var _footsteps: Node = null
 var _opening: OpeningCinematic = null
 var _mechanic_popup: MechanicPopup = null
+## The new opening plays once per Level01 instance. R and failure recovery
+## never call the film again; a fresh new game is a fresh scene instance.
+var _opening_played: bool = false
 
 
 ## Raw keyboard forwarding for left-Shift and double-tap intent. The movement
@@ -153,7 +156,7 @@ func _process(_delta: float) -> void:
 func _physics_process(_delta: float) -> void:
 	if _menu != null and _menu.is_gameplay_blocked():
 		return
-	if get_tree().paused or _completed:
+	if get_tree().paused or _completed or _intro_active:
 		return
 	if not is_instance_valid(_player):
 		return
@@ -222,6 +225,8 @@ func _setup_mechanic_popup() -> void:
 func _tick_mechanic_popup() -> void:
 	if _mechanic_popup == null or _mechanic_popup.is_open():
 		return
+	if _intro_active or _resetting or _scene_leaving:
+		return
 	if _player == null or not is_instance_valid(_player):
 		return
 	if _player.global_position.x >= 640.0:
@@ -285,12 +290,16 @@ func _footstep_stop() -> void:
 		_footsteps.call("stop")
 
 
+## Starts the new-game film exactly once for this scene instance. R and failure
+## recovery never pass through here; they use _begin_play()/the checkpoint.
 func _begin_intro(reset_player: bool) -> void:
+	if _opening_played:
+		_begin_play(reset_player, START_REASON)
+		return
 	_completed = false
 	_footstep_stop()
-	# Music belongs to actual gameplay, not the integrated title page.  Both
-	# entering from the menu and R pass through here, so each run starts the
-	# whole-loop track from its first frame.
+	# Music belongs to actual gameplay, not the integrated title page. The film
+	# never pauses or stops it.
 	_music.play(true)
 	if _opening != null:
 		_opening.abort()
@@ -307,15 +316,11 @@ func _begin_intro(reset_player: bool) -> void:
 		_player.reset_to_spawn(START_REASON, false)
 		_resetting = false
 	_player.set_spawn_point(_start_position)
-	# The narrative echo stays awake and is owned by the opening film (its
-	# public page API is used, while F is reserved). The high-step echo is far
-	# away and stays suspended until the hand-off, as before.
+	# The narrative echo is awake and owned by the film; the high-step echo is
+	# far away and waits for the hand-off.
 	if _mechanism_guide != null and is_instance_valid(_mechanism_guide):
 		_mechanism_guide.set_suspended(true)
 	if _narrative_guide != null and is_instance_valid(_narrative_guide):
-		# The title menu suspends both guides while it owns the screen. The
-		# opening must wake the first echo again before taking page ownership,
-		# otherwise its public open_dialogue() correctly refuses to open.
 		_narrative_guide.set_suspended(false)
 		_narrative_guide.set_cinematic_owned(true)
 	_hud.set_polarity(true)
@@ -326,20 +331,69 @@ func _begin_intro(reset_player: bool) -> void:
 		_pause_menu.set_completion_active(false)
 	_hud.show_toast("", 0.0)
 	_camera.reset_smoothing()
+	_opening_played = true
 	if _opening == null or not _opening.start():
-		_finish_intro()
+		_begin_play(true, START_REASON)
+
+
+## Gameplay entry without the film. Used by R (restart), a failed film start,
+## and tests that finish the film from the outside. It never replays the film.
+func _begin_play(reset_player: bool, reason: String = START_REASON) -> void:
+	_completed = false
+	_footstep_stop()
+	_music.play(true)
+	if _opening != null:
+		_opening.abort()
+	_intro_active = false
+	_intro_elapsed = 0.0
+	_opening_played = true
+	_exit.set_completed(false)
+	_checkpoint.set_activated(false)
+	_checkpoint_position = _start_position
+	for stone: RuneStoneField in _rune_stones:
+		if stone != null:
+			stone.reset_state()
+	_player.clear_external_force()
+	_player.set_spawn_point(_start_position)
+	_player.set_physics_process(true)
+	if reset_player:
+		_resetting = true
+		_player.reset_to_spawn(reason, true)
+		_resetting = false
+	_player.set_spawn_point(_start_position)
+	_narrative_guide.on_player_reset(reason)
+	_mechanism_guide.on_player_reset(reason)
+	_set_guides_suspended(false)
+	_hud.set_polarity(true)
+	_hud.show_completion(false)
+	_hud.set_pause_visible(false)
+	_hud.set_opening_active(false)
+	_hud.visible = true
+	if _pause_menu != null:
+		_pause_menu.set_completion_active(false)
+	_camera.enabled = true
+	_camera.make_current()
+	_camera.reset_smoothing()
+	_player.end_input_override()
+	_player.clear_input_buffers()
+	_refresh_exit_gate_available()
 
 
 func _finish_intro() -> void:
-	if not _intro_active:
-		return
+	_opening_played = true
 	if _opening != null and _opening.is_active():
-		# Aborting cleans the override, page voice, bars and the hidden slot; the
-		# aborted signal sets _intro_active=false.
+		# Aborting cleans the override, page voice, camera and the hidden chrome;
+		# the aborted signal sets _intro_active=false.
 		_opening.abort()
 		return
 	_intro_active = false
-	_player.end_input_override()
+	if _player != null:
+		_player.end_input_override()
+	_camera.enabled = true
+	_camera.make_current()
+	_camera.reset_smoothing()
+	_hud.set_opening_active(false)
+	_hud.visible = true
 	_refresh_exit_gate_available()
 	if not _completed and not get_tree().paused:
 		_set_guides_suspended(false)
@@ -347,8 +401,14 @@ func _finish_intro() -> void:
 
 func _on_opening_finished(_skipped: bool) -> void:
 	_intro_active = false
+	_opening_played = true
 	if _opening != null:
 		_intro_elapsed = _opening.get_elapsed()
+	_camera.enabled = true
+	_camera.make_current()
+	_camera.reset_smoothing()
+	_hud.set_opening_active(false)
+	_hud.visible = true
 	_refresh_exit_gate_available()
 	if not _completed and not get_tree().paused:
 		_set_guides_suspended(false)
@@ -356,8 +416,14 @@ func _on_opening_finished(_skipped: bool) -> void:
 
 func _on_opening_aborted() -> void:
 	_intro_active = false
+	_opening_played = true
 	if _opening != null:
 		_intro_elapsed = _opening.get_elapsed()
+	_camera.enabled = true
+	_camera.make_current()
+	_camera.reset_smoothing()
+	_hud.set_opening_active(false)
+	_hud.visible = true
 	_refresh_exit_gate_available()
 	if not _completed and not get_tree().paused:
 		_set_guides_suspended(false)
@@ -396,26 +462,9 @@ func _restart_level() -> void:
 	get_tree().paused = false
 	_hud.set_pause_visible(false)
 	_hud.show_completion(false)
-	_completed = false
-	_intro_active = false
-	_exit.set_completed(false)
-	_checkpoint.set_activated(false)
-	_checkpoint_position = _start_position
-	for stone: RuneStoneField in _rune_stones:
-		if stone != null:
-			stone.reset_state()
-	_player.clear_external_force()
-	_player.set_spawn_point(_start_position)
-	_player.set_physics_process(true)
-	_resetting = true
-	_player.reset_to_spawn(RESTART_REASON, true)
-	_resetting = false
-	_player.set_spawn_point(_start_position)
-	_narrative_guide.on_player_reset(RESTART_REASON)
-	_mechanism_guide.on_player_reset(RESTART_REASON)
-	_hud.set_polarity(true)
-	_camera.reset_smoothing()
-	_begin_intro(false)
+	# R is a gameplay restart, not a new game: it never starts the opening
+	# film again, even if the film had just been aborted.
+	_begin_play(true, RESTART_REASON)
 	_hud.show_toast("本关已重新开始", 1.2)
 
 
@@ -635,6 +684,10 @@ func get_camera() -> Camera2D:
 	return _camera
 
 
+func get_opening_camera() -> Camera2D:
+	return get_node_or_null("World/OpeningCamera") as Camera2D
+
+
 func get_checkpoint() -> LevelCheckpoint:
 	return _checkpoint
 
@@ -727,6 +780,10 @@ func get_completion_count() -> int:
 
 func get_intro_start_count() -> int:
 	return _intro_start_count
+
+
+func has_played_opening() -> bool:
+	return _opening_played
 
 
 func get_opening() -> OpeningCinematic:

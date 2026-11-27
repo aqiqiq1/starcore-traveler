@@ -420,6 +420,14 @@ func _set_facing(direction: int) -> void:
 	_update_effect_positions()
 
 
+## Presentation-only facing for a scripted beat (the L1 opening looks left and
+## right in place). It never changes movement, physics or input state.
+func set_facing_direction(direction: int) -> void:
+	if direction == 0:
+		return
+	_set_facing(1 if direction > 0 else -1)
+
+
 ## Called by Main._input for every raw keyboard event. Using the actual
 ## InputEventKey lets us distinguish left/right Shift by location and ignore
 ## OS key-repeat echo events; an InputMap sprint action would conflate them.
@@ -795,6 +803,19 @@ func show_showcase(anim: StringName, frame_index: int, facing: int, positive: bo
 	_update_effect_positions()
 	state_changed.emit(_state, _character_sprite.frame, _frame_count_for(_state))
 	polarity_changed.emit(_positive)
+
+
+## Leaves the capture/showcase pose without moving or resetting the player.
+## The level-01 opening uses one real walk frame as the "reach" pose at the
+## stele, then returns to ordinary idle physics before the echo speaks.
+func end_showcase() -> void:
+	if not _showcase_mode:
+		return
+	_showcase_mode = false
+	set_physics_process(true)
+	velocity = Vector2.ZERO
+	_apply_animation(STATE_IDLE, true)
+	_update_effect_positions()
 
 
 func get_state_name() -> String:

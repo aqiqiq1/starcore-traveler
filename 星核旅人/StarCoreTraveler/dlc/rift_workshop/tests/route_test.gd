@@ -193,6 +193,18 @@ func _wait_for_boss_active(max_frames: int = 240) -> bool:
 
 func _cleanup() -> void:
 	await _wait_process(2)
+	# The route ends on the level_01 title screen, whose title BGM is a new
+	# 2026-11-27 hand-off.  Release that scene (and its audio player) before
+	# quitting so the engine does not report a false resource-leak ERROR during
+	# teardown.  This changes no gameplay state and no assertion.
+	var current: Node = get_tree().current_scene
+	if current != null and current != _rift:
+		var menu: Node = current.get_node_or_null("StartMenu")
+		if menu != null and menu.has_method("stop_title_music_for_test"):
+			menu.call("stop_title_music_for_test")
+		get_tree().current_scene = null
+		current.queue_free()
+		await _wait_process(20)
 	get_tree().current_scene = null
 	if _rift != null and is_instance_valid(_rift):
 		_rift.queue_free()

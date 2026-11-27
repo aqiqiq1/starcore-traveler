@@ -37,6 +37,21 @@ function Invoke-Smoke([string]$name, [string]$scene, [string]$logName) {
     return @{ name = $name; exit = $code; problems = $problems.Count; strict = $false }
 }
 
+function Invoke-CleanSmoke([string]$name, [string]$scene, [string]$levelKey, [string]$logName) {
+    # Base levels: same 90-frame load/run, plus a teardown that releases the
+    # new title BGM before quit (the raw --quit-after path leaves the OGG
+    # playback alive and the engine reports a false resource-leak ERROR).
+    $out = & $Godot --headless --path . $scene -- $levelKey 2>&1
+    $code = $LASTEXITCODE
+    $out | Set-Content -Path (Join-Path $tests "$logName.log") -Encoding UTF8
+    $problems = @($out | Select-String -Pattern "SCRIPT ERROR|Parse Error|Failed to load|ERROR:")
+    Write-Host ("{0}: exit={1} problems={2}" -f $name, $code, $problems.Count)
+    if ($problems.Count -gt 0) {
+        $problems | Select-Object -First 8 | ForEach-Object { Write-Host ("   " + $_.Line) }
+    }
+    return @{ name = $name; exit = $code; problems = $problems.Count; strict = $false }
+}
+
 if (-not (Test-Path $Godot)) {
     throw "Godot console binary not found: $Godot"
 }
@@ -48,9 +63,9 @@ $summary += Invoke-Case "rift_polish" "res://dlc/rift_workshop/tests/polish_test
 $summary += Invoke-Case "rift_parity" "res://dlc/rift_workshop/tests/parity_test.tscn" "parity_test" $true
 $summary += Invoke-Case "rift_title" "res://dlc/rift_workshop/tests/title_test.tscn" "title_test" $true
 $summary += Invoke-Smoke "rift_90" "res://dlc/rift_workshop/rift_workshop.tscn" "rift_90"
-$summary += Invoke-Smoke "level_01_90" "res://scenes/level_01.tscn" "level_01_90"
-$summary += Invoke-Smoke "level_02_90" "res://scenes/level_02.tscn" "level_02_90"
-$summary += Invoke-Smoke "level_03_90" "res://scenes/level_03.tscn" "level_03_90"
+$summary += Invoke-CleanSmoke "level_01_90" "res://dlc/rift_workshop/tests/base_level_90_clean.tscn" "level_01" "level_01_90"
+$summary += Invoke-CleanSmoke "level_02_90" "res://dlc/rift_workshop/tests/base_level_90_clean.tscn" "level_02" "level_02_90"
+$summary += Invoke-CleanSmoke "level_03_90" "res://dlc/rift_workshop/tests/base_level_90_clean.tscn" "level_03" "level_03_90"
 
 Write-Host ""
 Write-Host "RIFT_RUN_ALL"

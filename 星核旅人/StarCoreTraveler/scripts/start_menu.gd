@@ -83,6 +83,11 @@ const PENDING_CANCEL_RECT: Rect2 = Rect2(334.0, 190.0, 140.0, 26.0)
 const MASTER_BUS_NAME: StringName = &"Master"
 const DEFAULT_AUDIO_PATH: String = "user://audio_settings.cfg"
 const DEFAULT_DISPLAY_PATH: String = "user://display_settings.cfg"
+## Fixed title-music path from the 2026-11-27 audio hand-off.  Missing file is
+## a supported silent menu: no warning, no blocking, and UI click cues keep
+## using their existing DemoAudio route.
+const TITLE_MUSIC_PATH: String = "res://assets/audio/music/title_theme.ogg"
+const TITLE_MUSIC_DB: float = -6.0
 
 enum Phase { INACTIVE, MENU, TITLE_FADE, CAMERA_PAN, SETTLE, ENTRY, DONE }
 
@@ -148,6 +153,8 @@ var _end_center: Vector2 = Vector2.ZERO
 var _start_request_count: int = 0
 var _volume_percent: int = 100
 var _master_bus_index: int = -1
+var _title_music: AudioStreamPlayer = null
+var _title_music_start_count: int = 0
 var _stele_prompt_layers: Array[CanvasLayer] = []
 
 
@@ -164,6 +171,7 @@ func _ready() -> void:
 		apply_display = bool(parent.call("is_start_menu_enabled"))
 	_display.initialize(get_window(), display_settings_path, apply_display)
 	_build_ui()
+	_setup_title_music()
 	_display.pending_cancelled.connect(_on_display_pending_cancelled)
 	_root.visible = false
 	get_window().focus_exited.connect(_on_window_focus_exited)
@@ -206,6 +214,7 @@ func activate(level: Node, menu_camera: Camera2D) -> void:
 	_pause_overlay.visible = false
 	_refresh_focus_overlays()
 	_load_audio_settings()
+	_start_title_music()
 
 	_player_camera.enabled = false
 	_menu_camera.anchor_mode = Camera2D.ANCHOR_MODE_DRAG_CENTER
@@ -939,6 +948,7 @@ func _on_start_pressed() -> void:
 	_focus_settings_rect.visible = false
 	_focus_quit_rect.visible = false
 	_phase = Phase.TITLE_FADE
+	_stop_title_music()
 	start_requested.emit()
 	_start_sequence()
 
@@ -981,6 +991,7 @@ func _on_quit_pressed() -> void:
 	_focus_start_rect.visible = false
 	_focus_settings_rect.visible = false
 	_focus_quit_rect.visible = false
+	_stop_title_music()
 	quit_requested.emit()
 	get_tree().quit(0)
 
@@ -1017,6 +1028,7 @@ func _on_trial_pressed() -> void:
 	_focus_start_rect.visible = false
 	_focus_settings_rect.visible = false
 	_focus_quit_rect.visible = false
+	_stop_title_music()
 	LEVEL_FLOW.release_one_shot_actions()
 	# Let the activating key/click finish its dispatch before the scene swap.
 	await get_tree().process_frame
@@ -1039,6 +1051,7 @@ func _restore_after_failed_trial() -> void:
 		_rift_button.disabled = false
 	if _loom_button != null and _loom_button.visible:
 		_loom_button.disabled = false
+	_start_title_music()
 	call_deferred("_focus_start")
 
 
@@ -1069,6 +1082,7 @@ func _on_rift_pressed() -> void:
 	_focus_start_rect.visible = false
 	_focus_settings_rect.visible = false
 	_focus_quit_rect.visible = false
+	_stop_title_music()
 	LEVEL_FLOW.release_one_shot_actions()
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -1089,6 +1103,7 @@ func _restore_after_failed_rift() -> void:
 	_rift_button.disabled = false
 	if _loom_button != null and _loom_button.visible:
 		_loom_button.disabled = false
+	_start_title_music()
 	call_deferred("_focus_start")
 
 
@@ -1123,6 +1138,7 @@ func _on_loom_pressed() -> void:
 	_focus_start_rect.visible = false
 	_focus_settings_rect.visible = false
 	_focus_quit_rect.visible = false
+	_stop_title_music()
 	LEVEL_FLOW.release_one_shot_actions()
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -1143,6 +1159,7 @@ func _restore_after_failed_loom() -> void:
 	if _rift_button != null and _rift_button.visible:
 		_rift_button.disabled = false
 	_loom_button.disabled = false
+	_start_title_music()
 	call_deferred("_focus_start")
 
 
@@ -1690,6 +1707,101 @@ func _apply_master_volume() -> void:
 			_master_bus_index,
 			linear_to_db(float(_volume_percent) / 100.0)
 		)
+
+
+# --- optional title music --------------------------------------------------
+
+## Guarded by ResourceLoader.exists(): the title track may be delivered after
+## this code, and a missing file must leave the menu silent without an error.
+func _setup_title_music(path: String = TITLE_MUSIC_PATH) -> void:
+	if not ResourceLoader.exists(path):
+		return
+	var stream: Resource = ResourceLoader.load(path)
+	if not (stream is AudioStream):
+		return
+	if stream is AudioStreamOggVorbis:
+		(stream as AudioStreamOggVorbis).loop = true
+	elif stream is AudioStreamMP3:
+		(stream as AudioStreamMP3).loop = true
+	elif stream is AudioStreamWAV:
+		(stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_FORWARD
+	if _title_music == null:
+		_title_music = AudioStreamPlayer.new()
+		_title_music.name = "TitleMusic"
+		_title_music.bus = MASTER_BUS_NAME
+		_title_music.volume_db = TITLE_MUSIC_DB
+		add_child(_title_music)
+	_title_music.stream = stream as AudioStream
+
+
+func _start_title_music() -> void:
+	if settings_host_mode or _title_music == null:
+		return
+	if not _title_music.playing:
+		_title_music.play()
+		_title_music_start_count += 1
+
+
+func _stop_title_music() -> void:
+	if _title_music != null:
+		_title_music.stop()
+
+
+func is_title_music_available() -> bool:
+	return _title_music != null and _title_music.stream != null
+
+
+func is_title_music_playing() -> bool:
+	return _title_music != null and _title_music.playing
+
+
+func get_title_music_player() -> AudioStreamPlayer:
+	return _title_music
+
+
+func get_title_music_path() -> String:
+	return TITLE_MUSIC_PATH
+
+
+func get_title_music_start_count() -> int:
+	return _title_music_start_count
+
+
+func get_title_music_loop() -> bool:
+	if _title_music == null or _title_music.stream == null:
+		return false
+	var stream: AudioStream = _title_music.stream
+	if stream is AudioStreamOggVorbis:
+		return (stream as AudioStreamOggVorbis).loop
+	if stream is AudioStreamMP3:
+		return (stream as AudioStreamMP3).loop
+	if stream is AudioStreamWAV:
+		return (stream as AudioStreamWAV).loop_mode != AudioStreamWAV.LOOP_DISABLED
+	return false
+
+
+## Test hook: exercise the positive existence branch with any real audio file
+## while the delivered title track is absent.
+func setup_title_music_for_test(path: String) -> void:
+	if _title_music != null:
+		_title_music.stop()
+		_title_music.queue_free()
+		_title_music = null
+	_setup_title_music(path)
+
+
+func start_title_music_for_test() -> void:
+	_start_title_music()
+
+
+func stop_title_music_for_test() -> void:
+	_stop_title_music()
+
+
+func _exit_tree() -> void:
+	_stop_title_music()
+	if _title_music != null:
+		_title_music.stream = null
 
 
 func _save_audio_settings() -> void:

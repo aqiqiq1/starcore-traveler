@@ -147,32 +147,11 @@ func _draw_loom(canvas: CanvasItem) -> void:
 		shake = roundf(sin(_time * 80.0) * 1.0)
 	var destination: Rect2 = LOOM_RECT
 	destination.position.x += shake
-	var source: Rect2 = Rect2(float(frame) * LOOM_FRAME_SIZE.x, 0.0,
-		LOOM_FRAME_SIZE.x, LOOM_FRAME_SIZE.y)
-	# Soft warm ambient behind the 2x sprite, then a 1 px dark silhouette fringe
-	# made from offset copies of the same frame (transparent texels contribute
-	# nothing), so the loom's hard magnified edge sits into the hall.
-	for layer: int in range(3):
-		canvas.draw_colored_polygon(
-			_ellipse_points(Vector2(destination.get_center().x, 192.0),
-				238.0 + float(layer) * 26.0, 162.0 + float(layer) * 18.0, 40),
-			Color(1.0, 0.82, 0.55, 0.028 - float(layer) * 0.008)
-		)
-	var outline_offsets: Array[Vector2] = [
-		Vector2(-1.0, 0.0), Vector2(1.0, 0.0), Vector2(0.0, -1.0), Vector2(0.0, 1.0),
-		Vector2(-1.0, -1.0), Vector2(1.0, -1.0), Vector2(-1.0, 1.0), Vector2(1.0, 1.0),
-	]
-	for offset: Vector2 in outline_offsets:
-		canvas.draw_texture_rect_region(
-			LOOM,
-			Rect2(destination.position + offset, destination.size),
-			source,
-			Color(0.075, 0.055, 0.045, 0.82)
-		)
 	canvas.draw_texture_rect_region(
 		LOOM,
 		destination,
-		source,
+		Rect2(float(frame) * LOOM_FRAME_SIZE.x, 0.0,
+			LOOM_FRAME_SIZE.x, LOOM_FRAME_SIZE.y),
 		Color(0.86, 0.90, 0.88, 0.96)
 	)
 
@@ -205,15 +184,8 @@ func _draw_orbs(canvas: CanvasItem) -> void:
 
 
 func _draw_orb(canvas: CanvasItem, center: Vector2, color: Color, lit: float) -> void:
-	# Unlit orb: dark glass in an iron ring, not a flat black hole.  The 1 px
-	# inner reflection keeps it legible now that the hall behind it is brighter.
-	canvas.draw_circle(center, 19.0, Color(0.050, 0.080, 0.088, 0.96))
-	canvas.draw_circle(center + Vector2(-4.0, -4.0), 12.0, Color(0.085, 0.130, 0.135, 0.42))
-	canvas.draw_rect(Rect2(center + Vector2(-8.0, -7.0), Vector2(3.0, 2.0)),
-		Color(0.34, 0.48, 0.47, 0.28))
-	canvas.draw_arc(center, 19.0, 0.0, TAU, 28, Color(0.24, 0.31, 0.31, 0.95), 1.0)
-	canvas.draw_arc(center, 16.5, PI * 1.05, PI * 1.80, 14,
-		Color(0.42, 0.54, 0.52, 0.38), 1.0)
+	canvas.draw_circle(center, 19.0, Color(0.018, 0.028, 0.030, 0.96))
+	canvas.draw_arc(center, 19.0, 0.0, TAU, 28, Color(0.24, 0.30, 0.30, 0.9), 2.0)
 	if lit <= 0.0:
 		return
 	for layer: int in range(4):
@@ -272,11 +244,3 @@ func _draw_vignette(canvas: CanvasItem) -> void:
 		canvas.draw_rect(Rect2(0.0, 0.0, thickness, VIEW_SIZE.y), Color(0.0, 0.0, 0.0, alpha))
 		canvas.draw_rect(Rect2(VIEW_SIZE.x - thickness, 0.0, thickness, VIEW_SIZE.y),
 			Color(0.0, 0.0, 0.0, alpha))
-
-
-func _ellipse_points(center: Vector2, rx: float, ry: float, segments: int) -> PackedVector2Array:
-	var points: PackedVector2Array = PackedVector2Array()
-	for index: int in range(segments):
-		var angle: float = TAU * float(index) / float(segments)
-		points.append(center + Vector2(cos(angle) * rx, sin(angle) * ry))
-	return points

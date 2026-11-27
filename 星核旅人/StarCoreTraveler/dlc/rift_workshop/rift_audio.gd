@@ -26,6 +26,17 @@ const DENY_STREAM: AudioStreamWAV = preload(
 ## kept alive past teardown.  The base file is read only.
 const SLAM_PATH: String = "res://assets/level03_prototype/audio_slam.ogg"
 
+## Music/defeat paths are fixed by the 2026-11-27 audio hand-off.  They are
+## deliberately loaded at runtime and guarded by ResourceLoader.exists(): the
+## music route may deliver the files after this code lands, and a missing file
+## must stay silent instead of raising an error or blocking the fight.
+const MUSIC_PATH: String = "res://dlc/rift_workshop/assets/audio/mirror_boss.ogg"
+const DEFEAT_PATH: String = "res://dlc/rift_workshop/assets/audio/mirror_defeat.ogg"
+## Same -6 dB local-music level as the star-loom chapter.  The player stays on
+## the Master bus, so the existing master-volume slider controls it.
+const MUSIC_DB: float = -6.0
+const DEFEAT_DB: float = -2.0
+
 # The WAVs are peak-normalised to -3 dBFS (hum -9 dBFS), so these player gains
 # are the real final peaks: inversion / complete -3 dBFS, bridge -5 dBFS when it
 # forms and -7 dBFS when it dissolves, at the base levels' audible level without
@@ -45,10 +56,14 @@ var _bridge: AudioStreamPlayer
 var _complete: AudioStreamPlayer
 var _slam: AudioStreamPlayer
 var _deny: AudioStreamPlayer
+var _music: AudioStreamPlayer = null
+var _defeat: AudioStreamPlayer
 var _bridge_plays: int = 0
 var _slam_plays: int = 0
 var _deny_plays: int = 0
 var _complete_plays: int = 0
+var _music_start_count: int = 0
+var _defeat_plays: int = 0
 var _last_slam_ms: int = -1000
 
 
@@ -62,6 +77,9 @@ func _ready() -> void:
 			SLAM_PATH, "", ResourceLoader.CACHE_MODE_IGNORE
 		) as AudioStream
 	_deny = _make_player("Deny", DENY_STREAM, -6.0)
+	_defeat = _make_player("Defeat", null, DEFEAT_DB)
+	_setup_defeat(DEFEAT_PATH)
+	_setup_music(MUSIC_PATH)
 
 
 func _make_player(
@@ -71,8 +89,147 @@ func _make_player(
 	player.name = player_name
 	player.stream = stream
 	player.volume_db = volume_db
+	player.bus = &"Master"
 	add_child(player)
 	return player
+
+
+# --- optional boss music / defeat cue --------------------------------------
+
+## Missing music is a supported silent state, not an error.  The OGG loop flag
+## is set in code because the generated .import sidecar may leave it off.
+func _setup_music(path: String) -> void:
+	if not ResourceLoader.exists(path):
+		return
+	var stream: Resource = ResourceLoader.load(path)
+	if not (stream is AudioStream):
+		return
+	_set_stream_loop(stream as AudioStream, true)
+	if _music == null:
+		_music = _make_player("Music", null, MUSIC_DB)
+		# The chapter's pause page pauses the tree; the BGM must freeze with it
+		# instead of inheriting the chapter's PROCESS_MODE_ALWAYS.
+		_music.process_mode = Node.PROCESS_MODE_PAUSABLE
+	_music.stream = stream as AudioStream
+
+
+func _setup_defeat(path: String) -> void:
+	if _defeat == null:
+		return
+	if not ResourceLoader.exists(path):
+		return
+	var stream: Resource = ResourceLoader.load(path)
+	if stream is AudioStream:
+		_defeat.stream = stream as AudioStream
+
+
+func _set_stream_loop(stream: AudioStream, value: bool) -> void:
+	if stream is AudioStreamOggVorbis:
+		(stream as AudioStreamOggVorbis).loop = value
+	elif stream is AudioStreamMP3:
+		(stream as AudioStreamMP3).loop = value
+	elif stream is AudioStreamWAV:
+		(stream as AudioStreamWAV).loop_mode = (
+			AudioStreamWAV.LOOP_FORWARD if value else AudioStreamWAV.LOOP_DISABLED
+		)
+
+
+func start_music() -> void:
+	if _music == null:
+		return
+	if not _music.playing:
+		_music.play()
+		_music_start_count += 1
+
+
+func stop_music() -> void:
+	if _music != null:
+		_music.stop()
+
+
+func pause_music() -> void:
+	if _music != null and _music.playing:
+		_music.stream_paused = true
+
+
+func resume_music() -> void:
+	if _music != null:
+		_music.stream_paused = false
+
+
+func play_defeat() -> bool:
+	if _defeat == null or _defeat.stream == null:
+		return false
+	_defeat.play()
+	_defeat_plays += 1
+	return true
+
+
+func is_music_available() -> bool:
+	return _music != null and _music.stream != null
+
+
+func is_music_playing() -> bool:
+	return _music != null and _music.playing
+
+
+func is_music_paused() -> bool:
+	return _music != null and _music.stream_paused
+
+
+func is_music_loop() -> bool:
+	if _music == null or _music.stream == null:
+		return false
+	var stream: AudioStream = _music.stream
+	if stream is AudioStreamOggVorbis:
+		return (stream as AudioStreamOggVorbis).loop
+	if stream is AudioStreamMP3:
+		return (stream as AudioStreamMP3).loop
+	if stream is AudioStreamWAV:
+		return (stream as AudioStreamWAV).loop_mode != AudioStreamWAV.LOOP_DISABLED
+	return false
+
+
+func is_defeat_available() -> bool:
+	return _defeat != null and _defeat.stream != null
+
+
+func get_music_path() -> String:
+	return MUSIC_PATH
+
+
+func get_defeat_path() -> String:
+	return DEFEAT_PATH
+
+
+func get_music_player() -> AudioStreamPlayer:
+	return _music
+
+
+func get_defeat_player() -> AudioStreamPlayer:
+	return _defeat
+
+
+func get_music_start_count() -> int:
+	return _music_start_count
+
+
+func get_defeat_play_count() -> int:
+	return _defeat_plays
+
+
+## Test hooks: prove the positive existence branch with any real audio file
+## even while the delivered fixed-path assets are still absent.
+func setup_music_for_test(path: String) -> void:
+	if _music != null:
+		_music.stop()
+		_music.queue_free()
+		_music = null
+	_setup_music(path)
+
+
+func setup_defeat_for_test(path: String) -> void:
+	_setup_defeat(path)
 
 
 func play_inversion() -> void:
@@ -145,6 +302,20 @@ func get_complete_play_count() -> int:
 
 
 func stop_all() -> void:
-	for player: AudioStreamPlayer in [_inversion, _bridge, _complete, _slam, _deny]:
+	stop_music()
+	for player: AudioStreamPlayer in [
+		_inversion, _bridge, _complete, _slam, _deny, _defeat,
+	]:
 		if player != null:
 			player.stop()
+
+
+## Scene shutdown: drop the OGG playback/stream before the SceneTree exits so
+## no music stream survives a title hand-off.  stop_all() alone is enough for
+## retries, where the streams must stay loaded.
+func shutdown() -> void:
+	stop_all()
+	if _music != null:
+		_music.stream = null
+	if _defeat != null:
+		_defeat.stream = null

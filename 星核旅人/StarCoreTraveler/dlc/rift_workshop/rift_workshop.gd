@@ -134,6 +134,9 @@ var _elapsed: float = 0.0
 var _completed: bool = false
 var _scene_leaving: bool = false
 var _arena_entered: bool = false
+## True only while the mirror fight is actually running; drives the chapter
+## BGM so leaving/retrying/defeating the boss cannot leave music behind.
+var _boss_active: bool = false
 var _boss_defeated: bool = false
 var _boss_collapse_active: bool = false
 var _boss_defeat_cue_played: bool = false
@@ -456,7 +459,7 @@ func _exit_tree() -> void:
 	_footstep_stop()
 	_release_ambience()
 	if _audio != null:
-		_audio.stop_all()
+		_audio.shutdown()
 	for wisp: RiftPolarityWisp in _all_wisps():
 		if wisp != null and is_instance_valid(wisp):
 			wisp.set_hum_enabled(false)
@@ -488,6 +491,7 @@ func _physics_process(delta: float) -> void:
 		_arena_intro_left = maxf(_arena_intro_left - delta, 0.0)
 		if _arena_intro_left <= 0.0:
 			_wake_boss()
+	# The intro hover is not the fight; BGM starts only in _wake_boss().
 
 	_tick_bridge_edge_hints()
 
@@ -711,6 +715,8 @@ func _on_hud_quit_requested() -> void:
 	if _scene_leaving:
 		return
 	_scene_leaving = true
+	_boss_active = false
+	_audio.stop_music()
 	get_tree().paused = false
 	_release_ambience()
 	if is_instance_valid(DemoAudio):
@@ -738,10 +744,12 @@ func _set_paused(value: bool) -> void:
 		if _arena_entered:
 			_boss.set_suspended(true)
 		_ambience.set_paused(true)
+		_audio.pause_music()
 		get_tree().paused = true
 		return
 	get_tree().paused = false
 	_ambience.set_paused(false)
+	_audio.resume_music()
 	LEVEL_FLOW.release_one_shot_actions()
 	_player.clear_input_buffers()
 	# A pause during the 0.9 s intro must not shorten or skip it; the intro
@@ -940,6 +948,8 @@ func _wake_boss() -> void:
 		return
 	if not _arena_entered or _boss_defeated:
 		return
+	_boss_active = true
+	_audio.start_music()
 	_boss.set_suspended(false)
 	_boss.begin_fight()
 	_mirror_tip_pending = true
@@ -1066,6 +1076,11 @@ func _on_boss_phase_started(phase_index: int) -> void:
 func _on_boss_defeat_started() -> void:
 	if _completed or _scene_leaving or _boss_defeated:
 		return
+	# The 1.35 s collapse owns the audio: stop the BGM at its first frame and
+	# play the defeat cue exactly once for this collapse.
+	_boss_active = false
+	_audio.stop_music()
+	_audio.play_defeat()
 	_boss_collapse_active = true
 	# Display only: the 1.35 s collapse owns the screen, so the player health
 	# bar is suppressed until the mirror has finished falling apart.
@@ -1084,6 +1099,8 @@ func _on_boss_defeated() -> void:
 	if _completed or _scene_leaving or _boss_defeated:
 		return
 	_boss_collapse_active = false
+	_boss_active = false
+	_audio.stop_music()
 	_boss_defeated = true
 	# The collapse is over; the post-fight route shows the bar again until the
 	# completion page or a modal pauses it.
@@ -1197,6 +1214,8 @@ func _on_player_recovery_transition_requested(reason: String) -> void:
 func _begin_recovery(kind: String) -> void:
 	if _recovery_active or _completed or _scene_leaving:
 		return
+	_boss_active = false
+	_audio.stop_music()
 	_footstep_stop()
 	_hud.set_player_health_visible(false)
 	_recovery_active = true
@@ -1303,6 +1322,8 @@ func _finish_recovery() -> void:
 ## opening state: phase 1, both face plates intact, core at 3/3, summons gone.
 ## R remains the full chapter restart.
 func _retry_boss() -> void:
+	_boss_active = false
+	_audio.stop_music()
 	_resolved_swings.clear()
 	_player_hits = 0
 	_hud.set_player_hits(0, PLAYER_MAX_HITS)
@@ -1367,6 +1388,8 @@ func _complete_chapter() -> void:
 	_footstep_stop()
 	_hud.set_player_health_visible(false)
 	_completed = true
+	_boss_active = false
+	_audio.stop_music()
 	_boss_collapse_active = false
 	_retry_pending = false
 	_arena_intro_left = 0.0
@@ -1404,6 +1427,8 @@ func _return_to_title() -> void:
 	_core_tip_pending = false
 	_hud.show_pause(false)
 	_hud.show_completion(false, _elapsed)
+	_boss_active = false
+	_audio.stop_music()
 	_release_ambience()
 	if is_instance_valid(DemoAudio):
 		DemoAudio.stop_world()
@@ -1423,6 +1448,7 @@ func _restart_chapter() -> void:
 	_pause_open = false
 	_completed = false
 	_arena_entered = false
+	_boss_active = false
 	_boss_defeated = false
 	_boss_collapse_active = false
 	_boss_defeat_cue_played = false
@@ -1622,6 +1648,10 @@ func get_elapsed_seconds() -> float:
 
 func is_completed() -> bool:
 	return _completed
+
+
+func is_boss_active() -> bool:
+	return _boss_active
 
 
 func is_boss_defeated() -> bool:

@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3]
+[gd_scene load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://scripts/level_01.gd" id="1_level"]
 [ext_resource type="Script" path="res://scripts/audio/base_level_music.gd" id="30_music"]
@@ -22,6 +22,7 @@
 [ext_resource type="Texture2D" path="res://assets/bridge_stone_v1/generated/l1_start_1024x64.png" id="19_l1_start"]
 [ext_resource type="Texture2D" path="res://assets/bridge_stone_v1/generated/l1_high_336x144.png" id="20_l1_high"]
 [ext_resource type="Texture2D" path="res://assets/bridge_stone_v1/generated/l1_far_496x64.png" id="21_l1_far"]
+[ext_resource type="Script" path="res://scripts/narrative/opening_stele_glow.gd" id="31_glow"]
 
 [sub_resource type="Gradient" id="Gradient_sky"]
 offsets = PackedFloat32Array(0, 0.56, 0.82, 1)
@@ -210,10 +211,22 @@ limit_top = 0
 limit_right = 1952
 limit_bottom = 360
 
+[node name="OpeningCamera" type="Camera2D" parent="World"]
+position = Vector2(320, 180)
+enabled = false
+limit_left = -320
+limit_top = 0
+limit_right = 2272
+limit_bottom = 360
+
 [node name="GuideEchoMeeting" parent="World" instance=ExtResource("4_guide")]
 position = Vector2(250, 300)
 player_path = NodePath("../Player")
-pages = PackedStringArray("后面的桥断了，回不去了。\n沿着这条路往前，旧门还在。", "你胸前那枚护符还能用。\n换一种相性，再看看符石的反应。", "金色是辉相，青色是澜相。\n颜色相同会推开，不同会拉近。")
+pages = PackedStringArray("别怕。他们叫我守望者残响。\n守桥的人早就没了——\n你听见的，只是他留下的那点回声。", "这里是星核断桥。\n城在云上，桥断了，星核散了。", "你手里的核能换相。\n把三枚送回城门，\n城才会重新亮起来。")
+
+[node name="SteleGlow" type="Node2D" parent="World/GuideEchoMeeting"]
+z_index = 2
+script = ExtResource("31_glow")
 
 [node name="GuideEchoHighstep" parent="World" instance=ExtResource("4_guide")]
 position = Vector2(735, 300)

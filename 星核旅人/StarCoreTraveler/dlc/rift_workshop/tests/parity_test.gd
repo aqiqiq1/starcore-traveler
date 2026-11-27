@@ -140,6 +140,16 @@ func _close_popup() -> bool:
 
 func _cleanup() -> void:
 	get_tree().paused = false
+	# The parity run returns to level_01; release the title scene and its new
+	# title BGM before quit (test teardown only, no gameplay assertion changed).
+	var current: Node = get_tree().current_scene
+	if current != null and current != _rift:
+		var menu: Node = current.get_node_or_null("StartMenu")
+		if menu != null and menu.has_method("stop_title_music_for_test"):
+			menu.call("stop_title_music_for_test")
+		get_tree().current_scene = null
+		current.queue_free()
+		await _wait_process(20)
 	get_tree().current_scene = null
 	if _rift != null and is_instance_valid(_rift):
 		_rift.queue_free()

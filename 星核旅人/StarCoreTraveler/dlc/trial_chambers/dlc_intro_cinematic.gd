@@ -252,10 +252,7 @@ func _process(delta: float) -> void:
 	if _finishing:
 		_finish_left = maxf(_finish_left - delta, 0.0)
 		var progress: float = _finish_left / maxf(_finish_total, 0.001)
-		if _stage != null:
-			_stage.modulate.a = clampf(progress, 0.0, 1.0) * _finish_start_alpha
-		if _bg != null:
-			_bg.color.a = clampf(progress, 0.0, 1.0)
+		_apply_alpha(clampf(progress, 0.0, 1.0) * _finish_start_alpha)
 		if _footer != null:
 			_footer.modulate.a = clampf(progress, 0.0, 1.0) * _finish_start_alpha
 		if _finish_left <= 0.0:
@@ -407,10 +404,8 @@ func _exit_tree() -> void:
 func _apply_alpha(value: float) -> void:
 	if _stage != null:
 		_stage.modulate.a = value
-	# The black backing stays opaque while the stage fades in, so the live
-	# chapter cannot show through the "black first" beat.
 	if _bg != null:
-		_bg.color.a = 1.0
+		_bg.color.a = value
 
 
 func _set_hold_bar(visible_value: bool, progress: float) -> void:

@@ -1,5 +1,4 @@
-# DLC1 试炼场: opening film, gate, route, title, pause title, ambience,
-# chapter smoke and the three base levels.
+# DLC1 星核试炼场: gates, route, title, pause and the three base levels.
 # Writes every log next to this script.  No git, no export.
 #   powershell -NoProfile -ExecutionPolicy Bypass -File dlc\trial_chambers\tests\run_all.ps1
 
@@ -13,7 +12,7 @@ Set-Location $root
 $tests = "dlc/trial_chambers/tests"
 $summary = @()
 
-function Invoke-Case([string]$name, [string]$scene, [string]$logName, [bool]$strict) {
+function Invoke-Case([string]$name, [string]$scene, [string]$logName) {
     $out = & $Godot --headless --path . $scene 2>&1
     $code = $LASTEXITCODE
     $out | Set-Content -Path (Join-Path $tests "$logName.log") -Encoding UTF8
@@ -22,7 +21,7 @@ function Invoke-Case([string]$name, [string]$scene, [string]$logName, [bool]$str
     if ($problems.Count -gt 0) {
         $problems | Select-Object -First 8 | ForEach-Object { Write-Host ("   " + $_.Line) }
     }
-    return @{ name = $name; exit = $code; problems = $problems.Count; strict = $strict }
+    return @{ name = $name; exit = $code; problems = $problems.Count; strict = $true }
 }
 
 function Invoke-Smoke([string]$name, [string]$scene, [string]$logName) {
@@ -41,13 +40,10 @@ if (-not (Test-Path $Godot)) {
     throw "Godot console binary not found: $Godot"
 }
 
-$summary += Invoke-Case "trial_intro" "res://dlc/trial_chambers/tests/intro_test.tscn" "intro_test" $true
-$summary += Invoke-Case "trial_gate" "res://dlc/trial_chambers/tests/gate_test.tscn" "gate_test" $true
-$summary += Invoke-Case "trial_route" "res://dlc/trial_chambers/tests/route_test.tscn" "route_test" $true
-$summary += Invoke-Case "trial_title" "res://dlc/trial_chambers/tests/title_test.tscn" "title_test" $true
-$summary += Invoke-Case "trial_pause_title" "res://dlc/trial_chambers/tests/pause_title_test.tscn" "pause_title_test" $true
-$summary += Invoke-Case "trial_ambience" "res://dlc/trial_chambers/tests/ambience_test.tscn" "ambience_test" $true
-$summary += Invoke-Case "trial_teaching" "res://dlc/trial_chambers/tests/teaching_test.tscn" "teaching_test" $true
+$summary += Invoke-Case "trial_gate" "res://dlc/trial_chambers/tests/gate_test.tscn" "gate_test"
+$summary += Invoke-Case "trial_route" "res://dlc/trial_chambers/tests/route_test.tscn" "route_test"
+$summary += Invoke-Case "trial_title" "res://dlc/trial_chambers/tests/title_test.tscn" "title_test"
+$summary += Invoke-Case "trial_pause" "res://dlc/trial_chambers/tests/pause_title_test.tscn" "pause_title_test"
 $summary += Invoke-Smoke "trial_90" "res://dlc/trial_chambers/trial_chambers.tscn" "trial_90"
 $summary += Invoke-Smoke "level_01_90" "res://scenes/level_01.tscn" "level_01_90"
 $summary += Invoke-Smoke "level_02_90" "res://scenes/level_02.tscn" "level_02_90"

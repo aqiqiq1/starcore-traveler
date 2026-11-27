@@ -1,12 +1,12 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_workshop.gd" id="1_rift"]
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_hud.gd" id="2_hud"]
-[ext_resource type="PackedScene" path="res://scenes/backgrounds/cloud_ruins_ds03.tscn" id="3_ds03"]
+[ext_resource type="Script" path="res://dlc/rift_workshop/rift_interior_backdrop.gd" id="3_backdrop"]
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_fog.gd" id="4_fog"]
 [ext_resource type="Script" path="res://scripts/level03/l3_terrain.gd" id="5_terrain"]
-[ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_tall.tscn" id="6_col_tall"]
-[ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_broken.tscn" id="7_col_broken"]
+[ext_resource type="PackedScene" path="res://dlc/rift_workshop/scenes/workshop_post_tall.tscn" id="6_col_tall"]
+[ext_resource type="PackedScene" path="res://dlc/rift_workshop/scenes/workshop_post_broken.tscn" id="7_col_broken"]
 [ext_resource type="PackedScene" path="res://scenes/level03/l3_player.tscn" id="8_player"]
 [ext_resource type="PackedScene" path="res://dlc/trial_chambers/polarity_gate.tscn" id="9_gate"]
 [ext_resource type="PackedScene" path="res://dlc/rift_workshop/rift_inversion_field.tscn" id="10_field"]
@@ -19,6 +19,10 @@
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_low_beams.gd" id="17_beams"]
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_mirror_boss.gd" id="18_boss"]
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_inversion_crystal.gd" id="19_crystal"]
+[ext_resource type="Texture2D" path="res://dlc/rift_workshop/assets/interior/interior_back_1880x360.png" id="20_back"]
+[ext_resource type="Texture2D" path="res://dlc/rift_workshop/assets/interior/interior_mid_1880x360.png" id="21_mid"]
+[ext_resource type="Texture2D" path="res://dlc/rift_workshop/assets/interior/interior_fore_640x360.png" id="22_fore"]
+[ext_resource type="Texture2D" path="res://dlc/rift_workshop/assets/interior/interior_floor_1880x40.png" id="23_floor"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_checkpoint"]
 size = Vector2(40, 72)
@@ -31,13 +35,31 @@ script = ExtResource("1_rift")
 [node name="Background" type="CanvasLayer" parent="."]
 process_mode = 1
 layer = -10
+script = ExtResource("3_backdrop")
 
-[node name="CloudRuinsDS03" parent="Background" instance=ExtResource("3_ds03")]
+[node name="Back" type="Sprite2D" parent="Background"]
 process_mode = 1
-depth_grade = "l3_depth"
+texture_filter = 1
+texture = ExtResource("20_back")
+centered = false
+
+[node name="Mid" type="Sprite2D" parent="Background"]
+process_mode = 1
+z_index = 1
+texture_filter = 1
+texture = ExtResource("21_mid")
+centered = false
+
+[node name="Fore" type="Sprite2D" parent="Background"]
+process_mode = 1
+z_index = 2
+texture_filter = 1
+texture = ExtResource("22_fore")
+centered = false
 
 [node name="RiftFog" type="Node2D" parent="Background"]
 process_mode = 1
+z_index = 3
 script = ExtResource("4_fog")
 
 [node name="Terrain" type="Node2D" parent="."]
@@ -78,6 +100,14 @@ block_rect = Rect2(0, 0, 160, 40)
 position = Vector2(1240, 320)
 script = ExtResource("5_terrain")
 block_rect = Rect2(0, 0, 640, 40)
+
+[node name="RiftFloor" type="Sprite2D" parent="."]
+process_mode = 1
+z_index = 2
+texture_filter = 1
+position = Vector2(0, 320)
+texture = ExtResource("23_floor")
+centered = false
 
 [node name="Decorations" type="Node2D" parent="."]
 process_mode = 1

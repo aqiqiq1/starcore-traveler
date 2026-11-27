@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://dlc/rift_workshop/assets/interior/interior_post_tall_52x112.png" id="1_texture"]
+
+[node name="WorkshopPostTall" type="Sprite2D"]
+texture_filter = 1
+texture = ExtResource("1_texture")
+offset = Vector2(0, -56)

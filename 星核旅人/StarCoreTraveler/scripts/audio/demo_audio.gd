@@ -23,6 +23,13 @@ extends Node
 
 const RUNTIME_DIR: String = "res://assets/audio_demo_v2_20261116/"
 const DIALOGUE_AUDIO_DIR: String = "res://assets/dialogue_feedback_20261117/"
+## 2026-11-27 polarity-switch replacement.  The old
+## assets/audio_demo_v2_20261116/polarity_switch.wav stays on disk untouched;
+## only this event points at the v2 file.  play_polarity_switch() is unchanged.
+const POLARITY_SWITCH_DIR: String = "res://assets/audio/sfx/"
+## Until the v2 switch cue is delivered, the approved v1 cue keeps the base
+## levels audible instead of going silent.
+const POLARITY_SWITCH_FALLBACK: String = "res://assets/audio_demo_v2_20261116/polarity_switch.wav"
 ## Trial install (user-approved direction): total +3.5 st from the approved
 ## player_hurt_vocal source, same 120 Hz high-pass, no volume increase.
 const HURT_YOUTH_DIR: String = "res://assets/experience_alignment_20261117/hurt_youth/"
@@ -54,7 +61,12 @@ const EVENT_SPECS: Dictionary = {
 	EVENT_COMPLETE: {"file": "complete.wav", "volume_db": -4.0, "ui": false},
 	EVENT_FAILURE: {"file": "failure.wav", "volume_db": -5.0, "ui": false},
 	EVENT_RESPAWN: {"file": "respawn.wav", "volume_db": -6.0, "ui": false},
-	EVENT_POLARITY_SWITCH: {"file": "polarity_switch.wav", "volume_db": -6.0, "ui": false},
+	EVENT_POLARITY_SWITCH: {
+		"dir": POLARITY_SWITCH_DIR,
+		"file": "polarity_switch_v2.wav",
+		"volume_db": -6.0,
+		"ui": false,
+	},
 	EVENT_SWING: {"file": "swing.wav", "volume_db": -6.0, "ui": false},
 	EVENT_SHELL_SHATTER: {"file": "shell_shatter_heavy.wav", "volume_db": -3.0, "ui": false},
 }
@@ -164,17 +176,45 @@ func _play_event(event_name: String) -> bool:
 func _stream_for(event_name: String) -> AudioStream:
 	if _streams.has(event_name):
 		return _streams[event_name] as AudioStream
-	var spec: Dictionary = EVENT_SPECS[event_name]
-	var path: String = String(spec.get("dir", RUNTIME_DIR)) + String(spec.get("file", ""))
+	var path: String = get_event_stream_path(event_name)
 	if not ResourceLoader.exists(path):
-		push_warning("DemoAudio: missing stream %s" % path)
-		_streams[event_name] = null
-		return null
-	var stream: AudioStream = ResourceLoader.load(
-		path, "", ResourceLoader.CACHE_MODE_IGNORE
-	) as AudioStream
+		if event_name == EVENT_POLARITY_SWITCH and ResourceLoader.exists(POLARITY_SWITCH_FALLBACK):
+			path = POLARITY_SWITCH_FALLBACK
+		else:
+			push_warning("DemoAudio: missing stream %s" % path)
+			_streams[event_name] = null
+			return null
+	var stream: AudioStream = load_stream_if_exists(path)
 	_streams[event_name] = stream
 	return stream
+
+
+## Fixed path for an event (dir + file), exposed so tests and logs can print
+## the exact resource the event will use.
+func get_event_stream_path(event_name: String) -> String:
+	if not EVENT_SPECS.has(event_name):
+		return ""
+	var spec: Dictionary = EVENT_SPECS[event_name]
+	return String(spec.get("dir", RUNTIME_DIR)) + String(spec.get("file", ""))
+
+
+## The path the switch cue will actually load: v2 when delivered, otherwise the
+## v1 fallback so the base levels never lose the cue.
+func get_polarity_switch_effective_path() -> String:
+	var primary: String = get_event_stream_path(EVENT_POLARITY_SWITCH)
+	if ResourceLoader.exists(primary):
+		return primary
+	return POLARITY_SWITCH_FALLBACK
+
+
+## Existence-guarded loader shared by every event.  A missing file returns
+## null; callers decide whether that is silence or a warning.
+static func load_stream_if_exists(path: String) -> AudioStream:
+	if path.is_empty() or not ResourceLoader.exists(path):
+		return null
+	return ResourceLoader.load(
+		path, "", ResourceLoader.CACHE_MODE_IGNORE
+	) as AudioStream
 
 
 func _pick_player(ui: bool) -> AudioStreamPlayer:

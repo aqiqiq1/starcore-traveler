@@ -59,6 +59,9 @@ const FACE_CYAN: Texture2D = preload(
 const FACE_CYAN_BROKEN: Texture2D = preload(
 	"res://dlc/rift_workshop/assets/sprites/mirror_face_cyan_broken_48x48.png"
 )
+const CRACK_LAYER_SCRIPT: Script = preload(
+	"res://dlc/rift_workshop/rift_boss_cracks.gd"
+)
 
 const GOLD: Color = Color("#f4cd63")
 const CYAN: Color = Color("#5fe1e6")
@@ -91,7 +94,11 @@ const WAVE_WARN_TIME: float = 0.60
 const SWEEP_WARN_SLOW: float = 0.85
 const SWEEP_WARN_FAST: float = 0.55
 const SWEEP_WARN_FORM_3: float = 0.46
-const DOUBLE_SWEEP_WARN: float = 0.42
+## 2026-11-27 readability pass: the second sweep of form 3 gets a full
+## 0.65 s telegraph plus a 0.12 s landing gap after the first beam.  The
+## single-sweep hit width (48 px body / low beam) and damage are unchanged.
+const DOUBLE_SWEEP_WARN: float = 0.65
+const DOUBLE_SWEEP_GAP: float = 0.12
 const SUMMON_CAST_TIME: float = 0.60
 ## 1.0-1.2 s is the approved form-break window.
 const PHASE_CLEAR_TIME: float = 1.10
@@ -116,6 +123,8 @@ enum State {
 	WAVE_RELEASE,
 	SWEEP_WARN,
 	SWEEP_RELEASE,
+	## Short readable landing gap between the two form-3 sweeps.
+	SWEEP_GAP,
 	SUMMON_CAST,
 	CORE_OPEN,
 	PHASE_CLEAR,
@@ -129,6 +138,7 @@ enum State {
 
 var _player: L3Player = null
 var _base: Sprite2D = null
+var _cracks: Node2D = null
 var _face_gold: Sprite2D = null
 var _face_cyan: Sprite2D = null
 
@@ -190,10 +200,12 @@ var _face_local_cyan: Vector2 = Vector2(FACE_OFFSET.x, FACE_OFFSET.y)
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	# Absolute draw order in the arena:
-	#   terrain 2 < mirror body 3 < face plates 4 < effects 5 < player 6.
-	# The negative child z values lift the body above the z=2 stone strip while
-	# leaving the parent _draw (chains, floor wave, cracks, flashes) above the
-	# plates.  The chapter raises the player to z=6.
+	#   terrain 2 < body/cracks 3 < face plates 4 < effects 5 < player 6.
+	# The mirror body and the crack layer share z=-2; the crack child is added
+	# after the body so it covers the stone, and both face plates are added
+	# after the crack layer at z=-1 so an orbiting plate always covers a crack
+	# it passes over.  The parent _draw (chains, floor wave, shatter bursts,
+	# core flashes, defeat) stays above the plates.  Player is raised to z=6.
 	z_index = 5
 	_build_sprites()
 	_resolve_player()
@@ -212,6 +224,14 @@ func _build_sprites() -> void:
 	_base.frame = 0
 	_base.z_index = -2
 	add_child(_base)
+
+	# Same effective z as the body but a later sibling, so the cracks sit on
+	# the stone.  The plates below are added even later at z=-1, so they stay
+	# above this layer.
+	_cracks = CRACK_LAYER_SCRIPT.new() as Node2D
+	_cracks.name = "MirrorCracks"
+	_cracks.z_index = -2
+	add_child(_cracks)
 
 	_face_gold = _make_face("GoldFace", FACE_GOLD, Vector2(-FACE_OFFSET.x, FACE_OFFSET.y))
 	_face_cyan = _make_face("CyanFace", FACE_CYAN, Vector2(FACE_OFFSET.x, FACE_OFFSET.y))
@@ -286,10 +306,15 @@ func _process(delta: float) -> void:
 		State.SWEEP_RELEASE:
 			if _state_time >= _state_duration:
 				if _sweep_bursts_left > 0:
-					_sweep_resolved = false
-					_enter_state(State.SWEEP_WARN, DOUBLE_SWEEP_WARN)
+					# The first beam has passed.  Hold a short, visibly empty
+					# landing gap before the full second-sweep telegraph.
+					_enter_state(State.SWEEP_GAP, DOUBLE_SWEEP_GAP)
 				else:
 					_enter_idle(_form_attack_gap())
+		State.SWEEP_GAP:
+			if _state_time >= _state_duration:
+				_sweep_resolved = false
+				_enter_state(State.SWEEP_WARN, DOUBLE_SWEEP_WARN)
 		State.SUMMON_CAST:
 			if _state_time >= _state_duration:
 				_finish_summon()
@@ -299,6 +324,7 @@ func _process(delta: float) -> void:
 		State.PHASE_CLEAR:
 			if _state_time >= _state_duration:
 				_finish_phase_clear()
+	_update_crack_layer()
 	queue_redraw()
 
 
@@ -444,6 +470,7 @@ func reset_full() -> void:
 		_face_cyan.visible = true
 		_face_cyan.modulate = Color.WHITE
 	_update_face_visuals()
+	_update_crack_layer()
 	queue_redraw()
 
 
@@ -649,6 +676,7 @@ func _finish_phase_clear() -> void:
 	_sweep_bursts_left = 0
 	_anchor_retry_left = 0.0
 	_update_face_visuals()
+	_update_crack_layer()
 	_enter_idle(1.0)
 	phase_started.emit(_phase_index)
 	if _phase_index > 0:
@@ -682,6 +710,7 @@ func _start_defeat() -> void:
 		"t": 0.0, "life": 1.10, "kind": "defeat",
 	})
 	_update_face_visuals()
+	_update_crack_layer()
 	defeat_started.emit()
 	queue_redraw()
 
@@ -1038,13 +1067,14 @@ func _draw() -> void:
 		_draw_sweep_warning()
 	elif _state == State.SWEEP_RELEASE:
 		_draw_sweep_release()
+	elif _state == State.SWEEP_GAP:
+		_draw_sweep_gap()
 	if _state == State.SUMMON_CAST:
 		_draw_summon_cast()
 	if _anchor_portal_time > 0.0:
 		_draw_anchor_portals()
 	_draw_face_bursts()
 	_draw_anchor_links()
-	_draw_mirror_cracks()
 	_draw_core_effects()
 	if _state == State.PHASE_CLEAR:
 		_draw_phase_flash()
@@ -1206,6 +1236,28 @@ func _draw_sweep_release() -> void:
 	_draw_ground_dust(0.55 * alpha, DUST)
 
 
+## Landing gap between the two form-3 sweeps: the first beam's afterglow dies
+## out and a short red "next pass" sight marks the low line.  It is deliberately
+## much quieter than the real telegraph that follows for 0.65 s.
+func _draw_sweep_gap() -> void:
+	var progress: float = clampf(_state_time / maxf(_state_duration, 0.01), 0.0, 1.0)
+	var left: float = arena_left - global_position.x
+	var width: float = arena_right - arena_left
+	var y: float = floor_y - global_position.y - 18.0
+	var fade: float = 1.0 - progress
+	# Thin afterglow from the beam that just passed.
+	draw_rect(Rect2(left, y, width, 1.0), Color(WHITE, 0.28 * fade))
+	draw_rect(Rect2(left, y + 2.0, width, 1.0), Color(RED, 0.16 * fade))
+	_draw_ground_dust(0.22 * fade, DUST)
+	# Three small brackets mark the low line for the coming second pass; the
+	# full-width red warning is drawn only by _draw_sweep_warning().
+	for offset: float in [-42.0, 0.0, 42.0]:
+		var blink: float = 0.55 + 0.45 * absf(sin(_sway_time * 18.0 + offset))
+		draw_rect(Rect2(offset - 4.0, y - 1.0, 8.0, 1.0), Color(RED, 0.62 * blink))
+		draw_rect(Rect2(offset - 4.0, y - 4.0, 1.0, 3.0), Color(RED, 0.62 * blink))
+		draw_rect(Rect2(offset + 3.0, y - 4.0, 1.0, 3.0), Color(RED, 0.62 * blink))
+
+
 func _draw_summon_cast() -> void:
 	_summon_draws += 1
 	var progress: float = clampf(_state_time / maxf(_state_duration, 0.01), 0.0, 1.0)
@@ -1334,36 +1386,21 @@ func _draw_anchor_links() -> void:
 				draw_rect(Rect2(center + Vector2(-5.0, -33.0), Vector2(10.0, 2.0)), Color(PURPLE_DARK, 0.55))
 
 
-func _draw_mirror_cracks() -> void:
-	if _phase_index < 2 and _state != State.PHASE_CLEAR:
+## The long form-3 centre split and its branches live in RiftBossCracks, a
+## child at z=-2 that is added after the body and before both plates.  This
+## keeps the plates (z=-1) and every parent effect (z=5) above the cracks.
+func _update_crack_layer() -> void:
+	if _cracks == null:
 		return
-	var progress: float = 1.0
-	if _state == State.PHASE_CLEAR:
-		progress = clampf(_state_time / maxf(_state_duration, 0.01), 0.0, 1.0)
-	var alpha: float = 0.82 if _phase_index >= 2 else 0.70 * sin(progress * PI)
-	if alpha <= 0.01:
-		return
-	# The long centre split and two branch families make "the mirror cracked"
-	# readable at 1x, not just a hairline.  Drawn on the parent z=5 layer so it
-	# sits over the z=3 body and the z=4 plates.
-	var cracks: Array[PackedVector2Array] = [
-		PackedVector2Array([Vector2(-2.0, -54.0), Vector2(4.0, -30.0), Vector2(-4.0, -8.0), Vector2(3.0, 16.0), Vector2(-2.0, 52.0)]),
-		PackedVector2Array([Vector2(-36.0, -42.0), Vector2(-10.0, -15.0), Vector2(-24.0, 18.0), Vector2(2.0, 44.0)]),
-		PackedVector2Array([Vector2(30.0, -48.0), Vector2(12.0, -20.0), Vector2(30.0, 8.0), Vector2(18.0, 38.0)]),
-		PackedVector2Array([Vector2(-48.0, 8.0), Vector2(-22.0, 4.0), Vector2(-4.0, -18.0), Vector2(22.0, -12.0)]),
-		PackedVector2Array([Vector2(-18.0, -36.0), Vector2(-8.0, -26.0), Vector2(-14.0, -16.0)]),
-		PackedVector2Array([Vector2(20.0, 24.0), Vector2(34.0, 32.0), Vector2(28.0, 44.0)]),
-	]
-	for crack: PackedVector2Array in cracks:
-		for index: int in range(crack.size() - 1):
-			var start: Vector2 = crack[index]
-			var end: Vector2 = crack[index + 1]
-			draw_line(start, end, Color(INK, alpha), 3.0)
-			draw_line(start + Vector2(1.0, 0.0), end + Vector2(1.0, 0.0),
-				Color(WHITE, alpha * 0.75), 1.0)
-			if index % 2 == 0:
-				draw_line(start, start.lerp(end, 0.55),
-					Color(GOLD_PALE if _phase_index >= 2 else CYAN_PALE, alpha * 0.55), 1.0)
+	var alpha: float = 0.0
+	if _phase_index >= 2:
+		alpha = 0.82
+	elif _state == State.PHASE_CLEAR:
+		var progress: float = clampf(
+			_state_time / maxf(_state_duration, 0.01), 0.0, 1.0
+		)
+		alpha = 0.70 * sin(progress * PI)
+	_cracks.call("set_crack_state", _phase_index, alpha)
 
 
 func _draw_core_effects() -> void:
@@ -1697,6 +1734,30 @@ func get_next_attack_kind() -> String:
 
 func get_sweep_bursts_left() -> int:
 	return _sweep_bursts_left
+
+
+func get_double_sweep_warn_time() -> float:
+	return DOUBLE_SWEEP_WARN
+
+
+func get_double_sweep_gap_time() -> float:
+	return DOUBLE_SWEEP_GAP
+
+
+## Time from the first sweep release to the second sweep release: release
+## animation + landing gap + second telegraph.  Tests assert this stays
+## comfortably above 0.6 s.
+func get_double_sweep_interval() -> float:
+	var release: float = 0.24 if _phase_index > 0 else 0.30
+	return release + DOUBLE_SWEEP_GAP + DOUBLE_SWEEP_WARN
+
+
+func get_crack_layer() -> Node2D:
+	return _cracks
+
+
+func get_face_sprite(positive: bool) -> Sprite2D:
+	return _face_gold if positive else _face_cyan
 
 
 func get_boss_center() -> Vector2:

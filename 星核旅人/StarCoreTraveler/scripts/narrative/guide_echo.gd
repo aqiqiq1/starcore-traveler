@@ -59,9 +59,9 @@ const PANEL_BG: Color = Color(0.020, 0.048, 0.058, 0.93)
 const PANEL_BORDER: Color = Color(0.37, 0.72, 0.74, 0.85)
 
 @export var pages: PackedStringArray = PackedStringArray([
-	"后面的桥断了，回不去了。\n沿着这条路往前，旧门还在。",
-	"你胸前那枚护符还能用。\n换一种相性，再看看符石的反应。",
-	"金色是辉相，青色是澜相。\n颜色相同会推开，不同会拉近。",
+	"别怕。他们叫我守望者残响。\n守桥的人早就没了——\n你听见的，只是他留下的那点回声。",
+	"这里是星核断桥。\n城在云上，桥断了，星核散了。",
+	"你手里的核能换相。\n把三枚送回城门，\n城才会重新亮起来。",
 ]):
 	set(value):
 		pages = value

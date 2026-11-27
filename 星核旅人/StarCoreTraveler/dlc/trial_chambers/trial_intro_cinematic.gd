@@ -80,94 +80,62 @@ func _draw_intro(canvas: CanvasItem) -> void:
 
 
 func _draw_floor(canvas: CanvasItem) -> void:
-	canvas.draw_rect(Rect2(-180.0, FLOOR_Y, 900.0, 60.0), Color(0.050, 0.044, 0.048, 1.0))
-	canvas.draw_rect(Rect2(-180.0, FLOOR_Y, 900.0, 1.0), STONE_TOP)
-	canvas.draw_rect(Rect2(-180.0, FLOOR_Y + 1.0, 900.0, 2.0), Color(0.22, 0.19, 0.19, 0.9))
-	canvas.draw_rect(Rect2(-180.0, FLOOR_Y + 3.0, 900.0, 1.0), STONE_EDGE)
-	# Wide floor slabs with one lit top edge and one dark seam each.
-	for index: int in range(15):
-		var x: float = -160.0 + float(index) * 60.0
-		canvas.draw_rect(Rect2(x, FLOOR_Y + 9.0, 52.0, 1.0), Color(0.16, 0.14, 0.14, 0.7))
-		canvas.draw_rect(Rect2(x, FLOOR_Y + 10.0, 52.0, 1.0), Color(0.02, 0.018, 0.02, 0.9))
-		canvas.draw_rect(Rect2(x, FLOOR_Y + 18.0, 52.0, 1.0), Color(0.10, 0.09, 0.09, 0.5))
+	canvas.draw_rect(Rect2(-180.0, FLOOR_Y, 900.0, 60.0), Color(0.020, 0.030, 0.031, 1.0))
+	canvas.draw_rect(Rect2(-180.0, FLOOR_Y, 900.0, 2.0), Color(0.14, 0.19, 0.19, 1.0))
+	for index: int in range(18):
+		var x: float = -160.0 + float(index) * 52.0
+		canvas.draw_rect(Rect2(x, FLOOR_Y + 10.0 + float(index % 3) * 8.0, 30.0, 1.0),
+			Color(0.12, 0.17, 0.17, 0.55))
 	for index: int in range(6):
 		var x: float = -120.0 + float(index) * 160.0
-		canvas.draw_rect(Rect2(x, FLOOR_Y + 4.0, 7.0, 4.0), STONE_SHADOW)
-		canvas.draw_rect(Rect2(x, FLOOR_Y + 4.0, 7.0, 1.0), STONE_HI)
+		canvas.draw_rect(Rect2(x, FLOOR_Y + 2.0, 7.0, 4.0), Color(0.19, 0.25, 0.24, 0.8))
+
+
+## Warm pool where the seam light spills onto the floor: three soft ellipses and
+## a 1 px core, drawn in the gate's transformed space so it tracks the zoom.
+func _draw_floor_light_pool(canvas: CanvasItem) -> void:
+	var lit: float = clampf((_time - 1.52) / 0.60, 0.0, 1.0)
+	if lit <= 0.0:
+		return
+	var center: Vector2 = Vector2(GATE_X, FLOOR_Y + 2.0)
+	for layer: int in range(3):
+		var radius_x: float = 30.0 + float(layer) * 22.0
+		var radius_y: float = 4.0 + float(layer) * 2.5
+		var alpha: float = (0.16 - float(layer) * 0.045) * lit
+		canvas.draw_colored_polygon(
+			_ellipse_points(center, radius_x, radius_y, 18),
+			Color(1.0, 0.86, 0.62, alpha)
+		)
+	canvas.draw_rect(
+		Rect2(center.x - 10.0, center.y - 1.0, 20.0, 1.0),
+		Color(1.0, 0.94, 0.80, 0.55 * lit)
+	)
 
 
 func _draw_gate(canvas: CanvasItem) -> void:
-	# Lintel: three stacked stones, each with a lit top edge and a dark seat.
-	canvas.draw_rect(Rect2(GATE_X - 76.0, 118.0, 152.0, 22.0), STONE_EDGE)
-	canvas.draw_rect(Rect2(GATE_X - 74.0, 120.0, 148.0, 18.0), STONE_SHADOW)
-	canvas.draw_rect(Rect2(GATE_X - 74.0, 120.0, 148.0, 1.0), STONE_TOP)
-	canvas.draw_rect(Rect2(GATE_X - 70.0, 127.0, 140.0, 9.0), STONE)
-	canvas.draw_rect(Rect2(GATE_X - 70.0, 127.0, 140.0, 1.0), STONE_HI)
-	canvas.draw_rect(Rect2(GATE_X - 70.0, 135.0, 140.0, 1.0), STONE_EDGE)
-	for index: int in range(5):
-		var x: float = GATE_X - 60.0 + float(index) * 30.0
-		canvas.draw_rect(Rect2(x, 128.0, 1.0, 7.0), Color(0.24, 0.21, 0.21, 0.7))
+	# Outer stone frame.
+	canvas.draw_rect(Rect2(GATE_X - 52.0, 142.0, 104.0, 180.0), STONE_EDGE)
+	canvas.draw_rect(Rect2(GATE_X - 49.0, 145.0, 98.0, 175.0), STONE)
+	canvas.draw_rect(Rect2(GATE_X - 49.0, 145.0, 98.0, 2.0), STONE_HI)
+	canvas.draw_rect(Rect2(GATE_X - 49.0, 145.0, 2.0, 175.0), STONE_HI)
+	canvas.draw_rect(Rect2(GATE_X + 45.0, 145.0, 2.0, 175.0), STONE_LO)
+	canvas.draw_rect(Rect2(GATE_X - 49.0, 318.0, 98.0, 2.0), STONE_LO)
 
-	# Two pilasters with capital and base.  The lit side faces the same upper-left
-	# key light as the level; the right side stays in the L2 shadow value.
-	for side: int in [-1, 1]:
-		var px: float = GATE_X + float(side) * 60.0
-		canvas.draw_rect(Rect2(px - 8.0, 150.0, 16.0, 156.0), STONE_EDGE)
-		canvas.draw_rect(Rect2(px - 7.0, 150.0, 14.0, 156.0), STONE_SHADOW)
-		canvas.draw_rect(Rect2(px - 6.0, 151.0, 12.0, 155.0), STONE)
-		canvas.draw_rect(Rect2(px - 6.0, 151.0, 1.0, 155.0), STONE_MID)
-		canvas.draw_rect(Rect2(px - 5.0, 151.0, 1.0, 155.0), STONE_TOP)
-		canvas.draw_rect(Rect2(px + 6.0, 151.0, 1.0, 155.0), STONE_LO)
-		for flute: int in range(3):
-			var fx: float = px - 3.0 + float(flute) * 3.0
-			canvas.draw_rect(Rect2(fx, 155.0, 1.0, 147.0), Color(0.33, 0.29, 0.29, 0.55))
-		# Capital: abacus, echinus, necking.
-		canvas.draw_rect(Rect2(px - 11.0, 136.0, 22.0, 5.0), STONE_LO)
-		canvas.draw_rect(Rect2(px - 10.0, 136.0, 20.0, 4.0), STONE_MID)
-		canvas.draw_rect(Rect2(px - 10.0, 136.0, 20.0, 1.0), STONE_TOP)
-		canvas.draw_rect(Rect2(px - 9.0, 141.0, 18.0, 5.0), STONE)
-		canvas.draw_rect(Rect2(px - 9.0, 141.0, 18.0, 1.0), STONE_HI)
-		canvas.draw_rect(Rect2(px - 7.0, 146.0, 14.0, 2.0), STONE_LO)
-		canvas.draw_rect(Rect2(px - 7.0, 148.0, 14.0, 2.0), STONE_SHADOW)
-		# Base: plinth, torus, square foot.
-		canvas.draw_rect(Rect2(px - 9.0, 302.0, 18.0, 4.0), STONE_LO)
-		canvas.draw_rect(Rect2(px - 8.0, 302.0, 16.0, 3.0), STONE_MID)
-		canvas.draw_rect(Rect2(px - 8.0, 302.0, 16.0, 1.0), STONE_TOP)
-		canvas.draw_rect(Rect2(px - 11.0, 306.0, 22.0, 5.0), STONE_SHADOW)
-		canvas.draw_rect(Rect2(px - 11.0, 306.0, 22.0, 1.0), STONE_HI)
-		canvas.draw_rect(Rect2(px - 13.0, 311.0, 26.0, 7.0), STONE)
-		canvas.draw_rect(Rect2(px - 13.0, 311.0, 26.0, 1.0), STONE_TOP)
-		canvas.draw_rect(Rect2(px - 13.0, 317.0, 26.0, 1.0), STONE_EDGE)
-
-	# Recessed stone surround with readable courses: 1 px highlight, 1 px seam.
-	canvas.draw_rect(Rect2(GATE_X - 48.0, 140.0, 96.0, 180.0), STONE_EDGE)
-	canvas.draw_rect(Rect2(GATE_X - 46.0, 142.0, 92.0, 178.0), STONE_LO)
-	canvas.draw_rect(Rect2(GATE_X - 44.0, 144.0, 88.0, 176.0), STONE_SHADOW)
-	canvas.draw_rect(Rect2(GATE_X - 44.0, 144.0, 88.0, 1.0), STONE_MID)
-	for row: int in range(8):
-		var y: float = 150.0 + float(row) * 21.0
-		canvas.draw_rect(Rect2(GATE_X - 44.0, y, 88.0, 1.0), Color(0.10, 0.09, 0.10, 0.9))
-		canvas.draw_rect(Rect2(GATE_X - 44.0, y + 1.0, 88.0, 1.0), Color(0.30, 0.27, 0.26, 0.55))
-		var shift: float = 0.0 if row % 2 == 0 else 22.0
-		for column: int in range(3):
-			var x: float = GATE_X - 44.0 + shift + float(column) * 44.0
-			if x > GATE_X + 42.0:
+	# Stone blocks: readable courses rather than a flat rectangle.
+	for row: int in range(13):
+		var y: float = 151.0 + float(row) * 13.0
+		canvas.draw_rect(Rect2(GATE_X - 45.0, y, 90.0, 1.0), Color(0.07, 0.11, 0.12, 0.75))
+		var shift: float = 0.0 if row % 2 == 0 else 14.0
+		for column: int in range(4):
+			var x: float = GATE_X - 45.0 + shift + float(column) * 28.0
+			if x > GATE_X + 40.0:
 				continue
-			canvas.draw_rect(Rect2(x, y, 1.0, 20.0), Color(0.12, 0.10, 0.11, 0.85))
-			canvas.draw_rect(Rect2(x + 1.0, y, 1.0, 20.0), Color(0.28, 0.25, 0.24, 0.35))
+			canvas.draw_rect(Rect2(x, y, 1.0, 13.0), Color(0.07, 0.11, 0.12, 0.65))
 
-	# Door leaves: vertical planks, two rails and small affinity marks.
+	# Two door leaves, a central seam and small affinity marks.
 	canvas.draw_rect(Rect2(GATE_X - 34.0, 158.0, 68.0, 160.0), Color(0.012, 0.024, 0.028, 1.0))
 	canvas.draw_rect(Rect2(GATE_X - 34.0, 158.0, 32.0, 160.0), Color(0.026, 0.043, 0.048, 1.0))
 	canvas.draw_rect(Rect2(GATE_X + 2.0, 158.0, 32.0, 160.0), Color(0.022, 0.038, 0.043, 1.0))
-	for plank: int in range(5):
-		var lx: float = GATE_X - 30.0 + float(plank) * 6.0
-		canvas.draw_rect(Rect2(lx, 161.0, 1.0, 154.0), Color(0.008, 0.016, 0.019, 0.7))
-		var rx: float = GATE_X + 4.0 + float(plank) * 6.0
-		canvas.draw_rect(Rect2(rx, 161.0, 1.0, 154.0), Color(0.008, 0.016, 0.019, 0.55))
-	for rail_y: float in [190.0, 285.0]:
-		canvas.draw_rect(Rect2(GATE_X - 34.0, rail_y, 68.0, 2.0), Color(0.07, 0.10, 0.11, 0.9))
-		canvas.draw_rect(Rect2(GATE_X - 34.0, rail_y, 68.0, 1.0), Color(0.16, 0.19, 0.19, 0.55))
 	canvas.draw_rect(Rect2(GATE_X - 34.0, 158.0, 68.0, 2.0), Color(0.12, 0.18, 0.18, 0.8))
 	canvas.draw_rect(Rect2(GATE_X - 1.0, 158.0, 2.0, 160.0), STONE_EDGE)
 	_draw_sun(canvas, Vector2(GATE_X - 17.0, 250.0), 7.0, Color(GOLD, 0.42))
@@ -319,88 +287,33 @@ func _draw_seam_light(canvas: CanvasItem) -> void:
 	var open: float = smoothstep(1.92, 2.34, _time)
 	if open <= 0.0:
 		return
-	var top: float = 158.0
-	var bottom: float = FLOOR_Y
-	var width: float = 2.0 + open * 7.0
-	# A warm shaft, never a white divider: the core is cream, the falloff is
-	# amber, and both fade vertically (weak at the lintel, strong at the floor).
-	# Horizontal softness is built from 1-2 px layers; vertical softness comes
-	# from vertex-colour strips, so no single hard-edged rectangle reads as a line.
-	var half_widths: Array[float] = [0.0, 1.0, 3.0, 6.0, 10.0, 15.0]
-	var layer_alphas: Array[float] = [0.44, 0.20, 0.11, 0.060, 0.032, 0.016]
-	for layer: int in range(half_widths.size()):
-		var half: float = width * 0.5 + half_widths[layer]
-		var tone: Color = Color(1.0, 0.93, 0.74) if layer == 0 else Color(1.0, 0.80, 0.48)
-		# Vertex-colour strips give a continuous vertical falloff; the previous
-		# slice rects left visible horizontal bands in the shaft.
-		_draw_seam_layer(canvas, half, top, bottom, tone, layer_alphas[layer] * open)
-	# Perspective wedge: the shaft widens as it meets the floor.
+	var width: float = 2.0 + open * 9.0
+	var center: Vector2 = Vector2(GATE_X, 238.0)
+	for layer: int in range(3):
+		var extra: float = 8.0 + float(layer) * 10.0
+		canvas.draw_rect(
+			Rect2(GATE_X - width * 0.5 - extra, 160.0, width + extra * 2.0, 158.0),
+			Color(1.0, 0.88, 0.58, 0.05 * open * (1.0 - float(layer) * 0.28))
+		)
+	canvas.draw_rect(Rect2(GATE_X - width * 0.5, 160.0, width, 158.0),
+		Color(1.0, 0.92, 0.68, 0.55 * open))
+	canvas.draw_rect(Rect2(GATE_X - width * 0.5 + 2.0, 162.0, maxf(width - 4.0, 1.0), 154.0),
+		Color(1.0, 0.98, 0.86, 0.55 * open))
 	canvas.draw_colored_polygon(
 		PackedVector2Array([
-			Vector2(GATE_X - width * 0.5 - 2.0, 214.0),
-			Vector2(GATE_X + width * 0.5 + 2.0, 214.0),
-			Vector2(GATE_X + 46.0, FLOOR_Y),
-			Vector2(GATE_X - 46.0, FLOOR_Y),
+			center + Vector2(-10.0, 82.0),
+			center + Vector2(10.0, 82.0),
+			center + Vector2(52.0, 122.0),
+			center + Vector2(-52.0, 122.0),
 		]),
-		Color(1.0, 0.82, 0.50, 0.055 * open)
+		Color(1.0, 0.86, 0.55, 0.10 * open)
 	)
-	# Warm dust inside the shaft.
 	for index: int in range(10):
 		var rise: float = fmod(_time * 26.0 + float(index) * 37.0, 150.0)
-		var x: float = GATE_X - 18.0 + fmod(float(index) * 17.0, 36.0)
+		var x: float = GATE_X - 20.0 + fmod(float(index) * 17.0, 40.0)
 		var y: float = 312.0 - rise
 		canvas.draw_rect(Rect2(x, y, 1.0, 1.0),
-			Color(1.0, 0.86, 0.58, (1.0 - rise / 150.0) * 0.45 * open))
-
-
-func _draw_seam_layer(
-	canvas: CanvasItem, half: float, top: float, bottom: float,
-	tone: Color, peak_alpha: float
-) -> void:
-	var steps: int = 14
-	for step: int in range(steps):
-		var t0: float = float(step) / float(steps)
-		var t1: float = float(step + 1) / float(steps)
-		var v0: float = 0.30 + 0.70 * t0
-		v0 *= smoothstep(0.0, 0.10, t0)
-		v0 *= 1.0 - 0.22 * smoothstep(0.90, 1.0, t0)
-		var v1: float = 0.30 + 0.70 * t1
-		v1 *= smoothstep(0.0, 0.10, t1)
-		v1 *= 1.0 - 0.22 * smoothstep(0.90, 1.0, t1)
-		var y0: float = lerpf(top, bottom, t0)
-		var y1: float = lerpf(top, bottom, t1)
-		canvas.draw_polygon(
-			PackedVector2Array([
-				Vector2(GATE_X - half, y0), Vector2(GATE_X + half, y0),
-				Vector2(GATE_X + half, y1), Vector2(GATE_X - half, y1),
-			]),
-			PackedColorArray([
-				Color(tone, peak_alpha * v0), Color(tone, peak_alpha * v0),
-				Color(tone, peak_alpha * v1), Color(tone, peak_alpha * v1),
-			])
-		)
-
-
-func _draw_floor_light_pool(canvas: CanvasItem) -> void:
-	var open: float = smoothstep(1.96, 2.30, _time)
-	if open <= 0.05:
-		return
-	# The pool is an ellipse on the floor, not a bright bar across the base of
-	# the door.  Three low-alpha layers give it a soft rim.
-	for layer: int in range(3):
-		var rx: float = maxf((28.0 + float(layer) * 20.0) * open, 5.0)
-		var ry: float = maxf((4.0 + float(layer) * 3.0) * open, 1.5)
-		canvas.draw_colored_polygon(
-			_ellipse_points(Vector2(GATE_X, 324.0), rx, ry, 24),
-			Color(1.0, 0.78, 0.44, (0.22 - float(layer) * 0.055) * open)
-		)
-	canvas.draw_colored_polygon(
-		_ellipse_points(Vector2(GATE_X, 323.0), 14.0 * open, 2.2 * open, 20),
-		Color(1.0, 0.88, 0.60, 0.30 * open)
-	)
-	# A 1 px hot centre only where the seam touches the floor.
-	canvas.draw_rect(Rect2(GATE_X - 8.0 * open, FLOOR_Y + 1.0, 16.0 * open, 1.0),
-		Color(1.0, 0.90, 0.66, 0.34 * open))
+			Color(1.0, 0.92, 0.68, (1.0 - rise / 150.0) * 0.55 * open))
 
 
 func _draw_player(canvas: CanvasItem) -> void:
@@ -410,55 +323,20 @@ func _draw_player(canvas: CanvasItem) -> void:
 	var bob: float = roundf(sin(_time * 2.0) * 1.0)
 	var x: float = PLAYER_X
 	var y: float = FLOOR_Y
-	# Ground shadow first, then a soft cool backlight.  Many low-alpha ellipses
-	# avoid the single bright halo disc that made the earlier version read as a
-	# UI pill; the gate sits to the player's right, so the warm rim is right-facing.
-	canvas.draw_colored_polygon(_ellipse_points(Vector2(x, y - 1.0), 11.0, 2.5 * appear, 16),
-		Color(0.0, 0.0, 0.0, 0.50 * appear))
-	for layer: int in range(7):
-		canvas.draw_colored_polygon(
-			_ellipse_points(Vector2(x + 1.0, y - 17.0), 10.0 + float(layer) * 3.0,
-				19.0 + float(layer) * 3.0, 24),
-			Color(CYAN, (0.013 - float(layer) * 0.001) * appear)
-		)
-	var body: Color = Color(0.028, 0.058, 0.066, 0.98 * appear)
-	var rim_warm: Color = Color(1.0, 0.84, 0.55, 0.82 * appear)
-	var rim_cool: Color = Color(CYAN, 0.40 * appear)
-	# Head (8 wide), neck, torso and a flared cloak: a human silhouette at 640x360.
+	var body: Color = Color(0.045, 0.095, 0.105, 0.98 * appear)
+	var rim: Color = Color(CYAN, 0.85 * appear)
 	canvas.draw_colored_polygon(
-		PackedVector2Array([
-			Vector2(x - 5.0, y - 21.0 + bob),
-			Vector2(x + 5.0, y - 21.0 + bob),
-			Vector2(x + 10.0, y - 2.0),
-			Vector2(x - 10.0, y - 2.0),
-		]), body
+		_ellipse_points(Vector2(x, y - 16.0), 15.0, 25.0, 20),
+		Color(CYAN, 0.10 * appear)
 	)
-	canvas.draw_rect(Rect2(x - 4.0, y - 22.0 + bob, 8.0, 13.0), body)
-	canvas.draw_rect(Rect2(x - 2.0, y - 25.0 + bob, 4.0, 3.0), body)
-	canvas.draw_rect(Rect2(x - 4.0, y - 34.0 + bob, 8.0, 9.0), body)
-	# Two legs with a 1 px gap; the cloak hangs behind them.
-	canvas.draw_rect(Rect2(x - 4.0, y - 9.0 + bob, 4.0, 9.0), body)
-	canvas.draw_rect(Rect2(x + 1.0, y - 9.0 + bob, 4.0, 9.0), body)
-	canvas.draw_rect(Rect2(x, y - 9.0, 1.0, 8.0), Color(0.0, 0.0, 0.0, 0.85 * appear))
-	# Cyan scarf / belt marks nod to the chapter's player without copying a sprite.
-	canvas.draw_rect(Rect2(x - 4.0, y - 21.0 + bob, 8.0, 1.0), Color(CYAN, 0.46 * appear))
-	canvas.draw_rect(Rect2(x - 3.0, y - 13.0 + bob, 2.0, 1.0), Color(CYAN, 0.55 * appear))
-	canvas.draw_line(Vector2(x - 4.0, y - 20.0 + bob), Vector2(x - 11.0, y - 18.0 + bob),
-		Color(CYAN, 0.34 * appear), 1.0)
-	# 1 px contour: right side catches the gate's warm light, left side is cool.
-	canvas.draw_rect(Rect2(x + 3.0, y - 34.0 + bob, 1.0, 9.0), rim_warm)
-	canvas.draw_rect(Rect2(x + 4.0, y - 22.0 + bob, 1.0, 13.0), rim_warm)
-	canvas.draw_line(Vector2(x + 5.0, y - 21.0 + bob), Vector2(x + 9.0, y - 2.0),
-		rim_warm, 1.0)
-	canvas.draw_rect(Rect2(x - 4.0, y - 34.0 + bob, 8.0, 1.0),
-		Color(1.0, 0.90, 0.66, 0.55 * appear))
-	canvas.draw_rect(Rect2(x - 4.0, y - 34.0 + bob, 1.0, 9.0), rim_cool)
-	canvas.draw_rect(Rect2(x - 4.0, y - 22.0 + bob, 1.0, 13.0), rim_cool)
-	canvas.draw_line(Vector2(x - 5.0, y - 21.0 + bob), Vector2(x - 9.0, y - 2.0),
-		rim_cool, 1.0)
-	canvas.draw_rect(Rect2(x + 1.0, y - 30.0 + bob, 1.0, 1.0), Color(WHITE, 0.85 * appear))
-	# Faint warm contact light on the floor in front of the player.
-	canvas.draw_rect(Rect2(x + 8.0, y - 1.0, 10.0, 1.0), Color(1.0, 0.78, 0.46, 0.12 * appear))
+	canvas.draw_rect(Rect2(x - 6.0, y - 22.0 + bob, 12.0, 22.0), body)
+	canvas.draw_rect(Rect2(x - 6.0, y - 22.0 + bob, 1.0, 22.0), rim)
+	canvas.draw_rect(Rect2(x - 5.0, y - 30.0 + bob, 10.0, 9.0), body)
+	canvas.draw_rect(Rect2(x - 5.0, y - 30.0 + bob, 1.0, 9.0), rim)
+	canvas.draw_rect(Rect2(x - 5.0, y - 31.0 + bob, 3.0, 2.0), rim)
+	canvas.draw_rect(Rect2(x - 2.0, y - 27.0 + bob, 1.0, 1.0), Color(WHITE, 0.75 * appear))
+	canvas.draw_rect(Rect2(x + 1.0, y - 27.0 + bob, 1.0, 1.0), Color(WHITE, 0.55 * appear))
+	canvas.draw_rect(Rect2(x - 7.0, y - 1.0, 14.0, 1.0), Color(0.0, 0.0, 0.0, 0.55 * appear))
 
 
 func _draw_vignette(canvas: CanvasItem) -> void:

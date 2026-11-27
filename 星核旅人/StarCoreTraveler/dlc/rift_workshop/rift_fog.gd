@@ -1,24 +1,27 @@
 extends Node2D
 
-## Rift-workshop background overlay, drawn over the read-only DS03 scene.
+## Rift-workshop interior overlay, drawn over the read-only interior backdrop.
 ##
 ## Two original layers:
-##   1. a generated 640x360 violet haze (assets/rift_fog_640x360.png) with a
-##      slow alpha breathing, screen-fixed like DS03 itself;
-##   2. code-drawn purple motes drifting upward and wrapping, plus a few
-##      larger slow embers.
+##   1. a generated 640x360 warm-dust haze
+##      (assets/interior/interior_warm_haze_640x360.png) with a slow alpha
+##      breathing, screen-fixed like the interior backdrop;
+##   2. code-drawn warm dust motes and a few slower embers drifting upward.
 ##
 ## The three base levels keep their own DS03 instances untouched: this node only
 ## exists inside dlc/rift_workshop/rift_workshop.tscn.  Nothing here is drawn
 ## over the terrain or gameplay (the whole Background CanvasLayer sits at
 ## layer -10, behind the world).
 
-const FOG: Texture2D = preload("res://dlc/rift_workshop/assets/rift_fog_640x360.png")
+const FOG: Texture2D = preload(
+	"res://dlc/rift_workshop/assets/interior/interior_warm_haze_640x360.png"
+)
 const VIEW_SIZE: Vector2 = Vector2(640.0, 360.0)
-const MOTE_COUNT: int = 46
-const PURPLE: Color = Color("#a874ff")
-const PURPLE_LIGHT: Color = Color("#d8bcff")
-const DEEP: Color = Color("#6a3fb8")
+const MOTE_COUNT: int = 42
+const EMBER: Color = Color("#f0a85e")
+const DUST: Color = Color("#d99a62")
+const DUST_LIGHT: Color = Color("#ffe0b0")
+const DEEP: Color = Color("#7a4426")
 
 var _motes: Array[Dictionary] = []
 var _time: float = 0.0
@@ -26,7 +29,7 @@ var _time: float = 0.0
 
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	z_index = 1
+	z_index = 3
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = 20261125
 	for _index: int in range(MOTE_COUNT):
@@ -76,12 +79,12 @@ func _draw() -> void:
 	var breath: float = 0.86 + 0.14 * (0.5 + 0.5 * sin(_time * 0.9))
 	draw_texture_rect(FOG, Rect2(Vector2.ZERO, VIEW_SIZE), false, Color(1.0, 1.0, 1.0, breath))
 	for mote: Dictionary in _motes:
-		var color: Color = PURPLE_LIGHT if bool(mote["bright"]) else PURPLE
-		color.a = float(mote["alpha"])
 		var size: float = float(mote["size"])
+		var color: Color = DUST_LIGHT if bool(mote["bright"]) else (EMBER if size > 1.0 else DUST)
+		color.a = float(mote["alpha"])
 		draw_rect(Rect2(round(float(mote["x"])), round(float(mote["y"])), size, size), color)
-	# Two thin violet horizon wisps: they read as the rift's open seam without
-	# adding a screen-wide gradient over the ruin silhouettes.
-	var seam: float = 0.10 + 0.05 * (0.5 + 0.5 * sin(_time * 0.7 + 1.4))
-	draw_rect(Rect2(0.0, 248.0, VIEW_SIZE.x, 1.0), Color(DEEP, seam))
-	draw_rect(Rect2(0.0, 268.0, VIEW_SIZE.x, 1.0), Color(DEEP, seam * 0.7))
+	# Two faint warm bands near the floor: hearth haze, not a second light
+	# source.  They sit on the background layer, never over the player.
+	var seam: float = 0.045 + 0.02 * (0.5 + 0.5 * sin(_time * 0.7 + 1.4))
+	draw_rect(Rect2(0.0, 300.0, VIEW_SIZE.x, 1.0), Color(DEEP, seam))
+	draw_rect(Rect2(0.0, 336.0, VIEW_SIZE.x, 1.0), Color(DEEP, seam * 0.7))

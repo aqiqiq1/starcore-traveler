@@ -108,6 +108,10 @@ func _test_case(scene_path: String, tag: String) -> void:
 	# One real player toggle must be one cue.  Calling the same private method
 	# Q calls keeps this deterministic without faking the owning level callback.
 	DemoAudio.reset_counts()
+	# The switch cue plays once per toggle: v2 when delivered, otherwise the
+	# v1 fallback keeps the base levels audible (never silent).
+	var cue_path: String = DemoAudio.get_polarity_switch_effective_path()
+	var cue_expected: int = 1 if ResourceLoader.exists(cue_path) else 0
 	var player: Node = level.call("get_player") as Node
 	_check(player != null, "%s exposes its player" % tag)
 	if player == null:
@@ -115,17 +119,21 @@ func _test_case(scene_path: String, tag: String) -> void:
 		return
 	player.call("_toggle_polarity")
 	await _wait_process(2)
-	_check(DemoAudio.get_play_count("polarity_switch") == 1,
+	_check(DemoAudio.get_play_count("polarity_switch") == cue_expected,
 		"%s plays the phase cue exactly once per toggle" % tag,
-		str(DemoAudio.get_play_count("polarity_switch")))
+		"%d (expected %d) %s" % [
+			DemoAudio.get_play_count("polarity_switch"), cue_expected, cue_path
+		])
 	_check(header.get_phase_kind() == "moon",
 		"%s HUD follows the real player toggle" % tag, header.get_phase_kind())
 
 	player.call("_toggle_polarity")
 	await _wait_process(2)
-	_check(DemoAudio.get_play_count("polarity_switch") == 2,
+	_check(DemoAudio.get_play_count("polarity_switch") == cue_expected * 2,
 		"%s two toggles play two cues, not four" % tag,
-		str(DemoAudio.get_play_count("polarity_switch")))
+		"%d (expected %d) %s" % [
+			DemoAudio.get_play_count("polarity_switch"), cue_expected * 2, cue_path
+		])
 	_check(header.get_phase_kind() == "sun",
 		"%s HUD returns to the sun" % tag, header.get_phase_kind())
 
