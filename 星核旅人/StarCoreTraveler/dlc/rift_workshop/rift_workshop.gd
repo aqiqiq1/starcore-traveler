@@ -143,6 +143,8 @@ enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 @onready var _crystal_right: RiftInversionCrystal = $CrystalRight
 @onready var _checkpoint: LevelCheckpoint = $RiftCheckpoint
 @onready var _hud: RiftWorkshopHUD = $HUD
+@onready var _depth_overlay: RiftDepthOverlay = get_node_or_null("Background/DepthOverlay") as RiftDepthOverlay
+@onready var _atmosphere: Node2D = get_node_or_null("Atmosphere") as Node2D
 @onready var _finish_core: Sprite2D = $FinishPoint/Core
 @onready var _audio = $Audio
 @onready var _ambience: DlcChapterAmbience = $Ambience
@@ -351,6 +353,18 @@ func _ready() -> void:
 	LEVEL_FLOW.release_one_shot_actions()
 	_player.begin_input_override()
 	_start_lock_ticks = 3
+	# The overlay is off by default.  A chapter that will play the film keeps
+	# the approved entry/bridge arch throats and hides the new smoke; a
+	# direct/test start turns both on before the first frame.
+	if _depth_overlay != null:
+		if show_intro_cinematic and not _completed and not _scene_leaving:
+			_depth_overlay.set_hidden_for_film()
+		else:
+			_depth_overlay.set_strength_for_capture(1.0)
+	if _atmosphere != null:
+		_atmosphere.modulate.a = 0.0 if (
+			show_intro_cinematic and not _completed and not _scene_leaving
+		) else 1.0
 	call_deferred("_start_intro_cinematic_or_guide")
 
 
@@ -364,6 +378,12 @@ func _start_intro_cinematic_or_guide() -> void:
 			_intro_active = true
 			_intro_skipped = false
 			_hud.visible = false
+			# Keep the film's approved entry/bridge backdrop; the far hall and
+			# furnace smoke fade in only after control returns.
+			if _depth_overlay != null:
+				_depth_overlay.set_hidden_for_film()
+			if _atmosphere != null:
+				_atmosphere.modulate.a = 0.0
 			_footstep_stop()
 			_boss.set_suspended(true)
 			_player.lock_for_cinematic()
@@ -382,6 +402,14 @@ func _on_intro_cinematic_finished(skipped: bool) -> void:
 	_intro_skipped = skipped
 	_hud.visible = true
 	_hud.fade_in_after_intro()
+	if _depth_overlay != null:
+		_depth_overlay.show_after_film()
+	if _atmosphere != null:
+		var tween: Tween = create_tween()
+		# Match the PAUSABLE overlay fade if the player pauses during the
+		# 0.30 s hand-off.
+		tween.set_pause_mode(Tween.TWEEN_PAUSE_STOP)
+		tween.tween_property(_atmosphere, "modulate:a", 1.0, 0.30)
 	_attack_key_down = false
 	_player.unlock_after_cinematic()
 	_player.begin_input_override()

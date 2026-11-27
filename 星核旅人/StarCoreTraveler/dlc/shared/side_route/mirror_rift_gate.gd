@@ -8,6 +8,10 @@ extends HiddenRouteGate
 ## narrow cyan fissure.  No collision, no new texture, and the checkpoint and
 ## body always draw in front.
 ##
+## `depth_strength` 0 keeps the original dark recess; 1 opens the inner 36x96
+## to the chapter's masked far-loom overlay behind the wall.  The chapter fades
+## it with the far hall after the opening film, so the film itself stays dark.
+##
 ## Reference use: the real rift workshop mirror hall
 ## (screenshots/rift_opening_20261127/01_mirror_hall_wide.png) for the round
 ## mounted mirror / dark arch language, and the recorded Hollow Knight lore
@@ -28,6 +32,7 @@ const DARK: Color = Color(0.008, 0.022, 0.028, 0.94)
 var _time: float = 0.0
 var _face: Sprite2D = null
 var _shard: Sprite2D = null
+var depth_strength: float = 0.0
 
 
 func _ready() -> void:
@@ -69,17 +74,37 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
+func set_depth_strength(value: float) -> void:
+	depth_strength = clampf(value, 0.0, 1.0)
+	queue_redraw()
+
+
+func get_depth_strength() -> float:
+	return depth_strength
+
+
 func _draw() -> void:
 	var pulse: float = 0.5 + 0.5 * sin(_time * 3.1)
 
-	# Dark cool-stone recess: a tall narrow opening in the hall wall, with a
-	# few faint masonry courses so it reads as a built niche rather than a
-	# flat black rectangle.  The top corners are cut one pixel.
-	draw_rect(Rect2(-22.0, -100.0, 44.0, 100.0), STONE_EDGE)
-	draw_rect(Rect2(-20.0, -98.0, 40.0, 98.0), STONE_LO)
-	draw_rect(Rect2(-18.0, -96.0, 36.0, 96.0), DARK)
+	# Cool-stone recess frame.  The inner 36x96 stays transparent at
+	# depth_strength 1 so the masked far hall behind the wall shows through;
+	# at 0 the original dark recess is drawn over it.
+	draw_rect(Rect2(-22.0, -100.0, 4.0, 100.0), STONE_EDGE)
+	draw_rect(Rect2(18.0, -100.0, 4.0, 100.0), STONE_EDGE)
+	draw_rect(Rect2(-22.0, -100.0, 44.0, 4.0), STONE_EDGE)
+	draw_rect(Rect2(-22.0, -4.0, 44.0, 4.0), STONE_EDGE)
+	draw_rect(Rect2(-20.0, -98.0, 2.0, 96.0), STONE_LO)
+	draw_rect(Rect2(18.0, -98.0, 2.0, 96.0), STONE_LO)
+	draw_rect(Rect2(-20.0, -98.0, 40.0, 2.0), STONE_LO)
+	draw_rect(Rect2(-20.0, -4.0, 40.0, 2.0), STONE_LO)
 	draw_rect(Rect2(-22.0, -100.0, 6.0, 3.0), STONE_LO)
 	draw_rect(Rect2(16.0, -100.0, 6.0, 3.0), STONE_LO)
+	var recess_alpha: float = 1.0 - clampf(depth_strength, 0.0, 1.0)
+	if recess_alpha > 0.001:
+		draw_rect(
+			Rect2(-18.0, -96.0, 36.0, 96.0),
+			Color(DARK.r, DARK.g, DARK.b, recess_alpha)
+		)
 	for course_y: int in [-78, -52, -26]:
 		draw_rect(Rect2(-17.0, float(course_y), 34.0, 1.0), Color(STONE, 0.20))
 		draw_rect(Rect2(-17.0, float(course_y + 1), 34.0, 1.0), Color(0.0, 0.0, 0.0, 0.28))

@@ -135,6 +135,9 @@ enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 @onready var _hazards: Node2D = $Hazards
 @onready var _fx: LoomFx = $Fx
 @onready var _hud: LoomHUD = $HUD
+@onready var _depth_overlay: LoomDepthOverlay = get_node_or_null("Depth") as LoomDepthOverlay
+@onready var _atmosphere: Node2D = get_node_or_null("Atmosphere") as Node2D
+@onready var _depth_gate: MirrorRiftGate = get_node_or_null("MirrorRiftGate") as MirrorRiftGate
 @onready var _audio: LoomAudio = $Audio
 @onready var _gate_first: PolarityGate = $GateFirst
 @onready var _gate_second: PolarityGate = $GateSecond
@@ -319,6 +322,22 @@ func _ready() -> void:
 	LEVEL_FLOW.release_one_shot_actions()
 	_player.begin_input_override()
 	_input_ticks = 3
+	# The far-hall overlay is off by default.  A chapter that will play the
+	# film keeps it off; a direct/test start turns it on before the first
+	# frame.  This keeps the film's original sky windows and avoids a flash.
+	if _depth_overlay != null:
+		if show_intro_cinematic and not _completed and not _scene_leaving:
+			_depth_overlay.set_hidden_for_film()
+		else:
+			_depth_overlay.set_strength_for_capture(1.0)
+	if _atmosphere != null:
+		_atmosphere.modulate.a = 0.0 if (
+			show_intro_cinematic and not _completed and not _scene_leaving
+		) else 1.0
+	if _depth_gate != null:
+		_depth_gate.set_depth_strength(
+			0.0 if (show_intro_cinematic and not _completed and not _scene_leaving) else 1.0
+		)
 	call_deferred("_start_intro_cinematic_or_guide")
 
 
@@ -333,6 +352,14 @@ func _start_intro_cinematic_or_guide() -> void:
 			_intro_active = true
 			_intro_skipped = false
 			_hud.visible = false
+			# Keep the film's original sky windows and keep the new brazier
+			# dust/fibres out of it; both fade in only after control returns.
+			if _depth_overlay != null:
+				_depth_overlay.set_hidden_for_film()
+			if _atmosphere != null:
+				_atmosphere.modulate.a = 0.0
+			if _depth_gate != null:
+				_depth_gate.set_depth_strength(0.0)
 			if _footsteps != null and is_instance_valid(_footsteps):
 				_footsteps.stop()
 			_player.lock_for_cinematic()
@@ -358,6 +385,18 @@ func _on_intro_cinematic_finished(skipped: bool) -> void:
 	_intro_skipped = skipped
 	_hud.visible = true
 	_hud.fade_in_after_intro()
+	if _depth_overlay != null:
+		_depth_overlay.show_after_film()
+	if _atmosphere != null:
+		var tween: Tween = create_tween()
+		tween.set_pause_mode(Tween.TWEEN_PAUSE_STOP)
+		tween.tween_property(_atmosphere, "modulate:a", 1.0, 0.30)
+	if _depth_gate != null:
+		var gate_tween: Tween = create_tween()
+		gate_tween.set_pause_mode(Tween.TWEEN_PAUSE_STOP)
+		gate_tween.tween_method(
+			Callable(_depth_gate, "set_depth_strength"), 0.0, 1.0, 0.30
+		)
 	_attack_key_down = false
 	# The player lock is released first, then the existing three-tick opening
 	# hold keeps the skip key from becoming a jump.  The guide waits a short

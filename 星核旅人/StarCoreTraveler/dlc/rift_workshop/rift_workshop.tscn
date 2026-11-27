@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3]
+[gd_scene load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_workshop.gd" id="1_rift"]
 [ext_resource type="Script" path="res://dlc/rift_workshop/rift_hud.gd" id="2_hud"]
@@ -26,6 +26,10 @@
 [ext_resource type="PackedScene" path="res://dlc/shared/core_delivery/core_carrier.tscn" id="24_carrier"]
 [ext_resource type="PackedScene" path="res://dlc/shared/core_delivery/core_bay.tscn" id="25_bay"]
 [ext_resource type="Script" path="res://dlc/shared/core_delivery/gate_power_proxy.gd" id="26_gate_proxy"]
+[ext_resource type="Script" path="res://dlc/rift_workshop/rift_depth_overlay.gd" id="27_depth"]
+[ext_resource type="Texture2D" path="res://dlc/rift_workshop/assets/interior/interior_deep_1880x360.png" id="28_deep"]
+[ext_resource type="Texture2D" path="res://dlc/rift_workshop/assets/interior/interior_depth_mask_1880x360.png" id="29_mask"]
+[ext_resource type="Script" path="res://dlc/rift_workshop/rift_furnace_atmosphere.gd" id="30_atmos"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_checkpoint"]
 size = Vector2(40, 72)
@@ -45,6 +49,19 @@ process_mode = 1
 texture_filter = 1
 texture = ExtResource("20_back")
 centered = false
+
+[node name="DepthOverlay" type="ColorRect" parent="Background"]
+process_mode = 1
+z_index = 0
+offset_right = 1880.0
+offset_bottom = 360.0
+mouse_filter = 2
+script = ExtResource("27_depth")
+deep_texture = ExtResource("28_deep")
+depth_mask = ExtResource("29_mask")
+parallax_factor = 0.65
+wall_factor = 0.9
+max_scroll = 1240.0
 
 [node name="Mid" type="Sprite2D" parent="Background"]
 process_mode = 1
@@ -297,6 +314,12 @@ position = Vector2(0, -34)
 scale = Vector2(2, 2)
 texture = ExtResource("13_core")
 hframes = 12
+
+[node name="Atmosphere" type="Node2D" parent="."]
+process_mode = 1
+z_index = 10
+script = ExtResource("30_atmos")
+player_path = NodePath("../Player")
 
 [node name="Audio" type="Node" parent="."]
 process_mode = 1

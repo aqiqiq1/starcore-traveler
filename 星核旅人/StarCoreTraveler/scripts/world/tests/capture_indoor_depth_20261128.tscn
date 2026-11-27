@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/tests/capture_indoor_depth_20261128.gd" id="1_capture"]
+
+[node name="IndoorDepthCapture" type="Node"]
+process_mode = 3
+script = ExtResource("1_capture")

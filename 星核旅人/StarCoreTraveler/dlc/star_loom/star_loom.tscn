@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3]
+[gd_scene load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://dlc/star_loom/star_loom.gd" id="1_loom"]
 [ext_resource type="Script" path="res://scripts/level03/l3_terrain.gd" id="2_terrain"]
@@ -19,11 +19,27 @@
 [ext_resource type="Script" path="res://dlc/shared/core_delivery/gate_power_proxy.gd" id="17_proxy"]
 [ext_resource type="PackedScene" path="res://dlc/shared/core_delivery/core_bay.tscn" id="18_bay"]
 [ext_resource type="Script" path="res://dlc/shared/side_route/mirror_rift_gate.gd" id="19_sidegate"]
+[ext_resource type="Script" path="res://dlc/star_loom/loom_depth_overlay.gd" id="20_depth"]
+[ext_resource type="Texture2D" path="res://dlc/star_loom/assets/city_v2/loom_hall_deep_1280x360.png" id="21_deep"]
+[ext_resource type="Texture2D" path="res://dlc/star_loom/assets/city_v2/loom_niche_door_mask_960x360.png" id="22_mask"]
+[ext_resource type="Script" path="res://dlc/star_loom/loom_dust_atmosphere.gd" id="23_atmos"]
 
 [node name="StarLoom" type="Node2D"]
 process_mode = 3
 process_physics_priority = -10
 script = ExtResource("1_loom")
+
+[node name="Depth" type="ColorRect" parent="."]
+process_mode = 1
+z_index = -9
+offset_right = 960.0
+offset_bottom = 360.0
+mouse_filter = 2
+script = ExtResource("20_depth")
+deep_texture = ExtResource("21_deep")
+depth_mask = ExtResource("22_mask")
+parallax_factor = 0.65
+max_scroll = 320.0
 
 [node name="CityBack" type="Sprite2D" parent="."]
 process_mode = 1
@@ -178,6 +194,12 @@ z_index = 12
 texture_filter = 1
 position = Vector2(480, 180)
 texture = ExtResource("10_fore")
+
+[node name="Atmosphere" type="Node2D" parent="."]
+process_mode = 1
+z_index = 10
+script = ExtResource("23_atmos")
+player_path = NodePath("../Player")
 
 [node name="Audio" type="Node" parent="."]
 process_mode = 1
