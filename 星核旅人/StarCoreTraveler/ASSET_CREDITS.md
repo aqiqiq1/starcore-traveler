@@ -281,3 +281,10 @@ eview_v2.png（美术检查板，非引擎截图）。
 ## 23. 残响中间档（2026-11-18）
 
 `assets/interaction_projection_20261117/voice_mid/echo_mumble_1..3.wav`（48 kHz mono PCM16，0.070 s）由同一 CC0 回声音节（SilentStrikeZ, *Human_Male_Mumble_Short_1*, Freesound 389644；原为有损 HQ 预览派生）经 ffmpeg 8.0.1 `atempo=12/7` 保音高压缩并轻收首尾 3 ms；基频不变（173.3 / 167.2 / 183.2 Hz），峰值 −12.3 / −14.7 / −13.0 dBFS，无增益。运行仍由 `scripts/narrative/dialogue_voice.gd` 在 −10 dB、单声部播放；最短间隔 0.08 s，34 cps 揭字与文本未改，120/80/60 ms 包保留。
+
+## 24. 标题页“章节”衍生菜单板（2026-11-27，项目自制派生）
+
+- 来源（只读，不覆盖）：assets/menu/main_menu_ui_640.png、main_menu_focus_settings_640.png、main_menu_quit_640.png、main_menu_focus_quit_640.png；均为项目既有的 V1 标题菜单程序化像素板。
+- 运行派生文件：assets/menu/main_menu_chapters_ui_640.png、main_menu_chapters_focus_chapter_640.png、main_menu_chapters_focus_settings_640.png、main_menu_chapters_quit_640.png、main_menu_chapters_focus_quit_640.png。生成脚本：dlc/chapter_select/tools/gen_chapter_menu_assets.py（Pillow）。
+- 修改：把原“设置”像素行下移 11 px，把“退出游戏”下移 3 px，用同一 assets/fonts/tutorial_zh.ttf 12 px + 1 px 阴影绘制新的“章节”文字与焦点光标/下划线；三行 DLC 入口的 y=238/262/286 不变。没有引入第三方像素、字体或图标。
+- 许可：派生自项目内部菜单板，随本项目使用；若单独分发这些菜单板，由项目组另行决定许可与署名。字体仍按第 5 节的 SIL OFL 1.1 处理。

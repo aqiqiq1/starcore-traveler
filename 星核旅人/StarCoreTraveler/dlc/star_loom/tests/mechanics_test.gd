@@ -222,9 +222,9 @@ func _run() -> void:
 	_check(_loom.get_stage() == 1 and not _loom.is_boss_active(),
 		"boss starts dormant at stage 1")
 	_check(_loom.get_gate_first() != null and _loom.get_gate_second() != null
-		and _loom.get_rune_stone() != null and _loom.get_rune_socket() != null
+		and _loom.get_core_carrier() != null and _loom.get_core_bay() != null
 		and _loom.get_checkpoint() != null,
-		"the approach restores the base gate / stone / checkpoint mechanisms")
+		"the approach restores the base gate / star core / checkpoint mechanisms")
 	_check(not _loom.get_checkpoint().is_activated()
 		and not _loom.get_gate_second().is_open(),
 		"the checkpoint and second gate start clear")
@@ -449,8 +449,10 @@ func _run() -> void:
 	_check(_loom.get_nodes_alive_count() == 0, "the node ring is empty")
 	_check(_loom.is_core_exposed(), "both nodes down exposes the core")
 	_check(_loom.get_hud().get_boss_bar().get_core_hp() == 0
-		and _loom.get_hud().get_boss_bar().get_core_max() == 3,
-		"HUD shows three empty core cells when exposed")
+		and _loom.get_hud().get_boss_bar().get_core_max() == 3
+		and not _loom.get_hud().get_boss_bar().has_core_diamonds()
+		and _loom.get_hud().get_boss_bar().get_red_bar_segment_count() == 3,
+		"HUD keeps the core in the three-segment red bar, with no diamond row")
 
 	var core: LoomCore = _loom.get_core()
 	var visual: Dictionary = core.get_expose_visual_info()
@@ -773,13 +775,13 @@ func _run() -> void:
 		"R stops the fight music until the boss starts again")
 	_check(not _loom.get_checkpoint().is_activated(),
 		"R clears the checkpoint")
-	_check(absf(_loom.get_rune_stone().global_position.x
-		- _loom.get_rune_stone().get_start_x()) < 0.5,
-		"R restores the rune stone initial position",
-		"x=%.1f" % _loom.get_rune_stone().global_position.x)
+	_check(absf(_loom.get_core_carrier().global_position.x
+		- _loom.get_core_carrier().get_start_x()) < 0.5,
+		"R restores the star core initial position",
+		"x=%.1f" % _loom.get_core_carrier().global_position.x)
 	_check(not _loom.get_gate_second().is_open()
-		and not _loom.get_rune_socket().is_occupied(),
-		"R closes the second gate and clears its socket")
+		and not _loom.get_core_bay().is_occupied(),
+		"R closes the second gate and darkens the star-core bay")
 
 	# --- 3 -> 0 lives and the game over page -----------------------------
 	_loom.debug_set_stage(2)

@@ -304,9 +304,10 @@ func _build_header() -> void:
 	_header.set_polarity(true)
 
 
-## Shared 360x16 boss bar.  The stage cells are the three loom stages, the two
-## node diamonds are the live nodes, the three core diamonds are accepted core
-## hits, and the three life hearts sit centred under the bar (no text count).
+## Shared 360x16 boss bar.  The three-stage cells are the loom stages, the two
+## node diamonds are the live independent nodes, the segmented red bar is the
+## core durability, and the three life hearts sit centred under the bar.  The
+## old separate core diamond row is gone (one core readout only).
 func _build_boss_bar() -> void:
 	_boss_bar = HudBossBar.new()
 	_boss_bar.name = "BossBar"
@@ -645,9 +646,10 @@ func set_objective(text_value: String) -> void:
 		_header.set_objective(text_value)
 
 
-## Maps the existing loom state onto the shared bar.  Stage is 1-based; core
-## cells fill with the accepted core hits; the red bar shows remaining core
-## health.  The three life hearts sit under the bar and keep their own count.
+## Maps the existing loom state onto the shared bar.  Stage is 1-based; the
+## three-segment red bar shows remaining core durability (one segment per true
+## hit) and the two node diamonds are the only icon cells.  The three life
+## hearts sit under the bar and keep their own count.
 func set_boss_state(
 	stage: int, stage_max: int, nodes_alive: int,
 	core_hits: int, core_needed: int, exposed: bool,

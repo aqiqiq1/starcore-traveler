@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://dlc/trial_chambers/trial_chambers.gd" id="1_trial"]
 [ext_resource type="Script" path="res://dlc/trial_chambers/trial_hud.gd" id="2_hud"]
@@ -13,7 +13,6 @@
 [ext_resource type="Script" path="res://scripts/level03/l3_audio.gd" id="11_audio"]
 [ext_resource type="Script" path="res://dlc/trial_chambers/chapter_ambience.gd" id="12_ambience"]
 [ext_resource type="PackedScene" path="res://dlc/trial_chambers/trial_phase_crystal.tscn" id="13_crystal"]
-[ext_resource type="PackedScene" path="res://dlc/trial_chambers/trial_sealed_crystal.tscn" id="16_relic"]
 [ext_resource type="Script" path="res://dlc/trial_chambers/trial_q_hint.gd" id="14_qhint"]
 [ext_resource type="Script" path="res://scripts/audio/player_footstep_audio.gd" id="15_footsteps"]
 
@@ -100,10 +99,6 @@ process_mode = 1
 position = Vector2(214, 320)
 player_path = NodePath("../Player")
 crystal_positive = true
-
-[node name="SealedCrystal" parent="." instance=ExtResource("16_relic")]
-process_mode = 1
-position = Vector2(346, 320)
 
 [node name="Player" parent="." instance=ExtResource("7_player")]
 process_mode = 1

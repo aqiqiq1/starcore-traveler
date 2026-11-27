@@ -47,6 +47,7 @@ const EVENT_COMPLETE: String = "complete"
 const EVENT_FAILURE: String = "failure"
 const EVENT_RESPAWN: String = "respawn"
 const EVENT_POLARITY_SWITCH: String = "polarity_switch"
+const EVENT_POLARITY_SWITCH_MOON: String = "polarity_switch_moon"
 const EVENT_SWING: String = "swing"
 const EVENT_SHELL_SHATTER: String = "shell_shatter"
 
@@ -64,6 +65,12 @@ const EVENT_SPECS: Dictionary = {
 	EVENT_POLARITY_SWITCH: {
 		"dir": POLARITY_SWITCH_DIR,
 		"file": "polarity_switch_v2.wav",
+		"volume_db": -6.0,
+		"ui": false,
+	},
+	EVENT_POLARITY_SWITCH_MOON: {
+		"dir": POLARITY_SWITCH_DIR,
+		"file": "polarity_switch_moon_v2.wav",
 		"volume_db": -6.0,
 		"ui": false,
 	},
@@ -141,8 +148,13 @@ func play_respawn() -> bool:
 	return _play_event(EVENT_RESPAWN)
 
 
-func play_polarity_switch() -> bool:
-	return _play_event(EVENT_POLARITY_SWITCH)
+## One cue per toggle, with a distinct gesture per target phase: the rising cue
+## when the player turns 辉相 (gold), the falling cue when the player turns
+## 澜相 (cyan).  Both count under the single `polarity_switch` event so the
+## existing tests and logs stay one-per-toggle.
+func play_polarity_switch(positive: bool = true) -> bool:
+	var event: String = EVENT_POLARITY_SWITCH if positive else EVENT_POLARITY_SWITCH_MOON
+	return _play_event(event, EVENT_POLARITY_SWITCH)
 
 
 func play_swing() -> bool:
@@ -155,7 +167,7 @@ func play_shell_shatter() -> bool:
 
 # --- Playback core ---------------------------------------------------------
 
-func _play_event(event_name: String) -> bool:
+func _play_event(event_name: String, count_key: String = "") -> bool:
 	if not EVENT_SPECS.has(event_name):
 		return false
 	var stream: AudioStream = _stream_for(event_name)
@@ -168,7 +180,8 @@ func _play_event(event_name: String) -> bool:
 	player.stream = stream
 	player.volume_db = float(spec.get("volume_db", -6.0))
 	player.play()
-	_play_counts[event_name] = int(_play_counts.get(event_name, 0)) + 1
+	var key: String = count_key if not count_key.is_empty() else event_name
+	_play_counts[key] = int(_play_counts.get(key, 0)) + 1
 	_last_event = event_name
 	return true
 

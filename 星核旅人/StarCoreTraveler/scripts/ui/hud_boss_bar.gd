@@ -4,9 +4,13 @@ extends Control
 ## One boss bar for every combat chapter: base L3 guard, trial guard, rift
 ## double mirror and star loom.
 ##
-## Approved layout (dlc/PRESENTATION_SYSTEM.md, 2026-11-27):
-##   360 x 16 at the top centre: 12 px name, red fill bar, phase / core cells.
-##   DLC3 may add its three life hearts under the same bar; no text count.
+## Approved layout (2026-11-27 boss-bar fix):
+##   360 x 16 at the top centre: 12 px name, a segmented red core bar (one cell
+##   per true-damage point), optional independent-object icons and phase cells.
+##   Core durability is shown once, by the red bar; the old three core diamonds
+##   are gone.  Only real independent objects keep diamonds: the mirror's two
+##   face plates and the loom's two orbit nodes.  DLC3 may add three life hearts
+##   under the same bar; no text count.
 ##
 ## Reference check (2026-11-27): Hades Lernie boss fight frame
 ## (screenshots/hud_refs/hades_boss_maxresdefault.jpg): a small top-centre
@@ -23,10 +27,7 @@ const OUTLINE_SIZE: int = 1
 const NAME_WIDTH: float = 58.0
 const FILL_POSITION: Vector2 = Vector2(68.0, 5.0)
 const FILL_SIZE: Vector2 = Vector2(158.0, 6.0)
-const CORE_START_X: float = 252.0
-const CORE_PITCH: float = 13.0
-const CORE_RADIUS: float = 5.0
-const PHASE_START_OFFSET: float = 45.0
+const SEGMENT_GAP: float = 1.0
 const PHASE_CELL: Vector2 = Vector2(5.0, 8.0)
 const PHASE_GAP: float = 3.0
 const FACE_X: float = 236.0
@@ -43,7 +44,7 @@ const TEXT: Color = Color("#e8e2d5")
 const MUTED: Color = Color("#9fb0b2")
 const GOLD: Color = Color("#f4cd63")
 const CYAN: Color = Color("#5fe1e6")
-const WHITE: Color = Color(1.0, 0.98, 0.90)
+
 const RED: Color = Color("#d95757")
 const LOW_RED: Color = Color("#ff7b7b")
 const EMPTY_RED: Color = Color(0.13, 0.07, 0.08, 0.98)
@@ -135,7 +136,8 @@ func set_boss_name(name_text: String) -> void:
 
 
 ## Mirror only: two face plates (gold / cyan).  A broken face stays on the bar
-## dimmed with a red X; the exposed core gets a white rim on the core cells.
+## dimmed with a red X.  They are the independent objects, so they keep their
+## icons; the exposed core itself is not repeated as extra diamonds.
 func set_faces(
 	gold_intact: bool, cyan_intact: bool, exposed: bool, shown: bool = true
 ) -> void:
@@ -146,7 +148,8 @@ func set_faces(
 	queue_redraw()
 
 
-## Loom only: two live orbit nodes shown before the core cells.
+## Loom only: the two live orbit nodes shown between the red bar and the phase
+## cells.  These are real independent objects, not a second core counter.
 func set_nodes(alive: int, total: int, shown: bool = true) -> void:
 	_nodes_visible = shown
 	_nodes_alive = clampi(alive, 0, maxi(total, 1))
@@ -245,26 +248,38 @@ func _draw() -> void:
 			HORIZONTAL_ALIGNMENT_LEFT, NAME_WIDTH, FONT_SIZE, TEXT
 		)
 
-	# Red fill: dark track, coral fill, 1 px warm highlight.
+	# Red fill = core durability, split into one cell per true-damage point.
+	# The gaps are deliberate: the player can count the remaining hits directly
+	# on the red bar, so no second core-diamond row is drawn.
 	draw_rect(Rect2(FILL_POSITION, FILL_SIZE), EMPTY_RED)
-	draw_rect(Rect2(FILL_POSITION, FILL_SIZE), INK, false, 1.0)
-	var fill_width: float = floorf(FILL_SIZE.x * _hp_ratio)
-	if fill_width > 0.0:
+	var fill_pixels: float = floorf(FILL_SIZE.x * _hp_ratio)
+	var red_cells: Array[Rect2] = _red_segment_rects()
+	for index: int in range(red_cells.size()):
+		var cell: Rect2 = red_cells[index]
+		var local_start: float = cell.position.x - FILL_POSITION.x
+		var cell_fill: float = clampf(
+			fill_pixels - local_start, 0.0, cell.size.x
+		)
+		if cell_fill <= 0.0:
+			continue
 		var fill_color: Color = LOW_RED if _hp_ratio <= 0.34 else RED
-		draw_rect(Rect2(FILL_POSITION, Vector2(fill_width, FILL_SIZE.y)), fill_color)
+		draw_rect(Rect2(cell.position, Vector2(cell_fill, cell.size.y)), fill_color)
 		draw_rect(
-			Rect2(FILL_POSITION, Vector2(fill_width, 1.0)),
+			Rect2(cell.position, Vector2(cell_fill, 1.0)),
 			Color(1.0, 0.88, 0.78, 0.55)
 		)
+	draw_rect(Rect2(FILL_POSITION, FILL_SIZE), INK, false, 1.0)
 
-	var core_x: float = CORE_START_X
+	# Only independent objects keep diamonds: the mirror's two faces or the
+	# loom's two nodes.  Guard / trial bars have no icon group here.
+	var status_x: float = FACE_X
 	if _faces_visible:
 		_draw_face(Vector2(FACE_X, 3.0), true, _gold_intact, _gold_anchored, _gold_window)
 		_draw_face(
 			Vector2(FACE_X + FACE_SIZE + FACE_GAP, 3.0),
 			false, _cyan_intact, _cyan_anchored, _cyan_window
 		)
-		core_x = FACE_X + FACE_SIZE * 2.0 + FACE_GAP + 4.0
+		status_x = FACE_X + FACE_SIZE * 2.0 + FACE_GAP
 	elif _nodes_visible:
 		for index: int in range(_nodes_max):
 			var alive: bool = index < _nodes_alive
@@ -273,21 +288,10 @@ func _draw() -> void:
 				Vector2(FACE_X + 3.0 + float(index) * (NODE_SIZE + 3.0), 8.0),
 				3.0, node_color, Color(0.45, 0.62, 0.60, 0.85)
 			)
-		core_x = FACE_X + float(_nodes_max) * (NODE_SIZE + 3.0) + 3.0
-
-	for index: int in range(_core_max):
-		var filled: bool = index < _core_current
-		var fill_color: Color = WHITE if filled else Color(0.20, 0.27, 0.28, 0.95)
-		var edge_color: Color = GOLD if filled else Color(0.42, 0.54, 0.52, 0.80)
-		if _exposed and _faces_visible:
-			edge_color = Color(1.0, 1.0, 1.0, 0.95) if filled else edge_color
-		_draw_diamond(
-			Vector2(core_x + CORE_RADIUS + float(index) * CORE_PITCH, 8.0),
-			CORE_RADIUS, fill_color, edge_color
-		)
+		status_x = FACE_X + float(_nodes_max) * (NODE_SIZE + 3.0) + 3.0
 
 	if _phase_count > 1:
-		var phase_x: float = core_x + float(_core_max) * CORE_PITCH + 6.0
+		var phase_x: float = status_x + 6.0
 		for index: int in range(_phase_count):
 			var active: bool = index <= _phase_index
 			var phase_color: Color = GOLD if index % 2 == 0 else CYAN
@@ -303,6 +307,27 @@ func _draw() -> void:
 		for index: int in range(_lives_max):
 			var color: Color = LIFE_RED if index < _lives_current else Color(0.30, 0.17, 0.19, 0.95)
 			_draw_heart(Vector2(LIVES_START + float(index) * LIVES_PITCH, LIVES_Y), color)
+
+
+## Equal-width red cells with 1 px dark gaps.  The rects are also the audit hook
+## used by the HUD tests, so the real drawing and the assertion share one layout.
+func _red_segment_rects() -> Array[Rect2]:
+	var count: int = maxi(_core_max, 1)
+	var rects: Array[Rect2] = []
+	var segment_width: float = floorf(
+		(FILL_SIZE.x - float(count - 1) * SEGMENT_GAP) / float(count)
+	)
+	var used_width: float = segment_width * float(count) \
+		+ SEGMENT_GAP * float(count - 1)
+	var start_x: float = FILL_POSITION.x + floorf(
+		(FILL_SIZE.x - used_width) * 0.5
+	)
+	for index: int in range(count):
+		rects.append(Rect2(
+			start_x + float(index) * (segment_width + SEGMENT_GAP),
+			FILL_POSITION.y, segment_width, FILL_SIZE.y
+		))
+	return rects
 
 
 func _draw_face(
@@ -422,6 +447,36 @@ func get_core_hp() -> int:
 
 func get_core_max() -> int:
 	return _core_max
+
+
+## The red bar is the only core-durability readout.  The old diamond row is
+## deliberately absent; tests assert this instead of counting drawn shapes.
+func has_core_diamonds() -> bool:
+	return false
+
+
+func get_core_diamond_count() -> int:
+	return 0
+
+
+func get_red_bar_segment_count() -> int:
+	return maxi(_core_max, 1)
+
+
+func get_red_segment_rects() -> Array[Rect2]:
+	return _red_segment_rects()
+
+
+func are_faces_visible() -> bool:
+	return _faces_visible
+
+
+func get_face_icon_count() -> int:
+	return 2 if _faces_visible else 0
+
+
+func get_node_icon_count() -> int:
+	return _nodes_max if _nodes_visible else 0
 
 
 func get_phase_index() -> int:

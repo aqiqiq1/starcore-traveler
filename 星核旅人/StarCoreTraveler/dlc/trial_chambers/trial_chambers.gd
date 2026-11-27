@@ -28,8 +28,12 @@ signal level_completed
 ## Automated routes that teleport through the chapter can turn the teaching
 ## popups off; a normal entry keeps this true.
 @export var show_mechanic_tips: bool = true
+## Empty = the shared user://chapter_progress.cfg.  Tests may point this at a
+## throwaway file before add_child(); gameplay never sets it.
+@export var chapter_progress_path: String = ""
 
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
+const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
 const DLC_GUIDE_SCENE: PackedScene = preload("res://dlc/ui/dlc_guide.tscn")
 const INTRO_CINEMATIC_SCENE: PackedScene = preload(
 	"res://dlc/trial_chambers/trial_intro_cinematic.tscn"
@@ -87,7 +91,6 @@ enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 @onready var _gate_gold: PolarityGate = $GateGold
 @onready var _gate_cyan: PolarityGate = $GateCyan
 @onready var _crystal: TrialPhaseCrystal = $PhaseCrystal
-@onready var _sealed_crystal: TrialSealedCrystal = $SealedCrystal
 @onready var _hud: TrialHUD = $HUD
 @onready var _finish_core: Sprite2D = $FinishPoint/Core
 @onready var _audio = $Audio
@@ -138,7 +141,7 @@ func _ready() -> void:
 
 	for node: Node in [
 		$Background, $Terrain, $Decorations, $Player, $Guard,
-		$GateGold, $GateCyan, $PhaseCrystal, $SealedCrystal, $FinishPoint,
+		$GateGold, $GateCyan, $PhaseCrystal, $FinishPoint,
 	]:
 		if node != null:
 			node.process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -230,7 +233,7 @@ func _start_intro_cinematic_or_guide() -> void:
 			_player.lock_for_cinematic()
 			add_child(_intro_cinematic)
 			_intro_cinematic.configure(
-				_gate_gold, _crystal, _sealed_crystal, _player, _camera, _hud
+				_gate_gold, _crystal, _player, _camera, _hud
 			)
 			_intro_cinematic.finished.connect(_on_intro_cinematic_finished)
 			if _intro_cinematic.start():
@@ -892,6 +895,7 @@ func _complete_trial() -> void:
 	if _completed or _scene_leaving:
 		return
 	_completed = true
+	CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_TRIAL, chapter_progress_path)
 	_retry_pending = false
 	_player_hits = 0
 	_hud.set_hit_pips_visible(false)
@@ -1051,10 +1055,6 @@ func get_gate_cyan() -> PolarityGate:
 
 func get_phase_crystal() -> TrialPhaseCrystal:
 	return _crystal
-
-
-func get_sealed_crystal() -> TrialSealedCrystal:
-	return _sealed_crystal
 
 
 func get_q_hint() -> TrialQHint:

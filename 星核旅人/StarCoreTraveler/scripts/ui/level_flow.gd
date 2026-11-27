@@ -79,13 +79,14 @@ static func release_one_shot_actions() -> void:
 
 
 ## Production scene change: unpause the tree first (pause is tree-global), then
-## switch to the real PackedScene path.
-static func change_scene(tree: SceneTree, path: String) -> void:
+## switch to the real PackedScene path.  Returns the engine error so title
+## callers can restore their menu instead of freezing on a black frame.
+static func change_scene(tree: SceneTree, path: String) -> Error:
 	if tree == null:
-		return
+		return ERR_UNCONFIGURED
 	tree.paused = false
 	release_gameplay_actions()
-	tree.change_scene_to_file(path)
+	return tree.change_scene_to_file(path)
 
 
 static func return_to_title(tree: SceneTree) -> void:

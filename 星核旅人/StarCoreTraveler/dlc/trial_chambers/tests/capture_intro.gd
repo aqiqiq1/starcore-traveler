@@ -14,8 +14,8 @@ extends Node
 const TRIAL_SCENE: String = "res://dlc/trial_chambers/trial_chambers.tscn"
 const OUT_DIR: String = "res://screenshots/trial_opening_20261127"
 const FRAMES: Array = [
-	[0.55, "00_gate_real_wide.png"],
-	[1.62, "01_crystals_and_lock.png"],
+	[0.55, "00_two_gates_real_wide.png"],
+	[1.62, "01_gold_crystal_and_two_doors.png"],
 	[2.30, "02_seam_light_pool.png"],
 	[3.22, "03_pull_to_player.png"],
 ]

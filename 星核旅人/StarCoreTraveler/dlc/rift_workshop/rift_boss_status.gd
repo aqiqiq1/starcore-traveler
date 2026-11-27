@@ -4,8 +4,9 @@ extends HudBossBar
 ## Mirror-boss adapter over the shared HudBossBar.  It keeps the old
 ## set_state / set_anchor_state signatures used by rift_workshop.gd and the
 ## existing tests, but draws the same 360x16 bar as every other chapter:
-## name 双面镜, red core fill, two face plates, three core diamonds, three
-## phase cells.  There is no separate 340x28 panel or 10 px status text.
+## name 双面镜, three-segment red core bar, two face plates (the independent
+## objects) and three phase cells.  The duplicate core diamond row is gone.
+## There is no separate 340x28 panel or 10 px status text.
 
 const BOSS_NAME: String = "双面镜"
 const MAX_PHASES: int = 3

@@ -96,6 +96,30 @@ func _test_first_play_locks_and_finish() -> void:
 	_check(opening.get_shake_amplitude() <= 2.0,
 		"earthquake shake is <= 2 px", str(opening.get_shake_amplitude()))
 
+	# The 0-1.95 s black hold must have no lit pixel at all.  Sampling through
+	# 2.45 s is stricter: not even one ember may appear before the scene fade.
+	var dust_seen_early: bool = opening.is_dust_visible()
+	while opening.get_elapsed() < 2.45:
+		if opening.is_dust_visible():
+			dust_seen_early = true
+		await get_tree().process_frame
+	_check(not dust_seen_early, "opening pure black / pre-fade has no dust motes",
+		"alpha=%.2f" % opening.get_dust_alpha())
+	_check(opening.get_dust_alpha() < 0.001,
+		"dust alpha is still zero before the 2.5 s scene fade",
+		str(opening.get_dust_alpha()))
+	while opening.get_elapsed() < 3.3:
+		await get_tree().process_frame
+	var dust_color: Color = opening.get_dust_color()
+	_check(opening.is_dust_visible() and opening.get_dust_alpha() >= 0.99,
+		"warm embers have fully faded in after 2.5 s", str(opening.get_dust_alpha()))
+	_check(opening.get_dust_count() >= 18 and opening.get_dust_count() <= 24,
+		"ember count is 18-24", str(opening.get_dust_count()))
+	_check(opening.get_dust_size() == 3,
+		"each ember is a 3x3 grain", str(opening.get_dust_size()))
+	_check(dust_color.r > dust_color.g and dust_color.g > dust_color.b,
+		"ember colour is warm (R>G>B)", str(dust_color))
+
 	var start_x: float = player.global_position.x
 	var start_y: float = player.global_position.y
 	var toggles: int = player.get_polarity_toggle_count()

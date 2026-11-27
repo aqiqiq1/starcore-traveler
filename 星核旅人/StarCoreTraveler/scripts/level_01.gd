@@ -1,4 +1,4 @@
-class_name Level01
+﻿class_name Level01
 extends Node2D
 
 ## Formal level 01 "断桥庭院" (first playable version).
@@ -19,6 +19,7 @@ const START_REASON: String = "level_start"
 const RESTART_REASON: String = "level_restart"
 const PAUSE_MENU_SCRIPT = preload("res://scripts/ui/pause_menu.gd")
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
+const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
 const FOOTSTEP_SCRIPT = preload("res://scripts/audio/player_footstep_audio.gd")
 const OPENING_SCRIPT = preload("res://scripts/narrative/opening_cinematic.gd")
 const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popup.tscn")
@@ -41,6 +42,9 @@ const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popu
 @export var menu_camera_start_position: Vector2 = Vector2(320.0, -180.0)
 @export var pause_audio_settings_path: String = "user://audio_settings.cfg"
 @export var pause_display_settings_path: String = "user://display_settings.cfg"
+## Empty = the shared user://chapter_progress.cfg.  Tests may point this at a
+## throwaway file before add_child(); gameplay never sets it.
+@export var chapter_progress_path: String = ""
 
 @onready var _world: Node2D = $World
 @onready var _player: PrototypePlayer = $World/Player
@@ -562,7 +566,7 @@ func _on_player_polarity_changed(positive: bool) -> void:
 	# set_polarity_state emits without incrementing, so neither can sound.
 	var toggles: int = _player.get_polarity_toggle_count()
 	if toggles > _last_polarity_toggles:
-		DemoAudio.play_polarity_switch()
+		DemoAudio.play_polarity_switch(positive)
 	_last_polarity_toggles = toggles
 	_hud.set_polarity(positive)
 
@@ -615,6 +619,7 @@ func _on_exit_reached() -> void:
 	if _opening != null and _opening.is_active():
 		_opening.abort()
 	_completed = true
+	CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_L1, chapter_progress_path)
 	_footstep_stop()
 	_completion_count += 1
 	DemoAudio.play_complete()

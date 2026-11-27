@@ -11,7 +11,8 @@ extends Node
 ## timing.
 ##
 ## Timeline (20.4 s):
-##   0.0-2.5  black, dust first, low rumble + debris, camera shake <= 2 px
+##   0.0-1.95 pure black, no lit pixel at all; low rumble + debris, shake <= 2 px
+##   2.5-3.1  warm 3x3 embers fade in (lower-middle band, slow upward drift)
 ##   2.5-5.0  fade-in to the wide bridge courtyard, cold sky, clouds running
 ##   5.0-8.0  player staggers in from the right edge, stops, looks around
 ##   8.0-9.25 camera pushes to 1.7x on the stele and player; 9.25 touch
@@ -37,6 +38,16 @@ const DURATION: float = 20.4
 
 const BLACK_END: float = 2.5
 const FADE_END: float = 4.5
+## The opening black must not read as noise.  It stays pure black first, then
+## only a small lower-middle cluster of warm gold embers fades in and drifts up.
+const DUST_START: float = 2.5
+const DUST_FADE_IN: float = 0.60
+const DUST_FADE_OUT_START: float = 4.5
+const DUST_FADE_OUT_END: float = 5.4
+const DUST_COUNT: int = 20
+const DUST_SIZE: int = 3
+const DUST_BAND_MIN_Y: float = 220.0
+const DUST_BAND_SIZE: float = 100.0
 const ENTER_START: float = 5.0
 const ENTER_END: float = 8.0
 const TOUCH_TIME: float = 9.25
@@ -94,7 +105,7 @@ const CORE_GLOW_FRAME_COUNT: int = 4
 const BLACK: Color = Color(0.003, 0.008, 0.010, 1.0)
 const GOLD: Color = Color(1.0, 0.82, 0.38, 1.0)
 const CYAN: Color = Color(0.37, 0.88, 0.90, 1.0)
-const DUST_COLOR: Color = Color(0.72, 0.78, 0.74, 1.0)
+const DUST_COLOR: Color = Color(1.0, 0.72, 0.34, 1.0)
 
 enum Phase { IDLE, BLACK, FADE_IN, ENTER, TOUCH, DIALOGUE, CORE, RETURN, AWAIT_RELEASE }
 
@@ -197,6 +208,7 @@ var _return_played: bool = false
 var _pre_player_position: Vector2 = Vector2.ZERO
 var _pre_facing: int = 1
 var _shake_amplitude: float = 0.0
+var _dust_alpha: float = 0.0
 var _played_cues: Dictionary = {}
 var _cue_count: int = 0
 
@@ -441,6 +453,9 @@ func start() -> bool:
 	_fade.color = BLACK
 	_fade.visible = true
 	_dust.position = Vector2.ZERO
+	_dust_alpha = 0.0
+	_dust.modulate.a = 0.0
+	_dust.visible = false
 	_vignette.visible = true
 	_apply_letterbox(LETTERBOX_HEIGHT)
 	_top_bar.visible = true
@@ -763,12 +778,14 @@ func _update_visuals(time: float, delta: float) -> void:
 	_fade.visible = fade_alpha > 0.001
 
 	var dust_alpha: float = 0.0
-	if time < 0.8:
-		dust_alpha = clampf(time / 0.8, 0.0, 1.0)
-	elif time < 4.0:
-		dust_alpha = 1.0
-	elif time < 5.2:
-		dust_alpha = 1.0 - smoothstep(4.0, 5.2, time)
+	if time >= DUST_START:
+		dust_alpha = smoothstep(DUST_START, DUST_START + DUST_FADE_IN, time)
+	if time >= DUST_FADE_OUT_START:
+		dust_alpha *= 1.0 - smoothstep(
+			DUST_FADE_OUT_START, DUST_FADE_OUT_END, time
+		)
+	_dust_alpha = dust_alpha
+	_dust.modulate.a = dust_alpha
 	_dust.visible = dust_alpha > 0.001
 	_dust.queue_redraw()
 
@@ -851,22 +868,30 @@ func _update_touch_spark(time: float) -> void:
 		_touch_spark.queue_redraw()
 
 
+## Warm gold embers after the pure-black hold.  Twenty 3x3 grains stay in the
+## lower-middle band (never a full-screen field), rise slowly and use a warm
+## R>G>B colour so they read as embers / floating dust, not white sensor noise.
+## The layer alpha is owned by _update_visuals, so this only draws the grains.
 func _draw_dust(canvas: CanvasItem) -> void:
 	if _dust == null or not _dust.visible:
 		return
-	var total: int = 72
-	for index: int in range(total):
-		var speed: float = 2.0 + float(index % 5) * 1.1
-		var x: float = fmod(float(index) * 53.0 + _elapsed * speed, VIEW_SIZE.x + 20.0) - 10.0
-		var y: float = fmod(float(index) * 31.0 + _elapsed * (0.7 + float(index % 3) * 0.35), VIEW_SIZE.y + 12.0) - 6.0
-		var alpha: float = (0.20 + 0.24 * absf(sin(_elapsed * 0.9 + float(index)))) * 0.80
+	var cluster_centers: Array[float] = [224.0, 336.0, 448.0]
+	for index: int in range(DUST_COUNT):
+		var x: float = cluster_centers[index % cluster_centers.size()] \
+			+ fmod(float(index) * 41.0, 72.0) - 36.0
+		var base_y: float = 272.0 + fmod(float(index) * 53.0, 56.0) - 28.0
+		var speed: float = 0.30 + float(index % 4) * 0.13
+		var y: float = fposmod(
+			base_y - _elapsed * speed - DUST_BAND_MIN_Y, DUST_BAND_SIZE
+		) + DUST_BAND_MIN_Y
+		var alpha: float = 0.34 + 0.22 * absf(
+			sin(_elapsed * 0.7 + float(index) * 1.7)
+		)
 		var color: Color = Color(DUST_COLOR, alpha)
-		if index % 4 == 0:
-			canvas.draw_rect(Rect2(floorf(x), floorf(y), 2.0, 1.0), color)
-		elif index % 9 == 0:
-			canvas.draw_rect(Rect2(floorf(x), floorf(y), 1.0, 2.0), color)
-		else:
-			canvas.draw_rect(Rect2(floorf(x), floorf(y), 1.0, 1.0), color)
+		var origin: Vector2 = Vector2(floorf(x), floorf(y))
+		canvas.draw_rect(
+			Rect2(origin, Vector2(DUST_SIZE, DUST_SIZE)), color
+		)
 
 
 func _draw_vignette(canvas: CanvasItem) -> void:
@@ -1031,6 +1056,8 @@ func _finish_now(skipped: bool) -> void:
 
 	_ui.visible = false
 	_fade.visible = false
+	_dust_alpha = 0.0
+	_dust.modulate.a = 0.0
 	_dust.visible = false
 	_vignette.visible = false
 	_stop_audio()
@@ -1146,6 +1173,8 @@ func abort() -> void:
 		_hud.visible = true
 	_ui.visible = false
 	_fade.visible = false
+	_dust_alpha = 0.0
+	_dust.modulate.a = 0.0
 	_dust.visible = false
 	_vignette.visible = false
 	_stop_audio()
@@ -1475,6 +1504,28 @@ func get_black_alpha() -> float:
 	if _fade == null or not _fade.visible:
 		return 0.0
 	return _fade.color.a
+
+
+## 0.0 during the pure-black hold; rises only after DUST_START.  Tests and the
+## capture harness use this instead of guessing from the drawn pixels.
+func get_dust_alpha() -> float:
+	return _dust_alpha
+
+
+func is_dust_visible() -> bool:
+	return _dust != null and _dust.visible and _dust_alpha > 0.001
+
+
+func get_dust_count() -> int:
+	return DUST_COUNT
+
+
+func get_dust_size() -> int:
+	return DUST_SIZE
+
+
+func get_dust_color() -> Color:
+	return DUST_COLOR
 
 
 func get_play_count() -> int:

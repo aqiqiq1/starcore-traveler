@@ -1,4 +1,4 @@
-class_name Level03
+﻿class_name Level03
 extends StarCoreInteractionRoom
 
 ## Level-03 play-test revision: turn back left/up to the extra device platform,
@@ -10,6 +10,7 @@ signal level_completed
 
 const PAUSE_MENU_SCRIPT = preload("res://scripts/level03/l3_pause_menu.gd")
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
+const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
 const FOOTSTEP_SCRIPT = preload("res://scripts/audio/player_footstep_audio.gd")
 const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popup.tscn")
 
@@ -46,6 +47,9 @@ const KEY_CORE_SHEET: Texture2D = preload("res://assets/level03_prototype/key_co
 
 @export var pause_audio_settings_path: String = "user://audio_settings.cfg"
 @export var pause_display_settings_path: String = "user://display_settings.cfg"
+## Empty = the shared user://chapter_progress.cfg.  Tests may point this at a
+## throwaway file before add_child(); gameplay never sets it.
+@export var chapter_progress_path: String = ""
 
 @onready var _l3_player: L3Player = $Player
 @onready var _camera: Camera2D = $Player/Camera2D
@@ -1033,6 +1037,7 @@ func _complete_city() -> void:
 	_cancel_recovery()
 	_footstep_stop()
 	_completed = true
+	CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_L3, chapter_progress_path)
 	_completion_count += 1
 	_clear_retry_pending()
 	DemoAudio.play_complete()
@@ -1057,7 +1062,7 @@ func _on_player_polarity_changed(positive: bool) -> void:
 	# set_polarity_state (retry/recovery) emits without incrementing.
 	var toggles: int = _player.get_polarity_toggle_count()
 	if toggles > _last_polarity_toggles:
-		DemoAudio.play_polarity_switch()
+		DemoAudio.play_polarity_switch(positive)
 	_last_polarity_toggles = toggles
 	if _hud03 != null:
 		_hud03.set_polarity(positive)
@@ -1465,8 +1470,8 @@ func _update_level_hud() -> void:
 	var combat: bool = _is_combat_active()
 	_hud03.set_combat(combat)
 	# Same 360x16 boss bar as every combat chapter; the guard's existing three
-	# true-damage points are the core cells, and its old overhead bar is
-	# suppressed in presentation only.
+	# true-damage points are the three red segments, and its old overhead bar
+	# is suppressed in presentation only.
 	var show_boss: bool = (
 		_stable_stage >= STAGE_ARENA
 		and not _guard.is_defeated()

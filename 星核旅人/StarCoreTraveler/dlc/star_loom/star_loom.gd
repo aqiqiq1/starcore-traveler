@@ -1,4 +1,4 @@
-﻿class_name StarLoom
+class_name StarLoom
 extends Node2D
 
 ## DLC chapter 3: 星核织机 (Star Loom), one 960 x 360 boss hall.
@@ -8,10 +8,15 @@ extends Node2D
 ## opposite-phase J hit breaks a node or hurts the exposed core.  Both nodes
 ## down -> core open -> three true hits -> next stage (three stages total).
 ##
-## The boss has three attacks, introduced by stage:
-##   1. slow homing bolts      (0.70 s warning)
-##   2. sweeping light band    (0.80 s warning)
-##   3. summon 1-2 rift wisps  (1.00 s warning)
+## The boss attacks are introduced by stage:
+##   1. one summon first, then slow homing bolts (0.70 s warning)
+##   2. sweeping light band (0.80 s warning) + floor fire + homing
+##   3. summon / sweep / fire / homing / rolling gears
+##
+## The first request of the fight is always one 裂隙浮灵: the player meets the
+## purple wisp in stage 1 instead of waiting for stage 3.  It is still a single
+## 44 px/s drifter that dies to one J, so stage 1 does not become a wisp wave;
+## the rest of stage 1 remains homing-only.
 ##
 ## Three accepted hits spend one of the run's three lives: the health meter
 ## empties, the current stage is restored at its entrance, and the life row
@@ -29,8 +34,12 @@ signal level_completed
 @export var show_intro_guide: bool = true
 ## First-entry opening film; R and combat retries never replay it.
 @export var show_intro_cinematic: bool = true
+## Empty = the shared user://chapter_progress.cfg.  Tests may point this at a
+## throwaway file before add_child(); gameplay never sets it.
+@export var chapter_progress_path: String = ""
 
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
+const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
 const DLC_GUIDE_SCENE: PackedScene = preload("res://dlc/ui/dlc_guide.tscn")
 const LOOM_GUIDE_SCRIPT: Script = preload("res://dlc/star_loom/loom_guide.gd")
 const INTRO_CINEMATIC_SCENE: PackedScene = preload(
@@ -89,8 +98,8 @@ const BODY_CENTER_OFFSET: Vector2 = Vector2(0.0, -15.0)
 const AUTO_FACE_RANGE: float = 240.0
 
 ## Warnings are 0.15-0.20 s wider than the first pass and far above the 0.3 s
-## floor.  Stage 1 only uses homing; stage 2 adds sweep + floor fire; stage 3
-## adds wisps + rolling gears.
+## floor.  The fight opens with one wisp summon in stage 1; stage 1 then uses
+## homing only, stage 2 adds sweep + floor fire, stage 3 adds wisps + gears.
 const WINDUP_HOMING: float = 0.70
 const WINDUP_SWEEP: float = 0.80
 const WINDUP_FIRE: float = 0.95
@@ -126,8 +135,8 @@ enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 @onready var _gate_first: PolarityGate = $GateFirst
 @onready var _gate_second: PolarityGate = $GateSecond
 @onready var _gate_proxy: LoomGateProxy = $GateSecondProxy
-@onready var _rune_stone: LoomRuneStone = $RuneStone
-@onready var _rune_socket: LoomRuneSocket = $RuneSocket
+@onready var _core_carrier: LoomCoreCarrier = $CoreCarrier
+@onready var _core_bay: LoomCoreBay = $CoreBay
 @onready var _checkpoint: LevelCheckpoint = $Checkpoint
 
 var _footsteps: PlayerFootstepAudio = null
@@ -179,8 +188,8 @@ var _last_polarity_toggles: int = 0
 ## kept as the fallback.
 var _checkpoint_position: Vector2 = ARENA_SPAWN
 var _gate_hint_shown: bool = false
-var _stone_hint_shown: bool = false
-var _socket_was_powered: bool = false
+var _core_hint_shown: bool = false
+var _bay_was_powered: bool = false
 
 var _attack_state: AttackState = AttackState.IDLE
 var _attack_kind: String = ""
@@ -188,6 +197,7 @@ var _attack_left: float = 0.0
 var _telegraph_windup: float = 1.0
 var _attack_cursor: int = 0
 var _summon_serial: int = 0
+var _intro_summon_pending: bool = false
 var _homing_points: Array[Vector2] = []
 var _homing_directions: Array[Vector2] = []
 var _summon_points: Array[Vector2] = []
@@ -216,7 +226,7 @@ func _ready() -> void:
 	for node: Node in [
 		$CityBack, $Terrain, $CityFloor, $Props, $Boss, $Boss/Core,
 		$Boss/NodeA, $Boss/NodeB, $Hazards, $Player, $Fx, $CityFore,
-		$GateFirst, $GateSecond, $GateSecondProxy, $RuneStone, $RuneSocket,
+		$GateFirst, $GateSecond, $GateSecondProxy, $CoreCarrier, $CoreBay,
 		$Checkpoint,
 	]:
 		if node != null:
@@ -251,9 +261,10 @@ func _ready() -> void:
 	_setup_footsteps()
 
 	# Reused base-game mechanisms: the trial polarity door, the rune-stone
-	# field, and the level checkpoint.  The second gate is powered by the
-	# stone's floor socket; its proxy follows the real body so deny/anti-pinch
-	# stay attached to the actual player instead of a fixed point.
+	# force field (now moving a star core), and the level checkpoint.  The
+	# second gate is powered by the star core's floor bay; its proxy follows
+	# the real body so deny/anti-pinch stay attached to the actual player
+	# instead of a fixed point.
 	_gate_first.set_player_node(_player)
 	_gate_second.set_player_node(_gate_proxy)
 	_gate_proxy.bind_target(_player)
@@ -573,11 +584,11 @@ func _clean_hazard_lists() -> void:
 		_sweep = null
 
 
-# --- loom approach: gate / rune stone / checkpoint -------------------------
+# --- loom approach: gate / delivered star core / checkpoint ----------------
 
 ## Runs before the boss-start check so the approach puzzle works while the loom
-## is still dormant.  The stone uses the existing RuneStoneField sample; the
-## second gate uses the trial PolarityGate with a follower proxy; the
+## is still dormant.  The core uses the existing RuneStoneField force sample;
+## the second gate uses the trial PolarityGate with a follower proxy; the
 ## checkpoint uses the base LevelCheckpoint script and stores a real spawn.
 func _tick_loom_mechanics(delta: float) -> void:
 	if (
@@ -585,19 +596,19 @@ func _tick_loom_mechanics(delta: float) -> void:
 		or _game_over
 	):
 		return
-	_rune_stone.tick_stone(delta)
-	_rune_socket.set_occupied(_rune_stone.is_on_socket())
+	_core_carrier.tick_stone(delta)
+	_core_bay.set_occupied(_core_carrier.is_on_socket())
 	var powered: bool = is_second_gate_powered()
 	_gate_proxy.set_positive_override(not powered)
 	if not _boss_active and not _intro_active:
 		_update_mechanics_hints(powered)
-	_socket_was_powered = powered
+	_bay_was_powered = powered
 
 
-## The socket is the pressure source; once the checkpoint is recorded the
-## second gate stays open so a player on its far side can never be locked out.
+## The bay is the pressure source; once the checkpoint is recorded the second
+## gate stays open so a player on its far side can never be locked out.
 func is_second_gate_powered() -> bool:
-	return _rune_socket.is_occupied() or _checkpoint.is_activated()
+	return _core_bay.is_occupied() or _checkpoint.is_activated()
 
 
 func _update_mechanics_hints(powered: bool) -> void:
@@ -610,16 +621,16 @@ func _update_mechanics_hints(powered: bool) -> void:
 		_gate_hint_shown = true
 		_hud.show_event("同相门 · 日纹为辉相", 2.2)
 	if (
-		not _stone_hint_shown
+		not _core_hint_shown
 		and x >= 180.0
 		and x <= _gate_second.global_position.x
 	):
-		_stone_hint_shown = true
-		_hud.show_event("符文石 · 同相推开，异相拉近", 2.4)
-	if powered and not _socket_was_powered:
-		_hud.show_event("符文石已压槽 · 第二道门开启", 1.8)
-	elif not powered and _socket_was_powered and not _checkpoint.is_activated():
-		_hud.show_event("符文石离槽 · 第二道门关闭", 1.6)
+		_core_hint_shown = true
+		_hud.show_event("星核 · 青环为澜相：同相推开，异相拉近", 2.8)
+	if powered and not _bay_was_powered:
+		_hud.show_event("星核入仓 · 第二道门开启", 1.8)
+	elif not powered and _bay_was_powered and not _checkpoint.is_activated():
+		_hud.show_event("星核离仓 · 第二道门关闭", 1.6)
 
 
 func _on_first_gate_denied(required_positive: bool) -> void:
@@ -639,7 +650,7 @@ func _on_first_gate_opened() -> void:
 	if _completed or _scene_leaving:
 		return
 	# Only announce the opening when the body is actually at this gate; the
-	# same Q in the stone section must not overwrite the stone hint with a
+	# same Q in the core section must not overwrite the core hint with a
 	# "gate opened" line from a door behind the player.
 	if absf(_player.global_position.x - _gate_first.global_position.x) > 20.0:
 		return
@@ -649,8 +660,8 @@ func _on_first_gate_opened() -> void:
 func _on_second_gate_denied(_required_positive: bool) -> void:
 	if _completed or _scene_leaving:
 		return
-	_stone_hint_shown = true
-	_hud.show_event("第二道门 · 将符文石压入凹槽", 1.8)
+	_core_hint_shown = true
+	_hud.show_event("第二道门 · 将星核送入仓中", 1.8)
 
 
 func _on_checkpoint_entered(checkpoint: LevelCheckpoint) -> void:
@@ -674,14 +685,14 @@ func _reset_loom_mechanics() -> void:
 	_gate_second.set_required_positive(false)
 	# Unpowered: virtual phase true, required phase false -> solid.
 	_gate_proxy.set_positive_override(true)
-	_rune_stone.reset_state()
-	_rune_socket.set_occupied(false)
+	_core_carrier.reset_state()
+	_core_bay.set_occupied(false)
 	_checkpoint.set_activated(false)
 	_checkpoint_position = ARENA_SPAWN
 	_player.set_spawn_point(START_SPAWN)
 	_gate_hint_shown = false
-	_stone_hint_shown = false
-	_socket_was_powered = false
+	_core_hint_shown = false
+	_bay_was_powered = false
 
 
 # --- boss start / stage flow ----------------------------------------------
@@ -706,6 +717,7 @@ func _start_boss() -> void:
 	_attack_left = 1.4
 	_attack_cursor = 0
 	_summon_serial = 0
+	_intro_summon_pending = true
 	_boss_grace = START_GRACE
 	_audio.start_music()
 	_audio.play_core_exposed()
@@ -777,6 +789,7 @@ func _advance_stage() -> void:
 	_attack_state = AttackState.IDLE
 	_attack_left = 1.5
 	_attack_cursor = 0
+	_intro_summon_pending = false
 	_boss_grace = STAGE_GRACE
 	_stage_flash = 1.0
 	_audio.play_stage()
@@ -821,7 +834,7 @@ func _update_objective(force: bool = false) -> void:
 		text = "目标：织机停转"
 		key = "done"
 	elif not _boss_active:
-		# The approach has two real gates and one stone socket before the
+		# The approach has two real gates and the star-core bay before the
 		# arena; the objective reads the next unresolved mechanism.  The
 		# checkpoint latches the second gate, so after it the only goal is
 		# the hall again.
@@ -841,8 +854,8 @@ func _update_objective(force: bool = false) -> void:
 				text = "目标：换辉相，过同相门"
 				key = "gate"
 		else:
-			text = "目标：将符文石推入凹槽"
-			key = "stone"
+			text = "目标：将星核送入星核仓"
+			key = "core_delivery"
 	elif _core.is_exposed():
 		text = "目标：异相攻击暴露的核心"
 		key = "core"
@@ -879,6 +892,13 @@ func _tick_attack(delta: float) -> void:
 
 
 func _next_attack_kind() -> String:
+	# The first request of the fight is the wisp summon, even though the stage-1
+	# pool stays homing-only.  This is the requested earlier introduction, not a
+	# permanent stage-1 pool change: after this one request the normal pool runs.
+	if _intro_summon_pending and _stage == 1:
+		_intro_summon_pending = false
+		_attack_cursor = 0
+		return "summon"
 	var pool: Array = get_attack_pool()
 	var kind: String = String(pool[_attack_cursor % pool.size()])
 	_attack_cursor += 1
@@ -908,7 +928,10 @@ func _begin_telegraph(kind: String) -> void:
 		"sweep":
 			_hud.show_event("预警 · 横扫光带 · 跳起", 1.2)
 		"summon":
-			_hud.show_event("预警 · 召唤裂隙浮灵", 1.4)
+			if _stage == 1 and _summon_serial == 0:
+				_hud.show_event("预警 · 裂隙浮灵 · 挥剑可清", 1.6)
+			else:
+				_hud.show_event("预警 · 召唤裂隙浮灵", 1.4)
 		"fire":
 			_hud.show_event("预警 · 地砖火柱 · 离开发光地砖", 1.4)
 		"gear":
@@ -1335,6 +1358,7 @@ func _reset_current_stage() -> void:
 	_attack_left = 1.2
 	_attack_cursor = 0
 	_summon_serial = 0
+	_intro_summon_pending = false
 	_fire_serial = 0
 	_stage_flash = 0.0
 	_clear_hazards()
@@ -1506,6 +1530,7 @@ func _complete_chapter() -> void:
 	if _completed or _scene_leaving:
 		return
 	_completed = true
+	CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_LOOM, chapter_progress_path)
 	_boss_active = false
 	_pending_completion = false
 	_retry_pending = false
@@ -1526,7 +1551,8 @@ func _complete_chapter() -> void:
 	_hud.set_gear_warning(false, 0.0)
 	_hud.show_completion(true, _elapsed)
 	_hud.set_objective("目标：织机停转")
-	# The completion row should show all three core pips and no shielded icon.
+	# The completion bar should show the three-segment red core row with no
+	# duplicate core diamonds and no shielded icon.
 	_hud.set_boss_state(
 		_stage, MAX_STAGE, 0, CORE_HITS_PER_STAGE, CORE_HITS_PER_STAGE, true,
 		0, PLAYER_HIT_LIMIT, _lives, PLAYER_LIVES
@@ -1588,6 +1614,7 @@ func _restart_chapter() -> void:
 	_attack_left = 0.0
 	_attack_cursor = 0
 	_summon_serial = 0
+	_intro_summon_pending = false
 	_attack_kind = ""
 	_telegraph_windup = 1.0
 	_attack_key_down = false
@@ -1676,12 +1703,12 @@ func get_gate_proxy() -> LoomGateProxy:
 	return _gate_proxy
 
 
-func get_rune_stone() -> LoomRuneStone:
-	return _rune_stone
+func get_core_carrier() -> LoomCoreCarrier:
+	return _core_carrier
 
 
-func get_rune_socket() -> LoomRuneSocket:
-	return _rune_socket
+func get_core_bay() -> LoomCoreBay:
+	return _core_bay
 
 
 func get_checkpoint() -> LevelCheckpoint:
@@ -1818,6 +1845,11 @@ func get_attack_kind() -> String:
 	return _attack_kind
 
 
+## Test/capture read: the next natural request will be the one early wisp.
+func is_intro_summon_pending() -> bool:
+	return _intro_summon_pending
+
+
 func get_telegraph_progress() -> float:
 	if _attack_state != AttackState.TELEGRAPH or _telegraph_windup <= 0.0:
 		return 0.0
@@ -1942,6 +1974,7 @@ func debug_set_stage(stage: int) -> void:
 	_attack_left = 1.0
 	_attack_cursor = 0
 	_summon_serial = 0
+	_intro_summon_pending = false
 	_clear_hazards()
 	_core.configure()
 	_core.set_active(true)

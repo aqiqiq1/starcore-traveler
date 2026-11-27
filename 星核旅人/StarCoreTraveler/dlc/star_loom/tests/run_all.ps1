@@ -56,6 +56,7 @@ if (-not (Test-Path $Godot)) {
 $summary += Invoke-Case "loom_intro" "res://dlc/star_loom/tests/intro_test.tscn" "intro_test" $true
 $summary += Invoke-Case "loom_mech" "res://dlc/star_loom/tests/mechanics_test.tscn" "mechanics_test" $true
 $summary += Invoke-Case "loom_gate" "res://dlc/star_loom/tests/gate_test.tscn" "gate_test" $true
+$summary += Invoke-Case "loom_wisp" "res://dlc/star_loom/tests/core_wisp_test.tscn" "core_wisp_test" $true
 $summary += Invoke-Case "loom_route" "res://dlc/star_loom/tests/route_test.tscn" "route_test" $true
 $summary += Invoke-Case "loom_guide" "res://dlc/star_loom/tests/guide_test.tscn" "guide_test" $true
 $summary += Invoke-Case "loom_ui_parity" "res://dlc/star_loom/tests/ui_parity_test.tscn" "ui_parity_test" $true

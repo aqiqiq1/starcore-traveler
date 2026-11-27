@@ -128,6 +128,8 @@ func _run() -> void:
 			crystals.append(node)
 	_check(crystals.size() == 1, "only the first gate has a phase crystal",
 		str(crystals.size()))
+	_check(_trial.get_node_or_null("SealedCrystal") == null,
+		"the removed sealed twin is not in the scene")
 	_check(_crystal.global_position.x < _gold.global_position.x,
 		"the crystal stands before the gold gate",
 		"crystal=%.0f gold=%.0f" % [_crystal.global_position.x, _gold.global_position.x])

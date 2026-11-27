@@ -6,7 +6,7 @@ extends Node2D
 ## The film is not a painted screen: every frame is the live chapter.  A real
 ## Camera2D hangs in front of the real loom (`Boss/Core`, `Boss/NodeA`,
 ## `Boss/NodeB`) and the real city wall, and the camera then pulls left through
-## the real gate / rune stone / checkpoint corridor to the real L3Player at the
+## the real gate / star-core bay / checkpoint corridor to the real L3Player at the
 ## chapter start (x=40).  The three lamp rows, the two side-orb halos and the
 ## central core light are world-space overlays anchored to the real wall and
 ## real boss nodes; they never replace the loom sprite or the boss state.

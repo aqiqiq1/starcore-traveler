@@ -576,7 +576,8 @@ func set_boss_visible(value: bool) -> void:
 		_boss_bar.set_active(value)
 
 
-## Trial guard uses the existing three true-damage points.
+## Trial guard uses the existing three true-damage points, drawn as three red
+## segments on the shared bar (no duplicate core diamonds).
 func set_boss_state(core_current: int, core_max: int = 3) -> void:
 	if _boss_bar != null:
 		_boss_bar.set_bar_values(core_current, core_max, 0, 1)

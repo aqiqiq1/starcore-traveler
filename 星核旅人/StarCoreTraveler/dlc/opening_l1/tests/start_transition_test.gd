@@ -8,6 +8,7 @@ extends Node
 
 const LEVEL_SCENE: String = "res://scenes/level_01.tscn"
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
+const TEST_PROGRESS: String = "user://start_transition_test_progress.cfg"
 
 var _checks: int = 0
 var _failures: Array[String] = []
@@ -28,8 +29,14 @@ func _ready() -> void:
 
 func _run() -> void:
 	LEVEL_FLOW.clear_new_game_request()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_PROGRESS))
 	var level: Level01 = (load(LEVEL_SCENE) as PackedScene).instantiate() as Level01
 	level.enable_start_menu = true
+	# 开始游戏 now follows the first unfinished chapter; pin this test to a
+	# fresh profile so it always starts L1 regardless of earlier test runs.
+	var start_menu: StartMenu = level.get_node_or_null("StartMenu") as StartMenu
+	if start_menu != null:
+		start_menu.chapter_progress_path = TEST_PROGRESS
 	get_tree().root.add_child(level)
 	get_tree().current_scene = level
 	await _wait_process(6)
@@ -91,9 +98,21 @@ func _run() -> void:
 		_check(opening.get_black_alpha() >= 0.999,
 			"new level's first frame is covered by black",
 			str(opening.get_black_alpha()))
+		_check(not opening.is_dust_visible() and opening.get_dust_alpha() < 0.001,
+			"start-game black has no dust on entry",
+			str(opening.get_dust_alpha()))
 		_check(opening.is_ui_visible(), "opening black UI is visible")
 		_check(get_viewport().get_camera_2d() == opening.get_opening_camera(),
 			"new level uses the authored opening camera")
+		# The '开始游戏' black is the same opening black: hold it through the
+		# 0-1.95 s pure-black window (sampled to 2.45 s) and make sure the dust
+		# layer never becomes visible before the scene fade.
+		var dust_seen: bool = false
+		while opening.get_elapsed() < 2.45:
+			if opening.is_dust_visible():
+				dust_seen = true
+			await get_tree().process_frame
+		_check(not dust_seen, "start-game black / pre-fade has no dust motes")
 		opening.abort()
 	await _wait_process(8)
 
@@ -120,6 +139,7 @@ func _check(condition: bool, label: String, detail: String = "") -> void:
 
 func _cleanup() -> void:
 	get_tree().paused = false
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_PROGRESS))
 	var current: Node = get_tree().current_scene
 	get_tree().current_scene = null
 	if current != null:

@@ -4,12 +4,12 @@ extends Node2D
 ## DLC1 星核试炼场 opening, 2026-11-27 rework.
 ##
 ## The film is not a painted screen: every frame is the live trial.  A real
-## Camera2D hangs in front of the real `GateGold` (the same PolarityGate node
-## the player meets), the real gold `PhaseCrystal` and the real sealed cyan twin
-## flank it, and the warm seam light is drawn over the gate's own 8 px curtain
+## Camera2D opens on a wide frame that holds the real gold `GateGold` (x=280),
+## the real gold `PhaseCrystal` (x=214) and the real cyan `GateCyan` (x=520) at
+## once.  The warm seam light is drawn over the gold gate's own 8 px curtain
 ## and the real terrain floor.  The camera then pulls back to the real L3Player
 ## at the entrance.  Only the dark grade, vignette and skip footer are
-## screen-space; they never draw the world.
+## screen-space; they never draw the world.  There is no fake sealed crystal.
 ##
 ## The gate's sun plate, padlock, curtain and collision are untouched.  The film
 ## only dims/restores the real node's modulate and adds light rings anchored to
@@ -33,13 +33,11 @@ const VIEW_CENTER: Vector2 = Vector2(320.0, 180.0)
 ## so the HUD can begin its fade without a camera step.
 const DURATION: float = 3.40
 const SKIP_HOLD: float = 0.60
-const GATE_FOCUS: Vector2 = Vector2(280.0, 245.0)
-const GATE_ZOOM: float = 1.60
-## The level's left limit is x=0 and the viewport is 640 wide, so the gameplay
-## camera (player x=40) and the gate view (x=280) both clamp to centre x=320.
-## A literal left pan would show empty sky left of the level, so the pull is a
-## real 1.6 -> 1.0 zoom-out with a 40 px centre settle; the player at the far
-## left enters the frame exactly as the gate slides left.
+## A true wide frame at 1.0x: x=400 shows 80..720, so the gold gate (280), the
+## gold crystal (214) and the cyan gate (520) are all inside one honest shot.
+## The camera then settles to the player's clamped 320 centre.
+const WIDE_FOCUS: Vector2 = Vector2(400.0, 180.0)
+const WIDE_ZOOM: float = 1.0
 const PULL_START: float = 2.55
 const PULL_END: float = 3.25
 const LIGHT_FADE_START: float = 3.00
@@ -59,7 +57,6 @@ const DARK_GRADE: Color = Color(0.004, 0.010, 0.014, 1.0)
 
 const GATE_DIM: Color = Color(0.36, 0.38, 0.38, 1.0)
 const CRYSTAL_DIM: Color = Color(0.30, 0.33, 0.34, 1.0)
-const RELIC_DIM: Color = Color(0.28, 0.33, 0.35, 1.0)
 
 const AUDIO_POOL_SIZE: int = 6
 
@@ -75,7 +72,6 @@ class WorldLightLayer:
 
 var _gate: PolarityGate = null
 var _crystal: TrialPhaseCrystal = null
-var _relic: TrialSealedCrystal = null
 var _player: L3Player = null
 var _player_camera: Camera2D = null
 var _hud: TrialHUD = null
@@ -93,7 +89,6 @@ var _font: Font = null
 
 var _gate_original: Color = Color.WHITE
 var _crystal_original: Color = Color.WHITE
-var _relic_original: Color = Color.WHITE
 
 var _gold_stream: AudioStream = null
 var _cyan_stream: AudioStream = null
@@ -113,7 +108,6 @@ var _space_latched: bool = false
 var _capture_mode: bool = false
 
 var _gold_lit: float = 0.0
-var _cyan_lit: float = 0.0
 var _gate_wake: float = 0.0
 var _lock_turn: float = 0.0
 var _seam: float = 0.0
@@ -142,14 +136,12 @@ func _ready() -> void:
 func configure(
 	gate: PolarityGate,
 	crystal: TrialPhaseCrystal,
-	relic: TrialSealedCrystal,
 	player: L3Player,
 	player_camera: Camera2D,
 	hud: TrialHUD
 ) -> void:
 	_gate = gate
 	_crystal = crystal
-	_relic = relic
 	_player = player
 	_player_camera = player_camera
 	_hud = hud
@@ -159,8 +151,6 @@ func configure(
 		_gate_original = _gate.modulate
 	if _crystal != null:
 		_crystal_original = _crystal.modulate
-	if _relic != null:
-		_relic_original = _relic.modulate
 	if _player_camera != null and _opening_camera != null:
 		_opening_camera.limit_left = _player_camera.limit_left
 		_opening_camera.limit_top = _player_camera.limit_top
@@ -369,7 +359,6 @@ func start() -> bool:
 	_played_cues.clear()
 	_cue_count = 0
 	_gold_lit = 0.0
-	_cyan_lit = 0.0
 	_gate_wake = 0.0
 	_lock_turn = 0.0
 	_seam = 0.0
@@ -381,13 +370,9 @@ func start() -> bool:
 	_gate_original = _gate.modulate
 	if _crystal != null:
 		_crystal_original = _crystal.modulate
-	if _relic != null:
-		_relic_original = _relic.modulate
 	_gate.modulate = GATE_DIM
 	if _crystal != null:
 		_crystal.modulate = CRYSTAL_DIM
-	if _relic != null:
-		_relic.modulate = RELIC_DIM
 
 	# Hand the viewport to the real film camera.  The gameplay camera is
 	# disabled rather than merely outranked, so no later smoothing tick can
@@ -448,7 +433,6 @@ func _apply_time(value: float) -> void:
 		)
 
 	_gold_lit = smoothstep(0.98, 1.24, value)
-	_cyan_lit = smoothstep(1.24, 1.50, value)
 	_gate_wake = smoothstep(0.82, 1.55, value)
 	_lock_turn = smoothstep(1.02, 1.95, value)
 	_seam = smoothstep(1.30, 2.10, value)
@@ -460,8 +444,6 @@ func _apply_time(value: float) -> void:
 		_gate.modulate = GATE_DIM.lerp(_gate_original, _gate_wake)
 	if _crystal != null and is_instance_valid(_crystal):
 		_crystal.modulate = CRYSTAL_DIM.lerp(_crystal_original, _gold_lit)
-	if _relic != null and is_instance_valid(_relic):
-		_relic.modulate = RELIC_DIM.lerp(_relic_original, _cyan_lit)
 
 	if _grade != null:
 		_grade.color = Color(DARK_GRADE, _grade_alpha)
@@ -483,8 +465,8 @@ func _apply_time(value: float) -> void:
 func _camera_state_at(value: float) -> Vector3:
 	var gameplay: Vector2 = _gameplay_camera_center()
 	var pull: float = smoothstep(PULL_START, PULL_END, value)
-	var center: Vector2 = GATE_FOCUS.lerp(gameplay, pull)
-	return Vector3(center.x, center.y, lerpf(GATE_ZOOM, 1.0, pull))
+	var center: Vector2 = WIDE_FOCUS.lerp(gameplay, pull)
+	return Vector3(center.x, center.y, lerpf(WIDE_ZOOM, 1.0, pull))
 
 
 ## The exact centre the real player camera would use for the current player.
@@ -569,8 +551,6 @@ func _restore_gate_looks() -> void:
 		_gate.modulate = _gate_original
 	if _crystal != null and is_instance_valid(_crystal):
 		_crystal.modulate = _crystal_original
-	if _relic != null and is_instance_valid(_relic):
-		_relic.modulate = _relic_original
 
 
 func _restore_player_camera() -> void:
@@ -757,7 +737,6 @@ func _draw_world_light(canvas: Node2D) -> void:
 	_draw_seam_light(canvas)
 	_draw_lock_rings(canvas)
 	_draw_crystal_halo(canvas, _crystal, _gold_lit, GOLD, GOLD_PALE)
-	_draw_crystal_halo(canvas, _relic, _cyan_lit, CYAN, CYAN_PALE)
 	_draw_dust(canvas)
 
 
@@ -1004,8 +983,6 @@ func set_time_for_capture(value: float) -> void:
 		_gate_original = Color.WHITE
 	if _crystal != null:
 		_crystal_original = Color.WHITE
-	if _relic != null:
-		_relic_original = Color.WHITE
 	if _player_camera != null:
 		_player_camera.enabled = false
 	if _opening_camera != null:
@@ -1104,10 +1081,6 @@ func get_gold_lit_amount() -> float:
 	return _gold_lit
 
 
-func get_cyan_lit_amount() -> float:
-	return _cyan_lit
-
-
 func get_lock_turn_amount() -> float:
 	return _lock_turn
 
@@ -1150,10 +1123,6 @@ func get_crystal() -> TrialPhaseCrystal:
 	return _crystal
 
 
-func get_relic() -> TrialSealedCrystal:
-	return _relic
-
-
 func get_player() -> L3Player:
 	return _player
 
@@ -1180,9 +1149,3 @@ func get_crystal_world_position() -> Vector2:
 	if _crystal == null:
 		return Vector2.ZERO
 	return _crystal.get_shard_center_global()
-
-
-func get_relic_world_position() -> Vector2:
-	if _relic == null:
-		return Vector2.ZERO
-	return _relic.get_shard_center_global()

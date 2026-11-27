@@ -43,8 +43,12 @@ signal level_completed
 @export var show_intro_guide: bool = true
 ## First-entry opening film; R and combat retries never replay it.
 @export var show_intro_cinematic: bool = true
+## Empty = the shared user://chapter_progress.cfg.  Tests may point this at a
+## throwaway file before add_child(); gameplay never sets it.
+@export var chapter_progress_path: String = ""
 
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
+const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
 const RIFT_GUIDE_SCRIPT: Script = preload("res://dlc/rift_workshop/rift_guide.gd")
 const INTRO_CINEMATIC_SCENE: PackedScene = preload(
 	"res://dlc/rift_workshop/rift_intro_cinematic.tscn"
@@ -1416,6 +1420,7 @@ func _complete_chapter() -> void:
 	_footstep_stop()
 	_hud.set_player_health_visible(false)
 	_completed = true
+	CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_RIFT, chapter_progress_path)
 	_boss_active = false
 	_audio.stop_music()
 	_boss_collapse_active = false

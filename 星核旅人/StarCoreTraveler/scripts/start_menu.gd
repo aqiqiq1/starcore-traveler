@@ -28,12 +28,14 @@ const GOLD: Color = Color("#f4cd63")
 const CYAN: Color = Color("#5fe1e6")
 const TEXT: Color = Color("#e7eceb")
 const MUTED: Color = Color("#a4b3be")
+const PALE_CYAN: Color = Color("#b6d6d2")
 const DIM: Color = Color("#728889")
 const PANEL_BG: Color = Color(0.014, 0.032, 0.040, 0.96)
 const PANEL_BORDER: Color = Color(0.45, 0.66, 0.63, 0.9)
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
+const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
 const TRIAL_SCENE_PATH: String = "res://dlc/trial_chambers/trial_chambers.tscn"
 ## Optional DLC chapter 2.  Its entry only exists while the scene file is
 ## present; with dlc/rift_workshop/ removed the base game shows the original
@@ -44,17 +46,26 @@ const RIFT_SCENE_PATH: String = "res://dlc/rift_workshop/rift_workshop.tscn"
 ## dlc/star_loom/ leaves the original menu untouched.
 const LOOM_SCENE_PATH: String = "res://dlc/star_loom/star_loom.tscn"
 
-const UI_BASE: Texture2D = preload("res://assets/menu/main_menu_ui_640.png")
+const UI_BASE: Texture2D = preload("res://assets/menu/main_menu_chapters_ui_640.png")
 const UI_FOCUS_START: Texture2D = preload("res://assets/menu/main_menu_focus_start_640.png")
-const UI_FOCUS_SETTINGS: Texture2D = preload("res://assets/menu/main_menu_focus_settings_640.png")
-const UI_QUIT: Texture2D = preload("res://assets/menu/main_menu_quit_640.png")
-const UI_FOCUS_QUIT: Texture2D = preload("res://assets/menu/main_menu_focus_quit_640.png")
+const UI_FOCUS_CHAPTER: Texture2D = preload("res://assets/menu/main_menu_chapters_focus_chapter_640.png")
+const UI_FOCUS_SETTINGS: Texture2D = preload(
+	"res://assets/menu/main_menu_chapters_focus_settings_640.png"
+)
+const UI_QUIT: Texture2D = preload("res://assets/menu/main_menu_chapters_quit_640.png")
+const UI_FOCUS_QUIT: Texture2D = preload(
+	"res://assets/menu/main_menu_chapters_focus_quit_640.png"
+)
 const UI_SETTINGS: Texture2D = preload("res://assets/menu/settings_panel_640.png")
 const UI_SETTINGS_RETURN_FOCUS: Texture2D = preload("res://assets/menu/settings_return_focus_640.png")
 
 const START_RECT: Rect2 = Rect2(256.0, 138.0, 128.0, 36.0)
-const SETTINGS_RECT: Rect2 = Rect2(294.0, 184.0, 52.0, 20.0)
-const QUIT_RECT: Rect2 = Rect2(284.0, 212.0, 72.0, 20.0)
+## New 章节 row: the freed 设置 slot directly under 开始游戏.  The three text
+## rows are packed a little tighter than the original so the DLC rows keep their
+## approved y positions (238/262/286).
+const CHAPTER_RECT: Rect2 = Rect2(294.0, 175.0, 52.0, 20.0)
+const SETTINGS_RECT: Rect2 = Rect2(294.0, 195.0, 52.0, 20.0)
+const QUIT_RECT: Rect2 = Rect2(284.0, 215.0, 72.0, 20.0)
 ## Optional trial entry, directly below the existing Quit row.  112x20 is the
 ## same small STONE button style used by the settings page.
 const TRIAL_RECT: Rect2 = Rect2(264.0, 238.0, 112.0, 20.0)
@@ -83,9 +94,19 @@ const PENDING_PANEL_RECT: Rect2 = Rect2(150.0, 100.0, 340.0, 150.0)
 const PENDING_CONFIRM_RECT: Rect2 = Rect2(166.0, 190.0, 140.0, 26.0)
 const PENDING_CANCEL_RECT: Rect2 = Rect2(334.0, 190.0, 140.0, 26.0)
 
+## 章节 page geometry.  Six 30 px rows keep the same STONE face/border as the
+## DLC entries; the panel uses the settings page's flat pixel frame.
+const CHAPTERS_PANEL_RECT: Rect2 = Rect2(88.0, 28.0, 464.0, 304.0)
+const CHAPTER_ROW_ORIGIN: Vector2 = Vector2(104.0, 90.0)
+const CHAPTER_ROW_SIZE: Vector2 = Vector2(432.0, 30.0)
+const CHAPTER_ROW_GAP: float = 3.0
+const CHAPTERS_RETURN_RECT: Rect2 = Rect2(430.0, 292.0, 110.0, 24.0)
+const CHAPTERS_HINT_RECT: Rect2 = Rect2(104.0, 294.0, 300.0, 14.0)
+
 const MASTER_BUS_NAME: StringName = &"Master"
 const DEFAULT_AUDIO_PATH: String = "user://audio_settings.cfg"
 const DEFAULT_DISPLAY_PATH: String = "user://display_settings.cfg"
+const DEFAULT_CHAPTER_PROGRESS_PATH: String = "user://chapter_progress.cfg"
 ## Fixed title-music path from the 2026-11-27 audio hand-off.  Missing file is
 ## a supported silent menu: no warning, no blocking, and UI click cues keep
 ## using their existing DemoAudio route.
@@ -96,6 +117,9 @@ enum Phase { INACTIVE, MENU, START_FADE, TITLE_FADE, CAMERA_PAN, SETTLE, ENTRY, 
 
 @export var audio_settings_path: String = DEFAULT_AUDIO_PATH
 @export var display_settings_path: String = DEFAULT_DISPLAY_PATH
+## Six-boolean chapter completion file.  Tests point this at a throwaway path
+## before add_child(); production keeps user://chapter_progress.cfg.
+@export var chapter_progress_path: String = DEFAULT_CHAPTER_PROGRESS_PATH
 ## Full-black fade on 开始游戏. It happens over the old title, then the real
 ## level_01 is switched in under black; the new level opens with the film's own
 ## black frame already opaque.
@@ -118,15 +142,29 @@ var _root: Control = null
 var _fade_group: Control = null
 var _base_rect: TextureRect = null
 var _focus_start_rect: TextureRect = null
+var _focus_chapter_rect: TextureRect = null
 var _focus_settings_rect: TextureRect = null
 var _quit_row_rect: TextureRect = null
 var _focus_quit_rect: TextureRect = null
 var _start_button: Button = null
+var _chapter_button: Button = null
 var _settings_button: Button = null
 var _quit_button: Button = null
 var _trial_button: PixelMenuButton = null
 var _rift_button: PixelMenuButton = null
 var _loom_button: PixelMenuButton = null
+
+var _chapters_layer: Control = null
+var _chapters_progress_label: Label = null
+var _chapters_return_button: PixelMenuButton = null
+var _chapter_rows: Dictionary = {}
+var _chapter_index_labels: Dictionary = {}
+var _chapter_name_labels: Dictionary = {}
+var _chapter_tag_labels: Dictionary = {}
+var _chapter_status_labels: Dictionary = {}
+var _chapters_progress: Dictionary = {}
+var _chapters_open: bool = false
+var _start_target_id: String = ""
 
 var _settings_layer: Control = null
 var _settings_return_focus_rect: TextureRect = null
@@ -207,6 +245,7 @@ func activate(level: Node, menu_camera: Camera2D) -> void:
 	_start_locked = false
 	_quit_locked = false
 	_settings_open = false
+	_chapters_open = false
 	_hover_kind = ""
 	_root.visible = true
 	_fade_group.visible = true
@@ -215,7 +254,9 @@ func activate(level: Node, menu_camera: Camera2D) -> void:
 	_start_black.color.a = 0.0
 	_scene_change_alpha = -1.0
 	_scene_change_count = 0
+	_start_target_id = ""
 	_start_button.disabled = false
+	_chapter_button.disabled = false
 	_settings_button.disabled = false
 	_quit_button.disabled = false
 	_trial_button.disabled = false
@@ -224,10 +265,12 @@ func activate(level: Node, menu_camera: Camera2D) -> void:
 	if _loom_button != null and _loom_button.visible:
 		_loom_button.disabled = false
 	_settings_layer.visible = false
+	_chapters_layer.visible = false
 	_pending_overlay.visible = false
 	_pause_overlay.visible = false
 	_refresh_focus_overlays()
 	_load_audio_settings()
+	_load_chapter_progress()
 	_start_title_music()
 
 	_player_camera.enabled = false
@@ -333,6 +376,71 @@ func get_start_request_count() -> int:
 
 func get_start_button() -> Button:
 	return _start_button
+
+
+func get_chapter_button() -> Button:
+	return _chapter_button
+
+
+func is_chapters_open() -> bool:
+	return _chapters_open
+
+
+func get_chapters_layer() -> Control:
+	return _chapters_layer
+
+
+func get_chapters_progress_text() -> String:
+	return _chapters_progress_label.text if _chapters_progress_label != null else ""
+
+
+func get_chapter_row(id: String) -> PixelMenuButton:
+	return _chapter_rows.get(id) as PixelMenuButton
+
+
+func get_chapter_status_text(id: String) -> String:
+	var label: Label = _chapter_status_labels.get(id) as Label
+	return label.text if label != null else ""
+
+
+func get_chapter_target_path(id: String) -> String:
+	return String(CHAPTER_PROGRESS.get_chapter(id).get("path", ""))
+
+
+func get_chapter_progress_path() -> String:
+	return chapter_progress_path
+
+
+## "开始游戏" target: first chapter in display order that is not completed,
+## unlocked and whose scene exists; falls back to L1 once everything is done.
+func get_start_target_chapter_id() -> String:
+	var completed: Dictionary = CHAPTER_PROGRESS.load_completed(chapter_progress_path)
+	var id: String = CHAPTER_PROGRESS.first_uncompleted(completed)
+	if id.is_empty() or not CHAPTER_PROGRESS.is_unlocked(id, completed) \
+			or not CHAPTER_PROGRESS.is_available(id):
+		id = ""
+		for chapter: Dictionary in CHAPTER_PROGRESS.CHAPTERS:
+			var candidate: String = String(chapter["id"])
+			if CHAPTER_PROGRESS.is_completed(candidate, completed):
+				continue
+			if not CHAPTER_PROGRESS.is_unlocked(candidate, completed):
+				continue
+			if not CHAPTER_PROGRESS.is_available(candidate):
+				continue
+			id = candidate
+			break
+	if id.is_empty():
+		id = CHAPTER_PROGRESS.ID_L1
+	if not CHAPTER_PROGRESS.is_available(id):
+		for candidate: Dictionary in CHAPTER_PROGRESS.CHAPTERS:
+			var candidate_id: String = String(candidate["id"])
+			if CHAPTER_PROGRESS.is_available(candidate_id):
+				return candidate_id
+	return id
+
+
+func get_start_target_path() -> String:
+	return get_chapter_target_path(get_start_target_chapter_id())
 
 
 func get_settings_button() -> Button:
@@ -484,6 +592,8 @@ func _build_ui() -> void:
 	_fade_group.add_child(_base_rect)
 	_focus_start_rect = _texture_rect(UI_FOCUS_START)
 	_focus_start_rect.name = "FocusStart"
+	_focus_chapter_rect = _texture_rect(UI_FOCUS_CHAPTER)
+	_focus_chapter_rect.name = "FocusChapter"
 	_focus_settings_rect = _texture_rect(UI_FOCUS_SETTINGS)
 	_focus_settings_rect.name = "FocusSettings"
 	_quit_row_rect = _texture_rect(UI_QUIT)
@@ -491,9 +601,11 @@ func _build_ui() -> void:
 	_focus_quit_rect = _texture_rect(UI_FOCUS_QUIT)
 	_focus_quit_rect.name = "FocusQuit"
 	_focus_start_rect.visible = false
+	_focus_chapter_rect.visible = false
 	_focus_settings_rect.visible = false
 	_focus_quit_rect.visible = false
 	_fade_group.add_child(_focus_start_rect)
+	_fade_group.add_child(_focus_chapter_rect)
 	_fade_group.add_child(_focus_settings_rect)
 	_fade_group.add_child(_quit_row_rect)
 	_fade_group.add_child(_focus_quit_rect)
@@ -505,6 +617,16 @@ func _build_ui() -> void:
 	_start_button.focus_exited.connect(_deferred_refresh_focus)
 	_start_button.mouse_entered.connect(_on_hover.bind("start"))
 	_start_button.mouse_exited.connect(_on_unhover.bind("start"))
+
+	# 章节 is a real hot zone with the baked text underneath.  Focus/hover is
+	# drawn from a derived plate so the approved V1 row language is unchanged.
+	_chapter_button = _hit_button("ChapterButton", CHAPTER_RECT)
+	_fade_group.add_child(_chapter_button)
+	_chapter_button.pressed.connect(_on_chapter_pressed)
+	_chapter_button.focus_entered.connect(_deferred_refresh_focus)
+	_chapter_button.focus_exited.connect(_deferred_refresh_focus)
+	_chapter_button.mouse_entered.connect(_on_hover.bind("chapter"))
+	_chapter_button.mouse_exited.connect(_on_unhover.bind("chapter"))
 
 	_settings_button = _hit_button("SettingsButton", SETTINGS_RECT)
 	_fade_group.add_child(_settings_button)
@@ -584,6 +706,14 @@ func _build_ui() -> void:
 	_root.add_child(_pause_overlay)
 	_pause_overlay.visible = false
 
+	_chapters_layer = _build_chapters_layer()
+	_root.add_child(_chapters_layer)
+	_chapters_layer.visible = false
+	# PixelMenuButton._ready() enables focus; the bottom 返回 is mouse/Esc only
+	# so the ↑↓ ring is exactly the six chapter rows.
+	if _chapters_return_button != null:
+		_chapters_return_button.focus_mode = Control.FOCUS_NONE
+
 	# Last child: covers the whole title, settings and pause layers during the
 	# new-game fade. The old world/HUD are already hidden by activate(); this
 	# overlay guarantees no world or HUD frame can appear before the scene swap.
@@ -595,6 +725,118 @@ func _build_ui() -> void:
 	_start_black.mouse_filter = Control.MOUSE_FILTER_STOP
 	_start_black.visible = false
 	_root.add_child(_start_black)
+
+
+func _build_chapters_layer() -> Control:
+	var layer_control: Control = Control.new()
+	layer_control.name = "ChaptersLayer"
+	layer_control.position = Vector2.ZERO
+	layer_control.size = VIEW_SIZE
+	layer_control.mouse_filter = Control.MOUSE_FILTER_STOP
+
+	var shade: ColorRect = ColorRect.new()
+	shade.name = "ChapterShade"
+	shade.position = Vector2.ZERO
+	shade.size = VIEW_SIZE
+	shade.color = Color(0.006, 0.014, 0.018, 0.72)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	layer_control.add_child(shade)
+
+	var panel: Panel = Panel.new()
+	panel.name = "ChaptersPanel"
+	panel.position = CHAPTERS_PANEL_RECT.position
+	panel.size = CHAPTERS_PANEL_RECT.size
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = PANEL_BG
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.border_color = PANEL_BORDER
+	style.set_corner_radius_all(0)
+	style.anti_aliasing = false
+	panel.add_theme_stylebox_override("panel", style)
+	layer_control.add_child(panel)
+
+	var title: Label = _label("章节", Vector2(0.0, 8.0), Vector2(464.0, 32.0), 24, GOLD)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	panel.add_child(title)
+	_chapters_progress_label = _label(
+		"已完成 0 / 6", Vector2(0.0, 40.0), Vector2(464.0, 14.0), 12, MUTED
+	)
+	_chapters_progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	panel.add_child(_chapters_progress_label)
+
+	for index: int in range(CHAPTER_PROGRESS.chapter_count()):
+		var chapter: Dictionary = CHAPTER_PROGRESS.CHAPTERS[index]
+		var id: String = String(chapter["id"])
+		var row_position: Vector2 = CHAPTER_ROW_ORIGIN + Vector2(
+			0.0, float(index) * (CHAPTER_ROW_SIZE.y + CHAPTER_ROW_GAP)
+		)
+		var row: PixelMenuButton = _menu_button(
+			"ChapterRow%s" % id.capitalize(),
+			"",
+			Rect2(row_position, CHAPTER_ROW_SIZE),
+			PixelMenuButton.Variant.STONE
+		)
+		row.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		row.pressed.connect(_on_chapter_row_pressed.bind(id))
+		row.focus_entered.connect(_deferred_refresh_focus)
+		row.focus_exited.connect(_deferred_refresh_focus)
+		layer_control.add_child(row)
+		_chapter_rows[id] = row
+
+		var index_label: Label = _label(
+			"%02d" % (index + 1), Vector2(12.0, 0.0), Vector2(22.0, CHAPTER_ROW_SIZE.y),
+			12, DIM
+		)
+		index_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		row.add_child(index_label)
+		_chapter_index_labels[id] = index_label
+
+		var name_label: Label = _label(
+			String(chapter["title"]), Vector2(38.0, 0.0),
+			Vector2(158.0, CHAPTER_ROW_SIZE.y), 14, TEXT
+		)
+		name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		row.add_child(name_label)
+		_chapter_name_labels[id] = name_label
+
+		var tag_label: Label = _label(
+			String(chapter["tag"]), Vector2(198.0, 0.0),
+			Vector2(88.0, CHAPTER_ROW_SIZE.y), 12, PALE_CYAN
+		)
+		tag_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		row.add_child(tag_label)
+		_chapter_tag_labels[id] = tag_label
+
+		var status_label: Label = _label(
+			"", Vector2(288.0, 0.0), Vector2(130.0, CHAPTER_ROW_SIZE.y), 12, MUTED
+		)
+		status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		row.add_child(status_label)
+		_chapter_status_labels[id] = status_label
+
+	var hint: Label = _label(
+		"↑↓ 选择 · Enter 进入 · Esc 返回",
+		CHAPTERS_HINT_RECT.position,
+		CHAPTERS_HINT_RECT.size,
+		12,
+		MUTED
+	)
+	hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	layer_control.add_child(hint)
+
+	_chapters_return_button = _menu_button(
+		"ChaptersReturn", "返回", CHAPTERS_RETURN_RECT, PixelMenuButton.Variant.STONE
+	)
+	# Esc is the keyboard route; the mouse button must not join the ↑↓ ring.
+	_chapters_return_button.focus_mode = Control.FOCUS_NONE
+	_chapters_return_button.pressed.connect(_on_chapters_return_pressed)
+	layer_control.add_child(_chapters_return_button)
+	return layer_control
 
 
 func _build_settings_layer() -> Control:
@@ -866,14 +1108,14 @@ func _label(text_value: String, position_value: Vector2, size_value: Vector2, fo
 # --- Focus / hover ---------------------------------------------------------
 
 func _focus_start() -> void:
-	if _phase != Phase.MENU or _settings_open:
+	if _phase != Phase.MENU or _settings_open or _chapters_open:
 		return
 	_start_button.grab_focus()
 	_refresh_focus_overlays()
 
 
 func _focus_settings() -> void:
-	if _phase != Phase.MENU or _settings_open:
+	if _phase != Phase.MENU or _settings_open or _chapters_open:
 		return
 	_settings_button.grab_focus()
 	_refresh_focus_overlays()
@@ -905,14 +1147,15 @@ func _on_unhover(kind: String) -> void:
 func _refresh_focus_overlays() -> void:
 	if (
 		_focus_start_rect == null or _focus_settings_rect == null
-		or _focus_quit_rect == null
+		or _focus_quit_rect == null or _focus_chapter_rect == null
 	):
 		return
 	var show_start: bool = false
+	var show_chapter: bool = false
 	var show_settings: bool = false
 	var show_quit: bool = false
 	if (
-		_phase == Phase.MENU and not _settings_open
+		_phase == Phase.MENU and not _settings_open and not _chapters_open
 		and not _quit_locked and _fade_group.visible
 	):
 		var kind: String = _hover_kind
@@ -920,14 +1163,18 @@ func _refresh_focus_overlays() -> void:
 			var owner: Control = get_viewport().gui_get_focus_owner()
 			if owner == _start_button:
 				kind = "start"
+			elif owner == _chapter_button:
+				kind = "chapter"
 			elif owner == _settings_button:
 				kind = "settings"
 			elif owner == _quit_button:
 				kind = "quit"
 		show_start = kind == "start"
+		show_chapter = kind == "chapter"
 		show_settings = kind == "settings"
 		show_quit = kind == "quit"
 	_focus_start_rect.visible = show_start
+	_focus_chapter_rect.visible = show_chapter
 	_focus_settings_rect.visible = show_settings
 	_focus_quit_rect.visible = show_quit
 
@@ -935,6 +1182,7 @@ func _refresh_focus_overlays() -> void:
 func _refresh_menu_focus_chain() -> void:
 	if (
 		_start_button == null or _settings_button == null or _quit_button == null
+		or _chapter_button == null
 	):
 		return
 	var chain: Array[Control] = [_start_button, _settings_button, _quit_button]
@@ -952,9 +1200,27 @@ func _refresh_menu_focus_chain() -> void:
 		var previous: Control = chain[(index - 1 + chain.size()) % chain.size()]
 		current.focus_next = current.get_path_to(next)
 		current.focus_previous = current.get_path_to(previous)
-		# Up/Down follow the same entry loop as Tab/Shift+Tab.
+	# Existing title tests pin start -> settings -> quit -> DLC rows for Tab, so
+	# that legacy chain stays untouched.  The new 章节 row joins the arrow-key
+	# order in its real visual slot under 开始游戏.
+	var visual_chain: Array[Control] = [_start_button, _chapter_button, _settings_button, _quit_button]
+	if _trial_button != null and _trial_button.visible:
+		visual_chain.append(_trial_button)
+	if _rift_button != null and _rift_button.visible:
+		visual_chain.append(_rift_button)
+	if _loom_button != null and _loom_button.visible:
+		visual_chain.append(_loom_button)
+	for index: int in range(visual_chain.size()):
+		var current: Control = visual_chain[index]
+		var next: Control = visual_chain[(index + 1) % visual_chain.size()]
+		var previous: Control = visual_chain[(index - 1 + visual_chain.size()) % visual_chain.size()]
+		# Up/Down follow the visible menu order.
 		current.focus_neighbor_bottom = current.get_path_to(next)
 		current.focus_neighbor_top = current.get_path_to(previous)
+	# Tab from the new row moves on to 设置; Shift+Tab from 设置 reaches it.
+	_chapter_button.focus_next = _chapter_button.get_path_to(_settings_button)
+	_chapter_button.focus_previous = _chapter_button.get_path_to(_start_button)
+	_settings_button.focus_previous = _settings_button.get_path_to(_chapter_button)
 
 
 func _refresh_return_focus() -> void:
@@ -970,14 +1236,16 @@ func _refresh_return_focus() -> void:
 # --- Menu actions ----------------------------------------------------------
 
 func _on_start_pressed() -> void:
-	if _phase != Phase.MENU or _settings_open or _start_locked or _quit_locked:
+	if _phase != Phase.MENU or _settings_open or _chapters_open or _start_locked or _quit_locked:
 		return
 	if _display != null and _display.is_pending():
 		return
 	DemoAudio.play_ui_click()
 	_start_locked = true
 	_start_request_count += 1
+	_start_target_id = get_start_target_chapter_id()
 	_start_button.release_focus()
+	_chapter_button.release_focus()
 	_settings_button.release_focus()
 	_quit_button.release_focus()
 	_trial_button.release_focus()
@@ -986,6 +1254,7 @@ func _on_start_pressed() -> void:
 	if _loom_button != null:
 		_loom_button.release_focus()
 	_start_button.disabled = true
+	_chapter_button.disabled = true
 	_settings_button.disabled = true
 	_quit_button.disabled = true
 	_trial_button.disabled = true
@@ -995,6 +1264,7 @@ func _on_start_pressed() -> void:
 		_loom_button.disabled = true
 	_hover_kind = ""
 	_focus_start_rect.visible = false
+	_focus_chapter_rect.visible = false
 	_focus_settings_rect.visible = false
 	_focus_quit_rect.visible = false
 	_phase = Phase.START_FADE
@@ -1003,25 +1273,25 @@ func _on_start_pressed() -> void:
 	_start_new_game_fade()
 
 
-func _on_settings_pressed() -> void:
-	if _phase != Phase.MENU or _settings_open or _start_locked or _quit_locked:
+## Opens the in-place 章节 list.  It is not a separate scene: the title's DS03
+## background keeps animating and Esc returns to the same menu.
+func _on_chapter_pressed() -> void:
+	if _phase != Phase.MENU or _settings_open or _chapters_open \
+			or _start_locked or _quit_locked:
 		return
 	if _display != null and _display.is_pending():
 		return
 	DemoAudio.play_ui_click()
-	_open_settings()
+	_open_chapters()
 
 
-func _on_quit_pressed() -> void:
-	if _phase != Phase.MENU or _settings_open or _start_locked or _quit_locked:
+func _open_chapters() -> void:
+	if _phase != Phase.MENU or _settings_open or _chapters_open:
 		return
-	if _display != null and _display.is_pending():
-		return
-	# Accepting the quit locks every menu hot zone before the process exits, so
-	# a double click or a held Enter cannot run the handler twice.
-	DemoAudio.play_ui_click()
-	_quit_locked = true
+	_chapters_open = true
+	_hover_kind = ""
 	_start_button.release_focus()
+	_chapter_button.release_focus()
 	_settings_button.release_focus()
 	_quit_button.release_focus()
 	_trial_button.release_focus()
@@ -1030,6 +1300,216 @@ func _on_quit_pressed() -> void:
 	if _loom_button != null:
 		_loom_button.release_focus()
 	_start_button.disabled = true
+	_chapter_button.disabled = true
+	_settings_button.disabled = true
+	_quit_button.disabled = true
+	_trial_button.disabled = true
+	if _rift_button != null:
+		_rift_button.disabled = true
+	if _loom_button != null:
+		_loom_button.disabled = true
+	_focus_start_rect.visible = false
+	_focus_chapter_rect.visible = false
+	_focus_settings_rect.visible = false
+	_focus_quit_rect.visible = false
+	_fade_group.visible = false
+	_chapters_layer.visible = true
+	_refresh_chapters(true)
+
+
+func _close_chapters() -> void:
+	if not _chapters_open:
+		return
+	_chapters_open = false
+	_chapters_layer.visible = false
+	_fade_group.visible = true
+	_fade_group.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	_set_main_menu_enabled(true)
+	call_deferred("_focus_chapter_row_entry")
+
+
+func _on_chapters_return_pressed() -> void:
+	if not _chapters_open:
+		return
+	_close_chapters()
+
+
+func _on_chapter_row_pressed(id: String) -> void:
+	if not _chapters_open or _phase != Phase.MENU or _start_locked or _quit_locked:
+		return
+	if _display != null and _display.is_pending():
+		return
+	_chapters_progress = CHAPTER_PROGRESS.load_completed(chapter_progress_path)
+	if not CHAPTER_PROGRESS.is_unlocked(id, _chapters_progress):
+		return
+	if not CHAPTER_PROGRESS.is_available(id):
+		return
+	_start_locked = true
+	_start_target_id = id
+	for value: Variant in _chapter_rows.values():
+		var row: PixelMenuButton = value as PixelMenuButton
+		if row != null:
+			row.release_focus()
+			row.disabled = true
+	if _chapters_return_button != null:
+		_chapters_return_button.release_focus()
+	_chapters_return_button.disabled = true
+	_hover_kind = ""
+	_phase = Phase.START_FADE
+	_stop_title_music()
+	_start_new_game_fade()
+
+
+func _set_main_menu_enabled(enabled: bool) -> void:
+	if _start_button == null:
+		return
+	_start_button.disabled = not enabled
+	if _chapter_button != null:
+		_chapter_button.disabled = not enabled
+	_settings_button.disabled = not enabled
+	_quit_button.disabled = not enabled
+	_trial_button.disabled = not enabled or not _trial_button.visible
+	if _rift_button != null:
+		_rift_button.disabled = not enabled or not _rift_button.visible
+	if _loom_button != null:
+		_loom_button.disabled = not enabled or not _loom_button.visible
+
+
+## Re-reads the six flags and repaints every row.  Locked rows are truly
+## unfocusable and mouse-transparent, so neither Tab nor a click can enter them.
+func _refresh_chapters(grab_entry_focus: bool) -> void:
+	_chapters_progress = CHAPTER_PROGRESS.load_completed(chapter_progress_path)
+	var completed_count: int = 0
+	for chapter: Dictionary in CHAPTER_PROGRESS.CHAPTERS:
+		var id: String = String(chapter["id"])
+		var row: PixelMenuButton = _chapter_rows.get(id) as PixelMenuButton
+		if row == null:
+			continue
+		var unlocked: bool = CHAPTER_PROGRESS.is_unlocked(id, _chapters_progress)
+		var available: bool = CHAPTER_PROGRESS.is_available(id)
+		var completed: bool = CHAPTER_PROGRESS.is_completed(id, _chapters_progress)
+		var can_enter: bool = unlocked and available
+		if completed:
+			completed_count += 1
+		row.disabled = not can_enter
+		row.selected = false
+
+		var index_label: Label = _chapter_index_labels.get(id) as Label
+		var name_label: Label = _chapter_name_labels.get(id) as Label
+		var tag_label: Label = _chapter_tag_labels.get(id) as Label
+		var status_label: Label = _chapter_status_labels.get(id) as Label
+		if index_label != null:
+			index_label.add_theme_color_override(
+				"font_color", DIM if can_enter else Color(DIM, 0.55)
+			)
+		if name_label != null:
+			name_label.add_theme_color_override(
+				"font_color", TEXT if can_enter else Color(DIM, 0.62)
+			)
+		if tag_label != null:
+			tag_label.add_theme_color_override(
+				"font_color", PALE_CYAN if can_enter else Color(DIM, 0.55)
+			)
+		if status_label != null:
+			if not available:
+				status_label.text = "章节场景缺失"
+				status_label.add_theme_color_override("font_color", Color(DIM, 0.7))
+			elif not unlocked:
+				status_label.text = "需先完成 %s" % CHAPTER_PROGRESS.required_title(id)
+				status_label.add_theme_color_override("font_color", MUTED)
+			elif completed:
+				status_label.text = "已通关"
+				status_label.add_theme_color_override("font_color", GOLD)
+			else:
+				status_label.text = "可进入"
+				status_label.add_theme_color_override("font_color", CYAN)
+
+	if _chapters_progress_label != null:
+		_chapters_progress_label.text = "已完成 %d / %d" % [
+			completed_count, CHAPTER_PROGRESS.chapter_count()
+		]
+	_refresh_chapter_focus_chain()
+	if grab_entry_focus:
+		call_deferred("_focus_chapter_page_entry")
+
+
+func _refresh_chapter_focus_chain() -> void:
+	var chain: Array[Control] = []
+	for chapter: Dictionary in CHAPTER_PROGRESS.CHAPTERS:
+		var id: String = String(chapter["id"])
+		var row: PixelMenuButton = _chapter_rows.get(id) as PixelMenuButton
+		if row != null and row.focus_mode != Control.FOCUS_NONE:
+			chain.append(row)
+	if chain.is_empty():
+		return
+	for index: int in range(chain.size()):
+		var current: Control = chain[index]
+		var next: Control = chain[(index + 1) % chain.size()]
+		var previous: Control = chain[(index - 1 + chain.size()) % chain.size()]
+		current.focus_next = current.get_path_to(next)
+		current.focus_previous = current.get_path_to(previous)
+		current.focus_neighbor_bottom = current.get_path_to(next)
+		current.focus_neighbor_top = current.get_path_to(previous)
+
+
+## Entry focus prefers the first still-unfinished unlocked chapter; locked rows
+## are skipped.  Falls back to the first unlocked row.
+func _focus_chapter_page_entry() -> void:
+	if not _chapters_open:
+		return
+	var preferred: String = CHAPTER_PROGRESS.first_uncompleted(_chapters_progress)
+	var row: PixelMenuButton = _chapter_rows.get(preferred) as PixelMenuButton
+	if row != null and row.focus_mode != Control.FOCUS_NONE:
+		row.grab_focus()
+		return
+	for chapter: Dictionary in CHAPTER_PROGRESS.CHAPTERS:
+		var candidate: PixelMenuButton = _chapter_rows.get(String(chapter["id"])) as PixelMenuButton
+		if candidate != null and candidate.focus_mode != Control.FOCUS_NONE:
+			candidate.grab_focus()
+			return
+
+
+func _focus_chapter_row_entry() -> void:
+	if _chapters_open:
+		return
+	if _chapter_button != null and not _chapter_button.disabled:
+		_chapter_button.grab_focus()
+		_refresh_focus_overlays()
+
+
+func _load_chapter_progress() -> void:
+	_chapters_progress = CHAPTER_PROGRESS.load_completed(chapter_progress_path)
+
+
+func _on_settings_pressed() -> void:
+	if _phase != Phase.MENU or _settings_open or _chapters_open or _start_locked or _quit_locked:
+		return
+	if _display != null and _display.is_pending():
+		return
+	DemoAudio.play_ui_click()
+	_open_settings()
+
+
+func _on_quit_pressed() -> void:
+	if _phase != Phase.MENU or _settings_open or _chapters_open or _start_locked or _quit_locked:
+		return
+	if _display != null and _display.is_pending():
+		return
+	# Accepting the quit locks every menu hot zone before the process exits, so
+	# a double click or a held Enter cannot run the handler twice.
+	DemoAudio.play_ui_click()
+	_quit_locked = true
+	_start_button.release_focus()
+	_chapter_button.release_focus()
+	_settings_button.release_focus()
+	_quit_button.release_focus()
+	_trial_button.release_focus()
+	if _rift_button != null:
+		_rift_button.release_focus()
+	if _loom_button != null:
+		_loom_button.release_focus()
+	_start_button.disabled = true
+	_chapter_button.disabled = true
 	_settings_button.disabled = true
 	_quit_button.disabled = true
 	_trial_button.disabled = true
@@ -1039,6 +1519,7 @@ func _on_quit_pressed() -> void:
 		_loom_button.disabled = true
 	_hover_kind = ""
 	_focus_start_rect.visible = false
+	_focus_chapter_rect.visible = false
 	_focus_settings_rect.visible = false
 	_focus_quit_rect.visible = false
 	_stop_title_music()
@@ -1052,13 +1533,14 @@ func _on_quit_pressed() -> void:
 func _on_trial_pressed() -> void:
 	if _trial_button == null or not _trial_button.visible:
 		return
-	if _phase != Phase.MENU or _settings_open or _start_locked or _quit_locked:
+	if _phase != Phase.MENU or _settings_open or _chapters_open or _start_locked or _quit_locked:
 		return
 	if _display != null and _display.is_pending():
 		return
 	DemoAudio.play_ui_click()
 	_start_locked = true
 	_start_button.release_focus()
+	_chapter_button.release_focus()
 	_settings_button.release_focus()
 	_quit_button.release_focus()
 	_trial_button.release_focus()
@@ -1067,6 +1549,7 @@ func _on_trial_pressed() -> void:
 	if _loom_button != null:
 		_loom_button.release_focus()
 	_start_button.disabled = true
+	_chapter_button.disabled = true
 	_settings_button.disabled = true
 	_quit_button.disabled = true
 	_trial_button.disabled = true
@@ -1076,6 +1559,7 @@ func _on_trial_pressed() -> void:
 		_loom_button.disabled = true
 	_hover_kind = ""
 	_focus_start_rect.visible = false
+	_focus_chapter_rect.visible = false
 	_focus_settings_rect.visible = false
 	_focus_quit_rect.visible = false
 	_stop_title_music()
@@ -1094,6 +1578,7 @@ func _restore_after_failed_trial() -> void:
 	_start_locked = false
 	_phase = Phase.MENU
 	_start_button.disabled = false
+	_chapter_button.disabled = false
 	_settings_button.disabled = false
 	_quit_button.disabled = false
 	_trial_button.disabled = false
@@ -1112,24 +1597,27 @@ func _restore_after_failed_trial() -> void:
 func _on_rift_pressed() -> void:
 	if _rift_button == null or not _rift_button.visible:
 		return
-	if _phase != Phase.MENU or _settings_open or _start_locked or _quit_locked:
+	if _phase != Phase.MENU or _settings_open or _chapters_open or _start_locked or _quit_locked:
 		return
 	if _display != null and _display.is_pending():
 		return
 	DemoAudio.play_ui_click()
 	_start_locked = true
 	_start_button.release_focus()
+	_chapter_button.release_focus()
 	_settings_button.release_focus()
 	_quit_button.release_focus()
 	_trial_button.release_focus()
 	_rift_button.release_focus()
 	_start_button.disabled = true
+	_chapter_button.disabled = true
 	_settings_button.disabled = true
 	_quit_button.disabled = true
 	_trial_button.disabled = true
 	_rift_button.disabled = true
 	_hover_kind = ""
 	_focus_start_rect.visible = false
+	_focus_chapter_rect.visible = false
 	_focus_settings_rect.visible = false
 	_focus_quit_rect.visible = false
 	_stop_title_music()
@@ -1147,6 +1635,7 @@ func _restore_after_failed_rift() -> void:
 	_start_locked = false
 	_phase = Phase.MENU
 	_start_button.disabled = false
+	_chapter_button.disabled = false
 	_settings_button.disabled = false
 	_quit_button.disabled = false
 	_trial_button.disabled = false
@@ -1164,13 +1653,14 @@ func _restore_after_failed_rift() -> void:
 func _on_loom_pressed() -> void:
 	if _loom_button == null or not _loom_button.visible:
 		return
-	if _phase != Phase.MENU or _settings_open or _start_locked or _quit_locked:
+	if _phase != Phase.MENU or _settings_open or _chapters_open or _start_locked or _quit_locked:
 		return
 	if _display != null and _display.is_pending():
 		return
 	DemoAudio.play_ui_click()
 	_start_locked = true
 	_start_button.release_focus()
+	_chapter_button.release_focus()
 	_settings_button.release_focus()
 	_quit_button.release_focus()
 	_trial_button.release_focus()
@@ -1178,6 +1668,7 @@ func _on_loom_pressed() -> void:
 		_rift_button.release_focus()
 	_loom_button.release_focus()
 	_start_button.disabled = true
+	_chapter_button.disabled = true
 	_settings_button.disabled = true
 	_quit_button.disabled = true
 	_trial_button.disabled = true
@@ -1186,6 +1677,7 @@ func _on_loom_pressed() -> void:
 	_loom_button.disabled = true
 	_hover_kind = ""
 	_focus_start_rect.visible = false
+	_focus_chapter_rect.visible = false
 	_focus_settings_rect.visible = false
 	_focus_quit_rect.visible = false
 	_stop_title_music()
@@ -1203,6 +1695,7 @@ func _restore_after_failed_loom() -> void:
 	_start_locked = false
 	_phase = Phase.MENU
 	_start_button.disabled = false
+	_chapter_button.disabled = false
 	_settings_button.disabled = false
 	_quit_button.disabled = false
 	_trial_button.disabled = false
@@ -1224,9 +1717,9 @@ func _on_return_pressed() -> void:
 	_close_settings()
 
 
-## New-game hand-off: full black first, then a real scene change. The fresh
-## level_01 consumes LevelFlow's one-shot flag and starts its opening film with
-## an already-opaque black overlay; no title world, HUD or old copy can flash.
+## Title hand-off: full black first, then a real scene change.  L1 consumes
+## LevelFlow's new-game flag and opens with its approved film; L2/L3/DLC rows
+## use an ordinary scene change.  No title world, HUD or old copy can flash.
 func _start_new_game_fade() -> void:
 	if _sequence != null and _sequence.is_valid():
 		_sequence.kill()
@@ -1251,9 +1744,23 @@ func _on_start_black_reached() -> void:
 	_scene_change_alpha = _start_black.color.a
 	_scene_change_count += 1
 	start_scene_change_requested.emit(_scene_change_alpha)
-	var error: Error = LEVEL_FLOW.start_new_game(get_tree())
+	var target_id: String = _start_target_id
+	if target_id.is_empty():
+		target_id = CHAPTER_PROGRESS.ID_L1
+	var error: Error = _change_to_chapter(target_id)
 	if error != OK:
 		_restore_after_failed_start()
+
+
+## L1 takes the existing new-game hand-off (fresh scene, menu suppressed, the
+## approved opening film).  L2/L3/DLC chapters are ordinary real scene changes.
+func _change_to_chapter(id: String) -> Error:
+	var chapter: Dictionary = CHAPTER_PROGRESS.get_chapter(id)
+	if chapter.is_empty():
+		return ERR_INVALID_PARAMETER
+	if id == CHAPTER_PROGRESS.ID_L1:
+		return LEVEL_FLOW.start_new_game(get_tree())
+	return LEVEL_FLOW.change_scene(get_tree(), String(chapter["path"]))
 
 
 func _restore_after_failed_start() -> void:
@@ -1264,7 +1771,14 @@ func _restore_after_failed_start() -> void:
 	_start_black.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_phase = Phase.MENU
 	_start_locked = false
+	_start_target_id = ""
+	_chapters_open = false
+	if _chapters_layer != null:
+		_chapters_layer.visible = false
+	if _fade_group != null:
+		_fade_group.visible = true
 	_start_button.disabled = false
+	_chapter_button.disabled = false
 	_settings_button.disabled = false
 	_quit_button.disabled = false
 	_trial_button.disabled = false
@@ -1412,6 +1926,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if not event.is_action_pressed(&"pause"):
 		return
+	if _chapters_open:
+		_close_chapters()
+		get_viewport().set_input_as_handled()
+		return
 	match _phase:
 		Phase.MENU:
 			if _settings_open:
@@ -1471,10 +1989,11 @@ func cancel_display_pending_for_leave() -> void:
 
 
 func _open_settings() -> void:
-	if _phase != Phase.MENU or _settings_open:
+	if _phase != Phase.MENU or _settings_open or _chapters_open:
 		return
 	_settings_open = true
 	_start_button.disabled = true
+	_chapter_button.disabled = true
 	_settings_button.disabled = true
 	_quit_button.disabled = true
 	_trial_button.disabled = true
@@ -1483,6 +2002,7 @@ func _open_settings() -> void:
 	if _loom_button != null:
 		_loom_button.disabled = true
 	_start_button.release_focus()
+	_chapter_button.release_focus()
 	_settings_button.release_focus()
 	_quit_button.release_focus()
 	_trial_button.release_focus()
@@ -1491,6 +2011,7 @@ func _open_settings() -> void:
 	if _loom_button != null:
 		_loom_button.release_focus()
 	_hover_kind = ""
+	_focus_chapter_rect.visible = false
 	_focus_quit_rect.visible = false
 	_fade_group.visible = false
 	_settings_layer.visible = true
@@ -1527,6 +2048,7 @@ func _close_settings() -> void:
 	_fade_group.visible = true
 	_fade_group.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	_start_button.disabled = false
+	_chapter_button.disabled = false
 	_settings_button.disabled = false
 	_quit_button.disabled = false
 	_trial_button.disabled = false

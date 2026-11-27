@@ -6,9 +6,9 @@
 powershell -NoProfile -ExecutionPolicy Bypass -File dlc\star_loom\tests\run_all.ps1
 ```
 
-覆盖：开场电影契约 `intro_test`、机制 `mechanics_test`、门/石/检查点 `gate_test`、
-真实路线 `route_test`、说明页 `guide_test`、标题 `title_test`，本章 90 帧、
-本体三关 90 帧（`base_level_90_clean` 干净收尾）。
+覆盖：开场电影契约 `intro_test`、机制 `mechanics_test`、门/星核/检查点 `gate_test`、
+阶段 1 首轮浮灵 `core_wisp_test`、真实路线 `route_test`、说明页 `guide_test`、
+标题 `title_test`，本章 90 帧、本体三关 90 帧（`base_level_90_clean` 干净收尾）。
 
 ## 只能开窗跑
 
@@ -22,11 +22,11 @@ D:/Godot/Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 res://d
 # 0.2 s 连续核对表所需帧（写到 tests/out/loom_opening_strip/）
 D:/Godot/Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 res://dlc/star_loom/tests/capture_intro_strip.tscn
 
-# 640x360 入厅机制：同相门开/关、符文石上槽/拉回、检查点
+# 640x360 入厅机制：同相门开/关、星核入仓/拉出、检查点、阶段 1 浮灵
 D:/Godot/Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 res://dlc/star_loom/tests/capture_mechanics.tscn
 ```
 
-`capture_mechanics` 写到 `screenshots/loom_mechanics_20261127/`；该目录带
+`capture_mechanics` 写到 `screenshots/loom_core_wisp_20261127/`；该目录带
 `.gdignore`，不会被导入成游戏纹理。`music_test` 与截图脚本都依赖
 `frame_post_draw`，headless 下不会出帧；`music_test` 已加 headless 保护，
 不会挂死，但结论只在开窗时有效。
@@ -42,6 +42,27 @@ D:/Godot/Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 res://d
 - `tests/out/intro_lamp_row_1.png`、`intro_lamp_row_2.png`、`intro_lamps.png`、
   `intro_shuttle.png`、`intro_core.png` 是 2026-11-27 之前黑底另绘版的旧图，
   仅保留历史记录，不再作为本轮真实关卡运镜的证据。
+
+## 第九轮（2026-11-27）：运送星核 + 阶段 1 浮灵提前
+
+入口段不再用符文石：`LoomCoreCarrier` 用 `StarCoreVisual` 的
+`star_core_positive_12f` 金色 12 帧（16×16，1:1）运送真星核；`RuneStoneField`
+的 160 px 场、同相斥/异相吸、250–330 行程与无实体碰撞规则不变。x=330 改为
+`LoomCoreBay`：现有 `star_core_bay_base/glass` 基座/玻璃罩 + 低石座、暗龛口、
+金色核心环、槽唇和通往 x=380 月门的短导线；空仓暗、入仓基座变白/玻璃罩合上/
+金环与导线亮起。星核可拉回、门关；检查点 x=410 与同相门 x=150 未动。
+
+浮灵：阶段 1 第一次自然攻击固定为 `summon`（`_intro_summon_pending`），只生成
+1 只 44 px/s 浮灵，28×28 命中框、12 s 寿命、1 次 J 击杀不变；之后阶段 1 仍只
+走 `["homing"]`，阶段 3 的召唤保留。首轮预警文案提前教「挥剑可清」。
+
+本轮实际结果：`run_all.ps1` **12 例全部 exit=0、problems=0**；机制
+**216 / 0**、门/星核/检查点 **61 / 0**、阶段 1 浮灵 **28 / 0**、路线
+**37 / 0**、开场 **78 / 0**、说明页 **42 / 0**、UI 对齐 **113 / 0**、
+标题 **42 / 0**；本章 90 帧与本体三关 90 帧 0 错误；`--headless --import`
+0 错误。640×360 证据在 `screenshots/loom_core_wisp_20261127/`（星核未入仓、
+推进中、入仓连续帧、亮起/门开、拉出/门关、阶段 1 浮灵预警/本体；每张另有
+3× 最近邻细节图）。参考实看记录见 `REF_CORE_DELIVERY_20261127.md`。
 
 ## 第八轮（2026-11-27）：开场改为真实关卡运镜
 

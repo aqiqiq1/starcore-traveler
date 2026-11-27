@@ -3,13 +3,16 @@ extends Node
 ## Headless assertion test for the restored loom approach mechanics:
 ##   - the trial PolarityGate blocks a wrong-phase body and passes the matching
 ##     phase (real movement, real Q);
-##   - the reused RuneStoneField slides the stone onto the socket (real Q and
-##     field sample), opens the second gate, and can be pulled back;
-##   - the socket holds the stone while the player walks past it;
+##   - the reused RuneStoneField moves the delivered **star core** onto the bay
+##     (real Q and field sample), lights the bay, opens the second gate, and
+##     can be pulled back;
+##   - the payload really is the project's animated gold star core, and the
+##     field's old rune-stone sprite never draws over it;
+##   - the bay holds the core while the player walks past it;
 ##   - the base LevelCheckpoint records a spawn and failure returns there;
-##   - the checkpoint permanently powers the second gate, so pulling the stone
+##   - the checkpoint permanently powers the second gate, so pulling the core
 ##     back after the checkpoint cannot lock the player out;
-##   - R restores the gate/stone/checkpoint initial state.
+##   - R restores the gate/core/bay/checkpoint initial state.
 ##
 ##   ... --headless --path . res://dlc/star_loom/tests/gate_test.tscn
 
@@ -131,15 +134,45 @@ func _run() -> void:
 		return
 	var gate_first: PolarityGate = _loom.get_gate_first()
 	var gate_second: PolarityGate = _loom.get_gate_second()
-	var stone: LoomRuneStone = _loom.get_rune_stone()
-	var socket: LoomRuneSocket = _loom.get_rune_socket()
+	var carrier: LoomCoreCarrier = _loom.get_core_carrier()
+	var bay: LoomCoreBay = _loom.get_core_bay()
 	var checkpoint: LevelCheckpoint = _loom.get_checkpoint()
-	_check(gate_first != null and gate_second != null and stone != null
-		and socket != null and checkpoint != null,
+	_check(gate_first != null and gate_second != null and carrier != null
+		and bay != null and checkpoint != null,
 		"all three restored mechanisms exist in the scene")
-	if gate_first == null or gate_second == null or stone == null \
-			or socket == null or checkpoint == null:
+	if gate_first == null or gate_second == null or carrier == null \
+			or bay == null or checkpoint == null:
 		return
+
+	# --- payload identity: a real animated star core, not a rune stone ---
+	var core_visual: StarCoreVisual = carrier.get_core_visual()
+	_check(core_visual != null,
+		"the carrier exposes a StarCoreVisual payload")
+	if core_visual != null:
+		_check(core_visual.state == StarCoreVisual.CoreState.POSITIVE,
+			"the payload is the gold POSITIVE star core")
+		_check(carrier.is_using_star_core_art()
+			and core_visual.is_using_animated_sheet(),
+			"the payload uses the 12-frame star_core sheet")
+		_check(core_visual.get_animation_frame_count() == 12,
+			"the core sheet really has 12 frames",
+			str(core_visual.get_animation_frame_count()))
+		_check(core_visual.get_art_texture() != null
+			and core_visual.get_art_texture().get_size() == Vector2(16.0, 16.0),
+			"the core is the project's 16x16 art",
+			str(core_visual.get_art_texture().get_size()))
+	_check(carrier.is_rune_stone_visual_hidden(),
+		"the field's old 32x32 rune-stone sprite is hidden")
+	_check(carrier.get_node_or_null("CollisionShape2D") == null
+		and bay.get_node_or_null("CollisionShape2D") == null,
+		"the core and bay own no collision body (no pinch / no platform)")
+	_check(bay.z_index + bay.get_glass_sprite().z_index
+		> carrier.z_index + core_visual.z_index,
+		"the bay glass draws in front of the core, so the core is inside it",
+		"glass=%d core=%d" % [
+			bay.z_index + bay.get_glass_sprite().z_index,
+			carrier.z_index + core_visual.z_index
+		])
 
 	_check(gate_first.get_emblem_kind() == "sun"
 		and gate_first.get_required_positive(),
@@ -150,14 +183,16 @@ func _run() -> void:
 	_check(not gate_first.is_open() and gate_first.get_collision_layer() == 1,
 		"both gates start solid for the cyan player")
 	_check(not gate_second.is_open() and gate_second.get_collision_layer() == 1,
-		"second gate starts solid before the stone is seated")
-	_check(not stone.get_field().is_positive() and stone.get_field().is_activated(),
-		"the rune stone starts live in 澜相")
-	_check(absf(stone.global_position.x - stone.get_start_x()) < 0.5,
-		"the rune stone starts at its authored position",
-		"x=%.1f" % stone.global_position.x)
-	_check(not socket.is_occupied() and not checkpoint.is_activated(),
-		"socket and checkpoint start clear")
+		"second gate starts solid before the core is seated")
+	_check(not carrier.get_field().is_positive()
+		and carrier.get_field().is_activated(),
+		"the core's force field starts live in 澜相")
+	_check(absf(carrier.global_position.x - carrier.get_start_x()) < 0.5,
+		"the star core starts at its authored position",
+		"x=%.1f" % carrier.global_position.x)
+	_check(not bay.is_occupied() and not bay.is_lit()
+		and bay.get_glow_strength() == 0.0 and not checkpoint.is_activated(),
+		"bay, glow and checkpoint start clear/dark")
 
 	# --- wrong phase blocks, Q opens, real walk passes -------------------
 	var blocked: bool = await _walk_right_until(
@@ -187,61 +222,77 @@ func _run() -> void:
 	_check(passed_gate, "matching-phase body really walks through the gate",
 		"x=%.1f" % _player.global_position.x)
 
-	# Stop left of the stone and switch back to its cyan phase.  The pull from
+	# Stop left of the core and switch back to its cyan phase.  The push from
 	# the gold body is allowed to settle first.
-	var reached_stone: bool = await _walk_right_until(
+	var reached_core: bool = await _walk_right_until(
 		func() -> bool: return _player.global_position.x >= 200.0,
 		160
 	)
-	_check(reached_stone, "the route reaches the rune stone section",
+	_check(reached_core, "the route reaches the star-core delivery section",
 		"x=%.1f" % _player.global_position.x)
 	await _tap_polarity()
 	_check(not _player.is_positive(), "Q returns the body to 澜相")
+	_check(_loom.get_hud().get_objective_text() == "目标：将星核送入星核仓",
+		"the HUD objective names the star-core bay",
+		_loom.get_hud().get_objective_text())
 
-	# --- push the stone onto the socket ---------------------------------
-	var socketed: bool = await _wait_until(
-		func() -> bool: return stone.is_on_socket(), 420
+	# --- push the core into the bay -------------------------------------
+	_check(not bay.is_lit(),
+		"the bay is dark before the core arrives",
+		"base=%s" % str(bay.get_base_sprite().modulate))
+	var seated: bool = await _wait_until(
+		func() -> bool: return carrier.is_on_socket(), 420
 	)
-	_check(socketed, "same-phase push seats the stone on the socket",
-		"stone=%.1f" % stone.global_position.x)
-	_check(socket.is_occupied(), "the socket reports the stone")
+	_check(seated, "same-phase push seats the core in the bay",
+		"core=%.1f" % carrier.global_position.x)
+	_check(bay.is_occupied() and bay.is_lit(),
+		"the bay reports and shows the core")
+	_check(bay.get_glow_strength() == 1.0 and bay.get_flash_left() > 0.0,
+		"seating lights the bay and starts its flash",
+		"glow=%.1f flash=%.2f" % [bay.get_glow_strength(), bay.get_flash_left()])
 	_check(gate_second.is_open() and gate_second.get_collision_layer() == 0,
-		"stone in the socket opens the second gate",
+		"core in the bay opens the second gate",
 		"layer=%d" % gate_second.get_collision_layer())
 	await _wait_physics(2)
-	_check(_loom.get_hud().get_event_text().contains("压槽")
+	_check(_loom.get_hud().get_event_text().contains("星核入仓")
 		and _loom.get_hud().get_event_text().contains("第二道门"),
-		"the HUD event line reports the stone seating and the door",
+		"the HUD event line reports the core seating and the door",
 		_loom.get_hud().get_event_text())
+	_check(core_visual.is_animating(),
+		"the seated core keeps spinning/animating inside the bay")
 
 	# --- pull it back, then push it in again ----------------------------
 	await _tap_polarity()
 	var pulled_off: bool = await _wait_until(
-		func() -> bool: return not stone.is_on_socket(), 240
+		func() -> bool: return not carrier.is_on_socket(), 240
 	)
-	_check(pulled_off, "opposite-phase pull moves the stone back off the socket",
-		"stone=%.1f" % stone.global_position.x)
+	_check(pulled_off, "opposite-phase pull moves the core back off the bay",
+		"core=%.1f" % carrier.global_position.x)
+	_check(not bay.is_occupied() and not bay.is_lit()
+		and bay.get_glow_strength() == 0.0,
+		"pulling the core out makes the bay dark again")
 	_check(not gate_second.is_open() and gate_second.get_collision_layer() == 1,
-		"second gate closes again while the stone is off the socket",
+		"second gate closes again while the core is out",
 		"layer=%d" % gate_second.get_collision_layer())
 	await _tap_polarity()
-	var resocketed: bool = await _wait_until(
-		func() -> bool: return stone.is_on_socket(), 420
+	var reseated: bool = await _wait_until(
+		func() -> bool: return carrier.is_on_socket(), 420
 	)
-	_check(resocketed, "same-phase push returns the stone to the socket",
-		"stone=%.1f" % stone.global_position.x)
-	_check(gate_second.is_open(), "second gate reopens after the stone returns")
+	_check(reseated, "same-phase push returns the core to the bay",
+		"core=%.1f" % carrier.global_position.x)
+	_check(bay.is_lit() and gate_second.is_open(),
+		"the bay relights and the second gate reopens")
 
-	# --- walk past the stone; the socket holds it, then checkpoint ------
+	# --- walk past the core; the bay holds it, then checkpoint ----------
 	var crossed_second: bool = await _walk_right_until(
 		func() -> bool: return _player.global_position.x > gate_second.global_position.x + 12.0,
 		220
 	)
 	_check(crossed_second, "the body walks through the opened second gate",
 		"x=%.1f" % _player.global_position.x)
-	_check(stone.is_on_socket(),
-		"walking past the stone does not push it back out",
-		"stone=%.1f" % stone.global_position.x)
+	_check(carrier.is_on_socket(),
+		"walking past the core does not push it back out",
+		"core=%.1f" % carrier.global_position.x)
 	var checkpoint_on: bool = await _wait_until(
 		func() -> bool: return checkpoint.is_activated(), 120
 	)
@@ -260,7 +311,7 @@ func _run() -> void:
 		"x=%.1f" % _loom.get_checkpoint_position().x)
 
 	# --- checkpoint keeps the second gate open after a pull -------------
-	# Walk back left of the stone, then pull it off.  The gate must stay open
+	# Walk back left of the core, then pull it off.  The gate must stay open
 	# because the checkpoint is now the stable progress record.
 	var back_left: bool = await _walk_left_until(
 		func() -> bool: return _player.global_position.x <= 300.0,
@@ -270,10 +321,10 @@ func _run() -> void:
 		"x=%.1f" % _player.global_position.x)
 	await _tap_polarity()
 	var off_after_checkpoint: bool = await _wait_until(
-		func() -> bool: return not stone.is_on_socket(), 240
+		func() -> bool: return not carrier.is_on_socket(), 240
 	)
-	_check(off_after_checkpoint, "the stone can still be pulled back after the checkpoint",
-		"stone=%.1f" % stone.global_position.x)
+	_check(off_after_checkpoint, "the core can still be pulled back after the checkpoint",
+		"core=%.1f" % carrier.global_position.x)
 	_check(gate_second.is_open(),
 		"checkpoint latch keeps the second gate open (no far-side softlock)")
 
@@ -321,12 +372,12 @@ func _run() -> void:
 	_check(absf(_player.global_position.x - _loom.get_start_spawn().x) < 4.0,
 		"R returns the body to the chapter start",
 		"x=%.1f" % _player.global_position.x)
-	_check(absf(stone.global_position.x - stone.get_start_x()) < 0.5,
-		"R restores the stone initial position",
-		"x=%.1f" % stone.global_position.x)
-	_check(not socket.is_occupied() and not gate_second.is_open()
+	_check(absf(carrier.global_position.x - carrier.get_start_x()) < 0.5,
+		"R restores the star core initial position",
+		"x=%.1f" % carrier.global_position.x)
+	_check(not bay.is_occupied() and not gate_second.is_open()
 		and gate_second.get_collision_layer() == 1,
-		"R closes the second gate and clears the socket")
+		"R closes the second gate and darkens the bay")
 	_check(not checkpoint.is_activated(),
 		"R clears the checkpoint")
 	_check(not gate_first.is_open() and gate_first.get_collision_layer() == 1,

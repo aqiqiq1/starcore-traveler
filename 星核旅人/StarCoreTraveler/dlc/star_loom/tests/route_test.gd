@@ -195,12 +195,12 @@ func _run() -> void:
 	if _player == null:
 		return
 
-	# Real walk through the restored approach: sun gate -> rune stone -> moon
-	# gate -> checkpoint.  Every step is a real key/action and the player's own
-	# body, not a teleport.
+	# Real walk through the restored approach: sun gate -> delivered star core
+	# -> moon gate -> checkpoint.  Every step is a real key/action and the
+	# player's own body, not a teleport.
 	var gate_first: PolarityGate = _loom.get_gate_first()
 	var gate_second: PolarityGate = _loom.get_gate_second()
-	var stone: LoomRuneStone = _loom.get_rune_stone()
+	var carrier: LoomCoreCarrier = _loom.get_core_carrier()
 	var checkpoint: LevelCheckpoint = _loom.get_checkpoint()
 	Input.action_press(&"move_right")
 	await _wait_until(
@@ -233,16 +233,16 @@ func _run() -> void:
 	await _wait_physics(4)
 	await _tap_polarity()
 	_check(not _player.is_positive(),
-		"Q returns the body to 澜相 for the cyan rune stone")
+		"Q returns the body to 澜相 for the cyan field around the gold core")
 	var socketed: bool = await _wait_until(
-		func() -> bool: return stone.is_on_socket(), 420
+		func() -> bool: return carrier.is_on_socket(), 420
 	)
-	_check(socketed, "same-phase push seats the rune stone on the socket",
-		"stone=%.1f" % stone.global_position.x)
-	_check(_loom.get_rune_socket().is_occupied() and gate_second.is_open(),
-		"the seated stone opens the moon gate")
+	_check(socketed, "same-phase push seats the star core in the bay",
+		"core=%.1f" % carrier.global_position.x)
+	_check(_loom.get_core_bay().is_lit() and gate_second.is_open(),
+		"the lit bay opens the moon gate")
 
-	# Real walk into the hall: the socket holds the stone as the body passes,
+	# Real walk into the hall: the bay holds the core as the body passes,
 	# and the checkpoint records the spawn before the arena line.
 	Input.action_press(&"move_right")
 	var entered: bool = await _wait_until(

@@ -122,6 +122,8 @@ func _test_base(path: String, tag: String, finish_intro: bool) -> void:
 			_check(boss.is_bar_visible(), tag + " boss bar fades in with the guard")
 			_check(boss.get_core_hp() == 3 and boss.get_core_max() == 3,
 				tag + " boss bar uses the guard's existing three points")
+			_check(not boss.are_faces_visible() and boss.get_node_icon_count() == 0,
+				tag + " guard bar has no independent-object icons")
 		var guard: L3Guard = level.call("get_guard") as L3Guard
 		_check(guard != null and guard.is_health_bar_suppressed(),
 			tag + " old guard overhead bar is suppressed")
@@ -181,7 +183,18 @@ func _test_dlc(path: String, tag: String, boss_name: String) -> void:
 		_check(boss.is_bar_visible(), tag + " boss bar fades in with the enemy")
 		_check(boss.get_name_text() == boss_name,
 			tag + " boss bar uses the shared name row", boss.get_name_text())
-		if tag == "loom":
+		if tag == "rift":
+			_check(boss.are_faces_visible() and boss.get_face_icon_count() == 2,
+				tag + " mirror keeps its two face-plate icons",
+				str(boss.get_face_icon_count()))
+			_check(not boss.has_core_diamonds() and boss.get_core_diamond_count() == 0,
+				tag + " mirror has no duplicate core diamonds")
+		elif tag == "loom":
+			_check(boss.is_nodes_visible() and boss.get_node_icon_count() == 2,
+				tag + " loom keeps its two orbit-node diamonds",
+				str(boss.get_node_icon_count()))
+			_check(not boss.has_core_diamonds() and boss.get_core_diamond_count() == 0,
+				tag + " loom has no duplicate core diamonds")
 			_check(boss.is_lives_visible() and boss.get_lives_current() == 2
 				and boss.get_lives_max() == 3,
 				tag + " three life hearts sit under the boss bar",
@@ -315,6 +328,20 @@ func _check_boss_bar(bar: HudBossBar, tag: String, expected_name: String, hearts
 		tag + " boss bar has no separate affinity text")
 	_check(bar.is_lives_visible() == hearts,
 		tag + " life hearts visible only on the loom", str(bar.is_lives_visible()))
+	_check(not bar.has_core_diamonds() and bar.get_core_diamond_count() == 0,
+		tag + " boss bar has no core diamond row",
+		str(bar.get_core_diamond_count()))
+	_check(bar.get_red_bar_segment_count() == 3,
+		tag + " red core bar is split into three true-damage segments",
+		str(bar.get_red_bar_segment_count()))
+	var segments: Array[Rect2] = bar.get_red_segment_rects()
+	_check(segments.size() == 3,
+		tag + " red bar exposes three segment rects", str(segments.size()))
+	if segments.size() == 3:
+		var gap: float = segments[1].position.x - segments[0].end.x
+		_check(absf(gap - 1.0) < 0.01 and segments[0].size.x >= 50.0,
+			tag + " red segments are equal 52 px cells with 1 px gaps",
+			"w=%.0f gap=%.0f" % [segments[0].size.x, gap])
 
 
 func _check_chrome_hidden(hud: Node, tag: String, state: String) -> void:

@@ -5,10 +5,10 @@ extends Node2D
 ##
 ## `PolarityGate` decides whether it is passable by asking its `player_path`
 ## node for `is_positive()` and `get_collision_size()`.  The second gate is not
-## opened by the player's own phase: it is opened while the rune stone is held
-## by the floor socket.  This invisible proxy follows the real player (so the
-## gate's deny pulse, anti-pinch latch and body rect still use the real body)
-## and reports the gate's virtual phase:
+## opened by the player's own phase: it is opened while the delivered star core
+## is held by the floor bay.  This invisible proxy follows the real player (so
+## the gate's deny pulse, anti-pinch latch and body rect still use the real
+## body) and reports the gate's virtual phase:
 ##
 ##   powered == false -> positive (the gate's opposite phase, so it is solid)
 ##   powered == true  -> negative (matches the moon gate, so it is passable)

@@ -4,8 +4,9 @@ extends Node
 ##
 ## The film is no longer a painted CanvasLayer: it must drive the real chapter
 ## through a real OpeningCamera2D, the real locked GateGold (sun plate, padlock
-## and 8 px curtain), the real gold PhaseCrystal, the real sealed cyan twin and
-## the real player at the entrance.  These checks cover:
+## and 8 px curtain), the real gold PhaseCrystal, the real cyan GateCyan (x=520)
+## and the real player at the entrance.  The fake sealed twin is gone.  These
+## checks cover:
 ##   - first play, HUD/input lock, no damage, real gate still locked;
 ##   - camera ownership before/after and the exact player view after the pan;
 ##   - the gate's phase rule is unchanged (player still 澜相, gold gate locked);
@@ -56,9 +57,11 @@ func _test_first_play_and_locks() -> void:
 	# The film must use the chapter's real nodes, not a painted copy.
 	var opening_camera: Camera2D = cine.get_opening_camera()
 	var gate: PolarityGate = trial.get_gate_gold()
+	var cyan_gate: PolarityGate = trial.get_gate_cyan()
 	var crystal: TrialPhaseCrystal = trial.get_phase_crystal()
-	var relic: TrialSealedCrystal = trial.get_sealed_crystal()
 	_check(opening_camera != null, "trial: OpeningCamera2D exists")
+	_check(trial.get_node_or_null("SealedCrystal") == null,
+		"trial: the fake sealed crystal node is gone")
 	_check(get_viewport().get_camera_2d() == opening_camera,
 		"trial: viewport camera is the OpeningCamera2D")
 	_check(opening_camera != trial.get_camera(),
@@ -68,8 +71,6 @@ func _test_first_play_and_locks() -> void:
 	_check(cine.get_gate() == gate, "trial: film points at the real gold gate")
 	_check(cine.get_crystal() == crystal,
 		"trial: film points at the real gold crystal")
-	_check(cine.get_relic() == relic,
-		"trial: film points at the real sealed cyan twin")
 	_check(cine.get_player() == trial.get_player(),
 		"trial: film points at the real player")
 	_check(opening_camera.get_parent() == cine,
@@ -80,11 +81,6 @@ func _test_first_play_and_locks() -> void:
 	_check(cine.get_crystal_world_position()
 		== crystal.get_shard_center_global(),
 		"trial: gold halo is anchored to the real crystal")
-	_check(cine.get_relic_world_position()
-		== relic.get_shard_center_global(),
-		"trial: cyan halo is anchored to the real sealed twin")
-	_check(relic.is_display_only(),
-		"trial: the cyan twin is display-only, not a second key")
 	_check(gate.get_required_positive(),
 		"trial: gold gate still requires 辉相")
 	_check(gate.get_lock_state() == "locked",
@@ -93,10 +89,23 @@ func _test_first_play_and_locks() -> void:
 		"trial: player still starts 澜相; the film did not flip it")
 
 	var start_center: Vector2 = cine.get_camera_center()
-	_check(absf(start_center.x - 280.0) < 1.0,
-		"trial: film opens on the gate at x=280", str(start_center.x))
-	_check(cine.get_camera_zoom() > 1.5 and cine.get_camera_zoom() < 1.7,
-		"trial: gate view uses a real 1.6 zoom", str(cine.get_camera_zoom()))
+	var start_zoom: float = cine.get_camera_zoom()
+	_check(absf(start_center.x - 400.0) < 1.0,
+		"trial: film opens on the wide two-gate frame at x=400",
+		str(start_center.x))
+	_check(absf(start_zoom - 1.0) < 0.01,
+		"trial: opening frame is a true 1.0x wide shot", str(start_zoom))
+	var half_view: float = 320.0 / start_zoom
+	var view_left: float = start_center.x - half_view
+	var view_right: float = start_center.x + half_view
+	_check(gate.global_position.x >= view_left
+		and gate.global_position.x <= view_right
+		and cyan_gate.global_position.x >= view_left
+		and cyan_gate.global_position.x <= view_right,
+		"trial: both real doors are inside the wide frame",
+		"view=%.0f..%.0f gold=%.0f cyan=%.0f" % [
+			view_left, view_right, gate.global_position.x, cyan_gate.global_position.x
+		])
 	_check(trial.get_player().global_position.x < 42.0,
 		"trial: real player waits at the entrance",
 		str(trial.get_player().global_position.x))
@@ -113,8 +122,6 @@ func _test_first_play_and_locks() -> void:
 		str(cine.get_grade_alpha()))
 	_check(cine.get_gold_lit_amount() < 0.05,
 		"trial: gold crystal starts unlit", str(cine.get_gold_lit_amount()))
-	_check(cine.get_cyan_lit_amount() < 0.05,
-		"trial: cyan twin starts unlit", str(cine.get_cyan_lit_amount()))
 
 	var start_x: float = trial.get_player().global_position.x
 	var hits: int = trial.get_player().get_hit_count()
@@ -139,13 +146,7 @@ func _test_first_play_and_locks() -> void:
 	_check(cine.get_gold_lit_amount() > 0.45,
 		"trial: gold crystal lights first",
 		str(cine.get_gold_lit_amount()))
-	_check(cine.get_cyan_lit_amount() < 0.10,
-		"trial: cyan twin is still dark at the gold beat",
-		str(cine.get_cyan_lit_amount()))
 	await _wait_until_elapsed(cine, 1.62, 300)
-	_check(cine.get_cyan_lit_amount() > 0.90,
-		"trial: cyan twin lights second",
-		str(cine.get_cyan_lit_amount()))
 	_check(cine.get_lock_turn_amount() > 0.40,
 		"trial: the real-plate lock rings are turning",
 		str(cine.get_lock_turn_amount()))
@@ -321,11 +322,10 @@ func _test_mid_pull_skip() -> void:
 		if cine.get_elapsed() >= 2.9:
 			break
 		await get_tree().process_frame
-	var was_pulling: bool = cine.get_camera_zoom() > 1.02 \
-		and cine.get_camera_center().x > 281.0 \
-		and cine.get_camera_center().x < 320.0
+	var was_pulling: bool = cine.get_camera_center().x > 321.0 \
+		and cine.get_camera_center().x < 399.0
 	_check(was_pulling, "trial pull skip: skip really starts inside the pull",
-		"zoom=%.2f centre=%.1f" % [cine.get_camera_zoom(), cine.get_camera_center().x])
+		"centre=%.1f" % cine.get_camera_center().x)
 	_push_key(KEY_F, true)
 	_push_key(KEY_F, false)
 	await _wait_process(2)

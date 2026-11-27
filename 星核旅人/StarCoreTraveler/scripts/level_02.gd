@@ -1,4 +1,4 @@
-class_name Level02
+﻿class_name Level02
 extends StarCoreInteractionRoom
 
 ## Formal level 02 "沉寂回廊" — unified stone ground rebuild, 1792 px.
@@ -19,6 +19,7 @@ signal level_completed
 
 const PAUSE_MENU_SCRIPT = preload("res://scripts/ui/pause_menu.gd")
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
+const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
 const FOOTSTEP_SCRIPT = preload("res://scripts/audio/player_footstep_audio.gd")
 const CONDUCTIVE_ACTIVATION = preload("res://scripts/narrative/conductive_activation.gd")
 const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popup.tscn")
@@ -32,6 +33,9 @@ const STABLE_SPAWN_LINKED: Vector2 = Vector2(830.0, 320.0)
 
 @export var pause_audio_settings_path: String = "user://audio_settings.cfg"
 @export var pause_display_settings_path: String = "user://display_settings.cfg"
+## Empty = the shared user://chapter_progress.cfg.  Tests may point this at a
+## throwaway file before add_child(); gameplay never sets it.
+@export var chapter_progress_path: String = ""
 
 @onready var _hud02: Level02HUD = $HUD
 @onready var _exit: LevelExit = $Exit
@@ -889,7 +893,7 @@ func _on_player_polarity_changed(positive: bool) -> void:
 	# changes do not increment it, so neither plays the phase cue.
 	var toggles: int = _player.get_polarity_toggle_count()
 	if toggles > _last_polarity_toggles:
-		DemoAudio.play_polarity_switch()
+		DemoAudio.play_polarity_switch(positive)
 	_last_polarity_toggles = toggles
 	if _hud02 != null:
 		_hud02.set_polarity(positive)
@@ -914,6 +918,7 @@ func _try_complete_at_exit() -> void:
 	if not is_exit_gate_ready():
 		return
 	_completed = true
+	CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_L2, chapter_progress_path)
 	_footstep_stop()
 	_completion_count += 1
 	DemoAudio.play_complete()
