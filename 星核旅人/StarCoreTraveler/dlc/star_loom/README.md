@@ -79,6 +79,17 @@ F 或长按空格关闭，R / 阶段重开不会重弹。
   与 `star_core_bay_glass.png`（32×32）；龛口/低石座/核心环/导线为代码绘制，
   本轮未新画任何 PNG。
 
+## 说明页演示（2026-11-28 重录）
+
+- `dlc/ui/demos/loom_nodes.png/json` 由 `tools/capture_loom_demos.tscn` 从正式
+  `star_loom.tscn` 重录；录制时关闭开场电影，帧数/尺寸/8 fps/crop(190,120)/
+  zoom 0.75 与旧 JSON 一致。画面中的金色物体是**极性节点**（40×40 象牙盘 +
+  代码环/心），不是自由星核；重录结果与 2026-11-26 版逐像素一致。
+- `dlc/ui/demos/loom_core.*` 已删除：它只服务已移除的入口/核心教学弹窗，
+  说明页现在只用 `loom_nodes` 与 `loom_gear`，全工程无演示引用。说明见
+  `dlc/ui/demos/README.md`。
+- `loom_fire` 与 `loom_gear` 仍对应当前场景，本轮未覆盖。
+
 ## 验收记录
 
 **第九轮（2026-11-27 星核运送 + 浮灵提前）实际结果**：`run_all.ps1` **12 例全部

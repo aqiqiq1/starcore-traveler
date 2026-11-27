@@ -4,6 +4,11 @@
 `scripts/start_menu.gd`、`project.godot`、`export_presets.cfg`、基础 assets/scripts。
 未 Git 提交/推送，未导出。
 
+> 2026-11-28：`rift_twins` 已随裂隙改版退役；`dlc/ui/tools/capture_guide_demos`
+> 现在只重录试炼三条。裂隙的 `rift_inversion` / `rift_bridge` / `rift_mirror`
+> 由裂隙章节自己的工具采集，`rift_core` 由 `dlc/rift_workshop/tools/capture_core_demo`
+> 采集。下文“六条”是 2026-11-25 的历史记录。
+
 ## 文件
 
 - `dlc/ui/dlc_guide.tscn` / `dlc_guide.gd`：560×236、最多 3 页共用开场说明
