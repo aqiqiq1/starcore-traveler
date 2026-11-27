@@ -1,0 +1,26 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://dlc/star_loom/loom_rune_stone.gd" id="1_stone"]
+[ext_resource type="PackedScene" path="res://scenes/rune_stone_field.tscn" id="2_field"]
+
+[node name="RuneStone" type="Node2D"]
+z_index = 4
+script = ExtResource("1_stone")
+player_path = NodePath("../Player")
+start_x = 270.0
+min_x = 250.0
+max_x = 330.0
+socket_x = 330.0
+move_speed = 72.0
+move_accel = 420.0
+stop_distance = 26.0
+
+[node name="Field" parent="." instance=ExtResource("2_field")]
+initial_active = true
+initial_positive = false
+field_range = 160.0
+inner_radius = 16.0
+full_radius = 52.0
+outer_fade = 40.0
+full_acceleration = 2400.0
+auto_hint_in_range = true

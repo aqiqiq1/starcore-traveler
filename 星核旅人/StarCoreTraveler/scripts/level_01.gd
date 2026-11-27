@@ -47,6 +47,7 @@ const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popu
 @onready var _camera: Camera2D = $World/Player/Camera2D
 @onready var _intro_end: Node2D = $World/IntroEnd
 @onready var _checkpoint: LevelCheckpoint = $World/Checkpoint
+@onready var _exit_polarity_gate: PolarityGate = $World/PolarityGateExit
 @onready var _exit: LevelExit = $World/Exit
 @onready var _narrative_guide: GuideEcho = $World/GuideEchoMeeting
 @onready var _mechanism_guide: GuideEcho = $World/GuideEchoHighstep
@@ -113,6 +114,7 @@ func _ready() -> void:
 	_player.reset_performed.connect(_on_player_reset_performed)
 	_player.polarity_changed.connect(_on_player_polarity_changed)
 	_checkpoint.checkpoint_entered.connect(_on_checkpoint_entered)
+	_exit_polarity_gate.denied.connect(_on_exit_polarity_gate_denied)
 	_exit.player_reached_exit.connect(_on_exit_reached)
 	get_window().focus_exited.connect(_on_window_focus_exited)
 	get_window().focus_entered.connect(_on_window_focus_entered)
@@ -585,6 +587,16 @@ func _on_player_reset_performed(reason: String, _count: int) -> void:
 			pass
 
 
+## The exit-side polarity gate only reads the player's phase. A refused contact
+## reuses the existing HUD event row: no new UI, no key injection, and Q always
+## remains the player's own toggle.
+func _on_exit_polarity_gate_denied(required_positive: bool) -> void:
+	if _completed or _scene_leaving or _resetting:
+		return
+	var phase_text: String = "辉相" if required_positive else "澜相"
+	_hud.show_toast("此门只认%s · 按 Q 换相" % phase_text, 1.4)
+
+
 func _on_checkpoint_entered(checkpoint: LevelCheckpoint) -> void:
 	if _completed or checkpoint == null:
 		return
@@ -695,6 +707,10 @@ func get_opening_camera() -> Camera2D:
 
 func get_checkpoint() -> LevelCheckpoint:
 	return _checkpoint
+
+
+func get_exit_polarity_gate() -> PolarityGate:
+	return _exit_polarity_gate
 
 
 func _refresh_exit_gate_available() -> void:

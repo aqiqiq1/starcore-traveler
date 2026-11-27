@@ -206,7 +206,10 @@ func _cleanup() -> void:
 	get_tree().current_scene = null
 	if current != null:
 		current.queue_free()
-	await _wait_process(6)
+	# The route ends on the level_01 title.  Give the title BGM/audio thread
+	# enough frames to release its OGG after the scene is freed, otherwise the
+	# headless exit prints a misleading "resources still in use" engine error.
+	await _wait_process(20)
 	_release_all()
 
 
@@ -218,6 +221,13 @@ func _run() -> void:
 		return
 	_check(_loom.get_stage() == 1 and not _loom.is_boss_active(),
 		"boss starts dormant at stage 1")
+	_check(_loom.get_gate_first() != null and _loom.get_gate_second() != null
+		and _loom.get_rune_stone() != null and _loom.get_rune_socket() != null
+		and _loom.get_checkpoint() != null,
+		"the approach restores the base gate / stone / checkpoint mechanisms")
+	_check(not _loom.get_checkpoint().is_activated()
+		and not _loom.get_gate_second().is_open(),
+		"the checkpoint and second gate start clear")
 	_check(_loom.get_player_hits() == 0 and _loom.get_core_hits() == 0,
 		"fresh attempt has 0 hits and 0 core damage")
 	_check(_loom.get_lives() == 3 and _loom.get_max_lives() == 3,
@@ -706,8 +716,8 @@ func _run() -> void:
 	_check(recovery_ended, "the recovery fade finishes")
 	if recovery_ended:
 		_check(_loom.get_hud().is_event_visible()
-			and _loom.get_hud().get_event_text() == "失败 · 织机把你抛回阶段入口",
-			"failure row is 失败 · 织机把你抛回阶段入口",
+			and _loom.get_hud().get_event_text() == "失败 · 从门前检查点恢复",
+			"failure row is 失败 · 从门前检查点恢复",
 			_loom.get_hud().get_event_text())
 		await _wait_physics(6)
 		_check(_loom.get_stage() == 2,
@@ -722,8 +732,8 @@ func _run() -> void:
 			"one death removes exactly one life", str(_loom.get_lives()))
 		_check(_loom.get_hud().get_boss_bar().get_lives_current() == 2,
 			"the HUD life-heart row drops to 2")
-		_check(absf(_player.global_position.x - _loom.get_arena_spawn().x) < 4.0,
-			"failure returns the player to the stage entrance",
+		_check(absf(_player.global_position.x - _loom.get_checkpoint_position().x) < 4.0,
+			"failure returns the player to the checkpoint",
 			"x=%.1f" % _player.global_position.x)
 		_check(_loom.is_boss_active(), "the boss stays active after the retry")
 		_check(_loom.is_stage_supply_used(),
@@ -733,7 +743,7 @@ func _run() -> void:
 		Input.action_press(&"move_right")
 		await _wait_physics(12)
 		Input.action_release(&"move_right")
-		_check(_player.global_position.x > _loom.get_arena_spawn().x + 2.0,
+		_check(_player.global_position.x > _loom.get_checkpoint_position().x + 2.0,
 			"the player can move again after the retry")
 
 	# --- R restarts the whole chapter ------------------------------------
@@ -761,6 +771,15 @@ func _run() -> void:
 	_check(not _loom.is_completed(), "R leaves the completion page hidden")
 	_check(not _loom.get_audio().is_music_playing(),
 		"R stops the fight music until the boss starts again")
+	_check(not _loom.get_checkpoint().is_activated(),
+		"R clears the checkpoint")
+	_check(absf(_loom.get_rune_stone().global_position.x
+		- _loom.get_rune_stone().get_start_x()) < 0.5,
+		"R restores the rune stone initial position",
+		"x=%.1f" % _loom.get_rune_stone().global_position.x)
+	_check(not _loom.get_gate_second().is_open()
+		and not _loom.get_rune_socket().is_occupied(),
+		"R closes the second gate and clears its socket")
 
 	# --- 3 -> 0 lives and the game over page -----------------------------
 	_loom.debug_set_stage(2)

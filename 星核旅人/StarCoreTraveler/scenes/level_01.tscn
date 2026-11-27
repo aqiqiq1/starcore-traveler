@@ -1,4 +1,4 @@
-[gd_scene load_steps=33 format=3]
+[gd_scene load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://scripts/level_01.gd" id="1_level"]
 [ext_resource type="Script" path="res://scripts/audio/base_level_music.gd" id="30_music"]
@@ -23,6 +23,7 @@
 [ext_resource type="Texture2D" path="res://assets/bridge_stone_v1/generated/l1_high_336x144.png" id="20_l1_high"]
 [ext_resource type="Texture2D" path="res://assets/bridge_stone_v1/generated/l1_far_496x64.png" id="21_l1_far"]
 [ext_resource type="Script" path="res://scripts/narrative/opening_stele_glow.gd" id="31_glow"]
+[ext_resource type="PackedScene" path="res://dlc/trial_chambers/polarity_gate.tscn" id="22_gate"]
 
 [sub_resource type="Gradient" id="Gradient_sky"]
 offsets = PackedFloat32Array(0, 0.56, 0.82, 1)
@@ -256,6 +257,11 @@ trigger_size = Vector2(40, 72)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="World/Checkpoint"]
 position = Vector2(0, -36)
 shape = SubResource("RectangleShape2D_checkpoint")
+
+[node name="PolarityGateExit" parent="World" instance=ExtResource("22_gate")]
+position = Vector2(1740, 300)
+player_path = NodePath("../Player")
+required_positive = false
 
 [node name="Exit" type="Area2D" parent="World"]
 position = Vector2(1840, 300)

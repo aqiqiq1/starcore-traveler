@@ -41,6 +41,7 @@ const STABLE_SPAWN_LINKED: Vector2 = Vector2(830.0, 320.0)
 @onready var _final_bay: StarCoreBayInteractable = $Bays/TargetBay
 @onready var _link: BayRuneLink = $LinkController
 @onready var _rune_field: RuneStoneField = $RuneField
+@onready var _inversion_field: RiftInversionField = $InversionField
 @onready var _stele: GuideEcho = $StartStele
 @onready var _relay_checkpoint: LevelCheckpoint = $RelayCheckpoint
 @onready var _linked_checkpoint: LevelCheckpoint = $LinkedCheckpoint
@@ -118,6 +119,11 @@ func _ready() -> void:
 	_link.reset_link()
 	if not _link.field_committed.is_connected(_on_link_field_committed):
 		_link.field_committed.connect(_on_link_field_committed)
+	if (
+		_inversion_field != null
+		and not _inversion_field.field_triggered.is_connected(_on_inversion_field_triggered)
+	):
+		_inversion_field.field_triggered.connect(_on_inversion_field_triggered)
 	activate(_player, null)
 	add_player_force_provider(_link)
 	_hud02.set_pause_visible(false)
@@ -706,6 +712,10 @@ func _restore_stable(reason: String) -> void:
 	if _linked_checkpoint != null:
 		_linked_checkpoint.set_activated(_stable_stage >= STABLE_LINKED)
 
+	if _inversion_field != null:
+		# Respawning outside the curtain must re-arm it; a body that died inside
+		# cannot leave the field with a stale "still inside" latch.
+		_inversion_field.reset_inside_state()
 	_player.global_position = get_stable_spawn_position()
 	_player.velocity = Vector2.ZERO
 	_player.visible = true
@@ -771,6 +781,8 @@ func on_player_reset(reason: String) -> void:
 
 func _reset_room_state() -> void:
 	super._reset_room_state()
+	if _inversion_field != null:
+		_inversion_field.reset_inside_state()
 	for bay: StarCoreBayInteractable in [_relay_bay, _linked_bay]:
 		if bay != null:
 			bay.reset_empty()
@@ -859,6 +871,17 @@ func _return_to_main_menu() -> void:
 	if _hud02 != null:
 		_hud02.set_completion_buttons_enabled(false)
 	LEVEL_FLOW.return_to_title(get_tree())
+
+
+## The rift curtain flips the player once per entry. It never blocks movement,
+## never touches the core, and Q always remains available to flip back. The HUD
+## event row is the only new prompt; no new UI node is added.
+func _on_inversion_field_triggered(positive_after: bool) -> void:
+	if _completed or _resetting or _scene_leaving or _next_level_started:
+		return
+	if _hud02 != null:
+		_hud02.show_toast("紫幕翻相 · 按 Q 换回来", 1.8)
+		_hud02.set_polarity(positive_after)
 
 
 func _on_player_polarity_changed(positive: bool) -> void:
@@ -1073,6 +1096,10 @@ func get_link() -> BayRuneLink:
 
 func get_rune_field() -> RuneStoneField:
 	return _rune_field
+
+
+func get_inversion_field() -> RiftInversionField:
+	return _inversion_field
 
 
 func get_start_stele() -> GuideEcho:

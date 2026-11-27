@@ -79,6 +79,13 @@ func _release_all() -> void:
 		Input.action_release(action)
 
 
+func _tap_polarity() -> void:
+	Input.action_press(&"polarity")
+	await _wait_physics(3)
+	Input.action_release(&"polarity")
+	await _wait_physics(5)
+
+
 func _place(x: float, y: float, positive: bool) -> void:
 	_player.global_position = Vector2(x, y)
 	_player.velocity = Vector2.ZERO
@@ -165,7 +172,9 @@ func _cleanup() -> void:
 	get_tree().current_scene = null
 	if current != null:
 		current.queue_free()
-	await _wait_process(6)
+	# The route ends on the level_01 title.  Let the title BGM/audio thread
+	# release its OGG before the headless exit.
+	await _wait_process(20)
 	_release_all()
 
 
@@ -186,16 +195,67 @@ func _run() -> void:
 	if _player == null:
 		return
 
-	# Real walk into the hall.
+	# Real walk through the restored approach: sun gate -> rune stone -> moon
+	# gate -> checkpoint.  Every step is a real key/action and the player's own
+	# body, not a teleport.
+	var gate_first: PolarityGate = _loom.get_gate_first()
+	var gate_second: PolarityGate = _loom.get_gate_second()
+	var stone: LoomRuneStone = _loom.get_rune_stone()
+	var checkpoint: LevelCheckpoint = _loom.get_checkpoint()
+	Input.action_press(&"move_right")
+	await _wait_until(
+		func() -> bool: return gate_first.get_deny_count() > 0, 320
+	)
+	Input.action_release(&"move_right")
+	await _wait_physics(4)
+	_check(_player.global_position.x < gate_first.global_position.x - 2.0,
+		"wrong-phase body is really blocked by the sun gate",
+		"x=%.1f" % _player.global_position.x)
+	_check(not gate_first.is_open(), "sun gate is closed for the cyan body")
+	await _tap_polarity()
+	_check(_player.is_positive() and gate_first.is_open(),
+		"Q opens the sun gate for the matching 辉相 body")
+	Input.action_press(&"move_right")
+	var through_first: bool = await _wait_until(
+		func() -> bool: return _player.global_position.x > gate_first.global_position.x + 18.0,
+		160
+	)
+	Input.action_release(&"move_right")
+	await _wait_physics(4)
+	_check(through_first, "the body walks through the sun gate",
+		"x=%.1f" % _player.global_position.x)
+
+	Input.action_press(&"move_right")
+	await _wait_until(
+		func() -> bool: return _player.global_position.x >= 200.0, 180
+	)
+	Input.action_release(&"move_right")
+	await _wait_physics(4)
+	await _tap_polarity()
+	_check(not _player.is_positive(),
+		"Q returns the body to 澜相 for the cyan rune stone")
+	var socketed: bool = await _wait_until(
+		func() -> bool: return stone.is_on_socket(), 420
+	)
+	_check(socketed, "same-phase push seats the rune stone on the socket",
+		"stone=%.1f" % stone.global_position.x)
+	_check(_loom.get_rune_socket().is_occupied() and gate_second.is_open(),
+		"the seated stone opens the moon gate")
+
+	# Real walk into the hall: the socket holds the stone as the body passes,
+	# and the checkpoint records the spawn before the arena line.
 	Input.action_press(&"move_right")
 	var entered: bool = await _wait_until(
-		func() -> bool: return _loom.is_boss_active(), 700
+		func() -> bool: return _loom.is_boss_active(), 500
 	)
 	Input.action_release(&"move_right")
 	await _wait_physics(4)
 	_check(entered, "real walk reaches the entrance and starts the boss")
 	_check(_player.global_position.x >= _loom.get_arena_enter_x(),
 		"player crossed the entrance line", "x=%.1f" % _player.global_position.x)
+	_check(checkpoint.is_activated(),
+		"the checkpoint records the spawn before the arena",
+		"x=%.1f" % _loom.get_checkpoint_position().x)
 	_loom.debug_set_attacks_enabled(false)
 	_loom.debug_set_boss_grace(0.0)
 

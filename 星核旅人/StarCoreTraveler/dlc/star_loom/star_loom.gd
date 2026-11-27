@@ -121,6 +121,12 @@ enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 @onready var _fx: LoomFx = $Fx
 @onready var _hud: LoomHUD = $HUD
 @onready var _audio: LoomAudio = $Audio
+@onready var _gate_first: PolarityGate = $GateFirst
+@onready var _gate_second: PolarityGate = $GateSecond
+@onready var _gate_proxy: LoomGateProxy = $GateSecondProxy
+@onready var _rune_stone: LoomRuneStone = $RuneStone
+@onready var _rune_socket: LoomRuneSocket = $RuneSocket
+@onready var _checkpoint: LevelCheckpoint = $Checkpoint
 
 var _footsteps: PlayerFootstepAudio = null
 var _nodes: Array[LoomNode] = []
@@ -163,6 +169,15 @@ var _input_ticks: int = 0
 var _stage_flash: float = 0.0
 var _last_polarity_toggles: int = 0
 
+## The checkpoint in front of the arena records its own feet position.  Failure
+## still restarts the current stage, but the body returns here instead of the
+## old arena spawn; before the checkpoint is touched the old stage entrance is
+## kept as the fallback.
+var _checkpoint_position: Vector2 = ARENA_SPAWN
+var _gate_hint_shown: bool = false
+var _stone_hint_shown: bool = false
+var _socket_was_powered: bool = false
+
 var _attack_state: AttackState = AttackState.IDLE
 var _attack_kind: String = ""
 var _attack_left: float = 0.0
@@ -197,6 +212,8 @@ func _ready() -> void:
 	for node: Node in [
 		$CityBack, $Terrain, $CityFloor, $Props, $Boss, $Boss/Core,
 		$Boss/NodeA, $Boss/NodeB, $Hazards, $Player, $Fx, $CityFore,
+		$GateFirst, $GateSecond, $GateSecondProxy, $RuneStone, $RuneSocket,
+		$Checkpoint,
 	]:
 		if node != null:
 			node.process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -228,6 +245,19 @@ func _ready() -> void:
 	_player.recovery_transition_requested.connect(_on_player_recovery_transition_requested)
 	_last_polarity_toggles = _player.get_polarity_toggle_count()
 	_setup_footsteps()
+
+	# Reused base-game mechanisms: the trial polarity door, the rune-stone
+	# field, and the level checkpoint.  The second gate is powered by the
+	# stone's floor socket; its proxy follows the real body so deny/anti-pinch
+	# stay attached to the actual player instead of a fixed point.
+	_gate_first.set_player_node(_player)
+	_gate_second.set_player_node(_gate_proxy)
+	_gate_proxy.bind_target(_player)
+	_gate_first.denied.connect(_on_first_gate_denied)
+	_gate_second.denied.connect(_on_second_gate_denied)
+	_gate_first.opened.connect(_on_first_gate_opened)
+	_checkpoint.checkpoint_entered.connect(_on_checkpoint_entered)
+	_reset_loom_mechanics()
 
 	_hud.resume_requested.connect(_on_hud_resume_requested)
 	_hud.restart_requested.connect(_on_hud_restart_requested)
@@ -467,6 +497,7 @@ func _physics_process(delta: float) -> void:
 	# A blocked teaching request stays pending and retries once the guide,
 	# pause page, recovery or stage switch releases the screen.
 	_tick_mechanic_popups()
+	_tick_loom_mechanics(delta)
 
 	if not _boss_active:
 		if _player.global_position.x >= ARENA_ENTER_X:
@@ -509,6 +540,114 @@ func _clean_hazard_lists() -> void:
 			_gears.remove_at(index)
 	if _sweep != null and not is_instance_valid(_sweep):
 		_sweep = null
+
+
+# --- loom approach: gate / rune stone / checkpoint -------------------------
+
+## Runs before the boss-start check so the approach puzzle works while the loom
+## is still dormant.  The stone uses the existing RuneStoneField sample; the
+## second gate uses the trial PolarityGate with a follower proxy; the
+## checkpoint uses the base LevelCheckpoint script and stores a real spawn.
+func _tick_loom_mechanics(delta: float) -> void:
+	if (
+		_completed or _scene_leaving or _recovery_active or _retry_pending
+		or _game_over
+	):
+		return
+	_rune_stone.tick_stone(delta)
+	_rune_socket.set_occupied(_rune_stone.is_on_socket())
+	var powered: bool = is_second_gate_powered()
+	_gate_proxy.set_positive_override(not powered)
+	if not _boss_active and not _intro_active:
+		_update_mechanics_hints(powered)
+	_socket_was_powered = powered
+
+
+## The socket is the pressure source; once the checkpoint is recorded the
+## second gate stays open so a player on its far side can never be locked out.
+func is_second_gate_powered() -> bool:
+	return _rune_socket.is_occupied() or _checkpoint.is_activated()
+
+
+func _update_mechanics_hints(powered: bool) -> void:
+	var x: float = _player.global_position.x
+	if (
+		not _gate_hint_shown
+		and x >= 80.0
+		and x <= _gate_first.global_position.x + 6.0
+	):
+		_gate_hint_shown = true
+		_hud.show_event("同相门 · 日纹为辉相", 2.2)
+	if (
+		not _stone_hint_shown
+		and x >= 180.0
+		and x <= _gate_second.global_position.x
+	):
+		_stone_hint_shown = true
+		_hud.show_event("符文石 · 同相推开，异相拉近", 2.4)
+	if powered and not _socket_was_powered:
+		_hud.show_event("符文石已压槽 · 第二道门开启", 1.8)
+	elif not powered and _socket_was_powered and not _checkpoint.is_activated():
+		_hud.show_event("符文石离槽 · 第二道门关闭", 1.6)
+
+
+func _on_first_gate_denied(required_positive: bool) -> void:
+	if _completed or _scene_leaving:
+		return
+	_gate_hint_shown = true
+	_hud.show_event(
+		"同相门 · 需辉相（日）" if required_positive else "同相门 · 需澜相（月）",
+		1.6
+	)
+
+
+## The gate itself already draws the sun/moon and padlock.  This short line
+## replaces the warm "需辉相" deny text the moment the real Q changes phase,
+## so the event row never contradicts the open door in the same frame.
+func _on_first_gate_opened() -> void:
+	if _completed or _scene_leaving:
+		return
+	if absf(_player.global_position.x - _gate_first.global_position.x) > 150.0:
+		return
+	_hud.show_event("同相门已开 · 通过", 1.4)
+
+
+func _on_second_gate_denied(_required_positive: bool) -> void:
+	if _completed or _scene_leaving:
+		return
+	_stone_hint_shown = true
+	_hud.show_event("第二道门 · 将符文石压入凹槽", 1.8)
+
+
+func _on_checkpoint_entered(checkpoint: LevelCheckpoint) -> void:
+	if _completed or _scene_leaving or checkpoint == null:
+		return
+	if _checkpoint.is_activated():
+		return
+	_checkpoint_position = checkpoint.global_position
+	_player.set_spawn_point(_checkpoint_position)
+	checkpoint.set_activated(true)
+	if is_instance_valid(DemoAudio):
+		DemoAudio.play_record_save()
+	_hud.show_event("检查点已记录 · 失败从门前恢复", 2.0)
+
+
+## R and a fresh scene both return every approach mechanism to its initial
+## state.  Death does not call this: the checkpoint and a powered gate are
+## stable progress.
+func _reset_loom_mechanics() -> void:
+	_gate_first.set_required_positive(true)
+	_gate_second.set_required_positive(false)
+	# Unpowered: virtual phase true, required phase false -> solid.
+	_gate_proxy.set_positive_override(true)
+	_rune_stone.reset_state()
+	_rune_socket.set_occupied(false)
+	_checkpoint.set_activated(false)
+	_checkpoint_position = ARENA_SPAWN
+	_player.set_spawn_point(START_SPAWN)
+	_gate_hint_shown = false
+	_stone_hint_shown = false
+	_socket_was_powered = false
 
 
 # --- boss start / stage flow ----------------------------------------------
@@ -648,8 +787,28 @@ func _update_objective(force: bool = false) -> void:
 		text = "目标：织机停转"
 		key = "done"
 	elif not _boss_active:
-		text = "目标：向右进入织机厅"
-		key = "enter"
+		# The approach has two real gates and one stone socket before the
+		# arena; the objective reads the next unresolved mechanism.  The
+		# checkpoint latches the second gate, so after it the only goal is
+		# the hall again.
+		var x: float = _player.global_position.x
+		if (
+			_checkpoint.is_activated()
+			or x >= _gate_second.global_position.x + 4.0
+			or x < _gate_first.global_position.x - 60.0
+		):
+			text = "目标：向右进入织机厅"
+			key = "enter"
+		elif x <= _gate_first.global_position.x + 8.0:
+			if _gate_first.is_open():
+				text = "目标：通过同相门"
+				key = "pass_gate"
+			else:
+				text = "目标：换辉相，过同相门"
+				key = "gate"
+		else:
+			text = "目标：将符文石推入凹槽"
+			key = "stone"
 	elif _core.is_exposed():
 		text = "目标：异相攻击暴露的核心"
 		key = "core"
@@ -1069,9 +1228,13 @@ func _advance_recovery(delta: float) -> void:
 
 func _apply_recovery_reset() -> void:
 	_reset_current_stage()
-	_reset_player_at(ARENA_SPAWN)
+	var checkpoint_active: bool = _checkpoint.is_activated()
+	_reset_player_at(_checkpoint_position if checkpoint_active else ARENA_SPAWN)
 	_player.begin_recovery_hold()
-	_hud.show_event("失败 · 织机把你抛回阶段入口", 2.2)
+	if checkpoint_active:
+		_hud.show_event("失败 · 从门前检查点恢复", 2.2)
+	else:
+		_hud.show_event("失败 · 织机把你抛回阶段入口", 2.2)
 
 
 func _finish_recovery() -> void:
@@ -1418,6 +1581,7 @@ func _restart_chapter() -> void:
 	_hud.set_polarity(false)
 	_player.end_recovery_hold()
 	_player.unlock_completion_input()
+	_reset_loom_mechanics()
 	_reset_player_at(START_SPAWN)
 	_last_polarity_toggles = _player.get_polarity_toggle_count()
 	LEVEL_FLOW.release_one_shot_actions()
@@ -1462,6 +1626,34 @@ func get_audio() -> LoomAudio:
 
 func get_fx() -> LoomFx:
 	return _fx
+
+
+func get_gate_first() -> PolarityGate:
+	return _gate_first
+
+
+func get_gate_second() -> PolarityGate:
+	return _gate_second
+
+
+func get_gate_proxy() -> LoomGateProxy:
+	return _gate_proxy
+
+
+func get_rune_stone() -> LoomRuneStone:
+	return _rune_stone
+
+
+func get_rune_socket() -> LoomRuneSocket:
+	return _rune_socket
+
+
+func get_checkpoint() -> LevelCheckpoint:
+	return _checkpoint
+
+
+func get_checkpoint_position() -> Vector2:
+	return _checkpoint_position
 
 
 func get_intro_guide() -> DlcGuide:

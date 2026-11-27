@@ -838,6 +838,19 @@ func get_facing() -> int:
 	return _facing
 
 
+## Scripted phase change used by chapter mechanisms (the DLC inversion field).
+## Mirrors L3Player.set_polarity_state(): no Q toggle-counter increment and no
+## switch-ring animation, so cues that key off a real Q press stay correct.
+func set_polarity_state(positive: bool) -> void:
+	if _positive == positive:
+		return
+	_positive = positive
+	_switch_ring.visible = false
+	_ring_time = 0.0
+	_apply_polarity_visuals()
+	polarity_changed.emit(_positive)
+
+
 func is_positive() -> bool:
 	return _positive
 

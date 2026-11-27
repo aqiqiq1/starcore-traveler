@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://dlc/star_loom/star_loom.gd" id="1_loom"]
 [ext_resource type="Script" path="res://scripts/level03/l3_terrain.gd" id="2_terrain"]
@@ -13,6 +13,11 @@
 [ext_resource type="Texture2D" path="res://dlc/star_loom/assets/city_v2/city_floor_960x40.png" id="11_floor"]
 [ext_resource type="Texture2D" path="res://dlc/star_loom/assets/city/vent_28x12_2f.png" id="12_vent"]
 [ext_resource type="Script" path="res://dlc/star_loom/loom_brazier.gd" id="13_brazier"]
+[ext_resource type="PackedScene" path="res://dlc/trial_chambers/polarity_gate.tscn" id="14_gate"]
+[ext_resource type="PackedScene" path="res://dlc/star_loom/loom_rune_stone.tscn" id="15_stone"]
+[ext_resource type="Script" path="res://scripts/level_checkpoint.gd" id="16_checkpoint"]
+[ext_resource type="Script" path="res://dlc/star_loom/loom_gate_proxy.gd" id="17_proxy"]
+[ext_resource type="Script" path="res://dlc/star_loom/loom_rune_socket.gd" id="18_socket"]
 
 [node name="StarLoom" type="Node2D"]
 process_mode = 3
@@ -77,6 +82,38 @@ script = ExtResource("13_brazier")
 [node name="BrazierRight" type="Node2D" parent="Props"]
 position = Vector2(860, 320)
 script = ExtResource("13_brazier")
+
+[node name="GateFirst" parent="." instance=ExtResource("14_gate")]
+position = Vector2(150, 320)
+required_positive = true
+player_path = NodePath("../Player")
+
+[node name="RuneSocket" type="Node2D" parent="."]
+z_index = 4
+position = Vector2(330, 320)
+script = ExtResource("18_socket")
+
+[node name="RuneStone" parent="." instance=ExtResource("15_stone")]
+position = Vector2(270, 304)
+player_path = NodePath("../Player")
+
+[node name="GateSecondProxy" type="Node2D" parent="."]
+position = Vector2(40, 320)
+script = ExtResource("17_proxy")
+target_path = NodePath("../Player")
+
+[node name="GateSecond" parent="." instance=ExtResource("14_gate")]
+position = Vector2(380, 320)
+required_positive = false
+player_path = NodePath("../GateSecondProxy")
+
+[node name="Checkpoint" type="Area2D" parent="."]
+z_index = 4
+position = Vector2(410, 320)
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("16_checkpoint")
+trigger_size = Vector2(40, 72)
 
 [node name="Boss" type="Node2D" parent="."]
 process_mode = 1
