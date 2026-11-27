@@ -14,10 +14,13 @@ extends Node
 ##   0.0-2.5  black, dust first, low rumble + debris, camera shake <= 2 px
 ##   2.5-5.0  fade-in to the wide bridge courtyard, cold sky, clouds running
 ##   5.0-8.0  player staggers in from the right edge, stops, looks around
-##   8.0-9.25 camera frames the stele; 9.25 touch, grooves light, quake stops
+##   8.0-9.25 camera pushes to 1.7x on the stele and player; 9.25 touch
 ##   10.0-17.2 echo: whisper first, then a translucent projection and 3 pages
-##   17.2-19.0 first star core travels from the stele to the player's chest
-##   19.0-20.4 camera returns to gameplay, HUD fades in, control returns
+##   17.2-18.70 first star core travels from the stele to the player's chest
+##   18.70-19.70 camera/zoom returns to gameplay over 1.0 s
+##   19.70-19.90 44 px letterbox retracts
+##   19.90-20.15 HUD fades in over 0.25 s; 20.15-20.40 standing lock
+##   20.40 control returns, with one-shot jump/polarity cleared
 ##
 ## Input: F (or the shared tutorial_next action) skips the whole film at once.
 ## Holding Space for 0.6 s also skips. A short Space tap is inert. If the skip
@@ -53,11 +56,18 @@ const QUESTION_START: float = 9.65
 const QUESTION_END: float = 10.45
 const PAGES_START: float = 10.70
 const CORE_TIME: float = 17.2
-const CORE_HANDOFF_TIME: float = 18.42
-const ZOOM_OUT_END: float = 19.02
-const RETURN_TIME: float = 19.0
-const HUD_RETURN_TIME: float = 19.05
-const HANDOFF_TIME: float = 20.4
+## The core arrives at the chest at 18.70, then the 1.70 s transition starts
+## immediately: 1.0 s camera return, 0.2 s letterbox retract, 0.25 s HUD fade,
+## 0.25 s stand. Total film remains the original 20.4 s.
+const CORE_HANDOFF_TIME: float = 18.70
+const END_TRANSITION_START: float = 18.70
+const ZOOM_OUT_END: float = 19.70
+const LETTERBOX_RETRACT_END: float = 19.90
+const RETURN_TIME: float = 18.70
+const HUD_RETURN_TIME: float = 19.90
+const HUD_FADE_DURATION: float = 0.25
+const STAND_DURATION: float = 0.25
+const HANDOFF_TIME: float = 20.40
 
 const ENTRY_POSITION: Vector2 = Vector2(656.0, 300.0)
 const HANDOFF_X: float = 286.0
@@ -675,7 +685,10 @@ func _update_core(time: float) -> void:
 	if _core == null or _core_glow == null:
 		return
 	var rise: float = clampf((time - CORE_TIME) / 0.45, 0.0, 1.0)
-	var fly: float = smoothstep(0.0, 1.0, clampf((time - CORE_TIME - 0.35) / 0.85, 0.0, 1.0))
+	var fly_duration: float = maxf(CORE_HANDOFF_TIME - (CORE_TIME + 0.35), 0.01)
+	var fly: float = smoothstep(
+		0.0, 1.0, clampf((time - CORE_TIME - 0.35) / fly_duration, 0.0, 1.0)
+	)
 	var start: Vector2 = Vector2(250.0, 274.0)
 	var raised: Vector2 = Vector2(250.0, 252.0)
 	var target: Vector2 = _player_chest()
@@ -689,12 +702,12 @@ func _update_core(time: float) -> void:
 	# in front of the chest, never as a one-pixel line at the key beat.
 	_core.frame = int(maxf(0.0, time - CORE_TIME) * 8.0) % 4
 	_core_glow.frame = int(maxf(0.0, time) * 8.0) % CORE_GLOW_FRAME_COUNT
-	if not _core_landed and time >= CORE_TIME + 1.22:
+	if not _core_landed and time >= CORE_HANDOFF_TIME:
 		_core_landed = true
 		_core_handoff_count += 1
 		_play_cue("core_handoff", time, -9.0)
 	if _core_landed:
-		var fade: float = clampf((time - (CORE_TIME + 1.22)) / 0.38, 0.0, 1.0)
+		var fade: float = clampf((time - CORE_HANDOFF_TIME) / 0.38, 0.0, 1.0)
 		_core.modulate.a = 1.0 - fade
 		_core_glow.modulate.a = 0.85 * (1.0 - fade)
 		if fade >= 1.0:
@@ -779,8 +792,8 @@ func _update_visuals(time: float, delta: float) -> void:
 		var p: float = smoothstep(ENTER_END, TOUCH_TIME, time)
 		base = WIDE_CAMERA.lerp(CLOSE_CAMERA, p)
 		zoom = lerpf(1.0, CLOSE_ZOOM, p)
-	if time >= CORE_HANDOFF_TIME:
-		var q: float = smoothstep(CORE_HANDOFF_TIME, ZOOM_OUT_END, time)
+	if time >= END_TRANSITION_START:
+		var q: float = smoothstep(END_TRANSITION_START, ZOOM_OUT_END, time)
 		base = CLOSE_CAMERA.lerp(_gameplay_camera_center(), q)
 		zoom = lerpf(CLOSE_ZOOM, 1.0, q)
 	if _opening_camera != null:
@@ -799,9 +812,9 @@ func _update_visuals(time: float, delta: float) -> void:
 		) + Vector2(float(shake_x), float(shake_y))
 
 	var bar_height: float = LETTERBOX_HEIGHT
-	if time >= CORE_HANDOFF_TIME:
+	if time >= ZOOM_OUT_END:
 		bar_height = LETTERBOX_HEIGHT * (
-			1.0 - smoothstep(CORE_HANDOFF_TIME, ZOOM_OUT_END, time)
+			1.0 - smoothstep(ZOOM_OUT_END, LETTERBOX_RETRACT_END, time)
 		)
 	_apply_letterbox(bar_height)
 
@@ -928,8 +941,8 @@ func _update_return(time: float) -> void:
 		_play_cue("return", time, -14.0)
 	if time >= HUD_RETURN_TIME and not _hud_returned:
 		_hud_returned = true
-		_hud.set_opening_active(false)
-	if time >= ZOOM_OUT_END:
+		_hud.set_opening_active(false, HUD_FADE_DURATION)
+	if time >= HANDOFF_TIME:
 		_return_played = true
 
 
@@ -1035,6 +1048,7 @@ func _finish_now(skipped: bool) -> void:
 		set_physics_process(false)
 		return
 	_await_release = false
+	_clear_one_shot_input()
 	if _player != null:
 		_player.end_input_override()
 	set_physics_process(false)
@@ -1050,6 +1064,7 @@ func _complete_handoff() -> void:
 	_space_held = false
 	_space_time = 0.0
 	_space_action_done = false
+	_clear_one_shot_input()
 	if _player != null:
 		_player.set_input_override_axis(0.0, false)
 		_player.end_input_override()
@@ -1057,6 +1072,17 @@ func _complete_handoff() -> void:
 	set_process_unhandled_input(false)
 	set_physics_process(false)
 	finished.emit(_skipped)
+
+
+## A press made during the film must not become a jump/polarity/interact on the
+## first gameplay frame. Movement actions are deliberately left alone so a held
+## direction still walks immediately.
+func _clear_one_shot_input() -> void:
+	for action: StringName in [
+		&"jump", &"polarity", &"reset", &"interact", &"tutorial_next"
+	]:
+		Input.action_release(action)
+	Input.flush_buffered_events()
 
 
 func abort() -> void:
@@ -1096,6 +1122,7 @@ func abort() -> void:
 		_player.velocity = Vector2.ZERO
 		_player.set_facing_direction(_pre_facing)
 		_player.set_input_override_axis(0.0, false)
+		_clear_one_shot_input()
 		_player.end_input_override()
 	if _opening_camera != null:
 		_opening_camera.enabled = false
@@ -1317,7 +1344,7 @@ func _tick_cues(time: float) -> void:
 		_play_cue("whisper", time, -12.0)
 	if time >= CORE_TIME:
 		_play_cue("core_emerge", time, -10.0)
-	if time >= CORE_TIME + 1.22:
+	if time >= CORE_HANDOFF_TIME:
 		_play_cue("core_handoff", time, -9.0)
 	if time >= RETURN_TIME:
 		_play_cue("return", time, -14.0)
@@ -1426,6 +1453,28 @@ func get_elapsed() -> float:
 
 func get_duration() -> float:
 	return DURATION
+
+
+func get_end_transition_duration() -> float:
+	return HANDOFF_TIME - END_TRANSITION_START
+
+
+func get_camera_return_duration() -> float:
+	return ZOOM_OUT_END - END_TRANSITION_START
+
+
+func get_hud_fade_duration() -> float:
+	return HUD_FADE_DURATION
+
+
+func get_stand_duration() -> float:
+	return HANDOFF_TIME - (HUD_RETURN_TIME + HUD_FADE_DURATION)
+
+
+func get_black_alpha() -> float:
+	if _fade == null or not _fade.visible:
+		return 0.0
+	return _fade.color.a
 
 
 func get_play_count() -> int:

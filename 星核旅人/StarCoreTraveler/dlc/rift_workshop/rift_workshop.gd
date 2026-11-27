@@ -104,6 +104,10 @@ const RIFT_SCENE: String = "res://dlc/rift_workshop/rift_workshop.tscn"
 const RECOVERY_FADE_OUT_TIME: float = 0.25
 const RECOVERY_BLACK_HOLD_TIME: float = 0.10
 const RECOVERY_FADE_IN_TIME: float = 0.35
+## The opening film's last frame is already the player view.  Keep one short
+## control beat (HUD fade is 0.35 s) before the first-play guide opens, so the
+## hand-off is real rather than a modal appearing in the same frame.
+const POST_INTRO_GUIDE_DELAY: float = 0.45
 ## Facing assist range while a real J is pressed inside the arena.
 const AUTO_FACE_RANGE: float = 160.0
 
@@ -169,10 +173,12 @@ var _recovery_alpha: float = 0.0
 var _recovery_elapsed: float = 0.0
 var _recovery_applying: bool = false
 var _intro_guide: DlcGuide = null
-var _intro_cinematic: DlcIntroCinematic = null
+var _intro_cinematic: RiftIntroCinematic = null
 var _intro_active: bool = false
 var _intro_played: bool = false
 var _intro_skipped: bool = false
+var _post_intro_guide_pending: bool = false
+var _post_intro_guide_left: float = 0.0
 var _mechanic_popup: MechanicPopup = null
 
 
@@ -298,7 +304,7 @@ func _ready() -> void:
 func _start_intro_cinematic_or_guide() -> void:
 	if show_intro_cinematic and not _intro_played and not _completed and not _scene_leaving:
 		if _intro_cinematic == null or not is_instance_valid(_intro_cinematic):
-			_intro_cinematic = INTRO_CINEMATIC_SCENE.instantiate() as DlcIntroCinematic
+			_intro_cinematic = INTRO_CINEMATIC_SCENE.instantiate() as RiftIntroCinematic
 		if _intro_cinematic != null:
 			_intro_active = true
 			_intro_skipped = false
@@ -307,6 +313,7 @@ func _start_intro_cinematic_or_guide() -> void:
 			_boss.set_suspended(true)
 			_player.lock_for_cinematic()
 			add_child(_intro_cinematic)
+			_intro_cinematic.configure(_boss, _player, _camera, _hud)
 			_intro_cinematic.finished.connect(_on_intro_cinematic_finished)
 			_intro_cinematic.start()
 			return
@@ -319,12 +326,30 @@ func _on_intro_cinematic_finished(skipped: bool) -> void:
 	_intro_played = true
 	_intro_skipped = skipped
 	_hud.visible = true
+	_hud.fade_in_after_intro()
 	_attack_key_down = false
 	_player.unlock_after_cinematic()
 	_player.begin_input_override()
 	_start_lock_ticks = 3
-	if show_intro_guide:
-		call_deferred("_open_intro_guide")
+	if show_intro_guide and not _completed and not _scene_leaving:
+		_post_intro_guide_pending = true
+		_post_intro_guide_left = POST_INTRO_GUIDE_DELAY
+
+
+func _tick_post_intro_guide(delta: float) -> void:
+	if not _post_intro_guide_pending:
+		return
+	# A pause freezes _process before this tick; on resume the short hand-off
+	# window continues.  Only states that will never return to this screen
+	# cancel the pending guide.
+	if _completed or _scene_leaving or _recovery_active or _retry_pending:
+		_post_intro_guide_pending = false
+		return
+	_post_intro_guide_left = maxf(_post_intro_guide_left - delta, 0.0)
+	if _post_intro_guide_left > 0.0:
+		return
+	_post_intro_guide_pending = false
+	_open_intro_guide()
 
 
 ## Called once per scene load.  Tests set show_intro_guide = false before
@@ -515,6 +540,7 @@ func _process(delta: float) -> void:
 		return
 	if _intro_active:
 		return
+	_tick_post_intro_guide(delta)
 	if not _completed:
 		_elapsed += delta
 	_advance_recovery(delta)
@@ -1214,6 +1240,7 @@ func _on_player_recovery_transition_requested(reason: String) -> void:
 func _begin_recovery(kind: String) -> void:
 	if _recovery_active or _completed or _scene_leaving:
 		return
+	_post_intro_guide_pending = false
 	_boss_active = false
 	_audio.stop_music()
 	_footstep_stop()
@@ -1385,6 +1412,7 @@ func _update_finish_marker() -> void:
 func _complete_chapter() -> void:
 	if _completed or _scene_leaving:
 		return
+	_post_intro_guide_pending = false
 	_footstep_stop()
 	_hud.set_player_health_visible(false)
 	_completed = true
@@ -1419,6 +1447,7 @@ func _complete_chapter() -> void:
 func _return_to_title() -> void:
 	if _scene_leaving:
 		return
+	_post_intro_guide_pending = false
 	_footstep_stop()
 	get_tree().paused = false
 	_pause_open = false
@@ -1443,6 +1472,7 @@ func _return_to_title() -> void:
 func _restart_chapter() -> void:
 	if _scene_leaving:
 		return
+	_post_intro_guide_pending = false
 	_footstep_stop()
 	get_tree().paused = false
 	_pause_open = false
@@ -1585,8 +1615,12 @@ func get_intro_guide() -> DlcGuide:
 	return _intro_guide
 
 
-func get_intro_cinematic() -> DlcIntroCinematic:
+func get_intro_cinematic() -> RiftIntroCinematic:
 	return _intro_cinematic
+
+
+func get_audio() -> Node:
+	return _audio
 
 
 func is_intro_active() -> bool:

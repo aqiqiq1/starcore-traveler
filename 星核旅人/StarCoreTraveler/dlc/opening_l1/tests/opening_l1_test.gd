@@ -142,8 +142,20 @@ func _test_first_play_locks_and_finish() -> void:
 			and absf(opening.get_letterbox_height() - 44.0) < 0.1,
 			"page letterbox is 44 px", str(opening.get_letterbox_height()))
 
-	await _wait_pages_and_finish(opening, echo)
+	await _wait_pages_and_finish(level, opening, echo, player)
 	_check(not level.is_intro_active(), "natural film ends")
+	_check(opening.get_end_transition_duration() >= 1.5
+		and opening.get_end_transition_duration() <= 1.8,
+		"end transition is 1.5-1.8 s", str(opening.get_end_transition_duration()))
+	_check(opening.get_camera_return_duration() >= 1.0
+		and opening.get_camera_return_duration() <= 1.2,
+		"camera return is 1.0-1.2 s", str(opening.get_camera_return_duration()))
+	_check(absf(opening.get_hud_fade_duration() - 0.25) < 0.001,
+		"HUD fade is 0.25 s", str(opening.get_hud_fade_duration()))
+	_check(opening.get_stand_duration() >= 0.249,
+		"standing lock after HUD fade is >=0.25 s", str(opening.get_stand_duration()))
+	_check(opening.get_black_alpha() < 0.01, "no black flash at hand-off",
+		str(opening.get_black_alpha()))
 	_check(not opening.is_active(), "controller is idle after natural finish")
 	_check(not opening.is_skipped(), "natural finish is not marked skipped")
 	_check(opening.get_core_handoff_count() == 1, "first star core was handed over")
@@ -349,11 +361,16 @@ func _wait_for_first_page(
 	return false
 
 
-func _wait_pages_and_finish(opening: OpeningCinematic, echo: GuideEcho) -> void:
-	# Wait on real elapsed time so the 20.4 s film reaches its natural end
-	# independently of the headless frame rate. Every page must show the
-	# translucent projection, the 1.6-1.8x camera and the 44 px letterbox.
+func _wait_pages_and_finish(
+	level: Level01, opening: OpeningCinematic, echo: GuideEcho, player: PrototypePlayer
+) -> void:
+	# Wait on real elapsed time so the film reaches its natural end independently
+	# of the headless frame rate. Every page must show the translucent projection,
+	# the 1.6-1.8x camera and the 44 px letterbox.
 	var pages_seen: Array[int] = []
+	var hud_fade_checked: bool = false
+	var input_probe_done: bool = false
+	var probe_toggles: int = player.get_polarity_toggle_count()
 	var deadline: int = Time.get_ticks_msec() + 40000
 	while opening.is_active() and Time.get_ticks_msec() < deadline:
 		var index: int = echo.get_page_index()
@@ -370,8 +387,41 @@ func _wait_pages_and_finish(opening: OpeningCinematic, echo: GuideEcho) -> void:
 				and absf(opening.get_letterbox_height() - 44.0) < 0.1,
 				"page %d letterbox is 44 px" % (index + 1),
 				str(opening.get_letterbox_height()))
+		if not hud_fade_checked and opening.get_elapsed() >= (
+			OpeningCinematic.HUD_RETURN_TIME + 0.10
+		):
+			hud_fade_checked = true
+			_check(level.is_intro_active(), "film still owns input during HUD fade")
+			_check(player.is_input_override_active(),
+				"player lock stays on during HUD fade")
+			_check(absf(opening.get_camera_zoom() - 1.0) < 0.01,
+				"camera is back at 1.0 before HUD fade",
+				str(opening.get_camera_zoom()))
+			_check(absf(opening.get_black_alpha()) < 0.01,
+				"no black flash during the end transition",
+				str(opening.get_black_alpha()))
+			_check(absf(opening.get_letterbox_height()) < 0.1,
+				"letterbox is gone before HUD fade",
+				str(opening.get_letterbox_height()))
+		if not input_probe_done and opening.get_elapsed() >= (
+			OpeningCinematic.HANDOFF_TIME - 0.10
+		):
+			input_probe_done = true
+			Input.action_press(&"jump")
+			Input.action_press(&"polarity")
 		await get_tree().process_frame
 	_check(pages_seen.size() == 3, "all three echo pages were seen", str(pages_seen))
+	_check(hud_fade_checked, "HUD-fade input lock was sampled")
+	_check(input_probe_done, "late-film jump/polarity probe was sent")
+	await _wait_physics(3)
+	_check(player.get_polarity_toggle_count() == probe_toggles,
+		"held polarity at hand-off did not toggle on the first frame")
+	_check(player.get_state_name() != "jump",
+		"held jump at hand-off did not start a jump", player.get_state_name())
+	_check(absf(player.global_position.y - 300.0) < 0.75,
+		"player stayed on the ground at hand-off", str(player.global_position.y))
+	Input.action_release(&"jump")
+	Input.action_release(&"polarity")
 
 
 func _wait_process(count: int) -> void:

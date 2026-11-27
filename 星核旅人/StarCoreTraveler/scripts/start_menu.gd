@@ -19,6 +19,9 @@ signal start_requested
 signal quit_requested
 signal transition_finished
 signal settings_host_closed
+## Emitted at full black, immediately before the real new-game scene change.
+## The alpha is captured for the start-transition audit.
+signal start_scene_change_requested(alpha: float)
 
 const VIEW_SIZE: Vector2 = Vector2(640.0, 360.0)
 const GOLD: Color = Color("#f4cd63")
@@ -89,10 +92,14 @@ const DEFAULT_DISPLAY_PATH: String = "user://display_settings.cfg"
 const TITLE_MUSIC_PATH: String = "res://assets/audio/music/title_theme.ogg"
 const TITLE_MUSIC_DB: float = -6.0
 
-enum Phase { INACTIVE, MENU, TITLE_FADE, CAMERA_PAN, SETTLE, ENTRY, DONE }
+enum Phase { INACTIVE, MENU, START_FADE, TITLE_FADE, CAMERA_PAN, SETTLE, ENTRY, DONE }
 
 @export var audio_settings_path: String = DEFAULT_AUDIO_PATH
 @export var display_settings_path: String = DEFAULT_DISPLAY_PATH
+## Full-black fade on 开始游戏. It happens over the old title, then the real
+## level_01 is switched in under black; the new level opens with the film's own
+## black frame already opaque.
+@export_range(0.8, 1.2, 0.01, "suffix:s") var start_fade_duration: float = 1.0
 ## Pause-menu hosting: reuse this exact settings panel (master volume + display
 ## apply/confirm/timeout) without activating the title menu, world hiding,
 ## MenuCamera or the 2.2 s opening pan.  The pause page sets this before
@@ -141,6 +148,9 @@ var _draft_mode: int = DisplayOptions.Mode.WINDOWED
 var _draft_window_size: Vector2i = DisplayOptions.DEFAULT_WINDOW_SIZE
 
 var _pause_overlay: Control = null
+var _start_black: ColorRect = null
+var _scene_change_alpha: float = -1.0
+var _scene_change_count: int = 0
 
 var _phase: int = Phase.INACTIVE
 var _settings_open: bool = false
@@ -201,6 +211,10 @@ func activate(level: Node, menu_camera: Camera2D) -> void:
 	_root.visible = true
 	_fade_group.visible = true
 	_fade_group.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	_start_black.visible = false
+	_start_black.color.a = 0.0
+	_scene_change_alpha = -1.0
+	_scene_change_count = 0
 	_start_button.disabled = false
 	_settings_button.disabled = false
 	_quit_button.disabled = false
@@ -249,6 +263,8 @@ func get_phase_name() -> String:
 			return "inactive"
 		Phase.MENU:
 			return "menu"
+		Phase.START_FADE:
+			return "start_fade"
 		Phase.TITLE_FADE:
 			return "title_fade"
 		Phase.CAMERA_PAN:
@@ -263,6 +279,28 @@ func get_phase_name() -> String:
 
 func is_gameplay_blocked() -> bool:
 	return _phase != Phase.INACTIVE and _phase != Phase.DONE
+
+
+func get_start_black_alpha() -> float:
+	if _start_black == null or not _start_black.visible:
+		return 0.0
+	return _start_black.color.a
+
+
+func is_start_black_visible() -> bool:
+	return _start_black != null and _start_black.visible
+
+
+func get_scene_change_alpha() -> float:
+	return _scene_change_alpha
+
+
+func get_scene_change_count() -> int:
+	return _scene_change_count
+
+
+func get_start_fade_duration() -> float:
+	return start_fade_duration
 
 
 func is_transition_active() -> bool:
@@ -545,6 +583,18 @@ func _build_ui() -> void:
 	_pause_overlay = _build_pause_overlay()
 	_root.add_child(_pause_overlay)
 	_pause_overlay.visible = false
+
+	# Last child: covers the whole title, settings and pause layers during the
+	# new-game fade. The old world/HUD are already hidden by activate(); this
+	# overlay guarantees no world or HUD frame can appear before the scene swap.
+	_start_black = ColorRect.new()
+	_start_black.name = "StartBlack"
+	_start_black.position = Vector2.ZERO
+	_start_black.size = VIEW_SIZE
+	_start_black.color = Color(0.003, 0.008, 0.010, 0.0)
+	_start_black.mouse_filter = Control.MOUSE_FILTER_STOP
+	_start_black.visible = false
+	_root.add_child(_start_black)
 
 
 func _build_settings_layer() -> Control:
@@ -947,10 +997,10 @@ func _on_start_pressed() -> void:
 	_focus_start_rect.visible = false
 	_focus_settings_rect.visible = false
 	_focus_quit_rect.visible = false
-	_phase = Phase.TITLE_FADE
+	_phase = Phase.START_FADE
 	_stop_title_music()
 	start_requested.emit()
-	_start_sequence()
+	_start_new_game_fade()
 
 
 func _on_settings_pressed() -> void:
@@ -1172,6 +1222,58 @@ func _on_return_pressed() -> void:
 		return
 	DemoAudio.play_ui_click()
 	_close_settings()
+
+
+## New-game hand-off: full black first, then a real scene change. The fresh
+## level_01 consumes LevelFlow's one-shot flag and starts its opening film with
+## an already-opaque black overlay; no title world, HUD or old copy can flash.
+func _start_new_game_fade() -> void:
+	if _sequence != null and _sequence.is_valid():
+		_sequence.kill()
+		_sequence = null
+	_start_black.visible = true
+	_start_black.color = Color(0.003, 0.008, 0.010, 0.0)
+	_start_black.mouse_filter = Control.MOUSE_FILTER_STOP
+	_sequence = create_tween()
+	_sequence.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_sequence.tween_property(
+		_start_black, "color:a", 1.0, maxf(start_fade_duration, 0.80)
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_sequence.tween_callback(_on_start_black_reached)
+
+
+func _on_start_black_reached() -> void:
+	if _phase != Phase.START_FADE:
+		return
+	# Snap the last sub-pixel of the tween; the scene change is only requested
+	# after this exact alpha is recorded as 1.0.
+	_start_black.color.a = 1.0
+	_scene_change_alpha = _start_black.color.a
+	_scene_change_count += 1
+	start_scene_change_requested.emit(_scene_change_alpha)
+	var error: Error = LEVEL_FLOW.start_new_game(get_tree())
+	if error != OK:
+		_restore_after_failed_start()
+
+
+func _restore_after_failed_start() -> void:
+	_scene_change_alpha = -1.0
+	_scene_change_count = 0
+	_start_black.visible = false
+	_start_black.color.a = 0.0
+	_start_black.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_phase = Phase.MENU
+	_start_locked = false
+	_start_button.disabled = false
+	_settings_button.disabled = false
+	_quit_button.disabled = false
+	_trial_button.disabled = false
+	if _rift_button != null and _rift_button.visible:
+		_rift_button.disabled = false
+	if _loom_button != null and _loom_button.visible:
+		_loom_button.disabled = false
+	_start_title_music()
+	call_deferred("_focus_start")
 
 
 func _start_sequence() -> void:

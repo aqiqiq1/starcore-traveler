@@ -43,7 +43,7 @@ func _ready() -> void:
 	await _wait_and_save("07_doubt_question.png", 9.95)
 	await _wait_and_save("04_echo_page1.png", 12.05)
 	await _wait_and_save("08_echo_manifest.png", 12.60)
-	await _wait_and_save("05_star_core_handoff.png", 18.50)
+	await _wait_and_save("05_star_core_handoff.png", 18.85)
 	await _wait_for_finish()
 	await _wait_process(8)
 	await _save("06_back_to_gameplay.png")

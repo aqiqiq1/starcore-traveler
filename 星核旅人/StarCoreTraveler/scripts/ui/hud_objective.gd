@@ -174,6 +174,11 @@ func set_chrome_visible(value: bool) -> void:
 
 
 func fade_in(duration: float = EVENT_FADE) -> void:
+	# A caller may have just revealed the chrome with the default 0.15 s and then
+	# asks for a custom duration (the L1 opening hand-off uses 0.25 s). Kill the
+	# first tween so the requested duration is the one that actually runs.
+	if _fade_tween != null and _fade_tween.is_valid():
+		_fade_tween.kill()
 	visible = true
 	modulate.a = 0.0
 	_fade_tween = _make_tween()

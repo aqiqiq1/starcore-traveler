@@ -37,6 +37,7 @@ var _completion_replay: PixelMenuButton
 var _completion_return: PixelMenuButton
 var _completion_active: bool = false
 var _pause_visible: bool = false
+var _chrome_fade_duration: float = 0.15
 var _font: Font
 
 
@@ -229,19 +230,22 @@ func set_objective(text_value: String) -> void:
 ## health bar are hidden from the first bar frame until control is handed back.
 ## A restart event raised during the film is held and shown once the slot
 ## returns.
-func set_opening_active(value: bool) -> void:
+func set_opening_active(value: bool, fade_duration: float = 0.15) -> void:
+	var was_opening_active: bool = _opening_active
 	_opening_active = value
 	if value:
+		_chrome_fade_duration = 0.15
 		var active_event: String = _header.get_event_text() if _header != null else ""
 		if not active_event.is_empty() and _header.is_event_visible():
 			_pending_event_text = active_event
 			_pending_event_left = 1.2
 		_header.clear_event()
 	else:
+		_chrome_fade_duration = clampf(fade_duration, 0.0, 1.0)
 		_restore_objective_after_opening()
 	_update_chrome_visibility()
-	if not value and _header != null:
-		_header.fade_in()
+	if not value and _header != null and was_opening_active:
+		_header.fade_in(_chrome_fade_duration)
 
 
 func _restore_objective_after_opening() -> void:
@@ -417,7 +421,7 @@ func _set_health_visible(value: bool) -> void:
 		_health_bar.modulate.a = 0.0
 		var tween: Tween = create_tween()
 		tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-		tween.tween_property(_health_bar, "modulate:a", 1.0, 0.15)
+		tween.tween_property(_health_bar, "modulate:a", 1.0, _chrome_fade_duration)
 		return
 	_health_bar.visible = false
 

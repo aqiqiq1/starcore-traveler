@@ -108,6 +108,25 @@ GLASS_LOW = (25, 27, 31, 255)
 GLASS_HI = (62, 62, 64, 255)
 GLASS_WARM = (72, 58, 46, 255)
 
+# Recessed second-layer masonry.  One step darker than the outer wall, but the
+# 32x16 coursing stays readable; the dark gap around it is depth, not a hole.
+INNER_GAP = (27, 23, 25, 255)
+INNER_MORTAR = (40, 34, 36, 255)
+INNER_0 = (50, 43, 45, 255)
+INNER_1 = (54, 47, 49, 255)
+INNER_2 = (58, 50, 52, 255)
+INNER_3 = (62, 54, 55, 255)
+INNER_TOP = (70, 60, 58, 255)
+INNER_RIM = (78, 66, 56, 255)
+INNER_TONES = (INNER_0, INNER_1, INNER_2, INNER_3)
+
+# Low-contrast workshop silhouettes: darker than the inner wall, never black.
+SIL_DARK = (34, 29, 28, 255)
+SIL_0 = (42, 36, 33, 255)
+SIL_1 = (46, 39, 35, 255)
+SIL_2 = (52, 44, 38, 255)
+SIL_HI = (64, 54, 44, 255)
+
 
 # --- generic helpers -------------------------------------------------------
 def rect(draw: ImageDraw.ImageDraw, x0: int, y0: int, x1: int, y1: int, color) -> None:
@@ -316,6 +335,246 @@ def plinth(img: Image.Image, x0: int, y0: int, x1: int) -> None:
         rect(draw, bx, 316, min(x1, bx + 56), 316, SHADOW)
 
 
+# --- recessed arch interiors ------------------------------------------------
+def arch_bottom_reflection(img: Image.Image, x0: int, y0: int, x1: int, y1: int) -> None:
+    """Warm floor reflection inside the recess, never a black strip."""
+    if y1 <= y0 or x1 <= x0:
+        return
+    draw = ImageDraw.Draw(img)
+    top = max(y0, y1 - 13)
+    span_y = max(1, y1 - top)
+    for y in range(top, y1 + 1):
+        span = next(arch_spans(x0, y, x1, y1))
+        t = (y - top) / float(span_y)
+        color = lerp((44, 37, 34, 255), (78, 60, 44, 255), t)
+        rect(draw, span[1] + 1, y, span[2] - 1, y, color)
+    # Two broken 1 px highlights read as reflected light on a worn floor.
+    for y in (y1 - 9, y1 - 5, y1 - 2):
+        span = next(arch_spans(x0, y, x1, y1))
+        for x in range(span[1] + 6, span[2] - 4, 18):
+            px(draw, x, y, (100, 76, 54, 255))
+    # A dark lip at the very bottom keeps the wall/floor junction readable.
+    span = next(arch_spans(x0, y1, x1, y1))
+    rect(draw, span[1] + 1, y1, span[2] - 1, y1, (38, 32, 30, 255))
+
+
+def inner_brick_arch(
+    img: Image.Image, x0: int, y0: int, x1: int, y1: int,
+    inset: int = 8,
+) -> None:
+    """Second, recessed brick wall inside an arch opening.
+
+    Leaves a narrow dark gap around the inner wall, then lights only its
+    upper-left lip.  The 32x16 coursing is one step darker than the outer wall
+    but remains legible, so the opening reads as depth instead of a black hole.
+    """
+    draw = ImageDraw.Draw(img)
+    fill_arch(draw, x0, y0, x1, y1, INNER_GAP)
+    ix0, iy0 = x0 + inset, y0 + inset
+    ix1, iy1 = x1 - inset, y1 - 2
+    if ix1 - ix0 < 12 or iy1 - iy0 < 12:
+        return
+    fill_arch(draw, ix0, iy0, ix1, iy1, INNER_1)
+    bw, bh = 32, 16
+    for y in range(iy0, iy1 + 1):
+        span = next(arch_spans(ix0, y, ix1, iy1))
+        left, right = span[1], span[2]
+        rel = y - iy0
+        row = rel // bh
+        offset = 0 if row % 2 == 0 else bw // 2
+        for x in range(left, right + 1):
+            col = (x - ix0 + offset) // bw
+            if rel % bh == 0:
+                tone = INNER_TOP
+            elif rel % bh == bh - 1:
+                tone = INNER_MORTAR
+            elif (x - ix0 + offset) % bw == 0:
+                tone = INNER_MORTAR
+            else:
+                tone = INNER_TONES[(row * 5 + col * 3) % len(INNER_TONES)]
+            # Top recess shadow and bottom contact shadow are value changes,
+            # not black fills.
+            if rel < 16:
+                tone = lerp(tone, INNER_GAP, 0.12 * (1.0 - rel / 16.0))
+            if y > iy1 - 8:
+                tone = lerp(tone, (42, 36, 38, 255), 0.20)
+            if (row * 7 + col * 5) % 17 == 0:
+                tone = INNER_3
+            img.putpixel((x, y), tone)
+    # 1 px weak inner lip light on the upper/left edge; dark on the right.
+    for y, left, right in arch_spans(ix0, iy0, ix1, iy1):
+        px(draw, left, y, INNER_RIM)
+        px(draw, left + 1, y, (62, 54, 50, 255))
+        px(draw, right, y, SIL_DARK)
+        px(draw, right - 1, y, (44, 38, 38, 255))
+    for yy in (iy0, iy0 + 1):
+        span = next(arch_spans(ix0, yy, ix1, iy1))
+        rect(draw, span[1] + 1, yy, span[2] - 1, yy,
+             INNER_TOP if yy == iy0 else (60, 52, 49, 255))
+    arch_bottom_reflection(img, ix0, iy0, ix1, iy1)
+
+
+def dark_gear(
+    img: Image.Image, cx: int, cy: int, radius: int,
+    body=SIL_0, edge=SIL_2, hole=SIL_DARK, teeth: int = 12,
+) -> None:
+    """Low-contrast workshop gear; values stay above the near-black floor."""
+    draw = ImageDraw.Draw(img)
+    draw.ellipse((cx - radius, cy - radius, cx + radius, cy + radius), fill=body)
+    draw.ellipse((cx - radius + 1, cy - radius + 1, cx + radius - 1, cy + radius - 1),
+                 outline=edge, width=1)
+    for index in range(teeth):
+        angle = TAU * float(index) / float(teeth)
+        tx = cx + int(round(math.cos(angle) * (radius - 2)))
+        ty = cy + int(round(math.sin(angle) * (radius - 2)))
+        rect(draw, tx - 3, ty - 3, tx + 3, ty + 3, body)
+        px(draw, tx - 3, ty - 3, edge)
+        px(draw, tx - 2, ty - 3, edge)
+    if hole is not None:
+        draw.ellipse((cx - radius // 3, cy - radius // 3,
+                      cx + radius // 3, cy + radius // 3), fill=hole)
+    draw.ellipse((cx - 4, cy - 4, cx + 4, cy + 4), fill=body)
+    draw.ellipse((cx - 4, cy - 4, cx + 4, cy + 4), outline=edge, width=1)
+    px(draw, cx - 3, cy - 3, edge)
+    px(draw, cx - 2, cy - 4, edge)
+
+
+def dark_pipe(img: Image.Image, x0: int, y0: int, x1: int, y1: int) -> None:
+    """Vertical/horizontal low-contrast pipe with flanges."""
+    draw = ImageDraw.Draw(img)
+    rect(draw, x0, y0, x1, y1, SIL_0)
+    rect(draw, x0, y0, x0, y1, SIL_2)
+    rect(draw, x0, y0, x1, y0, SIL_2)
+    rect(draw, x1, y0, x1, y1, SIL_DARK)
+    rect(draw, x0, y1, x1, y1, SIL_DARK)
+    if x1 - x0 >= y1 - y0:
+        for bx in range(x0 + 18, x1 - 4, 36):
+            rect(draw, bx, y0 - 1, bx + 3, y1 + 1, SIL_1)
+            rect(draw, bx, y0 - 1, bx + 3, y0 - 1, SIL_HI)
+            px(draw, bx + 1, y0 + 2, SIL_HI)
+    else:
+        for by in range(y0 + 24, y1 - 4, 42):
+            rect(draw, x0 - 1, by, x1 + 1, by + 4, SIL_1)
+            rect(draw, x0 - 1, by, x1 + 1, by, SIL_HI)
+            px(draw, x0 + 2, by + 2, SIL_HI)
+
+
+def dark_rack(img: Image.Image, x0: int, y_top: int, x1: int, y_bottom: int) -> None:
+    """Low-contrast timber scaffold / catwalk silhouette."""
+    draw = ImageDraw.Draw(img)
+    rect(draw, x0, y_top, x1, y_top + 4, SIL_1)
+    rect(draw, x0, y_top, x1, y_top, SIL_HI)
+    rect(draw, x0, y_top + 4, x1, y_top + 4, SIL_DARK)
+    for lx in (x0 + 4, x1 - 8):
+        rect(draw, lx, y_top + 5, lx + 4, y_bottom, SIL_0)
+        rect(draw, lx, y_top + 5, lx, y_bottom, SIL_2)
+        rect(draw, lx + 4, y_top + 5, lx + 4, y_bottom, SIL_DARK)
+    # One diagonal brace and a hanging hook.
+    steps = max(1, y_bottom - (y_top + 5))
+    for index in range(steps):
+        bx = x0 + 8 + int(round((x1 - x0 - 18) * index / float(steps)))
+        by = y_top + 5 + index
+        rect(draw, bx, by, bx + 2, by, SIL_1)
+    rect(draw, (x0 + x1) // 2, y_top + 4, (x0 + x1) // 2, y_top + 14, SIL_1)
+    rect(draw, (x0 + x1) // 2 - 2, y_top + 14, (x0 + x1) // 2 + 2, y_top + 16, SIL_0)
+    px(draw, (x0 + x1) // 2, y_top + 14, SIL_HI)
+
+
+def dark_chain(img: Image.Image, x: int, y0: int, y1: int) -> None:
+    """A low-contrast chain for the recessed arches."""
+    draw = ImageDraw.Draw(img)
+    y = y0
+    toggle = 0
+    while y < y1 - 4:
+        if toggle % 2 == 0:
+            rect(draw, x - 1, y, x + 1, y, SIL_1)
+            px(draw, x - 1, y, SIL_2)
+            px(draw, x - 1, y + 1, SIL_DARK)
+            px(draw, x + 1, y + 1, SIL_DARK)
+        else:
+            rect(draw, x, y, x, y + 2, SIL_0)
+            px(draw, x, y, SIL_2)
+        y += 3
+        toggle += 1
+
+
+def mirror_reflections(img: Image.Image, px0: int, py0: int, px1: int, py1: int) -> None:
+    """Faint reflected masonry and workshop shapes on a dark mirror plate.
+
+    The values stay within a few steps of the glass, so the plate reads as a
+    mirror reflecting the room rather than a black window, and the gold/cyan
+    boss remains the brightest object.
+    """
+    draw = ImageDraw.Draw(img)
+    left, top = px0 + 4, py0 + 4
+    right, bottom = px1 - 4, py1 - 4
+    if right - left < 10 or bottom - top < 10:
+        return
+    # Reflected lower brick wall: 24x12, 1 px seams, low contrast.
+    for y in range(top + 54, bottom):
+        rel = y - (top + 54)
+        row = rel // 12
+        offset = 0 if row % 2 == 0 else 12
+        for x in range(left, right + 1):
+            if rel % 12 == 0:
+                px(draw, x, y, (46, 48, 51, 255))
+            elif rel % 12 == 11:
+                px(draw, x, y, (34, 36, 39, 255))
+            elif (x - left + offset) % 24 == 0:
+                px(draw, x, y, (34, 36, 39, 255))
+            else:
+                tone = (39, 41, 44, 255) if (row + (x // 24)) % 2 == 0 else (42, 44, 47, 255)
+                px(draw, x, y, tone)
+    # Reflected broken gear at the upper right.
+    gcx, gcy, gr = right - 18, top + 30, 20
+    draw.ellipse((gcx - gr, gcy - gr, gcx + gr, gcy + gr),
+                 outline=(43, 45, 48, 255), width=2)
+    for index in range(8):
+        angle = TAU * float(index) / 8.0
+        tx = gcx + int(round(math.cos(angle) * (gr - 1)))
+        ty = gcy + int(round(math.sin(angle) * (gr - 1)))
+        rect(draw, tx - 2, ty - 2, tx + 2, ty + 2, (41, 43, 46, 255))
+        px(draw, tx - 1, ty - 2, (48, 50, 52, 255))
+    draw.ellipse((gcx - 5, gcy - 5, gcx + 5, gcy + 5),
+                 outline=(46, 48, 51, 255), width=1)
+    # Reflected chain on the left margin of the glass.
+    cx = left + 12
+    for y in range(top + 18, min(bottom - 20, top + 116), 4):
+        if (y // 4) % 2 == 0:
+            rect(draw, cx - 1, y, cx + 1, y, (43, 45, 48, 255))
+        else:
+            rect(draw, cx, y, cx, y + 2, (39, 41, 44, 255))
+    # Reflected wood rack / pipe across the lower glass.
+    rack_y = bottom - 34
+    rect(draw, left + 6, rack_y, right - 6, rack_y + 2, (42, 44, 47, 255))
+    rect(draw, left + 6, rack_y, right - 6, rack_y, (47, 49, 52, 255))
+    for bx in range(left + 10, right - 8, 28):
+        rect(draw, bx, rack_y + 2, bx + 2, bottom - 6, (39, 41, 44, 255))
+        px(draw, bx, rack_y + 2, (46, 48, 51, 255))
+    # A faint vertical post reflection near the left third.
+    rect(draw, left + 30, top + 16, left + 32, bottom - 8, (36, 38, 41, 255))
+    px(draw, left + 30, top + 16, (44, 46, 49, 255))
+
+
+def ember_cluster(img: Image.Image, cx: int, cy: int, rx: int, ry: int) -> None:
+    """Low-alpha furnace embers with a handful of 1 px hot points."""
+    glow(img, cx, cy, rx, ry, FIRE_DARK, 14)
+    glow(img, cx, cy - 3, max(8, rx // 2), max(6, ry // 2), FIRE_MID, 9)
+    draw = ImageDraw.Draw(img)
+    embers = (
+        (-112, -2, FIRE_LIGHT), (-86, 4, FIRE_MID), (-54, -5, FIRE_LIGHT),
+        (-26, 2, FIRE_MID), (4, -4, FIRE_HOT), (34, 3, FIRE_LIGHT),
+        (62, -2, FIRE_MID), (92, 4, FIRE_LIGHT), (118, -1, FIRE_MID),
+    )
+    for dx, dy, color in embers:
+        px(draw, cx + dx, cy + dy, color)
+        px(draw, cx + dx + 1, cy + dy + 1, (150, 82, 38, 255))
+    # A few sparks above the bed.
+    for dx, dy in ((-70, -14), (-18, -18), (26, -12), (78, -16), (106, -8)):
+        px(draw, cx + dx, cy + dy, (190, 118, 56, 255))
+
+
+
 # --- wood / iron -----------------------------------------------------------
 def wood_post(img: Image.Image, x: int, width: int, top: int, bottom: int) -> None:
     draw = ImageDraw.Draw(img)
@@ -489,64 +748,47 @@ def make_back() -> Image.Image:
     for x, width in ((0, 22), (292, 30), (552, 30), (1080, 30), (1224, 30), (1852, 28)):
         stone_pier(img, x, width, 31, 319)
 
-    # Entry blind arch behind the gate / violet curtain.
+    # Entry blind arch behind the gate / violet curtain: a recessed second
+    # brick wall, a weak inner lip and low-contrast machinery, never a black
+    # panel.
     ax0, ay0, ax1, ay1 = 146, 96, 288, 299
     fill_arch(draw, ax0 - 7, ay0 - 7, ax1 + 7, ay1, STONE_0)
     fill_arch(draw, ax0 - 6, ay0 - 6, ax1 + 6, ay1, STONE_2)
-    fill_arch(draw, ax0, ay0, ax1, ay1, (26, 21, 23, 255))
     arch_edges(draw, ax0 - 7, ay0 - 7, ax1 + 7, ay1, STONE_4, STONE_DARK, STONE_3)
     arch_edges(draw, ax0, ay0, ax1, ay1, (78, 64, 54, 255), (18, 15, 16, 255))
-    # Deep shadow inside the arch, darker at the bottom.
-    for y, left, right in arch_spans(ax0 + 2, ay0 + 2, ax1 - 2, ay1):
-        rect(draw, left, y, right, y, lerp((30, 24, 26, 255), (20, 17, 18, 255),
-                                          (y - ay0) / float(ay1 - ay0)))
-    # Low-contrast coursing keeps the recess from reading as a flat hole.
-    for y in range(ay0 + 24, ay1 - 8, 24):
-        span = next(arch_spans(ax0 + 2, y, ax1 - 2, ay1))
-        rect(draw, span[1] + 3, y, span[2] - 3, y, (34, 28, 29, 255))
-        for x in range(span[1] + 10 + (y // 24 % 2) * 12, span[2] - 6, 24):
-            rect(draw, x, y, x, min(ay1, y + 22), (32, 26, 27, 255))
-    # One very quiet back panel behind the gate.
-    rect(draw, 200, 150, 246, 298, (24, 20, 22, 255))
-    rect(draw, 200, 150, 200, 298, (36, 30, 30, 255))
-    rect(draw, 246, 150, 246, 298, (18, 15, 16, 255))
+    inner_brick_arch(img, ax0, ay0, ax1, ay1, inset=7)
+    dark_chain(img, ax0 + 60, ay0 + 24, ay0 + 132)
+    dark_gear(img, ax0 + 106, ay0 + 96, 22)
+    dark_rack(img, ax0 + 64, ay0 + 154, ax0 + 126, ay1 - 6)
 
     # Entry forge: the chapter's strongest local warm source, at the far left
     # so it never sits behind the violet curtain or the phase decks.
     entry_forge(img)
 
-    # Bridge-hall giant blind arch.  Its interior is nearly black so the
-    # phase decks and wisps keep the full contrast budget.
+    # Bridge-hall giant furnace arch.  The old near-black falloff is replaced
+    # by a recessed brick throat, machinery silhouettes and a low ember bed;
+    # the bridge band still stays darker than the decks.
     bx0, by0, bx1, by1 = 606, 92, 1004, 299
     fill_arch(draw, bx0 - 9, by0 - 9, bx1 + 9, by1, STONE_0)
     fill_arch(draw, bx0 - 7, by0 - 7, bx1 + 7, by1, STONE_2)
-    fill_arch(draw, bx0, by0, bx1, by1, (20, 17, 18, 255))
     arch_edges(draw, bx0 - 9, by0 - 9, bx1 + 9, by1, STONE_4, STONE_DARK, STONE_3)
     arch_edges(draw, bx0, by0, bx1, by1, (62, 52, 46, 255), (14, 12, 13, 255))
-    for y, left, right in arch_spans(bx0 + 2, by0 + 2, bx1 - 2, by1):
-        rect(draw, left, y, right, y, lerp((28, 23, 24, 255), (18, 15, 16, 255),
-                                          (y - by0) / float(by1 - by0)))
-    for y in range(by0 + 24, by1 - 8, 24):
-        span = next(arch_spans(bx0 + 2, y, bx1 - 2, by1))
-        rect(draw, span[1] + 4, y, span[2] - 4, y, (31, 26, 27, 255))
-        for x in range(span[1] + 12 + (y // 24 % 2) * 14, span[2] - 8, 24):
-            rect(draw, x, y, x, min(by1, y + 22), (29, 24, 25, 255))
-    # Wall gear and a slack chain: readable as machinery, not as a light.
-    gcx, gcy, gr = 824, 168, 38
-    draw.ellipse((gcx - gr, gcy - gr, gcx + gr, gcy + gr), fill=(35, 30, 28, 255))
-    draw.ellipse((gcx - gr + 3, gcy - gr + 3, gcx + gr - 3, gcy + gr - 3), fill=(24, 20, 20, 255))
-    for angle in range(0, 360, 30):
-        tx = gcx + int(round(math.cos(math.radians(angle)) * (gr - 2)))
-        ty = gcy + int(round(math.sin(math.radians(angle)) * (gr - 2)))
-        rect(draw, tx - 3, ty - 3, tx + 3, ty + 3, (36, 31, 29, 255))
-        px(draw, tx - 2, ty - 3, (52, 45, 39, 255))
-    draw.ellipse((gcx - 14, gcy - 14, gcx + 14, gcy + 14), fill=(42, 36, 32, 255))
-    draw.ellipse((gcx - 10, gcy - 10, gcx + 10, gcy + 10), fill=(24, 20, 19, 255))
-    rect(draw, gcx - 2, gcy - 5, gcx + 2, gcy + 5, (36, 30, 27, 255))
-    chain(img, gcx, 104, 130)
-    # Faint soot and a cold-iron glint on the gear.
-    px(draw, gcx - gr + 4, gcy - 12, (66, 58, 48, 255))
-    px(draw, gcx - 8, gcy - gr + 1, (66, 58, 48, 255))
+    inner_brick_arch(img, bx0, by0, bx1, by1, inset=10)
+    # Machinery: two gears, a wall pipe with a valve, a timber catwalk and a
+    # slack chain.  Values stay close to the inner wall; the embers are added
+    # after the global shade so they remain the only warm points down here.
+    dark_gear(img, 824, 168, 38)
+    dark_gear(img, 758, 224, 26, body=SIL_1, edge=SIL_2, hole=SIL_DARK, teeth=10)
+    dark_pipe(img, 956, 124, 968, 296)
+    draw.ellipse((948, 174, 976, 202), outline=SIL_2, width=2)
+    for angle in range(0, 360, 45):
+        vx = 962 + int(round(math.cos(math.radians(angle)) * 12))
+        vy = 188 + int(round(math.sin(math.radians(angle)) * 12))
+        draw.line((962, 188, vx, vy), fill=SIL_1, width=1)
+    px(draw, 953, 179, SIL_HI)
+    dark_rack(img, 636, 248, 772, 294)
+    dark_chain(img, 900, 106, 182)
+    dark_chain(img, 824, 104, 132)
 
     # Transition door: heavy planks, iron bands, a warm seam below.
     dx0, dy0, dx1, dy1 = 1112, 114, 1204, 299
@@ -586,6 +828,9 @@ def make_back() -> Image.Image:
     glow(img, 250, 250, 330, 170, FIRE_MID, 7)
     glow(img, 1540, 250, 300, 150, FIRE_DARK, 6)
     glow(img, 150, 290, 150, 100, FIRE_MID, 15)
+    # Furnace embers are added after the global shade so they stay the only
+    # warm points inside the bridge-hall throat.  They sit below the deck line.
+    ember_cluster(img, 805, 288, 150, 28)
     return img
 
 
@@ -673,19 +918,19 @@ def wall_sconce(img: Image.Image, cx: int, cy: int) -> None:
 
 def mirror_bay(img: Image.Image, x0: int, y0: int, x1: int, y1: int) -> None:
     draw = ImageDraw.Draw(img)
-    # Deep arched niche.  The glass itself is a separate rectangular plate, so
-    # this reads as a mounted mirror rather than a DLC3-style window.
+    # Deep arched niche: a recessed brick throat, a weak inner lip and a few
+    # low-contrast shapes tucked behind the plate.  The plate itself is a
+    # mounted mirror, so this reads as a mirror hall, not three black windows.
     fill_arch(draw, x0, y0, x1, y1, STONE_0)
     fill_arch(draw, x0 + 3, y0 + 3, x1 - 3, y1, STONE_2)
-    fill_arch(draw, x0 + 16, y0 + 16, x1 - 16, y1 - 6, (23, 19, 21, 255))
     arch_edges(draw, x0, y0, x1, y1, STONE_TOP, STONE_DARK, STONE_4)
     arch_edges(draw, x0 + 3, y0 + 3, x1 - 3, y1, STONE_3, STONE_0)
-    arch_edges(draw, x0 + 16, y0 + 16, x1 - 16, y1 - 6, (62, 53, 47, 255), (14, 12, 13, 255))
-    # Quiet brick coursing inside the niche above the plate.
-    for y in range(y0 + 22, y0 + 58, 8):
-        for x in range(x0 + 22, x1 - 22, 24):
-            if (x + y) % 48 < 24:
-                rect(draw, x, y, x + 10, y, (30, 25, 26, 255))
+    inner_brick_arch(img, x0 + 13, y0 + 13, x1 - 13, y1 - 6, inset=4)
+    # Physical silhouettes sit behind the plate; only the margins stay visible.
+    dark_gear(img, x0 + 38, y0 + 32, 20, body=SIL_1, edge=SIL_2, hole=SIL_DARK, teeth=9)
+    dark_pipe(img, x1 - 22, y0 + 22, x1 - 16, y1 - 12)
+    dark_chain(img, x0 + 20, y0 + 28, y1 - 16)
+    dark_rack(img, x0 + 18, y1 - 18, x1 - 18, y1 - 8)
     # Rectangular mirror plate with a 3 px iron frame.
     px0, py0 = x0 + 23, y0 + 50
     px1, py1 = x1 - 23, y1 - 18
@@ -699,6 +944,8 @@ def mirror_bay(img: Image.Image, x0: int, y0: int, x1: int, y1: int) -> None:
         t = (y - py0) / float(max(1, py1 - py0))
         color = lerp(GLASS_TOP, GLASS_LOW, t)
         rect(draw, px0 + 3, y, px1 - 3, y, color)
+    # Faint reflected masonry / machinery, kept within a few steps of the glass.
+    mirror_reflections(img, px0, py0, px1, py1)
     # Bevel: top/left 1 px pale, bottom/right 1 px nearly black.
     rect(draw, px0 + 3, py0 + 3, px1 - 3, py0 + 3, GLASS_HI)
     rect(draw, px0 + 3, py0 + 4, px0 + 3, py1 - 3, GLASS_HI)

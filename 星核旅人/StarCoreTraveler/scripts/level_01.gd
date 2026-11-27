@@ -94,6 +94,11 @@ func _input(event: InputEvent) -> void:
 
 
 func _ready() -> void:
+	# The title fades to black, then switches to this fresh level_01. Consume the
+	# one-shot request before the menu can activate so the opening film own black
+	# overlay is the first thing the new scene presents (no world/HUD/old copy).
+	if LEVEL_FLOW.consume_new_game_request():
+		enable_start_menu = false
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	process_physics_priority = -10
 	_world.process_mode = Node.PROCESS_MODE_PAUSABLE

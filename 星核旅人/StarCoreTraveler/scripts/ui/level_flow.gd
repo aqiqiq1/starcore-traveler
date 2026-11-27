@@ -31,6 +31,35 @@ const ONE_SHOT_ACTIONS: Array[StringName] = [
 	&"tutorial_next",
 ]
 
+## Set by the title's black fade before the real scene switch, consumed by the
+## fresh level_01 so its opening starts without the title menu. This is the only
+## state carried across a new-game change_scene.
+static var _new_game_requested: bool = false
+
+
+## Starts a fresh level_01 after the title has reached full black. The flag is
+## consumed by the new scene's _ready before it decides whether to show the menu.
+static func start_new_game(tree: SceneTree) -> Error:
+	if tree == null:
+		return ERR_UNCONFIGURED
+	_new_game_requested = true
+	tree.paused = false
+	release_gameplay_actions()
+	var error: Error = tree.change_scene_to_file(LEVEL_01_PATH)
+	if error != OK:
+		_new_game_requested = false
+	return error
+
+
+static func consume_new_game_request() -> bool:
+	var requested: bool = _new_game_requested
+	_new_game_requested = false
+	return requested
+
+
+static func clear_new_game_request() -> void:
+	_new_game_requested = false
+
 
 ## Drop any physical/action state that could leak into the newly loaded scene.
 ## A held Enter/Space/R/E must not jump, toggle polarity, interact or restart on

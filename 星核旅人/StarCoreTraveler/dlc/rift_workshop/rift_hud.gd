@@ -863,3 +863,24 @@ func is_panel_animating() -> bool:
 
 func get_panel_anim_time() -> float:
 	return PANEL_ANIM_TIME
+
+
+## The opening film hands the screen back to live gameplay.  Show the real HUD
+## node and fade its chrome in from transparent; the film's own CanvasLayer UI
+## is already gone.  Pause-process keeps the fade honest if a modal opens.
+func fade_in_after_intro(seconds: float = 0.35) -> void:
+	if _root == null:
+		return
+	_root.modulate.a = 0.0
+	var tween: Tween = create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tween.tween_property(_root, "modulate:a", 1.0, maxf(seconds, 0.01))
+
+
+func set_chrome_alpha(value: float) -> void:
+	if _root != null:
+		_root.modulate.a = clampf(value, 0.0, 1.0)
+
+
+func get_chrome_alpha() -> float:
+	return _root.modulate.a if _root != null else 0.0
