@@ -42,6 +42,10 @@ var _flip_flash: float = 0.0
 var _orbit_enabled: bool = true
 var _phase_timer_enabled: bool = true
 var _core_global: Vector2 = Vector2(700.0, 240.0)
+## Opening-film support.  The real node sprite/ring can be shown while the
+## boss is still inactive; `_active` stays false, so no orbit, phase timer or
+## hit box is turned on.
+var _cinematic_visible: bool = false
 
 
 func _ready() -> void:
@@ -78,6 +82,8 @@ func configure(
 	_flip_flash = 0.0
 	_phase_left = phase_period
 	_time = 0.0
+	_cinematic_visible = false
+	modulate.a = 1.0
 	position = _orbit_point()
 	_apply_visual()
 	queue_redraw()
@@ -85,10 +91,47 @@ func configure(
 
 func set_active(value: bool) -> void:
 	_active = value
+	modulate.a = 1.0
 	if _sprite != null:
 		_sprite.visible = value and _alive
 	if value:
 		_apply_visual()
+	queue_redraw()
+
+
+## Film-only look: the real 40x40 node sprite and its own ring/heart/tether are
+## drawn while the boss remains inactive.  Luminance is driven separately so
+## the two orbs can wake one after the other without enabling gameplay.
+func set_cinematic_visible(value: bool) -> void:
+	_cinematic_visible = value
+	if not value:
+		modulate.a = 1.0
+	if _sprite != null:
+		_sprite.visible = _alive and (_active or _cinematic_visible)
+	queue_redraw()
+
+
+func set_cinematic_lit(value: float) -> void:
+	if _active:
+		return
+	var lit: float = clampf(value, 0.0, 1.0)
+	modulate.a = lit if _cinematic_visible else 1.0
+	if _sprite != null:
+		_sprite.visible = _alive and _cinematic_visible and lit > 0.001
+	queue_redraw()
+
+
+func is_cinematic_visible() -> bool:
+	return _cinematic_visible
+
+
+## Film-only pose: angle and phase without enabling the orbit/phase timers or
+## the boss hit box.  The chapter reconfigures both nodes when the fight starts.
+func set_cinematic_pose(angle: float, positive: bool) -> void:
+	_angle = angle
+	_positive = positive
+	position = _orbit_point()
+	_apply_visual()
 	queue_redraw()
 
 
@@ -222,7 +265,7 @@ func set_phase_timer_enabled(value: bool) -> void:
 # --- drawing ---------------------------------------------------------------
 
 func _draw() -> void:
-	if not _active:
+	if not _active and not _cinematic_visible:
 		return
 	var phase_color: Color = GOLD if _positive else CYAN
 	# Tether to the core: a dashed 1 px thread, so the node clearly belongs to

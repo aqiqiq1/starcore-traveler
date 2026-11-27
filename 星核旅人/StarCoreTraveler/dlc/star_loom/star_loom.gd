@@ -108,6 +108,8 @@ const STAGE_GRACE: float = 1.50
 const RECOVERY_FADE_OUT_TIME: float = 0.25
 const RECOVERY_BLACK_HOLD_TIME: float = 0.10
 const RECOVERY_FADE_IN_TIME: float = 0.35
+## The guide opens 0.45 s after the film hands control back, matching DLC1/DLC2.
+const POST_INTRO_GUIDE_DELAY: float = 0.45
 
 enum AttackState { IDLE, TELEGRAPH, RECOVER }
 enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
@@ -139,10 +141,12 @@ var _fire_points: Array[Vector2] = []
 var _gear_points: Array[Vector2] = []
 var _fire_serial: int = 0
 var _intro_guide: DlcGuide = null
-var _intro_cinematic: DlcIntroCinematic = null
+var _intro_cinematic: LoomIntroCinematic = null
 var _intro_active: bool = false
 var _intro_played: bool = false
 var _intro_skipped: bool = false
+var _post_intro_guide_pending: bool = false
+var _post_intro_guide_left: float = 0.0
 var _mechanic_popup: MechanicPopup = null
 var _fire_tip_pending: bool = false
 ## The white opening flash is a once-per-run event; later exposures keep the
@@ -275,14 +279,10 @@ func _ready() -> void:
 	_hud.show_pause(false)
 	_hud.show_game_over(false)
 	_hud.set_recovery_alpha(0.0)
-	# The intro guide pauses the tree; in a real window start the track before
-	# it opens so the PROCESS_MODE_ALWAYS music really runs through the guide.
-	# The headless 90-frame smoke run has no audio device, and starting an OGG
-	# playback there leaves it referenced by AudioServer at forced exit, so the
-	# real-window path is the one that owns this early start.
-	if DisplayServer.get_name() != "headless":
-		_audio.start_music()
-
+	# The boss BGM is deliberately not started here: the opening film is a
+	# dormant hall and must play in silence.  The film's own lamp/wood/shuttle
+	# cues carry the room, and `_on_intro_cinematic_finished` starts the track
+	# only after control returns.  A no-film path starts it before the guide.
 	_camera.reset_smoothing()
 	_elapsed = 0.0
 	LEVEL_FLOW.release_one_shot_actions()
@@ -291,13 +291,13 @@ func _ready() -> void:
 	call_deferred("_start_intro_cinematic_or_guide")
 
 
-## The opening film runs before the guide.  The music was started above for a
-## real window and is PROCESS_MODE_ALWAYS, so the film never pauses or restarts
-## the track.  The HUD is hidden for the whole film and revealed at the end.
+## The opening film runs before the guide.  The boss BGM stays stopped for the
+## whole film; the dormancy is part of the read.  The HUD is hidden for the
+## whole film and revealed at the end.
 func _start_intro_cinematic_or_guide() -> void:
 	if show_intro_cinematic and not _intro_played and not _completed and not _scene_leaving:
 		if _intro_cinematic == null or not is_instance_valid(_intro_cinematic):
-			_intro_cinematic = INTRO_CINEMATIC_SCENE.instantiate() as DlcIntroCinematic
+			_intro_cinematic = INTRO_CINEMATIC_SCENE.instantiate() as LoomIntroCinematic
 		if _intro_cinematic != null:
 			_intro_active = true
 			_intro_skipped = false
@@ -306,9 +306,17 @@ func _start_intro_cinematic_or_guide() -> void:
 				_footsteps.stop()
 			_player.lock_for_cinematic()
 			add_child(_intro_cinematic)
+			_intro_cinematic.configure(
+				_core, _node_a, _node_b, _player, _camera, _hud
+			)
 			_intro_cinematic.finished.connect(_on_intro_cinematic_finished)
-			_intro_cinematic.start()
+			if _intro_cinematic.start():
+				return
+			# A missing real node makes the film emit a deferred `finished`
+			# so the chapter never stays locked on a film that cannot play.
 			return
+	if DisplayServer.get_name() != "headless":
+		_audio.start_music()
 	if show_intro_guide:
 		_open_intro_guide()
 
@@ -318,12 +326,34 @@ func _on_intro_cinematic_finished(skipped: bool) -> void:
 	_intro_played = true
 	_intro_skipped = skipped
 	_hud.visible = true
+	_hud.fade_in_after_intro()
 	_attack_key_down = false
+	# The player lock is released first, then the existing three-tick opening
+	# hold keeps the skip key from becoming a jump.  The guide waits a short
+	# control/HUD beat, matching the DLC1/DLC2 hand-off.
 	_player.unlock_after_cinematic()
 	_player.begin_input_override()
 	_input_ticks = 3
-	if show_intro_guide:
-		call_deferred("_open_intro_guide")
+	if DisplayServer.get_name() != "headless":
+		_audio.start_music()
+	if show_intro_guide and not _completed and not _scene_leaving:
+		_post_intro_guide_pending = true
+		_post_intro_guide_left = POST_INTRO_GUIDE_DELAY
+
+
+func _tick_post_intro_guide(delta: float) -> void:
+	if not _post_intro_guide_pending:
+		return
+	# Only states that will never return to this screen cancel the pending
+	# guide.  A pause freezes `_process` above, so the hand-off window resumes.
+	if _completed or _scene_leaving or _recovery_active or _retry_pending:
+		_post_intro_guide_pending = false
+		return
+	_post_intro_guide_left = maxf(_post_intro_guide_left - delta, 0.0)
+	if _post_intro_guide_left > 0.0:
+		return
+	_post_intro_guide_pending = false
+	_open_intro_guide()
 
 
 func _exit_tree() -> void:
@@ -518,6 +548,7 @@ func _process(delta: float) -> void:
 		return
 	if _intro_active:
 		return
+	_tick_post_intro_guide(delta)
 	if not _completed:
 		_elapsed += delta
 	_advance_recovery(delta)
@@ -1562,6 +1593,8 @@ func _restart_chapter() -> void:
 	_attack_key_down = false
 	_objective_key = ""
 	_fire_tip_pending = false
+	_post_intro_guide_pending = false
+	_post_intro_guide_left = 0.0
 	_core_burst_played = false
 	_clear_hazards()
 	_hud.set_gear_warning(false, 0.0)
@@ -1663,7 +1696,7 @@ func get_intro_guide() -> DlcGuide:
 	return _intro_guide
 
 
-func get_intro_cinematic() -> DlcIntroCinematic:
+func get_intro_cinematic() -> LoomIntroCinematic:
 	return _intro_cinematic
 
 

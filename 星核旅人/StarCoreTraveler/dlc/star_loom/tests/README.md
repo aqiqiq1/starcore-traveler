@@ -16,8 +16,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File dlc\star_loom\tests\run_all.
 # 音乐/混响/循环（需要真实音频设备与窗口）
 D:/Godot/Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 res://dlc/star_loom/tests/music_test.tscn
 
-# 640x360 开场关键帧
+# 640x360 开场关键帧（真实织机厅运镜）
 D:/Godot/Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 res://dlc/star_loom/tests/capture_intro.tscn
+
+# 0.2 s 连续核对表所需帧（写到 tests/out/loom_opening_strip/）
+D:/Godot/Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 res://dlc/star_loom/tests/capture_intro_strip.tscn
 
 # 640x360 入厅机制：同相门开/关、符文石上槽/拉回、检查点
 D:/Godot/Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 res://dlc/star_loom/tests/capture_mechanics.tscn
@@ -30,13 +33,26 @@ D:/Godot/Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 res://d
 
 ## 截图
 
-- `out/intro_lamp_row_1.png`：第一排顶灯亮。
-- `out/intro_lamp_row_2.png`：第二排顶灯亮。
-- `out/intro_lamps.png`：三排顶灯全亮。
-- `out/intro_shuttle.png`：木梁轻响、梭子滑过。
-- `out/intro_core.png`：两侧光球亮、中央核心点燃。
+- 当前开场证据：`screenshots/loom_opening_20261127/` 的
+  `00_hall_dark_loom_silhouette.png`、`01_lamp_row_1.png`、
+  `02_lamp_rows_all.png`、`03_lamp_rows_shuttle.png`、
+  `04_orbs_core_lit.png`、`05_pull_back_to_player.png`、
+  `06_control_returned.png`、`contact_sheet_0.2s.png`。全部为真实
+  `StarLoom` + 真实 `OpeningCamera2D` 的 640×360 渲染。
+- `tests/out/intro_lamp_row_1.png`、`intro_lamp_row_2.png`、`intro_lamps.png`、
+  `intro_shuttle.png`、`intro_core.png` 是 2026-11-27 之前黑底另绘版的旧图，
+  仅保留历史记录，不再作为本轮真实关卡运镜的证据。
 
-均为实际 640x360 渲染。章节在电影结束后才显示 HUD，再打开共享说明页。
+## 第八轮（2026-11-27）：开场改为真实关卡运镜
+
+`intro_test` 实际 **78 checks / 0 failures**（真实开窗额外 1 条 BGM 检查为
+**79 / 0**）：真实 `OpeningCamera2D` current、真实 Core/NodeA/NodeB/Player、
+首帧中心 >600 且 zoom >1.05、三排灯/真实 4 帧梭子、Boss 全程未激活、
+BGM 未在片内启动、HUD 隐藏、移动/J/Q 锁定、F/长按空格跳过、拉回中跳过
+立即回玩家、HUD 0.35 s 淡入、说明页 0.45 s 延迟、R/失败不重播。
+`run_all.ps1` **11 例全部 exit=0、problems=0**（含 gate 48/0、mechanics 216/0、
+本章 90 帧与本体三关 90 帧）。`--headless --import` 0 错误。参考记录
+`dlc/star_loom/REF_OPENING_SCENE_20261127.md`。
 
 ## 第七轮（2026-11-27）：补回入厅三件本体机制
 

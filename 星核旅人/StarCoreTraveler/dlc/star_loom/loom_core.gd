@@ -48,6 +48,10 @@ var _time: float = 0.0
 var _hit_flash: float = 0.0
 var _shield_flash: float = 0.0
 var _phase_flash: float = 0.0
+## Opening-film support: the real 4-frame sheet is driven from the film clock
+## while the boss is still inactive, so the shuttle movement is deterministic
+## and the boss cannot start from the film.
+var _cinematic_frame_lock: bool = false
 
 
 func _ready() -> void:
@@ -150,9 +154,26 @@ func _process(delta: float) -> void:
 	_hit_flash = maxf(_hit_flash - delta / 0.28, 0.0)
 	_shield_flash = maxf(_shield_flash - delta / 0.22, 0.0)
 	_phase_flash = maxf(_phase_flash - delta / 0.16, 0.0)
-	if _sprite != null:
+	if _sprite != null and not _cinematic_frame_lock:
 		_sprite.frame = int(_time * 3.2) % 4
 	queue_redraw()
+
+
+## The opening film drives the same four real frames from its own clock.  The
+## lock only stops the idle frame counter; `_active` and gameplay stay off.
+func set_cinematic_frame_lock(value: bool, start_frame: int = 0) -> void:
+	_cinematic_frame_lock = value
+	if value and _sprite != null:
+		_sprite.frame = clampi(start_frame, 0, 3)
+
+
+func set_cinematic_frame(frame: int) -> void:
+	if _sprite != null:
+		_sprite.frame = clampi(frame, 0, 3)
+
+
+func get_sprite_frame() -> int:
+	return _sprite.frame if _sprite != null else -1
 
 
 func _apply_visual() -> void:
