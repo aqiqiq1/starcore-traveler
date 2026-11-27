@@ -20,7 +20,6 @@ extends Node
 ##   failure_retry.png    two accepted hits -> black fade -> arena entrance
 ##   completion.png       "裂隙封闭 · 用时 mm:ss" (visual state only; the real
 ##                        three-hit + three-hit route is route_test.tscn)
-##   title_rift_button.png  title menu with 裂隙工坊 focused
 ##
 ## Every image is the live 640x360 viewport, including the HUD; nothing is
 ## composited from separate sprites.
@@ -224,19 +223,4 @@ func _run() -> void:
 	await _place(1550.0, 320.0, true)
 	await _wait_process(20)
 	await _save("completion.png")
-
-	# 7. Title menu with the real 裂隙工坊 button focused.
-	_rift.queue_free()
-	_rift = null
-	await _wait_process(6)
-	var level: Node = (load(LEVEL_01) as PackedScene).instantiate()
-	add_child(level)
-	await _wait_process(20)
-	var menu: StartMenu = level.get_node_or_null("StartMenu") as StartMenu
-	if menu != null:
-		var button: PixelMenuButton = menu.get_rift_button()
-		if button != null:
-			button.grab_focus()
-	await _wait_process(10)
-	await _save("title_rift_button.png")
 	Input.action_release(&"move_right")

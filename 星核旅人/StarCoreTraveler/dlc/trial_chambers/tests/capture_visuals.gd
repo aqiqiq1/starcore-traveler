@@ -9,7 +9,7 @@ extends Node
 ##   phase_crystal.png, gate_wrong_q.png, gate_gold_closed.png,
 ##   gate_gold_open.png, health_bar_hit.png, health_bar_pause.png,
 ##   gate_cyan_closed.png, arena.png, failure_retry.png, pause.png,
-##   completion.png, title_trial_button.png
+##   completion.png
 ##
 ## phase_crystal / gate_wrong_q / gate_gold_open / health_bar_hit are the
 ## current evidence: the crystal key, the red reject + Q keycap, the open sun
@@ -227,18 +227,3 @@ func _run() -> void:
 	await _place(player, 1204.0, true)
 	await _wait_process(20)
 	await _save("completion.png")
-
-	# Title menu with the real 试炼场 button focused.
-	_trial.queue_free()
-	_trial = null
-	await _wait_process(6)
-	var level: Node = (load(LEVEL_01) as PackedScene).instantiate()
-	add_child(level)
-	await _wait_process(20)
-	var menu: StartMenu = level.get_node_or_null("StartMenu") as StartMenu
-	if menu != null:
-		var button: PixelMenuButton = menu.get_trial_button()
-		if button != null:
-			button.grab_focus()
-	await _wait_process(10)
-	await _save("title_trial_button.png")

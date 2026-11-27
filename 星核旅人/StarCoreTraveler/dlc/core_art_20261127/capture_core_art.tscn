@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://dlc/core_art_20261127/capture_core_art.gd" id="1_cap"]
+
+[node name="CaptureCoreArt" type="Node"]
+script = ExtResource("1_cap")

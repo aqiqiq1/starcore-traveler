@@ -250,6 +250,13 @@ func _refresh_visual() -> void:
 	if not is_inside_tree():
 		return
 	_ensure_layers()
+	# An open, empty bay is cold and dim; a stored core brings the stone and
+	# its gold socket up to full brightness.  This is a display modulation
+	# only, not a gameplay state or collision change.
+	if _base != null:
+		_base.modulate = (
+			Color.WHITE if occupied else Color(0.64, 0.68, 0.69, 1.0)
+		)
 	if _core != null:
 		_core.visible = occupied
 		_core.show_state_badge = false

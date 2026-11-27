@@ -76,11 +76,13 @@ Public domain and free to use, personal or commercial. Credit is not required bu
 - 工程文件：`assets/star_core/star_core_locked.png`、`star_core_positive.png`、`star_core_negative.png`，均为16×16透明PNG。
 - 动态文件：同目录 `star_core_locked_12f.png`、`star_core_positive_12f.png`、`star_core_negative_12f.png`，每表192×16、12帧，单帧16×16，默认12FPS。紫色动态表复制源表，金青两表沿用调色方法逐帧修改；静帧文件保留为回退，动画不改变来源或CC BY 4.0署名义务。
 - 修改：从 `gem_round_16x16_12f_0d.png` 截取第0帧；紫色锁定态保留源帧RGBA，正/负态分别调为金色/青色。详细来源、SHA256和生成参数见项目根目录 `自制素材/星核三态/manifest.json`。这些是第三方素材的派生资源，不是完全原创资源。
+- 2026-11-27 二次改造：保留原 12 帧旋转节奏/192×16 布局，重绘内芯光、切面和外层金环；生成器 `dlc/core_art_20261127/gen_core_assets.py`，升级前文件备份在 `dlc/core_art_20261127/original/`。仍属 Frakassets 源素材的 CC BY 4.0 派生资源；署名与“已修改”说明义务不变。
 - 正负/锁定标识由 `scripts/star_core_visual.gd` 独立绘制，不修改宝石图；仅用于组件和独立预览，尚未实现星核运输或星核仓。
 
 ## 星核仓（项目自制、首版）
 
 - `assets/star_core_bay/star_core_bay_base.png`、`star_core_bay_glass.png`、`star_core_bay_empty.png` 为本项目Pillow程序绘制的32×32静态PNG，没有使用外部图像服务或第三方仓体素材。生成脚本和记录位于项目根目录 `自制素材/星核仓/`。
+- 2026-11-27 重绘：石座倒角/暗缝/黄铜嵌条、玻璃黄铜框/斜反光/内侧暗角；重绘脚本 `dlc/core_art_20261127/gen_core_assets.py`，升级前文件备份在同目录 `original/`。仍是项目自制资产，不含第三方像素。
 - 底座、玻璃与既有紫色星核分层。锁定标识由 `scripts/star_core_bay_lock_mark.gd` 绘制；空仓PNG不包含第三方星核。满仓预览中的星核仍属于上述Frakassets CC BY 4.0派生素材，不因组合进仓体而改变其署名义务。
 - 这是待用户确认的原型美术，未接入存取玩法。
 

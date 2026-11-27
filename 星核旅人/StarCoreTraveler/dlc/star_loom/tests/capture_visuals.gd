@@ -18,7 +18,6 @@ extends Node
 ##   sweep.png        stage-3 sweep warning + band (live telegraph)
 ##   summon.png       stage-3 summon warning / summoned wisps
 ##   completion.png   "织机停转 · 用时 mm:ss"
-##   title_loom_button.png  title menu with 星核织机 focused
 ##
 ## Every image is the live 640x360 viewport including the HUD.  Debug calls
 ## only pick a readable state (park a node, choose a stage/attack); the visible
@@ -258,19 +257,4 @@ func _run() -> void:
 			await _tap_q()
 	await _wait_process(20)
 	await _save("completion.png")
-
-	# 8. Title menu with the real 星核织机 button focused.
-	_loom.queue_free()
-	_loom = null
-	await _wait_process(6)
-	var level: Node = (load(LEVEL_01) as PackedScene).instantiate()
-	add_child(level)
-	await _wait_process(20)
-	var menu: StartMenu = level.get_node_or_null("StartMenu") as StartMenu
-	if menu != null:
-		var button: PixelMenuButton = menu.get_loom_button()
-		if button != null:
-			button.grab_focus()
-	await _wait_process(10)
-	await _save("title_loom_button.png")
 	Input.action_release(&"move_right")

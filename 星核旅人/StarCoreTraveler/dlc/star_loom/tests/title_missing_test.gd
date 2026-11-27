@@ -1,13 +1,15 @@
 extends Node
 
-## Missing-DLC branch test for 星核织机.
+## Missing-scene branch test for 星核织机.
 ##
-## Run with star_loom.tscn temporarily renamed (see tests/run_all.ps1):
+## Run with star_loom.tscn temporarily renamed:
 ##   ... --headless --path . res://dlc/star_loom/tests/title_missing_test.tscn
 ##
-## Asserts that hiding the entry does not disturb the base menu: the button
-## exists but is invisible / disabled / not focusable, the focus ring falls back
-## to rift -> start (or trial -> start), and the start row still works.
+## The title has no DLC direct rows.  With the scene absent, the 章节 page hides
+## the loom row and it stays disabled / unfocusable / unclickable, while the
+## base title rows and the remaining chapter rows are unchanged.
+
+const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
 
 const LEVEL_01: String = "res://scenes/level_01.tscn"
 const LOOM: String = "res://dlc/star_loom/star_loom.tscn"
@@ -45,27 +47,25 @@ func _wait_physics(count: int) -> void:
 		await get_tree().physics_frame
 
 
-func _push_key(code: int, pressed: bool) -> void:
-	var event: InputEventKey = InputEventKey.new()
-	event.physical_keycode = code as Key
-	event.keycode = code as Key
-	event.pressed = pressed
-	get_viewport().push_input(event)
-
-
 func _cleanup() -> void:
 	var current: Node = get_tree().current_scene
+	if current != null:
+		var menu: Node = current.get_node_or_null("StartMenu")
+		if menu != null and menu.has_method("stop_title_music_for_test"):
+			menu.call("stop_title_music_for_test")
+	if is_instance_valid(DemoAudio):
+		DemoAudio.stop_world()
 	get_tree().current_scene = null
 	if current != null:
 		current.queue_free()
-	await _wait_process(4)
+	await _wait_process(20)
 
 
 func _run() -> void:
 	await _wait_process(2)
 	_check(not ResourceLoader.exists(LOOM), "star_loom scene file is absent for this run")
-	_check(not StartMenu.is_loom_entry_available(),
-		"availability helper reports the entry as missing")
+	_check(not CHAPTER_PROGRESS.is_available(CHAPTER_PROGRESS.ID_LOOM),
+		"chapter_progress reports the missing loom scene")
 	var packed: PackedScene = load(LEVEL_01) as PackedScene
 	_check(packed != null, "level_01 loads with the DLC scene absent")
 	if packed == null:
@@ -79,46 +79,47 @@ func _run() -> void:
 	_check(menu != null and menu.is_menu_open(), "title menu is open")
 	if menu == null:
 		return
-	var loom_button: PixelMenuButton = menu.get_loom_button()
-	_check(loom_button != null, "hidden entry still exists as a node")
-	if loom_button == null:
-		return
-	_check(not loom_button.visible, "missing DLC hides the 星核织机 button")
-	_check(loom_button.disabled, "missing DLC leaves the button disabled")
-	_check(loom_button.focus_mode == Control.FOCUS_NONE,
-		"hidden button cannot take focus", str(loom_button.focus_mode))
 
-	# Focus ring skips the hidden entry.
+	_check(menu.find_child("LoomButton", true, false) == null,
+		"title has no 星核织机 direct row")
+	_check(menu.find_child("TrialButton", true, false) == null,
+		"title has no 试炼场 direct row")
+	_check(menu.find_child("RiftButton", true, false) == null,
+		"title has no 裂隙工坊 direct row")
+
 	var start_button: Button = menu.get_start_button()
+	var chapter_button: Button = menu.get_chapter_button()
 	var settings_button: Button = menu.get_settings_button()
 	var quit_button: Button = menu.get_quit_button()
-	var trial_button: PixelMenuButton = menu.get_trial_button()
-	var rift_button: PixelMenuButton = menu.get_rift_button()
-	_check(start_button.get_node(start_button.focus_next) == settings_button,
-		"start focus_next is still settings")
+	_check(start_button.get_node(start_button.focus_next) == chapter_button,
+		"start focus_next is 章节")
+	_check(chapter_button.get_node(chapter_button.focus_next) == settings_button,
+		"章节 focus_next is 设置")
 	_check(settings_button.get_node(settings_button.focus_next) == quit_button,
-		"settings focus_next is still quit")
-	var last_visible: Control = start_button
-	if trial_button != null and trial_button.visible:
-		_check(quit_button.get_node(quit_button.focus_next) == trial_button,
-			"quit focus_next still reaches the trial button")
-		last_visible = trial_button
-	else:
-		_check(quit_button.get_node(quit_button.focus_next) == start_button,
-			"quit focus_next loops to start without the DLC rows")
-	if rift_button != null and rift_button.visible:
-		_check(trial_button.get_node(trial_button.focus_next) == rift_button,
-			"trial focus_next still reaches the rift button")
-		last_visible = rift_button
-	_check(last_visible.get_node(last_visible.focus_next) == start_button,
-		"the last visible row loops back to start, skipping the hidden loom entry")
-	if last_visible == rift_button:
-		_check(rift_button.get_node(rift_button.focus_neighbor_bottom) == start_button,
-			"Down from rift loops to start when the loom entry is hidden")
+		"设置 focus_next is 退出游戏")
+	_check(quit_button.get_node(quit_button.focus_next) == start_button,
+		"退出游戏 focus_next loops to 开始游戏")
 
-	# The base opening row itself is exercised by title_test.tscn with the DLC
-	# present; here it only has to remain enabled and focusable while the entry
-	# is hidden (pressing it starts the 2.2 s title tween).
+	chapter_button.pressed.emit()
+	await _wait_process(4)
+	var loom_row: PixelMenuButton = menu.get_chapter_row(CHAPTER_PROGRESS.ID_LOOM)
+	_check(loom_row != null, "missing loom row still exists as a node")
+	if loom_row != null:
+		_check(not loom_row.visible, "missing scene hides the loom row")
+		_check(loom_row.disabled, "missing scene leaves the loom row disabled")
+		_check(loom_row.focus_mode == Control.FOCUS_NONE,
+			"hidden loom row cannot take focus", str(loom_row.focus_mode))
+		_check(loom_row.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"hidden loom row cannot be clicked")
+	_check(menu.get_chapter_status_text(CHAPTER_PROGRESS.ID_LOOM) == "章节场景缺失",
+		"loom row reports the missing scene",
+		menu.get_chapter_status_text(CHAPTER_PROGRESS.ID_LOOM))
+	var l1_row: PixelMenuButton = menu.get_chapter_row(CHAPTER_PROGRESS.ID_L1)
+	_check(l1_row != null and l1_row.visible and not l1_row.disabled,
+		"L1 row remains visible and enterable")
+	menu.call("_close_chapters")
+	await _wait_process(2)
+
 	_check(start_button.visible and not start_button.disabled,
 		"existing 开始游戏 row stays visible and enabled")
 	start_button.grab_focus()

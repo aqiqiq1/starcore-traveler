@@ -7,7 +7,8 @@ extends Node
 ##     res://dlc/chapter_select/tests/capture_chapter_select.tscn
 ##
 ## Saves to res://screenshots/chapter_select_20261127/:
-##   title_menu_chapter_row.png  the new 章节 row under 开始游戏 (focused)
+##   title_menu_no_direct_rows.png  default title: only 开始游戏/章节/设置/退出游戏
+##   title_menu_chapter_row.png  the 章节 row under 开始游戏 (focused)
 ##   chapter_select_locked.png   only L1 open; five rows greyed with 需先完成
 ##   chapter_select_unlocked.png L1..L3 已通关; 城内/试炼/裂隙 可进入
 
@@ -47,7 +48,12 @@ func _run() -> void:
 	for _index: int in range(24):
 		await get_tree().process_frame
 
-	# Title menu: focus/hover the new row so its caret + underline are visible.
+	# Title menu: default focus proves the page now has only the four base rows.
+	menu.get_start_button().grab_focus()
+	await _wait_process(4)
+	await _save("title_menu_no_direct_rows")
+
+	# Focus/hover the 章节 row so its caret + underline are visible.
 	menu.get_chapter_button().grab_focus()
 	await _wait_process(4)
 	await _save("title_menu_chapter_row")
