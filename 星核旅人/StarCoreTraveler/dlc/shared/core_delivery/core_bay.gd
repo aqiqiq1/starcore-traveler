@@ -35,6 +35,10 @@ const GLASS_TEXTURE: Texture2D = preload(
 	"res://assets/star_core_bay/star_core_bay_glass.png"
 )
 const CENTER: Vector2 = Vector2(0.0, -16.0)
+## One paired gesture per state change: a metal seat plus a short charge when the
+## core goes in, a pressure release when it comes out.
+const INSERT_SFX: String = "res://assets/audio/sfx/core_insert.wav"
+const REMOVE_SFX: String = "res://assets/audio/sfx/core_remove.wav"
 const GOLD: Color = Color("#f4cd63")
 const GOLD_DIM: Color = Color(0.957, 0.804, 0.388, 0.34)
 const STONE: Color = Color("#2b3537")
@@ -53,6 +57,7 @@ var _lit: float = 0.0
 var _glass_alpha: float = 0.0
 var _flash: float = 0.0
 var _time: float = 0.0
+var _sfx: AudioStreamPlayer = null
 
 
 func _ready() -> void:
@@ -60,6 +65,10 @@ func _ready() -> void:
 	_base = get_node_or_null("Base") as Sprite2D
 	_glass = get_node_or_null("Glass") as Sprite2D
 	_ensure_sprites()
+	_sfx = AudioStreamPlayer.new()
+	_sfx.name = "SeatSfx"
+	_sfx.bus = "Master"
+	add_child(_sfx)
 	_lit = 0.0
 	_glass_alpha = 0.0
 	_apply_look()
@@ -93,6 +102,7 @@ func set_occupied(value: bool) -> void:
 	if _occupied == value:
 		return
 	_occupied = value
+	_play_seat_sfx(value)
 	if value:
 		_flash = 1.0
 	set_process(true)
@@ -106,6 +116,24 @@ func is_occupied() -> bool:
 ## Read for captures/tests: the bay is visibly lit only while occupied.
 func is_lit() -> bool:
 	return _occupied
+
+
+## The seat cue that will play on the next state change, for tests/logs.
+func get_seat_sfx_path(seated: bool = true) -> String:
+	return INSERT_SFX if seated else REMOVE_SFX
+
+
+func _play_seat_sfx(seated: bool) -> void:
+	if _sfx == null:
+		return
+	var path: String = get_seat_sfx_path(seated)
+	if not ResourceLoader.exists(path):
+		return
+	var stream: AudioStream = load(path) as AudioStream
+	if stream == null:
+		return
+	_sfx.stream = stream
+	_sfx.play()
 
 
 func get_glow_strength() -> float:

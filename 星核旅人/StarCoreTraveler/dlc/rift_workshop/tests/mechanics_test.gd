@@ -8,7 +8,8 @@ extends Node
 ## curtain, the gate, low truss jump block, Q-less bridge crossing by killing
 ## deck wisps, wisp flip threat, checkpoint, arena layout, inversion crystals
 ## (2 s cooldown), the mirror boss (same/opposite face rules, core exposure,
-## three phases), two-hit failure reset, R restart, completion and E -> title.
+## three phases), three-hit health failure that spends one life and replays the
+## current form, the one-time form-1 refill, R restart, completion and E -> title.
 
 const RIFT_SCENE: String = "res://dlc/rift_workshop/rift_workshop.tscn"
 const LEVEL_01: String = "res://scenes/level_01.tscn"
@@ -256,10 +257,11 @@ func _run() -> void:
 	_check(hud.get_player_health_rect().position == Vector2(14.0, 324.0),
 		"bar is fixed at (14,324)", str(hud.get_player_health_rect()))
 	var segment_rects: Array[Rect2] = health_bar.get_segment_rects()
-	_check(segment_rects.size() == 2
+	_check(segment_rects.size() == 3
 		and segment_rects[0].size == Vector2(14.0, 8.0)
-		and segment_rects[1].position.x == 30.0,
-		"bar has two 14x8 segments with a 2 px gap", str(segment_rects))
+		and segment_rects[1].position.x == 30.0
+		and segment_rects[2].position.x == 46.0,
+		"bar has three 14x8 segments with a 2 px gap", str(segment_rects))
 	_check(health_bar.filled_color == Color("#d95757")
 		and health_bar.low_color == Color("#ff7b7b"),
 		"bar fill is red #d95757 with bright #ff7b7b low segment")
@@ -654,7 +656,7 @@ func _run() -> void:
 		"after the cooldown, touching again flips once more",
 		str(crystal.get_flip_count()))
 
-	# --- failure: two mirror sweeps reset the boss ----------------------
+	# --- failure: three mirror sweeps spend one life and replay form 1 ---
 	await _place(boss.global_position.x - 100.0, 320.0, true)
 	boss.set_attacks_enabled(true)
 	boss.debug_force_sweep()
@@ -663,11 +665,13 @@ func _run() -> void:
 	)
 	await _wait_physics(4)
 	_check(sweep_one and _rift.get_player_hits() == 1,
-		"a low mirror sweep removes one bar segment", str(_rift.get_player_hits()))
-	_check(health_bar.get_current() == 1,
-		"hit drops the fixed bar to one segment", str(health_bar.get_current()))
+		"a low mirror sweep removes one of three health cells",
+		str(_rift.get_player_hits()))
+	_check(health_bar.get_current() == 2,
+		"hit drops the fixed bar to two segments", str(health_bar.get_current()))
 	boss.set_attacks_enabled(false)
-	await _wait_physics(45)
+	# The chapter grace is 0.95 s, matching the star loom.
+	await _wait_physics(65)
 	boss.set_attacks_enabled(true)
 	boss.debug_force_sweep()
 	var sweep_two: bool = await _wait_until(
@@ -676,13 +680,28 @@ func _run() -> void:
 	await _wait_physics(4)
 	boss.set_attacks_enabled(false)
 	_check(sweep_two and _rift.get_player_hits() == 2,
-		"the second sweep empties the bar", str(_rift.get_player_hits()))
+		"the second sweep leaves one health cell", str(_rift.get_player_hits()))
+	_check(health_bar.get_current() == 1,
+		"second hit leaves one filled segment", str(health_bar.get_current()))
+	await _wait_physics(65)
+	boss.set_attacks_enabled(true)
+	boss.debug_force_sweep()
+	var sweep_three: bool = await _wait_until(
+		func() -> bool: return boss.get_sweep_count() > 2, 120
+	)
+	await _wait_physics(4)
+	boss.set_attacks_enabled(false)
+	_check(sweep_three and _rift.get_player_hits() == 3,
+		"the third sweep empties the health bar", str(_rift.get_player_hits()))
 	_check(health_bar.get_current() == 0,
-		"second hit leaves zero filled segments", str(health_bar.get_current()))
+		"third hit leaves zero filled segments", str(health_bar.get_current()))
 	var retry: bool = await _wait_until(
 		func() -> bool: return _rift.is_recovery_active(), 120
 	)
-	_check(retry, "two accepted hits start the failure transition")
+	_check(retry, "three accepted hits start the failure transition")
+	_check(_rift.get_lives() == 2,
+		"emptying the bar spends exactly one of three lives",
+		str(_rift.get_lives()))
 	var retry_done: bool = await _wait_until(
 		func() -> bool: return not _rift.is_recovery_active(), 320
 	)
@@ -693,13 +712,13 @@ func _run() -> void:
 		"x=%.1f" % _player.global_position.x)
 	_check(boss.get_phase_number() == 1 and boss.get_core_hp() == 3
 		and boss.get_intact_face_count() == 2,
-		"failure resets the boss to phase 1, core 3/3, both plates",
+		"failure replays the current form from its opening",
 		"phase=%d core=%d faces=%d" % [
 			boss.get_phase_number(), boss.get_core_hp(), boss.get_intact_face_count()
 		])
 	_check(_rift.get_player_hits() == 0, "failure clears the hit count")
-	_check(health_bar.get_current() == 2,
-		"failure recovery refills both bar segments", str(health_bar.get_current()))
+	_check(health_bar.get_current() == 3,
+		"failure recovery refills all three bar segments", str(health_bar.get_current()))
 	_check(_rift.get_crystal_left().get_flip_count() == 0
 		and _rift.get_crystal_right().get_flip_count() == 0,
 		"failure resets both arena crystals")
@@ -708,6 +727,13 @@ func _run() -> void:
 	var retry_active: bool = await _wait_for_boss_active()
 	_check(retry_active, "the boss wakes again after the retry opening")
 	boss.set_attacks_enabled(false)
+
+	# Damage once before the form-1 clear; the form-2 entry must refill it once.
+	boss.player_struck.emit(1)
+	await _wait_physics(3)
+	_check(_rift.get_player_hits() == 1 and health_bar.get_current() == 2,
+		"pre-clear damage leaves 2 of 3 cells",
+		"hits=%d bar=%d" % [_rift.get_player_hits(), health_bar.get_current()])
 
 	# --- an arena fall is the same full reset ---------------------------
 	_player.global_position = Vector2(1500.0, 560.0)
@@ -780,6 +806,16 @@ func _run() -> void:
 		"form 2 restores both plates and core 3/3")
 	_check(hud.get_boss_status().get_form_text() == "形态 2/3",
 		"HUD names form 2", hud.get_boss_status().get_form_text())
+	_check(_rift.get_player_hits() == 0 and health_bar.get_current() == 3,
+		"form 2 entry refills the three-cell bar once",
+		"hits=%d bar=%d" % [_rift.get_player_hits(), health_bar.get_current()])
+	# Later form changes do not refill: damage before the form-3 clear must
+	# survive the transition.
+	boss.player_struck.emit(1)
+	await _wait_physics(3)
+	_check(_rift.get_player_hits() == 1 and health_bar.get_current() == 2,
+		"form 2 can take damage after the one-time supply",
+		"hits=%d bar=%d" % [_rift.get_player_hits(), health_bar.get_current()])
 	var anchors_two: bool = await _wait_for_anchors(boss, 2)
 	_check(anchors_two, "form 2 summons one anchor per plate",
 		str(boss.get_alive_anchor_count()))
@@ -854,6 +890,9 @@ func _run() -> void:
 		"form 3 restores both plates and core 3/3")
 	_check(hud.get_boss_status().get_form_text() == "形态 3/3",
 		"HUD names form 3", hud.get_boss_status().get_form_text())
+	_check(_rift.get_player_hits() == 1 and health_bar.get_current() == 2,
+		"form 3 entry does not add a second refill",
+		"hits=%d bar=%d" % [_rift.get_player_hits(), health_bar.get_current()])
 	_check(is_equal_approx(boss.get_face_orbit_speed(), 1.9)
 		and is_equal_approx(boss.get_extra_summon_period(), 9.0)
 		and boss.get_next_attack_kind() == "wave",
@@ -979,6 +1018,12 @@ func _run() -> void:
 		and _rift.get_boss().get_core_hp() == 3
 		and _rift.get_boss().get_intact_face_count() == 2,
 		"R resets the mirror to phase 1 / core 3 / both plates")
+	_check(_rift.get_lives() == 3 and _rift.get_player_hits() == 0
+		and health_bar.get_current() == 3,
+		"R restores all three lives and all three health cells",
+		"lives=%d hits=%d bar=%d" % [
+			_rift.get_lives(), _rift.get_player_hits(), health_bar.get_current()
+		])
 	_check(not _rift.is_boss_defeated(), "R clears the boss defeat flag")
 	_check(_rift.get_crystal_left().get_flip_count() == 0
 		and _rift.get_crystal_right().get_flip_count() == 0,

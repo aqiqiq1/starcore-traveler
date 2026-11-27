@@ -5,7 +5,7 @@ extends Node
 ##   ... --headless --path . res://dlc/rift_workshop/tests/parity_test.tscn
 ##
 ## Covers the three guide pages and their demos, no permanent legend, the
-## 20 x 20 phase icon, the boss status row, the mirror tip, the two-hit failure
+## 20 x 20 phase icon, the boss status row, the mirror tip, the three-hit failure
 ## line, the core tip, the pause page and the completion page.
 
 const RIFT_SCENE: String = "res://dlc/rift_workshop/rift_workshop.tscn"
@@ -177,8 +177,11 @@ func _run() -> void:
 		"ambience keeps playing under the paused guide")
 	var health_bar: PlayerHealthBar = _hud.get_player_health_bar()
 	_check(health_bar != null and health_bar.get_style_name() == "bar"
-		and health_bar.get_segment_rects().size() == 2,
-		"the player health value is the two-segment shared bar")
+		and health_bar.get_segment_rects().size() == 3,
+		"the player health value is the three-segment shared bar")
+	_check(_hud.is_lives_visible() and _hud.get_lives() == 3
+		and _hud.get_max_lives() == 3,
+		"three life hearts sit under the boss bar")
 	_check(not _hud.is_player_health_visible(), "guide hides the fixed health bar")
 	_check(_hud.get_phase_icon_kind() == "sun"
 		and not _hud.is_affinity_text_visible(),
@@ -429,13 +432,15 @@ func _test_failure_line() -> void:
 	await _wait_until(func() -> bool: return not _rift.is_arena_intro_active(), 180)
 	_rift.get_boss().set_attacks_enabled(false)
 	_rift.get_boss().player_struck.emit(1)
-	await _wait_physics(3)
+	await _wait_physics(65)
+	_rift.get_boss().player_struck.emit(1)
+	await _wait_physics(65)
 	_rift.get_boss().player_struck.emit(1)
 	await _wait_physics(3)
 	var began: bool = await _wait_until(
 		func() -> bool: return _rift.is_recovery_active(), 120
 	)
-	_check(began, "two accepted hits start the failure recovery")
+	_check(began, "three accepted hits start the failure recovery")
 	_check(not _hud.is_player_health_visible(),
 		"failure recovery hides the fixed health bar")
 	_check(_rift.is_mechanic_popup_blocked(),
@@ -444,8 +449,9 @@ func _test_failure_line() -> void:
 		func() -> bool: return not _rift.is_recovery_active(), 360
 	)
 	_check(finished, "failure recovery finishes")
-	_check(_hud.get_event_text() == "失败 · 回到竞技场入口 · 双面镜复原",
-		"failure line matches the mirror reset", _hud.get_event_text())
+	_check(_hud.get_event_text() == "命数 -1 · 形态 1 开头重来 · 生命值补满",
+		"failure line names the spent life and current-form retry",
+		_hud.get_event_text())
 	await _wait_until(func() -> bool: return not _rift.is_arena_intro_active(), 180)
 
 

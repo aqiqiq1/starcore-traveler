@@ -7,10 +7,19 @@ extends Node2D
 ##   form 1: both plates intact, slow phase wave + one sweep (teaching);
 ##   form 2: both plates are anchored by one rift wisp.  A living anchor makes
 ##           its plate immune; killing the anchor opens a 6 s shatter window.
-##           The mirror summons the two anchors and sweeps faster;
+##           The mirror summons the two anchors, sweeps faster, and every third
+##           attack splits off one translucent mirror double.  The double is the
+##           only threat while the real body holds still: a 0.6 s sweep warning,
+##           one low sweep, then it fades.  A same-phase J scatters it early;
+##           jumping clears the low beam.  It never fires on the same frame as a
+##           wave, sweep or summon;
 ##   form 3: the mirror cracks, the plates orbit the core quickly, phase wave
 ##           and double sweep alternate, the exposed-core window is shorter and
-##           extra summons are more frequent.
+##           extra summons are more frequent.  Every third attack is a tracking
+##           mirror light: a 0.6 s core charge, then one 60 px/s homing orb that
+##           vanishes on the floor (or on the player).  Only one orb may exist;
+##           the real body waits until it resolves.  Jump over it, or move so it
+##           is led into the ground.
 ##
 ## A form break is a 1.1 s transition (plate shards, mirror crack, white core
 ## flash).  The final core clear is a 1.35 s collapse: the plates fall, the
@@ -43,6 +52,8 @@ signal phase_started(phase_index: int)
 signal defeat_started
 signal collapse_finished
 signal defeated
+signal clone_cast_started(positive: bool)
+signal homing_cast_started
 
 const BOSS_SHEET: Texture2D = preload(
 	"res://dlc/rift_workshop/assets/sprites/mirror_boss_128x112_8f.png"
@@ -61,6 +72,9 @@ const FACE_CYAN_BROKEN: Texture2D = preload(
 )
 const CRACK_LAYER_SCRIPT: Script = preload(
 	"res://dlc/rift_workshop/rift_boss_cracks.gd"
+)
+const ORB_DRAWER_SCRIPT: Script = preload(
+	"res://dlc/rift_workshop/rift_boss_orb.gd"
 )
 
 const GOLD: Color = Color("#f4cd63")
@@ -115,6 +129,24 @@ const FACE_ORBIT_RADIUS_FORM_3: float = 40.0
 const FACE_ORBIT_SPEED_FORM_2: float = 0.55
 const FACE_ORBIT_SPEED_FORM_3: float = 1.90
 
+## Form-2 mirror double.  The warning is exactly 0.6 s; the double stays
+## translucent through warning and release, and a same-phase J scatters it.
+const CLONE_WARN_TIME: float = 0.60
+const CLONE_RELEASE_TIME: float = 0.24
+const CLONE_OFFSET_X: float = 72.0
+const CLONE_OFFSET_Y: float = -24.0
+const CLONE_HIT_SIZE: Vector2 = Vector2(56.0, 100.0)
+
+## Form-3 tracking mirror light.  60 px/s is inside the approved 55-65 px/s
+## band; the turn rate keeps it dodgeable, and the floor always ends it.
+const HOMING_WARN_TIME: float = 0.60
+const HOMING_SPEED: float = 60.0
+const HOMING_TURN_RATE: float = 1.90
+const HOMING_LIFETIME: float = 5.0
+const HOMING_RADIUS: float = 5.0
+const HOMING_GROUND_MARGIN: float = 4.0
+const HOMING_MAX_ACTIVE: int = 1
+
 enum State {
 	DORMANT,
 	INTRO,
@@ -125,6 +157,11 @@ enum State {
 	SWEEP_RELEASE,
 	## Short readable landing gap between the two form-3 sweeps.
 	SWEEP_GAP,
+	## Form-2 mirror double: one 0.6 s warning, then one low sweep.
+	CLONE_WARN,
+	CLONE_RELEASE,
+	## Form-3 tracking mirror light: 0.6 s charge at the core, then flight.
+	HOMING_CHARGE,
 	SUMMON_CAST,
 	CORE_OPEN,
 	PHASE_CLEAR,
@@ -141,6 +178,8 @@ var _base: Sprite2D = null
 var _cracks: Node2D = null
 var _face_gold: Sprite2D = null
 var _face_cyan: Sprite2D = null
+var _clone_sprite: Sprite2D = null
+var _orb_drawer: Node2D = null
 
 var _state: State = State.DORMANT
 var _state_time: float = 0.0
@@ -196,6 +235,30 @@ var _summon_draws: int = 0
 var _face_local_gold: Vector2 = Vector2(-FACE_OFFSET.x, FACE_OFFSET.y)
 var _face_local_cyan: Vector2 = Vector2(FACE_OFFSET.x, FACE_OFFSET.y)
 
+# Mirror double (form 2).
+var _clone_active: bool = false
+var _clone_positive: bool = true
+var _clone_local: Vector2 = Vector2.ZERO
+var _clone_resolved: bool = true
+var _clone_hit_flash: float = 0.0
+var _clone_warn_draws: int = 0
+var _clone_release_draws: int = 0
+var _clone_cast_count: int = 0
+var _clone_release_count: int = 0
+var _clone_shatter_count: int = 0
+
+# Tracking mirror light (form 3).
+var _homing_active: bool = false
+var _homing_position: Vector2 = Vector2.ZERO
+var _homing_direction: Vector2 = Vector2.DOWN
+var _homing_time_left: float = 0.0
+var _homing_trail: Array[Vector2] = []
+var _homing_charge_draws: int = 0
+var _homing_cast_count: int = 0
+var _homing_fire_count: int = 0
+var _homing_ground_hit_count: int = 0
+var _homing_hit_player_count: int = 0
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -236,6 +299,26 @@ func _build_sprites() -> void:
 	_face_gold = _make_face("GoldFace", FACE_GOLD, Vector2(-FACE_OFFSET.x, FACE_OFFSET.y))
 	_face_cyan = _make_face("CyanFace", FACE_CYAN, Vector2(FACE_OFFSET.x, FACE_OFFSET.y))
 
+	# Form-2 double: the same stone sheet, translucent and phase-tinted.  It is
+	# a child at z=0, so it reads above the plates but below the player (z=6)
+	# and never creates a second solid-looking mirror.
+	_clone_sprite = Sprite2D.new()
+	_clone_sprite.name = "MirrorDouble"
+	_clone_sprite.texture = BOSS_SHEET
+	_clone_sprite.hframes = 8
+	_clone_sprite.vframes = 1
+	_clone_sprite.centered = true
+	_clone_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_clone_sprite.z_index = 0
+	_clone_sprite.visible = false
+	add_child(_clone_sprite)
+
+	# Draw-only sibling above the body/plates but below the player.  The parent
+	# _draw() is behind opaque child sprites, so the orb needs its own node.
+	_orb_drawer = ORB_DRAWER_SCRIPT.new() as Node2D
+	_orb_drawer.name = "MirrorLight"
+	add_child(_orb_drawer)
+
 
 func _make_face(node_name: String, texture: Texture2D, face_position: Vector2) -> Sprite2D:
 	var sprite: Sprite2D = Sprite2D.new()
@@ -273,6 +356,7 @@ func _process(delta: float) -> void:
 	_form_time += delta
 	_animate_sprites()
 	_update_flashes(delta)
+	_tick_homing(delta)
 	if _defeated:
 		_defeat_time += delta
 		if not _collapse_finished and _defeat_time >= DEFEAT_COLLAPSE_TIME:
@@ -315,6 +399,15 @@ func _process(delta: float) -> void:
 			if _state_time >= _state_duration:
 				_sweep_resolved = false
 				_enter_state(State.SWEEP_WARN, DOUBLE_SWEEP_WARN)
+		State.CLONE_WARN:
+			if _state_time >= _state_duration:
+				_release_clone()
+		State.CLONE_RELEASE:
+			if _state_time >= _state_duration:
+				_finish_clone()
+		State.HOMING_CHARGE:
+			if _state_time >= _state_duration:
+				_launch_homing()
 		State.SUMMON_CAST:
 			if _state_time >= _state_duration:
 				_finish_summon()
@@ -331,6 +424,8 @@ func _process(delta: float) -> void:
 func _tick_extra_summon(delta: float) -> void:
 	if _phase_index < 2 or _core_exposed or not _attacks_enabled:
 		return
+	if _homing_active or _clone_active:
+		return
 	_summon_clock += delta
 	if _summon_clock >= FORM_3_SUMMON_PERIOD:
 		_summon_clock = 0.0
@@ -338,6 +433,7 @@ func _tick_extra_summon(delta: float) -> void:
 
 
 func _animate_sprites() -> void:
+	_animate_clone()
 	if _base != null:
 		var base_offset: int = 4 if _core_exposed else 0
 		_base.frame = base_offset + int(_sway_time * 2.0) % 4
@@ -391,10 +487,34 @@ func _orbit_faces(speed: float, radius: float) -> void:
 	_face_cyan.rotation = sin(angle + PI) * 0.06
 
 
+## The double stays a translucent copy in the air.  Alpha rises during the
+## 0.6 s warning, then holds a firmer ghost for the single release frame; a
+## same-phase hit flashes it white before it scatters.
+func _animate_clone() -> void:
+	if _clone_sprite == null:
+		return
+	if not _clone_active:
+		_clone_sprite.visible = false
+		return
+	_clone_sprite.visible = true
+	_clone_sprite.position = _clone_local
+	_clone_sprite.frame = int(_sway_time * 2.0) % 4
+	var pulse: float = 0.5 + 0.5 * sin(_sway_time * 9.0)
+	var alpha: float = 0.42 + 0.10 * pulse
+	if _state == State.CLONE_RELEASE:
+		alpha = 0.72
+	var tint: Color = GOLD_PALE if _clone_positive else CYAN_PALE
+	if _clone_hit_flash > 0.0:
+		tint = WHITE
+		alpha = minf(alpha + 0.35 * _clone_hit_flash, 0.96)
+	_clone_sprite.modulate = Color(tint.r, tint.g, tint.b, alpha)
+
+
 func _update_flashes(delta: float) -> void:
 	_expose_flash = maxf(_expose_flash - delta * 4.0, 0.0)
 	_core_hit_flash = maxf(_core_hit_flash - delta * 6.0, 0.0)
 	_phase_flash = maxf(_phase_flash - delta * 2.5, 0.0)
+	_clone_hit_flash = maxf(_clone_hit_flash - delta * 6.0, 0.0)
 	_anchor_portal_time = maxf(_anchor_portal_time - delta, 0.0)
 	var alive: Array[Dictionary] = []
 	for burst: Dictionary in _bursts:
@@ -417,6 +537,11 @@ func begin_fight() -> void:
 	_suspended = false
 	_enter_state(State.INTRO, INTRO_TIME)
 	fight_started.emit()
+	if _phase_index > 0:
+		# A current-form retry starts suspended; the form's anchors must descend
+		# again as the fight resumes.  On a normal phase change they already
+		# exist, and this is a no-op.
+		_request_missing_anchors()
 	queue_redraw()
 
 
@@ -459,6 +584,18 @@ func reset_full() -> void:
 	_summon_clock = 0.0
 	_sweep_bursts_left = 0
 	_clear_anchors()
+	_clear_new_attacks()
+	_clone_cast_count = 0
+	_clone_release_count = 0
+	_clone_shatter_count = 0
+	_clone_warn_draws = 0
+	_clone_release_draws = 0
+	_clone_hit_flash = 0.0
+	_homing_cast_count = 0
+	_homing_fire_count = 0
+	_homing_ground_hit_count = 0
+	_homing_hit_player_count = 0
+	_homing_charge_draws = 0
 	_base.rotation = 0.0
 	_base.scale = Vector2.ONE
 	_base.modulate = Color.WHITE
@@ -469,6 +606,24 @@ func reset_full() -> void:
 	if _face_cyan != null:
 		_face_cyan.visible = true
 		_face_cyan.modulate = Color.WHITE
+	_update_face_visuals()
+	_update_crack_layer()
+	queue_redraw()
+
+
+## A health death replays the CURRENT form, not the whole three-form fight.
+## Every form-owned state returns to its opening (plates, core 3/3, anchors,
+## attack cursor, cracks); only _phase_index and the form count are kept.
+func reset_current_form() -> void:
+	var phase: int = clampi(_phase_index, 0, MAX_PHASES - 1)
+	reset_full()
+	_phase_index = phase
+	_form_time = 0.0
+	_state = State.DORMANT
+	_state_time = 0.0
+	_state_duration = 0.0
+	_active = false
+	_suspended = true
 	_update_face_visuals()
 	_update_crack_layer()
 	queue_redraw()
@@ -497,6 +652,25 @@ func receive_player_hit(
 	if player == null or not is_instance_valid(player):
 		return _remember({"code": "MISS_RANGE"})
 	var hit_rect: Rect2 = _player_hit_rect(player, facing)
+	# Form-2 double: it is a real target, not a fake that ignores the swing.
+	# It must be checked before the boss body because it stands beside it; a
+	# same-phase J scatters it, an opposite-phase J is refused.
+	if _clone_active:
+		var clone_center: Vector2 = get_clone_global_position()
+		var clone_dx: float = clone_center.x - player.global_position.x
+		if hit_rect.intersects(get_clone_rect()):
+			if clone_dx > 1.0 and facing < 0:
+				return _remember({"code": "MISS_BEHIND"})
+			if clone_dx < -1.0 and facing > 0:
+				return _remember({"code": "MISS_BEHIND"})
+			if positive == _clone_positive:
+				_shatter_clone()
+				return _remember({
+					"code": "CLONE_SHATTER", "positive": _clone_positive,
+				})
+			return _remember({
+				"code": "CLONE_SHIELDED", "positive": _clone_positive,
+			})
 	if not hit_rect.intersects(get_boss_rect()):
 		return _remember({"code": "MISS_RANGE"})
 	# Facing must point at the mirror, not away from it.
@@ -594,6 +768,7 @@ func _expose_core() -> void:
 		return
 	_core_exposed = true
 	_expose_flash = 1.0
+	_clear_new_attacks()
 	_clear_anchors()
 	var window: float = _core_window_for_form()
 	_enter_state(State.CORE_OPEN, window)
@@ -632,6 +807,7 @@ func _start_phase_clear() -> void:
 		return
 	_phase_flash = 1.0
 	_transition_started_msec = Time.get_ticks_msec()
+	_clear_new_attacks()
 	_clear_anchors()
 	# The two plates visibly shatter for the whole form break, then return with
 	# the new form.  The hit rule still uses _gold_intact, so this is visual only.
@@ -696,6 +872,7 @@ func _start_defeat() -> void:
 	_defeat_time = 0.0
 	_gold_intact = false
 	_cyan_intact = false
+	_clear_new_attacks()
 	_clear_anchors()
 	_bursts.append({
 		"center": _face_local_gold, "color": GOLD,
@@ -934,19 +1111,37 @@ func _core_window_for_form() -> float:
 func _start_next_attack() -> void:
 	if _core_exposed or _defeated:
 		return
-	var slot: int = _attack_index % 2
-	_attack_index += 1
+	# A resolved new attack never shares the frame with an old one: the mirror
+	# double owns its warning/release, and the tracking light makes the real
+	# body wait until the single orb has hit the floor or the player.
+	if _clone_active or _homing_active:
+		return
 	match _phase_index:
-		0, 1:
+		0:
+			var slot: int = _attack_index % 2
+			_attack_index += 1
 			if slot == 0:
 				_start_wave()
 			else:
 				_start_sweep(false)
-		_:
+		1:
+			var slot: int = _attack_index % 3
+			_attack_index += 1
 			if slot == 0:
 				_start_wave()
+			elif slot == 1:
+				_start_sweep(false)
 			else:
+				_start_clone()
+		_:
+			var slot: int = _attack_index % 3
+			_attack_index += 1
+			if slot == 0:
+				_start_wave()
+			elif slot == 1:
 				_start_sweep(true)
+			else:
+				_start_homing()
 
 
 func _start_wave() -> void:
@@ -1020,6 +1215,231 @@ func _finish_summon() -> void:
 	_enter_idle(1.0)
 
 
+# --- form-2 mirror double ---------------------------------------------------
+
+## One translucent double appears on the side opposite the player, so it never
+## spawns on top of them.  The real body enters the double's state and does
+## nothing else until the single sweep finishes or the double is scattered.
+func _start_clone() -> void:
+	if _clone_active or _homing_active or _defeated or _core_exposed:
+		return
+	_resolve_player()
+	_clone_positive = true
+	var player_x: float = global_position.x
+	if _player != null and is_instance_valid(_player):
+		_clone_positive = _player.is_positive()
+		player_x = _player.global_position.x
+	var side: float = 1.0 if player_x <= global_position.x else -1.0
+	_clone_local = Vector2(CLONE_OFFSET_X * side, CLONE_OFFSET_Y)
+	_clone_active = true
+	_clone_resolved = false
+	_clone_hit_flash = 0.0
+	_clone_cast_count += 1
+	_animate_clone()
+	_enter_state(State.CLONE_WARN, CLONE_WARN_TIME)
+	clone_cast_started.emit(_clone_positive)
+	queue_redraw()
+
+
+func _release_clone() -> void:
+	if not _clone_active:
+		_enter_idle(_form_attack_gap())
+		return
+	_enter_state(State.CLONE_RELEASE, CLONE_RELEASE_TIME)
+	_clone_release_count += 1
+	_resolve_clone_sweep()
+	queue_redraw()
+
+
+func _resolve_clone_sweep() -> void:
+	if _clone_resolved:
+		return
+	_clone_resolved = true
+	_resolve_player()
+	if _player == null or not is_instance_valid(_player):
+		return
+	if _player.global_position.x < arena_left or _player.global_position.x > arena_right:
+		return
+	if _player.global_position.y < floor_y - FLOOR_WAVE_HEIGHT:
+		# The double's beam is the same low line as the mirror sweep: jump it.
+		return
+	var clone_x: float = get_clone_global_position().x
+	var away: int = 1 if _player.global_position.x >= clone_x else -1
+	if _player.receive_enemy_strike(away):
+		player_struck.emit(away)
+
+
+## Same-phase J entry from receive_player_hit().  A warning-phase hit cancels
+## the whole sweep; a release-phase hit only scatters the already-fired ghost.
+func _shatter_clone() -> void:
+	if not _clone_active:
+		return
+	_clone_shatter_count += 1
+	_clone_hit_flash = 1.0
+	_bursts.append({
+		"center": _clone_local, "color": PURPLE_PALE,
+		"t": 0.0, "life": 0.50, "kind": "clone",
+	})
+	_clone_active = false
+	if _clone_sprite != null:
+		_clone_sprite.visible = false
+	_clone_resolved = true
+	if _state == State.CLONE_WARN:
+		_enter_idle(0.90)
+	queue_redraw()
+
+
+func _finish_clone() -> void:
+	if _clone_active:
+		_bursts.append({
+			"center": _clone_local,
+			"color": GOLD_PALE if _clone_positive else CYAN_PALE,
+			"t": 0.0, "life": 0.40, "kind": "clone",
+		})
+	_clone_active = false
+	if _clone_sprite != null:
+		_clone_sprite.visible = false
+	_clone_resolved = true
+	_enter_idle(_form_attack_gap())
+
+
+# --- form-3 tracking mirror light ------------------------------------------
+
+func _start_homing() -> void:
+	if _homing_active or _clone_active or _defeated or _core_exposed:
+		return
+	_homing_cast_count += 1
+	_enter_state(State.HOMING_CHARGE, HOMING_WARN_TIME)
+	homing_cast_started.emit()
+	queue_redraw()
+
+
+## Launch exactly one orb toward the floor under the player.  The target is the
+## floor point, not the airborne body, so jumping over it leads it into the
+## ground; the slow turn rate lets a moving player curve it sideways.  The real
+## body idles until this orb resolves (see _start_next_attack).
+func _launch_homing() -> void:
+	if _homing_active:
+		_enter_idle(0.60)
+		return
+	_resolve_player()
+	_homing_position = global_position + Vector2(0.0, -6.0)
+	var target_x: float = global_position.x
+	if _player != null and is_instance_valid(_player):
+		target_x = _player.global_position.x
+	target_x = clampf(target_x, arena_left + HOMING_RADIUS, arena_right - HOMING_RADIUS)
+	var target: Vector2 = Vector2(target_x, floor_y - 2.0)
+	var direction: Vector2 = (target - _homing_position).normalized()
+	if direction.length_squared() <= 0.0001:
+		direction = Vector2.DOWN
+	_homing_direction = direction
+	_homing_time_left = HOMING_LIFETIME
+	_homing_trail.clear()
+	_homing_active = true
+	_homing_fire_count += 1
+	_bursts.append({
+		"center": Vector2(0.0, -6.0), "color": MAGENTA,
+		"t": 0.0, "life": 0.42, "kind": "homing",
+	})
+	_update_homing_visual()
+	_enter_idle(1.20)
+	queue_redraw()
+
+
+func _tick_homing(delta: float) -> void:
+	if not _homing_active:
+		return
+	_homing_time_left = maxf(_homing_time_left - delta, 0.0)
+	if _homing_time_left <= 0.0:
+		_deactivate_homing()
+		return
+	_resolve_player()
+	var target: Vector2 = _homing_position + _homing_direction * 32.0
+	if _player != null and is_instance_valid(_player):
+		var target_x: float = clampf(
+			_player.global_position.x, arena_left + HOMING_RADIUS,
+			arena_right - HOMING_RADIUS
+		)
+		target = Vector2(target_x, floor_y - 2.0)
+	var desired: Vector2 = target - _homing_position
+	if desired.length_squared() > 0.0001:
+		desired = desired.normalized()
+		var turn: float = _homing_direction.angle_to(desired)
+		turn = clampf(turn, -HOMING_TURN_RATE * delta, HOMING_TURN_RATE * delta)
+		_homing_direction = _homing_direction.rotated(turn).normalized()
+	_homing_position += _homing_direction * HOMING_SPEED * delta
+	_homing_trail.append(_homing_position)
+	while _homing_trail.size() > 14:
+		_homing_trail.pop_front()
+	_update_homing_visual()
+	if _player != null and is_instance_valid(_player):
+		var body_rect: Rect2 = Rect2(
+			_player.global_position - Vector2(6.0, 30.0), Vector2(12.0, 30.0)
+		)
+		if _homing_rect().intersects(body_rect):
+			var away: int = 1 if _player.global_position.x >= _homing_position.x else -1
+			if _player.receive_enemy_strike(away):
+				_homing_hit_player_count += 1
+				_bursts.append({
+					"center": _homing_position - global_position,
+					"color": WHITE, "t": 0.0, "life": 0.50, "kind": "homing",
+				})
+				player_struck.emit(away)
+				_deactivate_homing()
+				return
+	if _homing_position.y >= floor_y - HOMING_GROUND_MARGIN:
+		_homing_ground_hit_count += 1
+		_bursts.append({
+			"center": Vector2(
+				_homing_position.x - global_position.x, floor_y - global_position.y
+			),
+			"color": MAGENTA, "t": 0.0, "life": 0.55, "kind": "homing",
+		})
+		_deactivate_homing()
+
+
+func _homing_rect() -> Rect2:
+	return Rect2(
+		_homing_position - Vector2(HOMING_RADIUS, HOMING_RADIUS),
+		Vector2(HOMING_RADIUS, HOMING_RADIUS) * 2.0
+	)
+
+
+func _update_homing_visual() -> void:
+	if _orb_drawer == null:
+		return
+	var offsets: Array[Vector2] = []
+	for point: Vector2 in _homing_trail:
+		offsets.append(point - _homing_position)
+	if not _orb_drawer.has_method("set_state"):
+		return
+	_orb_drawer.call("set_state", _homing_position, offsets, _homing_active)
+
+
+func _deactivate_homing() -> void:
+	_homing_active = false
+	_homing_time_left = 0.0
+	_homing_trail.clear()
+	_update_homing_visual()
+	# Give the real body a short, visibly empty recovery after the orb resolves
+	# instead of starting the next attack on the same frame.
+	if _state == State.IDLE and not _core_exposed and not _defeated:
+		_enter_idle(0.80)
+	queue_redraw()
+
+
+func _clear_new_attacks() -> void:
+	_clone_active = false
+	_clone_resolved = true
+	_clone_hit_flash = 0.0
+	if _clone_sprite != null:
+		_clone_sprite.visible = false
+	_homing_active = false
+	_homing_time_left = 0.0
+	_homing_trail.clear()
+	_update_homing_visual()
+
+
 ## Test/capture setup only: start the normal attack state, not fake damage.
 func set_attacks_enabled(value: bool) -> void:
 	_attacks_enabled = value
@@ -1055,6 +1475,46 @@ func debug_force_summon() -> void:
 	_start_summon()
 
 
+## Capture/test setup only: start the real mirror-double state.
+func debug_force_clone() -> void:
+	if not _active or _defeated or _core_exposed:
+		return
+	_start_clone()
+
+
+## Capture/test setup only: start the real tracking-light charge.
+func debug_force_homing() -> void:
+	if not _active or _defeated or _core_exposed:
+		return
+	_start_homing()
+
+
+## Capture/test setup only: move to a form without replaying the whole fight.
+## Plates, core, cracks and anchors are rebuilt for that form; possession/
+## durability is not faked.
+func debug_set_phase(index: int) -> void:
+	if _defeated:
+		return
+	_phase_index = clampi(index, 0, MAX_PHASES - 1)
+	_form_time = 0.0
+	_core_hp = CORE_HITS_PER_PHASE
+	_gold_intact = true
+	_cyan_intact = true
+	_core_exposed = false
+	_attack_index = 0
+	_phase_flash = 0.0
+	_summon_clock = 0.0
+	_sweep_bursts_left = 0
+	_clear_new_attacks()
+	_clear_anchors()
+	_update_face_visuals()
+	_update_crack_layer()
+	if _active:
+		_enter_idle(0.40)
+		_request_missing_anchors()
+	queue_redraw()
+
+
 # --- drawing ---------------------------------------------------------------
 
 func _draw() -> void:
@@ -1069,6 +1529,12 @@ func _draw() -> void:
 		_draw_sweep_release()
 	elif _state == State.SWEEP_GAP:
 		_draw_sweep_gap()
+	if _state == State.CLONE_WARN:
+		_draw_clone_warning()
+	elif _state == State.CLONE_RELEASE:
+		_draw_clone_release()
+	if _state == State.HOMING_CHARGE:
+		_draw_homing_charge()
 	if _state == State.SUMMON_CAST:
 		_draw_summon_cast()
 	if _anchor_portal_time > 0.0:
@@ -1256,6 +1722,97 @@ func _draw_sweep_gap() -> void:
 		draw_rect(Rect2(offset - 4.0, y - 1.0, 8.0, 1.0), Color(RED, 0.62 * blink))
 		draw_rect(Rect2(offset - 4.0, y - 4.0, 1.0, 3.0), Color(RED, 0.62 * blink))
 		draw_rect(Rect2(offset + 3.0, y - 4.0, 1.0, 3.0), Color(RED, 0.62 * blink))
+
+
+## Form-2 double warning: a red low-line laser warning (same dodge read as the
+## real sweep) plus a phase-coloured bracket around the ghost.  The ghost body
+## itself is drawn by the child sprite; this only adds the read.
+func _draw_clone_warning() -> void:
+	_clone_warn_draws += 1
+	var progress: float = clampf(_state_time / maxf(_state_duration, 0.01), 0.0, 1.0)
+	var y: float = floor_y - global_position.y - 18.0
+	var left: float = arena_left - global_position.x
+	var width: float = arena_right - arena_left
+	var flash: float = 0.45 + 0.55 * absf(sin(_state_time * 18.0))
+	draw_rect(Rect2(left, y, width, 1.0), Color(RED, flash))
+	draw_rect(Rect2(left, y - 4.0, width, 1.0), Color(RED, 0.16 + 0.22 * progress))
+	for index: int in range(20):
+		var x: float = left + float(index) * width / 19.0
+		draw_rect(Rect2(x, y - 5.0 - 2.0 * progress, 1.0, 3.0), Color(RED, 0.55))
+	# The ghost's phase colour sits on the same low line, so the player reads
+	# "this beam is the double's, and its phase is X" in one glance.
+	var tint: Color = GOLD if _clone_positive else CYAN
+	var center: Vector2 = _clone_local
+	draw_rect(
+		Rect2(center + Vector2(-30.0, -54.0), Vector2(60.0, 108.0)),
+		Color(tint, 0.10 + 0.10 * progress)
+	)
+	draw_rect(
+		Rect2(center + Vector2(-31.0, -55.0), Vector2(62.0, 110.0)),
+		Color(tint, 0.62), false, 1.0
+	)
+	for offset: Vector2 in [Vector2(-24.0, -46.0), Vector2(18.0, -46.0)]:
+		draw_rect(Rect2(center + offset, Vector2(6.0, 2.0)), Color(tint, 0.80))
+	for index: int in range(12):
+		var x: float = center.x - 26.0 + float(index) * 4.6
+		draw_rect(Rect2(x, y - 2.0, 2.0, 1.0), Color(tint, 0.45 + 0.35 * flash))
+	_draw_phase_icon(Vector2(center.x, y + 10.0), tint, 0.82)
+
+
+func _draw_clone_release() -> void:
+	_clone_release_draws += 1
+	var progress: float = clampf(_state_time / maxf(_state_duration, 0.01), 0.0, 1.0)
+	var left: float = arena_left - global_position.x
+	var width: float = arena_right - arena_left
+	var y: float = floor_y - global_position.y - 18.0
+	var alpha: float = 0.95 * (1.0 - progress * 0.45)
+	var tint: Color = GOLD_PALE if _clone_positive else CYAN_PALE
+	draw_rect(Rect2(left, y, width, 2.0), Color(WHITE, alpha))
+	draw_rect(Rect2(left, y - 2.0, width, 1.0), Color(tint, 0.48 * alpha))
+	draw_rect(Rect2(left, y + 2.0, width, 1.0), Color(RED, 0.55 * alpha))
+	var center: Vector2 = _clone_local
+	draw_rect(
+		Rect2(center + Vector2(-30.0, -54.0), Vector2(60.0, 108.0)),
+		Color(tint, 0.26 * alpha)
+	)
+	_draw_phase_icon(Vector2(center.x, y + 10.0), tint, 0.92 * alpha)
+
+
+## Form-3 charge: the core opens a white/cyan eye and a dashed sight line runs
+## to the floor under the player.  The 0.6 s charge is the only warning before
+## the orb exists.
+func _draw_homing_charge() -> void:
+	_homing_charge_draws += 1
+	var progress: float = clampf(_state_time / maxf(_state_duration, 0.01), 0.0, 1.0)
+	var pulse: float = 0.55 + 0.45 * absf(sin(_state_time * 20.0))
+	_resolve_player()
+	var target: Vector2 = Vector2(0.0, floor_y - global_position.y)
+	if _player != null and is_instance_valid(_player):
+		target.x = _player.global_position.x - global_position.x
+		target.x = clampf(
+			_player.global_position.x, arena_left + HOMING_RADIUS,
+			arena_right - HOMING_RADIUS
+		) - global_position.x
+	# Dashed sight line from the core eye to the floor target.
+	var start: Vector2 = Vector2(0.0, 0.0)
+	var delta: Vector2 = target - start
+	for index: int in range(10):
+		var t0: float = float(index) / 10.0
+		var t1: float = t0 + 0.55 / 10.0
+		if index % 2 == 0:
+			continue
+		draw_line(start + delta * t0, start + delta * t1,
+			Color(1.0, 0.62, 0.90, 0.24 + 0.24 * pulse), 1.0)
+	for ring_index: int in range(3):
+		var radius: float = 8.0 + 12.0 * float(ring_index) + 6.0 * progress
+		_draw_ring_segments(Vector2.ZERO, radius,
+			Color(MAGENTA if ring_index % 2 == 0 else WHITE, 0.68 - 0.14 * float(ring_index)))
+	draw_rect(Rect2(-3.0, -3.0, 6.0, 6.0), Color(WHITE, 0.98))
+	draw_rect(Rect2(-6.0, -6.0, 12.0, 12.0), Color(1.0, 0.62, 0.90, 0.60 + 0.24 * pulse), false, 1.0)
+	# The floor point gets a small crosshair, not a full damage zone.
+	var ground: Vector2 = Vector2(target.x, target.y)
+	draw_rect(Rect2(ground.x - 7.0, ground.y - 1.0, 14.0, 1.0), Color(MAGENTA, 0.68))
+	draw_rect(Rect2(ground.x - 1.0, ground.y - 7.0, 1.0, 14.0), Color(MAGENTA, 0.46))
 
 
 func _draw_summon_cast() -> void:
@@ -1728,7 +2285,21 @@ func get_extra_summon_period() -> float:
 
 func get_next_attack_kind() -> String:
 	if _phase_index == 2:
-		return "wave" if _attack_index % 2 == 0 else "double_sweep"
+		match _attack_index % 3:
+			0:
+				return "wave"
+			1:
+				return "double_sweep"
+			_:
+				return "homing"
+	if _phase_index == 1:
+		match _attack_index % 3:
+			0:
+				return "wave"
+			1:
+				return "sweep"
+			_:
+				return "clone"
 	return "wave" if _attack_index % 2 == 0 else "sweep"
 
 
@@ -1766,3 +2337,117 @@ func get_boss_center() -> Vector2:
 
 func get_floor_y() -> float:
 	return floor_y
+
+
+# --- mirror double / tracking light read API -------------------------------
+
+func is_clone_active() -> bool:
+	return _clone_active
+
+
+func is_clone_telegraph_visible() -> bool:
+	return _clone_active and _state == State.CLONE_WARN
+
+
+func is_clone_release_visible() -> bool:
+	return _clone_active and _state == State.CLONE_RELEASE
+
+
+func get_clone_positive() -> bool:
+	return _clone_positive
+
+
+func get_clone_global_position() -> Vector2:
+	return global_position + _clone_local
+
+
+func get_clone_rect() -> Rect2:
+	# The hit rect reaches down to the player's swing band even though the
+	# translucent ghost sits a little above the real mirror.
+	var center: Vector2 = get_clone_global_position() + Vector2(0.0, 18.0)
+	return Rect2(
+		center - CLONE_HIT_SIZE * Vector2(0.5, 0.5),
+		CLONE_HIT_SIZE
+	)
+
+
+func get_clone_warn_time() -> float:
+	return CLONE_WARN_TIME
+
+
+func get_clone_warn_draw_count() -> int:
+	return _clone_warn_draws
+
+
+func get_clone_release_draw_count() -> int:
+	return _clone_release_draws
+
+
+func get_clone_cast_count() -> int:
+	return _clone_cast_count
+
+
+func get_clone_release_count() -> int:
+	return _clone_release_count
+
+
+func get_clone_shatter_count() -> int:
+	return _clone_shatter_count
+
+
+func is_homing_active() -> bool:
+	return _homing_active
+
+
+func is_homing_charging() -> bool:
+	return _state == State.HOMING_CHARGE
+
+
+func get_homing_position() -> Vector2:
+	return _homing_position
+
+
+func get_homing_speed() -> float:
+	return HOMING_SPEED
+
+
+func get_homing_warn_time() -> float:
+	return HOMING_WARN_TIME
+
+
+func get_homing_lifetime() -> float:
+	return HOMING_LIFETIME
+
+
+func get_active_homing_count() -> int:
+	return 1 if _homing_active else 0
+
+
+func get_max_homing_count() -> int:
+	return HOMING_MAX_ACTIVE
+
+
+func get_homing_cast_count() -> int:
+	return _homing_cast_count
+
+
+func get_homing_fire_count() -> int:
+	return _homing_fire_count
+
+
+func get_homing_ground_hit_count() -> int:
+	return _homing_ground_hit_count
+
+
+func get_homing_hit_player_count() -> int:
+	return _homing_hit_player_count
+
+
+func get_homing_charge_draw_count() -> int:
+	return _homing_charge_draws
+
+
+func get_homing_orb_draw_count() -> int:
+	if _orb_drawer != null and _orb_drawer.has_method("get_draw_count"):
+		return int(_orb_drawer.call("get_draw_count"))
+	return 0

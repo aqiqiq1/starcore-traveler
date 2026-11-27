@@ -30,6 +30,10 @@ const PAUSE_PANEL_POSITION: Vector2 = Vector2(140.0, 56.0)
 const PAUSE_PANEL_SIZE: Vector2 = Vector2(360.0, 236.0)
 const COMPLETION_PANEL_POSITION: Vector2 = Vector2(120.0, 75.0)
 const COMPLETION_PANEL_SIZE: Vector2 = Vector2(400.0, 210.0)
+const GAME_OVER_PANEL_POSITION: Vector2 = Vector2(140.0, 75.0)
+const GAME_OVER_PANEL_SIZE: Vector2 = Vector2(360.0, 210.0)
+const GAME_OVER_TITLE: String = "生命耗尽"
+const LIFE_FILLED: Color = Color("#ef6b6b")
 const PAUSE_SUBTITLE: String = "裂隙工坊 · 支线裂隙"
 const COMPLETION_SUBTITLE: String = "双面镜碎裂，裂隙核心重新入睡。"
 const PAUSE_FOOTER: String = "返回主界面不保存本章进度"
@@ -60,6 +64,15 @@ var _completion_primary: PixelMenuButton
 var _completion_replay: PixelMenuButton
 var _completion_footer: Label
 var _completion_reveal: UiReveal
+
+var _game_over_root: ColorRect
+var _game_over_panel: Panel
+var _game_over_hearts: HitPips
+var _game_over_retry: PixelMenuButton
+var _game_over_title_button: PixelMenuButton
+var _game_over_note: Label
+var _game_over_reveal: UiReveal
+var _game_over_visible: bool = false
 
 var _pause_root: Control
 var _pause_overlay: ColorRect
@@ -110,6 +123,7 @@ func _ready() -> void:
 	_build_recovery_cover()
 	_build_completion()
 	_build_pause()
+	_build_game_over()
 
 	_completion_reveal = UiReveal.new()
 	_completion_reveal.setup(
@@ -120,11 +134,17 @@ func _ready() -> void:
 	_pause_reveal.setup(
 		self, _pause_root, _pause_overlay, _pause_panel, PAUSE_PANEL_POSITION
 	)
+	_game_over_reveal = UiReveal.new()
+	_game_over_reveal.setup(
+		self, _game_over_root, _game_over_root, _game_over_panel,
+		GAME_OVER_PANEL_POSITION
+	)
 
 	set_polarity(false)
 	set_objective(DEFAULT_OBJECTIVE)
 	show_completion(false, 0.0)
 	show_pause(false)
+	show_game_over(false)
 	_root.modulate.a = 0.0
 	var intro_tween: Tween = create_tween()
 	intro_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
@@ -136,7 +156,7 @@ func _ready() -> void:
 ## this unhandled path keeps every row reachable even if GUI key delivery is
 ## skipped.  It never runs when the pause page is hidden.
 func _unhandled_input(event: InputEvent) -> void:
-	if not _pause_visible or not (event is InputEventKey):
+	if not (_pause_visible or _game_over_visible) or not (event is InputEventKey):
 		return
 	var key_event: InputEventKey = event as InputEventKey
 	if not key_event.pressed or key_event.echo:
@@ -144,6 +164,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	var code: int = int(key_event.physical_keycode)
 	if code == 0:
 		code = int(key_event.keycode)
+	if _game_over_visible:
+		_handle_game_over_key(code)
+		return
 	# The operation reference is a sub-page of the pause panel.  While it is
 	# open, Enter/Space only closes that sub-page; it must never resume or
 	# restart the chapter behind the table.
@@ -183,15 +206,40 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+## Keyboard fallback for the two-item game-over page.  R is handled by the
+## chapter itself, so this only covers focus / activation with Enter, Space
+## and the arrow keys.
+func _handle_game_over_key(code: int) -> void:
+	var chain: Array[PixelMenuButton] = [
+		_game_over_retry, _game_over_title_button,
+	]
+	var focused: Control = get_viewport().gui_get_focus_owner()
+	var index: int = chain.find(focused as PixelMenuButton)
+	if code == int(KEY_ENTER) or code == int(KEY_KP_ENTER) or code == int(KEY_SPACE):
+		get_viewport().set_input_as_handled()
+		if index == 1:
+			title_requested.emit()
+		else:
+			restart_requested.emit()
+	elif code == int(KEY_DOWN) or code == int(KEY_TAB):
+		index = 0 if index < 0 else (index + 1) % chain.size()
+		chain[index].grab_focus()
+		get_viewport().set_input_as_handled()
+	elif code == int(KEY_UP):
+		index = chain.size() - 1 if index < 0 else (index - 1 + chain.size()) % chain.size()
+		chain[index].grab_focus()
+		get_viewport().set_input_as_handled()
+
+
 func _process(delta: float) -> void:
 	_update_chrome_visibility()
 	_update_health_overlay(delta)
 
 
-## The shared two-segment red bar is fixed at the lower-left HUD corner.  It is
+## The shared three-cell red bar is fixed at the lower-left HUD corner.  It is
 ## visible on the route and in the boss fight, hides whenever the tree is paused
-## (guide / popup / pause page), during recovery and completion, and pulses for
-## a second after an accepted hit.  Only the bar scales; the label stays 12 px.
+## (guide / popup / pause page), during recovery, completion or game over, and
+## pulses for a second after an accepted hit.  Only the bar scales.
 func _update_health_overlay(delta: float) -> void:
 	if _health_bar == null:
 		return
@@ -200,6 +248,7 @@ func _update_health_overlay(delta: float) -> void:
 		and not get_tree().paused
 		and not _completion_visible
 		and not _pause_visible
+		and not _game_over_visible
 		and not (_recovery_cover != null and _recovery_cover.visible)
 	)
 	if should_show:
@@ -230,6 +279,7 @@ func _update_chrome_visibility() -> void:
 	var hidden: bool = (
 		_pause_visible
 		or _completion_visible
+		or _game_over_visible
 		or (get_tree() != null and get_tree().paused)
 		or (_recovery_cover != null and _recovery_cover.visible)
 	)
@@ -322,9 +372,9 @@ func _build_header() -> void:
 func _build_hit_pips() -> void:
 	_health_bar = PlayerHealthBar.new()
 	_health_bar.name = "PlayerHealthBar"
-	_health_bar.max_segments = 2
+	_health_bar.max_segments = 3
 	_health_bar.position = PlayerHealthBar.HUD_POSITION
-	_health_bar.set_state(2, 2)
+	_health_bar.set_state(3, 3)
 	_health_bar.visible = false
 	_root.add_child(_health_bar)
 	_health_bar.pivot_offset = _health_bar.size * 0.5
@@ -337,6 +387,7 @@ func _build_boss_status() -> void:
 	_boss_status.size = HudBossBar.BAR_SIZE
 	_boss_status.font = _font
 	_root.add_child(_boss_status)
+	_boss_status.set_lives(3, 3, true)
 	_boss_status.set_active(false)
 
 
@@ -658,6 +709,90 @@ func _focus_controls_back() -> void:
 		_pause_controls_back.grab_focus()
 
 
+## Game-over page copied from the approved star-loom page: a dim full-screen
+## overlay, 360x210 dark red-edged panel, empty 3-heart row, 重试本章 / 返回标题
+## and one dim note.  It is a page, not a pause: the HUD chrome hides behind it.
+func _build_game_over() -> void:
+	_game_over_root = ColorRect.new()
+	_game_over_root.name = "GameOverOverlay"
+	_game_over_root.position = Vector2.ZERO
+	_game_over_root.size = VIEW_SIZE
+	_game_over_root.color = Color(0.006, 0.014, 0.018, 0.76)
+	_game_over_root.mouse_filter = Control.MOUSE_FILTER_STOP
+	_game_over_root.visible = false
+	_root.add_child(_game_over_root)
+
+	var panel: Panel = Panel.new()
+	panel.name = "GameOverPanel"
+	panel.position = GAME_OVER_PANEL_POSITION
+	panel.size = GAME_OVER_PANEL_SIZE
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = PANEL_BG
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color("#a8463f")
+	style.set_corner_radius_all(0)
+	style.anti_aliasing = false
+	panel.add_theme_stylebox_override("panel", style)
+	_game_over_root.add_child(panel)
+	_game_over_panel = panel
+
+	var title: Label = _label(
+		GAME_OVER_TITLE, Vector2(0.0, 12.0), Vector2(360.0, 34.0), 24, GOLD
+	)
+	title.name = "GameOverTitle"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	panel.add_child(title)
+
+	_game_over_hearts = HitPips.new()
+	_game_over_hearts.name = "GameOverHearts"
+	_game_over_hearts.kind = HitPips.Kind.HEART
+	_game_over_hearts.max_pips = 3
+	_game_over_hearts.pip_size = 12.0
+	_game_over_hearts.gap = 6.0
+	_game_over_hearts.filled_color = LIFE_FILLED
+	_game_over_hearts.empty_color = Color(0.58, 0.32, 0.34, 0.95)
+	_game_over_hearts.position = Vector2(132.0, 52.0)
+	_game_over_hearts.scale = Vector2(2.0, 2.0)
+	panel.add_child(_game_over_hearts)
+	_game_over_hearts.set_state(0, 3)
+
+	_game_over_retry = _menu_button(
+		"重试本章", Vector2(76.0, 84.0), Vector2(208.0, 28.0),
+		PixelMenuButton.Variant.STONE
+	)
+	_game_over_retry.name = "GameOverRetryButton"
+	_game_over_retry.pressed.connect(func() -> void: restart_requested.emit())
+	panel.add_child(_game_over_retry)
+
+	_game_over_title_button = _menu_button(
+		"返回标题", Vector2(76.0, 120.0), Vector2(208.0, 24.0),
+		PixelMenuButton.Variant.OPTION
+	)
+	_game_over_title_button.name = "GameOverTitleButton"
+	_game_over_title_button.pressed.connect(func() -> void: title_requested.emit())
+	panel.add_child(_game_over_title_button)
+
+	_game_over_note = _label(
+		"R 重试本章 · 生命重置为 3", Vector2(0.0, 164.0), Vector2(360.0, 16.0), 12, DIM
+	)
+	_game_over_note.name = "GameOverNote"
+	_game_over_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	panel.add_child(_game_over_note)
+
+	_game_over_retry.focus_next = _game_over_retry.get_path_to(_game_over_title_button)
+	_game_over_retry.focus_previous = _game_over_retry.get_path_to(_game_over_title_button)
+	_game_over_retry.focus_neighbor_bottom = _game_over_retry.get_path_to(_game_over_title_button)
+	_game_over_retry.focus_neighbor_top = _game_over_retry.get_path_to(_game_over_title_button)
+	_game_over_title_button.focus_next = _game_over_title_button.get_path_to(_game_over_retry)
+	_game_over_title_button.focus_previous = _game_over_title_button.get_path_to(_game_over_retry)
+	_game_over_title_button.focus_neighbor_bottom = _game_over_title_button.get_path_to(_game_over_retry)
+	_game_over_title_button.focus_neighbor_top = _game_over_title_button.get_path_to(_game_over_retry)
+
+
 # --- public state ----------------------------------------------------------
 
 func set_polarity(positive: bool) -> void:
@@ -698,6 +833,30 @@ func set_anchor_state(
 	)
 
 
+## The run's three life hearts sit under the boss bar, not mixed into the
+## lower-left health value.
+func set_lives(current: int, total: int) -> void:
+	if _boss_status == null:
+		return
+	_boss_status.set_lives(current, total, true)
+
+
+func get_lives() -> int:
+	if _boss_status == null:
+		return 0
+	return _boss_status.get_lives_current()
+
+
+func get_max_lives() -> int:
+	if _boss_status == null:
+		return 0
+	return _boss_status.get_lives_max()
+
+
+func is_lives_visible() -> bool:
+	return _boss_status != null and _boss_status.is_lives_visible()
+
+
 func get_boss_status() -> RiftBossStatus:
 	return _boss_status
 
@@ -726,9 +885,9 @@ func has_element_legend() -> bool:
 	return false
 
 
-## hits_taken = 0 keeps both segments filled; 1 removes one; 2 empties the bar.
-## A new hit starts the one-second bar pulse.
-func set_player_hits(hits_taken: int, max_hits: int = 2) -> void:
+## hits_taken = 0 keeps all three segments filled; 1 removes one; 3 empties
+## the bar.  A new hit starts the one-second bar pulse.
+func set_player_hits(hits_taken: int, max_hits: int = 3) -> void:
 	if _health_bar == null:
 		return
 	if hits_taken > _last_hits:
@@ -789,6 +948,11 @@ func show_event(text_value: String, seconds: float = 1.5) -> void:
 		_header.show_event(text_value, seconds)
 
 
+func hide_event() -> void:
+	if _header != null:
+		_header.clear_event()
+
+
 func set_recovery_alpha(value: float) -> void:
 	if _recovery_cover == null:
 		return
@@ -846,6 +1010,34 @@ func show_pause(value: bool) -> void:
 		call_deferred("_focus_completion")
 
 
+func show_game_over(value: bool, lives: int = 0) -> void:
+	var was_visible: bool = _game_over_visible
+	_game_over_visible = value
+	if _game_over_root == null:
+		return
+	if _game_over_hearts != null:
+		_game_over_hearts.set_state(lives, 3)
+	if value:
+		if _game_over_reveal != null:
+			_game_over_reveal.play_open()
+		else:
+			_game_over_root.visible = true
+		_update_chrome_visibility()
+		_update_health_overlay(0.0)
+		call_deferred("_focus_game_over")
+		return
+	if _game_over_reveal != null:
+		if was_visible:
+			_game_over_reveal.play_close()
+		else:
+			_game_over_reveal.snap_closed()
+	else:
+		_game_over_root.visible = false
+	_release_game_over_focus()
+	_update_chrome_visibility()
+	_update_health_overlay(0.0)
+
+
 func _set_controls_open_immediate(value: bool) -> void:
 	_controls_visible = value
 	if _pause_controls_root != null:
@@ -885,6 +1077,17 @@ func _release_pause_focus() -> void:
 func _focus_completion() -> void:
 	if _completion_visible and _completion_primary != null:
 		_completion_primary.grab_focus()
+
+
+func _focus_game_over() -> void:
+	if _game_over_visible and _game_over_retry != null:
+		_game_over_retry.grab_focus()
+
+
+func _release_game_over_focus() -> void:
+	for button: PixelMenuButton in [_game_over_retry, _game_over_title_button]:
+		if button != null:
+			button.release_focus()
 
 
 func _release_completion_focus() -> void:
@@ -942,6 +1145,45 @@ func get_completion_replay_button() -> PixelMenuButton:
 
 func get_completion_panel_rect() -> Rect2:
 	return Rect2(COMPLETION_PANEL_POSITION, COMPLETION_PANEL_SIZE)
+
+
+func is_game_over_visible() -> bool:
+	return _game_over_visible
+
+
+func get_game_over_panel_rect() -> Rect2:
+	return Rect2(GAME_OVER_PANEL_POSITION, GAME_OVER_PANEL_SIZE)
+
+
+func get_game_over_hearts() -> HitPips:
+	return _game_over_hearts
+
+
+func get_game_over_retry_button() -> PixelMenuButton:
+	return _game_over_retry
+
+
+func get_game_over_title_button() -> PixelMenuButton:
+	return _game_over_title_button
+
+
+func get_game_over_title_text() -> String:
+	return GAME_OVER_TITLE
+
+
+func get_game_over_note_text() -> String:
+	return _game_over_note.text if _game_over_note != null else ""
+
+
+func get_game_over_panel_alpha() -> float:
+	return _game_over_reveal.get_shade_alpha() if _game_over_reveal != null else 0.0
+
+
+func is_game_over_button_focused() -> bool:
+	if not _game_over_visible:
+		return false
+	var focused: Control = get_viewport().gui_get_focus_owner()
+	return focused == _game_over_retry or focused == _game_over_title_button
 
 
 func is_pause_visible() -> bool:

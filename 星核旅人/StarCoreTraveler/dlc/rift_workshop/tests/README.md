@@ -6,7 +6,21 @@
 powershell -NoProfile -ExecutionPolicy Bypass -File dlc\rift_workshop\tests\run_all.ps1
 ```
 
-覆盖：开场电影契约 `intro_test`、机制 `mechanics_test`（含星核入仓/拉出/复推与月门供电）、真实路线 `route_test`、UI 对齐 `parity_test`、打磨 `polish_test`、标题 `title_test`，本章 90 帧、本体三关 90 帧。
+覆盖：开场电影契约 `intro_test`、机制 `mechanics_test`（含星核入仓/拉出/复推与月门供电）、
+双面镜 v2 `boss_v2_test`（3 格血/3 命/掉命重开当前形态/一次性补满/Game Over/镜像分身/
+追踪镜光）、真实路线 `route_test`、UI 对齐 `parity_test`、打磨 `polish_test`、标题
+`title_test`，本章 90 帧、本体三关 90 帧。
+
+## 双面镜 v2 截图
+
+```powershell
+D:/Godot/Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 `
+  res://dlc/rift_workshop/tests/capture_boss_v2.tscn
+```
+
+输出到 `screenshots/rift_boss_v2_20261127/`：3 格血+3 心、镜像分身预警/释放、
+追踪镜光蓄力/飞行、掉命重开后 2 心+满血、Game Over 页，共 7 张 640×360。
+`boss_v2_test.log` 记录断言，`capture_boss_v2.log` 记录截图尺寸与光弹状态。
 
 ## 只能开窗跑
 

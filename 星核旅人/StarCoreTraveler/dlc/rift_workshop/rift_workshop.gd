@@ -97,7 +97,12 @@ const BRIDGE_FALL_LINE: String = "坠入云海 · 光桥只认同相 · 先熄�
 const BRIDGE_EDGE_LINE: String = "断桥了 · 先熄灭光灵，桥才会稳定"
 const WISP_FLIP_LINE: String = "光灵翻相了 · 快退回石台，或熄灭它"
 const WISP_CLEAR_LINE: String = "光灵熄灭 · 这座光桥已稳定"
-const PLAYER_MAX_HITS: int = 2
+const PLAYER_MAX_HITS: int = 3
+## Three lives for the mirror fight.  Emptying the 3-cell health bar spends one
+## life and replays the CURRENT form; the third death opens the game-over page.
+const PLAYER_LIVES: int = 3
+## Chapter-level grace after an accepted hit, matching the star loom's 0.95 s.
+const DAMAGE_IMMUNITY_TIME: float = 0.95
 ## The low truss leaves 27 px over the player's head.  This is the same number
 ## the beam script uses; tests compare the two.
 const BRIDGE_HEADROOM: float = 27.0
@@ -169,6 +174,13 @@ var _pause_open: bool = false
 var _attack_key_down: bool = false
 var _resolved_swings: Dictionary = {}
 var _player_hits: int = 0
+var _lives: int = PLAYER_LIVES
+var _game_over: bool = false
+var _damage_immunity_left: float = 0.0
+var _phase_supply_used: bool = false
+var _clone_hint_shown: bool = false
+var _homing_hint_shown: bool = false
+var _resume_note: String = ""
 var _retry_pending: bool = false
 var _retry_pending_left: float = 0.0
 var _start_lock_ticks: int = 0
@@ -277,6 +289,8 @@ func _ready() -> void:
 	_boss.phase_cleared.connect(_on_boss_phase_cleared)
 	_boss.phase_started.connect(_on_boss_phase_started)
 	_boss.defeated.connect(_on_boss_defeated)
+	_boss.clone_cast_started.connect(_on_boss_clone_cast_started)
+	_boss.homing_cast_started.connect(_on_boss_homing_cast_started)
 
 	_crystal_left.set_player_node(_player)
 	_crystal_right.set_player_node(_player)
@@ -303,12 +317,14 @@ func _ready() -> void:
 	_hud.quit_requested.connect(_on_hud_quit_requested)
 	_hud.set_polarity(true)
 	_hud.set_player_hits(0, PLAYER_MAX_HITS)
+	_hud.set_lives(PLAYER_LIVES, PLAYER_LIVES)
 	_hud.set_health_target(_player)
 	_hud.set_player_health_visible(true)
 	_hud.set_objective("目标：送澜相青核入仓，为月门供电")
 	_hud.set_boss_visible(false)
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
+	_hud.show_game_over(false)
 	_hud.set_recovery_alpha(0.0)
 	_sync_boss_hud()
 	_update_finish_marker()
@@ -526,8 +542,9 @@ func _exit_tree() -> void:
 # --- frame flow ------------------------------------------------------------
 
 func _physics_process(delta: float) -> void:
-	if get_tree().paused or _completed or _scene_leaving or _recovery_active:
+	if get_tree().paused or _completed or _scene_leaving or _recovery_active or _game_over:
 		return
+	_damage_immunity_left = maxf(_damage_immunity_left - delta, 0.0)
 	if _intro_active:
 		return
 	if _retry_pending:
@@ -569,7 +586,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _process(delta: float) -> void:
-	if get_tree().paused or _scene_leaving:
+	if get_tree().paused or _scene_leaving or _game_over:
 		return
 	if _intro_active:
 		return
@@ -615,6 +632,7 @@ func _sync_boss_hud() -> void:
 		_boss.has_face_anchor(true), _boss.has_face_anchor(false),
 		_boss.get_anchor_window_left(true), _boss.get_anchor_window_left(false)
 	)
+	_hud.set_lives(_lives, PLAYER_LIVES)
 
 
 ## Real J presses turn toward the nearest live arena target.  The bridge
@@ -623,23 +641,26 @@ func _sync_boss_hud() -> void:
 func _face_nearest_arena_target_on_attack() -> void:
 	if not _arena_entered or _boss_defeated:
 		return
-	var target: Node2D = null
+	# While the form-2 double exists it is the active target; aiming at it must
+	# not be stolen by the closer mirror body or a plate anchor.
+	if _boss.is_clone_active():
+		var clone_x: float = _boss.get_clone_global_position().x
+		_player.face_direction(1 if clone_x >= _player.global_position.x else -1)
+		return
+	var target_x: float = 0.0
 	var best_dx: float = INF
 	if not _boss.is_defeated():
-		var boss_dx: float = absf(_boss.global_position.x - _player.global_position.x)
-		target = _boss
-		best_dx = boss_dx
+		target_x = _boss.global_position.x
+		best_dx = absf(target_x - _player.global_position.x)
 	for wisp: RiftPolarityWisp in _boss_wisps:
 		if wisp == null or not is_instance_valid(wisp) or not wisp.is_alive():
 			continue
 		var dx: float = absf(wisp.global_position.x - _player.global_position.x)
 		if dx < best_dx:
 			best_dx = dx
-			target = wisp
-	if target != null and best_dx <= AUTO_FACE_RANGE:
-		_player.face_direction(
-			1 if target.global_position.x >= _player.global_position.x else -1
-		)
+			target_x = wisp.global_position.x
+	if best_dx <= AUTO_FACE_RANGE:
+		_player.face_direction(1 if target_x >= _player.global_position.x else -1)
 
 
 func _update_objective(force: bool = false) -> void:
@@ -723,6 +744,10 @@ func _input(event: InputEvent) -> void:
 		return
 	if _pause_open:
 		return
+	if _game_over:
+		# R above already restarts; the game-over page owns Enter/Space and
+		# arrows through the HUD's own fallback.
+		return
 	if _completed:
 		if key_event.pressed and not key_event.echo:
 			if code == int(KEY_E):
@@ -755,7 +780,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
 		return
-	if _scene_leaving or _recovery_active:
+	if _scene_leaving or _recovery_active or _game_over:
 		return
 	if event.is_action_pressed(&"pause"):
 		_set_paused(not _pause_open)
@@ -1079,7 +1104,11 @@ func _wake_boss() -> void:
 	_boss.begin_fight()
 	_mirror_tip_pending = true
 	_hud.set_boss_visible(true)
-	_hud.show_event("守门者睁眼 · 异相攻击才能碎面盘", 2.2)
+	if _resume_note.is_empty():
+		_hud.show_event("守门者睁眼 · 异相攻击才能碎面盘", 2.2)
+	else:
+		_hud.show_event(_resume_note, 2.6)
+		_resume_note = ""
 	_sync_boss_hud()
 
 
@@ -1096,8 +1125,11 @@ func _on_boss_phase_wave_released(positive_after: bool, flipped: bool) -> void:
 func _on_boss_player_struck(_away: int) -> void:
 	if _completed or _scene_leaving or _recovery_active or _retry_pending:
 		return
-	if _boss_collapse_active:
+	if _game_over or _boss_collapse_active:
 		return
+	if _damage_immunity_left > 0.0:
+		return
+	_damage_immunity_left = DAMAGE_IMMUNITY_TIME
 	_player_hits += 1
 	DemoAudio.play_player_hurt()
 	_audio.play_slam()
@@ -1114,6 +1146,24 @@ func _on_boss_summon_requested(count: int) -> void:
 	DemoAudio.play_link()
 	_hud.show_event("双面镜召来两只光灵 · 攻击可以熄灭", 1.8)
 	_sync_boss_hud()
+
+
+## First form-2 double of the run: one teaching line, then the 0.6 s warning
+## and the ghost itself carry every later read.
+func _on_boss_clone_cast_started(_positive: bool) -> void:
+	if _clone_hint_shown or _completed or _scene_leaving:
+		return
+	_clone_hint_shown = true
+	_hud.show_event("镜像分身 · 同相攻击可打散 · 横扫跳起躲避", 2.6)
+
+
+## First form-3 tracking light of the run: one teaching line, then the core
+## charge is the only warning.
+func _on_boss_homing_cast_started() -> void:
+	if _homing_hint_shown or _completed or _scene_leaving:
+		return
+	_homing_hint_shown = true
+	_hud.show_event("追踪镜光 · 跳起或引它撞地", 2.6)
 
 
 func _on_boss_anchors_requested(_count: int) -> void:
@@ -1190,9 +1240,18 @@ func _on_boss_phase_cleared(phase_index: int) -> void:
 
 func _on_boss_phase_started(phase_index: int) -> void:
 	if phase_index == 1:
-		_hud.show_event("形态 2 · 面盘被光灵锚定 · 横扫更快", 2.2)
+		# One-time mirror supply on the first form clear, matching the loom's
+		# stage-1 refill.  Later form changes do not add another heal, and a
+		# current-form retry keeps the supply spent.
+		if not _phase_supply_used:
+			_phase_supply_used = true
+			_player_hits = 0
+			_hud.set_player_hits(0, PLAYER_MAX_HITS)
+			_hud.show_event("形态 2 · 镜面补给：生命值补满 · 面盘被锚定", 2.4)
+		else:
+			_hud.show_event("形态 2 · 面盘被光灵锚定 · 横扫更快", 2.2)
 	elif phase_index == 2:
-		_hud.show_event("形态 3 · 镜面裂开 · 双横扫与短核心窗", 2.2)
+		_hud.show_event("形态 3 · 镜面裂开 · 双横扫与追踪镜光", 2.2)
 	else:
 		_hud.show_event("形态 1 · 异相攻击才能碎面盘", 2.0)
 	_sync_boss_hud()
@@ -1337,8 +1396,14 @@ func _on_player_recovery_transition_requested(reason: String) -> void:
 
 
 func _begin_recovery(kind: String) -> void:
-	if _recovery_active or _completed or _scene_leaving:
+	if _recovery_active or _completed or _scene_leaving or _game_over:
 		return
+	# One health death spends one life.  A route/arena fall is a positional
+	# reset only; the brief ties the life loss to the 3-cell health meter.
+	if kind == "combat":
+		_lives = maxi(_lives - 1, 0)
+		_hud.set_lives(_lives, PLAYER_LIVES)
+		_sync_boss_hud()
 	_post_intro_guide_pending = false
 	_boss_active = false
 	_audio.stop_music()
@@ -1377,7 +1442,10 @@ func _advance_recovery(delta: float) -> void:
 			if _recovery_alpha >= 1.0:
 				_recovery_phase = RecoveryPhase.BLACK_HOLD
 				_recovery_elapsed = 0.0
-				_apply_recovery_reset()
+				if _lives <= 0:
+					_start_game_over()
+				else:
+					_apply_recovery_reset()
 		RecoveryPhase.BLACK_HOLD:
 			_recovery_alpha = 1.0
 			_hud.set_recovery_alpha(1.0)
@@ -1398,7 +1466,10 @@ func _apply_recovery_reset() -> void:
 	if _recovery_applying:
 		return
 	_recovery_applying = true
-	if _recovery_kind == "fall" and not _arena_entered:
+	if _recovery_kind == "combat":
+		# A health death restarts the current form, not the whole fight.
+		_retry_boss_current_form()
+	elif _recovery_kind == "fall" and not _arena_entered:
 		var bridge_fall: bool = _fall_origin_x >= BRIDGE_SECTION_LEFT \
 			and _fall_origin_x < ARENA_ENTER_X
 		if _checkpoint_active:
@@ -1444,9 +1515,39 @@ func _finish_recovery() -> void:
 		_boss.set_suspended(false)
 
 
+## Health death: keep the current form number and replay its opening.  Health,
+## lives-read and the form's plates/core/anchors are restored; no other form is
+## touched.  The resume line is delivered when the arena opening wakes the boss.
+func _retry_boss_current_form() -> void:
+	_boss_active = false
+	_audio.stop_music()
+	_resolved_swings.clear()
+	_player_hits = 0
+	_hud.set_player_hits(0, PLAYER_MAX_HITS)
+	_retry_pending = false
+	_retry_pending_left = 0.0
+	_boss_collapse_active = false
+	_boss_defeat_cue_played = false
+	_mirror_tip_pending = false
+	_core_tip_pending = false
+	_damage_immunity_left = 0.8
+	_clear_boss_wisps()
+	_boss.reset_current_form()
+	_boss.set_suspended(true)
+	_crystal_left.reset_state()
+	_crystal_right.reset_state()
+	_arena_intro_left = ARENA_INTRO_TIME
+	_reset_player_at(ARENA_SPAWN, true)
+	_resume_note = "命数 -1 · 形态 %d 开头重来 · 生命值补满" % _boss.get_phase_number()
+	_hud.show_event(_resume_note, 2.6)
+	_update_finish_marker()
+	_update_objective(true)
+	_sync_boss_hud()
+
+
 ## A failure or a fall inside the arena returns the whole mirror fight to its
 ## opening state: phase 1, both face plates intact, core at 3/3, summons gone.
-## R remains the full chapter restart.
+## R remains the full chapter restart.  Falls do not spend a life.
 func _retry_boss() -> void:
 	_boss_active = false
 	_audio.stop_music()
@@ -1459,6 +1560,7 @@ func _retry_boss() -> void:
 	_boss_defeat_cue_played = false
 	_mirror_tip_pending = false
 	_core_tip_pending = false
+	_damage_immunity_left = 0.8
 	_clear_boss_wisps()
 	_boss.reset_full()
 	_boss.set_suspended(true)
@@ -1470,6 +1572,39 @@ func _retry_boss() -> void:
 	_update_objective(true)
 	_sync_boss_hud()
 	_hud.show_event("失败 · 回到竞技场入口 · 双面镜复原", 2.0)
+
+
+## Third health death: the arena stays behind a dim page with the empty heart
+## row, 重试本章 / 返回标题 and R as the keyboard reset.  R resets lives through
+## _restart_chapter; no path can add a fourth heart.
+func _start_game_over() -> void:
+	if _game_over or _completed or _scene_leaving:
+		return
+	_game_over = true
+	_boss_active = false
+	_retry_pending = false
+	_retry_pending_left = 0.0
+	_boss_collapse_active = false
+	_clear_boss_wisps()
+	_boss.set_suspended(true)
+	_recovery_active = false
+	_recovery_phase = RecoveryPhase.NONE
+	_recovery_elapsed = 0.0
+	_recovery_alpha = 0.0
+	_arena_intro_left = 0.0
+	_hud.set_recovery_alpha(0.0)
+	_hud.hide_event()
+	_hud.set_player_health_visible(false)
+	_hud.set_boss_visible(false)
+	_hud.show_game_over(true, 0)
+	_audio.stop_music()
+	_footstep_stop()
+	_attack_key_down = false
+	_player.begin_input_override()
+	_player.set_input_override_axis(0.0, false)
+	_player.cancel_attack()
+	_player.begin_recovery_hold()
+	LEVEL_FLOW.release_one_shot_actions()
 
 
 func _reset_player_at(point: Vector2, positive: bool = true) -> void:
@@ -1556,6 +1691,7 @@ func _return_to_title() -> void:
 	_core_tip_pending = false
 	_hud.show_pause(false)
 	_hud.show_completion(false, _elapsed)
+	_hud.show_game_over(false)
 	_boss_active = false
 	_audio.stop_music()
 	_release_ambience()
@@ -1595,6 +1731,13 @@ func _restart_chapter() -> void:
 	_recovery_kind = ""
 	_resolved_swings.clear()
 	_player_hits = 0
+	_lives = PLAYER_LIVES
+	_game_over = false
+	_damage_immunity_left = 0.0
+	_phase_supply_used = false
+	_clone_hint_shown = false
+	_homing_hint_shown = false
+	_resume_note = ""
 	_elapsed = 0.0
 	_finish_time = 0.0
 	_objective_key = ""
@@ -1608,9 +1751,11 @@ func _restart_chapter() -> void:
 	_hud.set_recovery_alpha(0.0)
 	_hud.show_completion(false, 0.0)
 	_hud.show_pause(false)
+	_hud.show_game_over(false)
 	_hud.set_objective("目标：送澜相青核入仓，为月门供电")
 	_hud.set_polarity(true)
 	_hud.set_player_hits(0, PLAYER_MAX_HITS)
+	_hud.set_lives(PLAYER_LIVES, PLAYER_LIVES)
 	_hud.set_health_target(_player)
 	_hud.set_player_health_visible(true)
 	_hud.set_boss_visible(false)
@@ -1858,6 +2003,26 @@ func is_recovery_active() -> bool:
 
 func get_player_hits() -> int:
 	return _player_hits
+
+
+func get_lives() -> int:
+	return _lives
+
+
+func get_max_lives() -> int:
+	return PLAYER_LIVES
+
+
+func is_game_over() -> bool:
+	return _game_over
+
+
+func get_damage_immunity_left() -> float:
+	return _damage_immunity_left
+
+
+func get_damage_immunity_time() -> float:
+	return DAMAGE_IMMUNITY_TIME
 
 
 func get_q_denial_count() -> int:

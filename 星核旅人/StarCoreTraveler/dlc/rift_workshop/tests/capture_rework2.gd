@@ -13,7 +13,7 @@ extends Node
 ##   rework2_q_denied.png     locked-Q cross icon above the head
 ##   rework2_crystal.png      arena inversion crystal + HUD phase
 ##   rework2_low_bridge.png   missing deck under the low truss
-##   health_bar_hit.png       fixed two-segment bar after one accepted hit
+##   health_bar_hit.png       fixed three-segment bar after one accepted hit
 ##   rework2_guide_page1.png  guide page 1 copy
 ##   rework2_guide_page3.png  guide page 3 double mirror + demo
 
@@ -225,7 +225,7 @@ func _run() -> void:
 	await _wait_ms(600)
 	await _save("rework2_boss_wave.png")
 	print("STATE boss_wave warning=%s" % str(boss.is_phase_wave_telegraph_visible()))
-	# One real accepted boss hit: the shared bar drops to one of two segments
+	# One real accepted boss hit: the shared bar drops to two of three segments
 	# at its fixed lower-left position.  Saved before the scene is freed.
 	boss.player_struck.emit(1)
 	await _wait_process(4)

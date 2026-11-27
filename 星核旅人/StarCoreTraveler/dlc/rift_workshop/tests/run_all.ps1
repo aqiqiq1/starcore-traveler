@@ -58,6 +58,7 @@ if (-not (Test-Path $Godot)) {
 
 $summary += Invoke-Case "rift_intro" "res://dlc/rift_workshop/tests/intro_test.tscn" "intro_test" $true
 $summary += Invoke-Case "rift_mech" "res://dlc/rift_workshop/tests/mechanics_test.tscn" "mechanics_test" $true
+$summary += Invoke-Case "rift_boss_v2" "res://dlc/rift_workshop/tests/boss_v2_test.tscn" "boss_v2_test" $true
 $summary += Invoke-Case "rift_route" "res://dlc/rift_workshop/tests/route_test.tscn" "route_test" $true
 $summary += Invoke-Case "rift_polish" "res://dlc/rift_workshop/tests/polish_test.tscn" "polish_test" $true
 $summary += Invoke-Case "rift_parity" "res://dlc/rift_workshop/tests/parity_test.tscn" "parity_test" $true
