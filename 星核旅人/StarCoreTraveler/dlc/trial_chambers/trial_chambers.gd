@@ -69,6 +69,10 @@ const TRIAL_PATH: String = "res://dlc/trial_chambers/trial_chambers.tscn"
 const RECOVERY_FADE_OUT_TIME: float = 0.25
 const RECOVERY_BLACK_HOLD_TIME: float = 0.10
 const RECOVERY_FADE_IN_TIME: float = 0.35
+## The live film's last frame is already the player view.  Keep one short
+## control/HUD-fade beat before the first-play guide opens, like DLC2, so the
+## hand-off is real rather than a modal appearing in the same frame.
+const POST_INTRO_GUIDE_DELAY: float = 0.45
 ## Same body centre the shared level-03 force providers use.  The guard's
 ## gravity field was already approved; this chapter must feed it to the player.
 const BODY_CENTER_OFFSET: Vector2 = Vector2(0.0, -15.0)
@@ -83,6 +87,7 @@ enum RecoveryPhase { NONE, FADE_OUT, BLACK_HOLD, FADE_IN }
 @onready var _gate_gold: PolarityGate = $GateGold
 @onready var _gate_cyan: PolarityGate = $GateCyan
 @onready var _crystal: TrialPhaseCrystal = $PhaseCrystal
+@onready var _sealed_crystal: TrialSealedCrystal = $SealedCrystal
 @onready var _hud: TrialHUD = $HUD
 @onready var _finish_core: Sprite2D = $FinishPoint/Core
 @onready var _audio = $Audio
@@ -113,10 +118,12 @@ var _recovery_alpha: float = 0.0
 var _recovery_elapsed: float = 0.0
 var _recovery_applying: bool = false
 var _intro_guide: DlcGuide = null
-var _intro_cinematic: DlcIntroCinematic = null
+var _intro_cinematic: TrialIntroCinematic = null
 var _intro_active: bool = false
 var _intro_played: bool = false
 var _intro_skipped: bool = false
+var _post_intro_guide_pending: bool = false
+var _post_intro_guide_left: float = 0.0
 var _mechanic_popup: MechanicPopup = null
 var _gate_gold_passed: bool = false
 var _gate_cyan_passed: bool = false
@@ -131,7 +138,7 @@ func _ready() -> void:
 
 	for node: Node in [
 		$Background, $Terrain, $Decorations, $Player, $Guard,
-		$GateGold, $GateCyan, $PhaseCrystal, $FinishPoint,
+		$GateGold, $GateCyan, $PhaseCrystal, $SealedCrystal, $FinishPoint,
 	]:
 		if node != null:
 			node.process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -212,7 +219,7 @@ func _ready() -> void:
 func _start_intro_cinematic_or_guide() -> void:
 	if show_intro_cinematic and not _intro_played and not _completed and not _scene_leaving:
 		if _intro_cinematic == null or not is_instance_valid(_intro_cinematic):
-			_intro_cinematic = INTRO_CINEMATIC_SCENE.instantiate() as DlcIntroCinematic
+			_intro_cinematic = INTRO_CINEMATIC_SCENE.instantiate() as TrialIntroCinematic
 		if _intro_cinematic != null:
 			_intro_active = true
 			_intro_skipped = false
@@ -222,8 +229,15 @@ func _start_intro_cinematic_or_guide() -> void:
 			_guard.set_suspended(true)
 			_player.lock_for_cinematic()
 			add_child(_intro_cinematic)
+			_intro_cinematic.configure(
+				_gate_gold, _crystal, _sealed_crystal, _player, _camera, _hud
+			)
 			_intro_cinematic.finished.connect(_on_intro_cinematic_finished)
-			_intro_cinematic.start()
+			if _intro_cinematic.start():
+				return
+			# A missing real node must never leave the chapter locked behind a
+			# film that cannot play.  The film's deferred failed `finished`
+			# signal releases the lock and opens the normal guide.
 			return
 	if show_intro_guide:
 		_open_intro_guide()
@@ -234,14 +248,32 @@ func _on_intro_cinematic_finished(skipped: bool) -> void:
 	_intro_played = true
 	_intro_skipped = skipped
 	_hud.visible = true
+	_hud.fade_in_after_intro()
 	_attack_key_down = false
 	# The player lock is released first, then the existing three-tick opening
-	# hold keeps the skip key from becoming a jump/Q press.
+	# hold keeps the skip key from becoming a jump/Q press.  The guide waits a
+	# short control/HUD beat, matching the DLC2 hand-off.
 	_player.unlock_after_cinematic()
 	_player.begin_input_override()
 	_guard_ticks = 3
-	if show_intro_guide:
-		call_deferred("_open_intro_guide")
+	if show_intro_guide and not _completed and not _scene_leaving:
+		_post_intro_guide_pending = true
+		_post_intro_guide_left = POST_INTRO_GUIDE_DELAY
+
+
+func _tick_post_intro_guide(delta: float) -> void:
+	if not _post_intro_guide_pending:
+		return
+	# Only states that will never return to this screen cancel the pending
+	# guide.  A pause freezes `_process` above, so the hand-off window resumes.
+	if _completed or _scene_leaving or _recovery_active or _retry_pending:
+		_post_intro_guide_pending = false
+		return
+	_post_intro_guide_left = maxf(_post_intro_guide_left - delta, 0.0)
+	if _post_intro_guide_left > 0.0:
+		return
+	_post_intro_guide_pending = false
+	_open_intro_guide()
 
 
 ## Called once per scene load.  Tests set show_intro_guide = false before
@@ -372,6 +404,7 @@ func _process(delta: float) -> void:
 		return
 	if _intro_active:
 		return
+	_tick_post_intro_guide(delta)
 	if not _completed:
 		_elapsed += delta
 	_advance_recovery(delta)
@@ -928,6 +961,8 @@ func _restart_trial() -> void:
 	_prev_player_x = START_SPAWN.x
 	_shell_shatter_pending = false
 	_true_damage_pending = false
+	_post_intro_guide_pending = false
+	_post_intro_guide_left = 0.0
 	_audio.stop_all()
 	_footsteps.stop()
 	_footsteps.reset_tracking()
@@ -974,7 +1009,7 @@ func get_intro_guide() -> DlcGuide:
 	return _intro_guide
 
 
-func get_intro_cinematic() -> DlcIntroCinematic:
+func get_intro_cinematic() -> TrialIntroCinematic:
 	return _intro_cinematic
 
 
@@ -1016,6 +1051,10 @@ func get_gate_cyan() -> PolarityGate:
 
 func get_phase_crystal() -> TrialPhaseCrystal:
 	return _crystal
+
+
+func get_sealed_crystal() -> TrialSealedCrystal:
+	return _sealed_crystal
 
 
 func get_q_hint() -> TrialQHint:

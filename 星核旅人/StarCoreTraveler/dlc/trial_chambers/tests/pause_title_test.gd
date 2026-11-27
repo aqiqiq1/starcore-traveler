@@ -59,10 +59,18 @@ func _tap_key(code: int) -> void:
 
 func _cleanup() -> void:
 	var current: Node = get_tree().current_scene
+	# The 返回主界面 route starts the title BGM; stop it before freeing the
+	# scene so the engine's exit teardown does not report a false resource leak.
+	if current != null:
+		var menu: Node = current.get_node_or_null("StartMenu")
+		if menu != null and menu.has_method("stop_title_music_for_test"):
+			menu.call("stop_title_music_for_test")
+	if is_instance_valid(DemoAudio):
+		DemoAudio.stop_world()
 	get_tree().current_scene = null
 	if current != null:
 		current.queue_free()
-	await _wait_process(3)
+	await _wait_process(20)
 
 
 func _run() -> void:

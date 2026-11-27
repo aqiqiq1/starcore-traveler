@@ -212,10 +212,20 @@ func _force_one_true_hit(hit_index: int) -> bool:
 func _cleanup() -> void:
 	await _wait_process(2)
 	var current: Node = get_tree().current_scene
+	# The E route returns to the title scene, which starts the title BGM.  Stop
+	# it before freeing the scene so the engine's exit teardown does not report
+	# a false "resources still in use" error (the same teardown the DLC smoke
+	# wrappers use).
+	if current != null:
+		var menu: Node = current.get_node_or_null("StartMenu")
+		if menu != null and menu.has_method("stop_title_music_for_test"):
+			menu.call("stop_title_music_for_test")
+	if is_instance_valid(DemoAudio):
+		DemoAudio.stop_world()
 	get_tree().current_scene = null
 	if current != null:
 		current.queue_free()
-	await _wait_process(4)
+	await _wait_process(20)
 
 
 func _try_save_completion_shot() -> void:

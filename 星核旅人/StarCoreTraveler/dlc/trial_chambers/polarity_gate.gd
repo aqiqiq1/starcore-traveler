@@ -170,6 +170,28 @@ func get_gate_rect() -> Rect2:
 	)
 
 
+## World-space centre of the 34x34 emblem plate above the curtain.  The opening
+## film hangs its light rings on this exact point; the plate, sun/moon emblem,
+## padlock and curtain themselves are still drawn by this node in `_draw()`.
+## The literal mirrors `_draw_stone_frame()` and the 32x32 emblem box there.
+func get_emblem_center_global() -> Vector2:
+	return global_position + Vector2(0.0, -123.0)
+
+
+func get_emblem_plate_rect_global() -> Rect2:
+	return Rect2(global_position + Vector2(-17.0, -140.0), Vector2(34.0, 34.0))
+
+
+## World-space top edge of the light curtain.  The film only adds warm light
+## over this exact band; the curtain's own phase colour and rails stay visible.
+func get_curtain_top_global() -> float:
+	return global_position.y - gate_height
+
+
+func get_curtain_bottom_global() -> float:
+	return global_position.y
+
+
 func get_player_rect() -> Rect2:
 	if _player == null or not is_instance_valid(_player):
 		return Rect2()

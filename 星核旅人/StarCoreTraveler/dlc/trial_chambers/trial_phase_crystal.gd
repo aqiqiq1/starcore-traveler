@@ -165,6 +165,15 @@ func get_crystal_positive() -> bool:
 	return crystal_positive
 
 
+## World-space centre of the floating shard.  The opening film anchors its gold
+## halo here; the shard itself is still drawn by this node in `_draw()`.
+func get_shard_center_global() -> Vector2:
+	var bob: float = 0.0
+	if animate_bob:
+		bob = roundf(sin(_time * 2.4) * 1.0)
+	return global_position + Vector2(0.0, -19.0 + bob)
+
+
 func is_player_inside() -> bool:
 	return _compute_touching()
 

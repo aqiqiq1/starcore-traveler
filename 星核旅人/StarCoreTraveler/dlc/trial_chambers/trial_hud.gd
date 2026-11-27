@@ -59,6 +59,7 @@ var _font: Font
 var _subtitle: String = ""
 var _completion_visible: bool = false
 var _pause_visible: bool = false
+var _intro_fade_tween: Tween = null
 
 
 func _ready() -> void:
@@ -82,9 +83,9 @@ func _ready() -> void:
 	show_completion(false, 0.0)
 	show_pause(false)
 	_root.modulate.a = 0.0
-	var intro_tween: Tween = create_tween()
-	intro_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	intro_tween.tween_property(_root, "modulate:a", 1.0, 0.15)
+	_intro_fade_tween = create_tween()
+	_intro_fade_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_intro_fade_tween.tween_property(_root, "modulate:a", 1.0, 0.15)
 
 
 ## Pause-page keyboard fallback.  The PixelMenuButton controls already handle
@@ -608,6 +609,29 @@ func set_recovery_alpha(value: float) -> void:
 	_recovery_cover.visible = alpha > 0.0
 	_recovery_cover.color = Color(0.0, 0.0, 0.0, alpha)
 	_update_chrome_visibility()
+
+
+## The opening film hands the screen back to live gameplay.  Show the real HUD
+## and fade its chrome in from transparent.  Pause-process keeps the fade honest
+## if a modal opens during the hand-off.
+func fade_in_after_intro(seconds: float = 0.35) -> void:
+	if _root == null:
+		return
+	if _intro_fade_tween != null and _intro_fade_tween.is_valid():
+		_intro_fade_tween.kill()
+	_root.modulate.a = 0.0
+	_intro_fade_tween = create_tween()
+	_intro_fade_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_intro_fade_tween.tween_property(_root, "modulate:a", 1.0, maxf(seconds, 0.01))
+
+
+func set_chrome_alpha(value: float) -> void:
+	if _root != null:
+		_root.modulate.a = clampf(value, 0.0, 1.0)
+
+
+func get_chrome_alpha() -> float:
+	return _root.modulate.a if _root != null else 0.0
 
 
 func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
