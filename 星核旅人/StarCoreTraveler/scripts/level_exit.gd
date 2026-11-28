@@ -340,17 +340,8 @@ func get_display_rect() -> Rect2:
 
 
 func _load_guide_font() -> void:
-	if _guide_font != null or not ResourceLoader.exists(FONT_PATH):
-		return
-	var font_file: FontFile = ResourceLoader.load(FONT_PATH) as FontFile
-	if font_file != null:
-		var copy: FontFile = font_file.duplicate() as FontFile
-		if copy != null:
-			copy.antialiasing = TextServer.FONT_ANTIALIASING_NONE
-			copy.hinting = TextServer.HINTING_NONE
-			copy.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
-			copy.allow_system_fallback = false
-			_guide_font = copy
+	if _guide_font == null:
+		_guide_font = UiFont.get_font_file()
 
 
 func _draw() -> void:

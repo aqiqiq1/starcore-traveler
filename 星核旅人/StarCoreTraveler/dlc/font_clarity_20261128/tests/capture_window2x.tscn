@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://dlc/font_clarity_20261128/tests/capture_window2x.gd" id="1"]
+
+[node name="CaptureWindow2x" type="Node"]
+script = ExtResource("1")

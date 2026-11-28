@@ -1,0 +1,358 @@
+﻿Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OpenGL API 3.3.0 NVIDIA 616.56 - Compatibility - Using Device: NVIDIA - NVIDIA GeForce RTX 4060 Laptop GPU
+
+SHOT 01_title_page.png size=640x360 error=0
+AUDIT_PAGE title
+SHOT 02_chapter_page.png size=640x360 error=0
+AUDIT_PAGE chapter
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChaptersPanel/@Label@37 text_len=2 size=24 rect=(0.0,8.0,464.0,32.0) gpos=(88.0,36.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChaptersPanel/@Label@38 text_len=9 size=12 rect=(0.0,40.0,464.0,23.0) gpos=(88.0,68.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowL 1/@Label@39 text_len=2 size=12 rect=(12.0,0.0,22.0,30.0) gpos=(116.0,90.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowL 1/@Label@40 text_len=4 size=12 rect=(38.0,0.0,158.0,30.0) gpos=(142.0,90.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowL 1/@Label@41 text_len=2 size=12 rect=(198.0,0.0,88.0,30.0) gpos=(302.0,90.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowL 1/@Label@42 text_len=3 size=12 rect=(288.0,0.0,130.0,30.0) gpos=(392.0,90.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowL 2/@Label@43 text_len=2 size=12 rect=(12.0,0.0,22.0,30.0) gpos=(116.0,123.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowL 2/@Label@44 text_len=4 size=12 rect=(38.0,0.0,158.0,30.0) gpos=(142.0,123.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowL 2/@Label@45 text_len=2 size=12 rect=(198.0,0.0,88.0,30.0) gpos=(302.0,123.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowL 2/@Label@46 text_len=3 size=12 rect=(288.0,0.0,130.0,30.0) gpos=(392.0,123.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowL 3/@Label@47 text_len=2 size=12 rect=(12.0,0.0,22.0,30.0) gpos=(116.0,156.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowL 3/@Label@48 text_len=4 size=12 rect=(38.0,0.0,158.0,30.0) gpos=(142.0,156.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowL 3/@Label@49 text_len=2 size=12 rect=(198.0,0.0,88.0,30.0) gpos=(302.0,156.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowL 3/@Label@50 text_len=3 size=12 rect=(288.0,0.0,130.0,30.0) gpos=(392.0,156.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowLoom/@Label@51 text_len=2 size=12 rect=(12.0,0.0,22.0,30.0) gpos=(116.0,189.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowLoom/@Label@52 text_len=7 size=12 rect=(38.0,0.0,158.0,30.0) gpos=(142.0,189.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowLoom/@Label@53 text_len=3 size=12 rect=(198.0,0.0,88.0,30.0) gpos=(302.0,189.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowLoom/@Label@54 text_len=3 size=12 rect=(288.0,0.0,130.0,30.0) gpos=(392.0,189.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowRift/@Label@55 text_len=2 size=12 rect=(12.0,0.0,22.0,30.0) gpos=(116.0,222.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowRift/@Label@56 text_len=4 size=12 rect=(38.0,0.0,158.0,30.0) gpos=(142.0,222.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowRift/@Label@57 text_len=3 size=12 rect=(198.0,0.0,88.0,30.0) gpos=(302.0,222.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/ChapterRowRift/@Label@58 text_len=3 size=12 rect=(288.0,0.0,130.0,30.0) gpos=(392.0,222.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT chapter Level01/StartMenu/StartMenuRoot/ChaptersLayer/@Label@59 text_len=25 size=12 rect=(104.0,294.0,300.0,23.0) gpos=(104.0,294.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+OPENING_DIALOGUE visible=true page=0
+SHOT 03_opening_dialogue.png size=640x360 error=0
+AUDIT_PAGE opening_dialogue
+AUDIT opening_dialogue Level01/World/GuideEchoMeeting/GuideEchoLayer/Dialogue/@Label@191 text_len=5 size=12 rect=(6.0,6.0,178.0,16.0) gpos=(125.0,56.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT opening_dialogue Level01/World/GuideEchoMeeting/GuideEchoLayer/Dialogue/@Label@192 text_len=41 size=12 rect=(6.0,24.0,234.0,51.0) gpos=(125.0,74.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT opening_dialogue Level01/World/GuideEchoMeeting/GuideEchoLayer/Dialogue/@Label@193 text_len=5 size=12 rect=(188.0,6.0,52.0,16.0) gpos=(307.0,56.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+SHOT 04a_hud_row.png size=640x360 error=0
+AUDIT_PAGE hud_row_l1
+AUDIT hud_row_l1 Level01/HUD/LevelHUDRoot/HudObjective/ChapterLabel text_len=4 size=12 rect=(12.0,6.0,50.0,16.0) gpos=(12.0,6.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT hud_row_l1 Level01/HUD/LevelHUDRoot/HudObjective/ObjectiveLabel text_len=6 size=12 rect=(72.0,6.0,528.0,16.0) gpos=(72.0,6.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+SHOT 04b_event_row.png size=640x360 error=0
+AUDIT_PAGE event_row_l1
+AUDIT event_row_l1 Level01/HUD/LevelHUDRoot/HudObjective/ChapterLabel text_len=4 size=12 rect=(12.0,6.0,50.0,16.0) gpos=(12.0,6.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT event_row_l1 Level01/HUD/LevelHUDRoot/HudObjective/ObjectiveLabel text_len=6 size=12 rect=(72.0,6.0,528.0,16.0) gpos=(72.0,6.0) scale=(1.00,1.00) alpha=0.00 outline=1 font= flags=ALPHA
+AUDIT event_row_l1 Level01/HUD/LevelHUDRoot/HudObjective/EventLabel text_len=14 size=12 rect=(72.0,6.0,528.0,16.0) gpos=(72.0,6.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+PAUSE_L1 controls=true
+SHOT 05_pause_l1.png size=640x360 error=0
+AUDIT_PAGE pause_l1
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@436 text_len=3 size=24 rect=(0.0,8.0,520.0,32.0) gpos=(60.0,36.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@437 text_len=10 size=12 rect=(0.0,40.0,520.0,23.0) gpos=(60.0,68.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@443 text_len=12 size=12 rect=(22.0,220.0,208.0,32.0) gpos=(82.0,248.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@445 text_len=4 size=12 rect=(262.0,58.0,160.0,23.0) gpos=(322.0,86.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@450 text_len=2 size=12 rect=(396.0,80.0,102.0,23.0) gpos=(456.0,108.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@454 text_len=2 size=12 rect=(396.0,98.0,102.0,23.0) gpos=(456.0,126.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@458 text_len=2 size=12 rect=(396.0,116.0,102.0,23.0) gpos=(456.0,144.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@462 text_len=4 size=12 rect=(396.0,134.0,102.0,23.0) gpos=(456.0,162.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@466 text_len=7 size=12 rect=(396.0,152.0,102.0,23.0) gpos=(456.0,180.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@470 text_len=7 size=12 rect=(396.0,170.0,102.0,23.0) gpos=(456.0,198.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@474 text_len=4 size=12 rect=(396.0,188.0,102.0,23.0) gpos=(456.0,216.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@478 text_len=4 size=12 rect=(396.0,206.0,102.0,23.0) gpos=(456.0,234.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@479 text_len=20 size=12 rect=(262.0,246.0,285.0,32.0) gpos=(322.0,274.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@449 text_len=13 size=12 rect=(262.0,80.0,130.0,16.0) gpos=(322.0,108.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@453 text_len=54 size=12 rect=(262.0,98.0,130.0,16.0) gpos=(322.0,126.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@457 text_len=54 size=12 rect=(262.0,116.0,130.0,16.0) gpos=(322.0,144.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@461 text_len=50 size=12 rect=(262.0,134.0,130.0,16.0) gpos=(322.0,162.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@465 text_len=50 size=12 rect=(262.0,152.0,130.0,16.0) gpos=(322.0,180.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@469 text_len=50 size=12 rect=(262.0,170.0,130.0,16.0) gpos=(322.0,198.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@473 text_len=50 size=12 rect=(262.0,188.0,130.0,16.0) gpos=(322.0,216.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@477 text_len=52 size=12 rect=(262.0,206.0,130.0,16.0) gpos=(322.0,234.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+MANUAL p1=1 / 2 rows=["polarity", "gate", "rune", "bay", "checkpoint", "guard", "inversion", "bridge"] step=24
+SHOT 06_manual_page1.png size=640x360 error=0
+AUDIT_PAGE manual_page1
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@436 text_len=3 size=24 rect=(0.0,8.0,520.0,32.0) gpos=(60.0,36.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@437 text_len=10 size=12 rect=(0.0,40.0,520.0,23.0) gpos=(60.0,68.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@443 text_len=12 size=12 rect=(22.0,220.0,208.0,32.0) gpos=(82.0,248.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@445 text_len=4 size=12 rect=(262.0,58.0,160.0,23.0) gpos=(322.0,86.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@450 text_len=2 size=12 rect=(396.0,80.0,102.0,23.0) gpos=(456.0,108.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@454 text_len=2 size=12 rect=(396.0,98.0,102.0,23.0) gpos=(456.0,126.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@458 text_len=2 size=12 rect=(396.0,116.0,102.0,23.0) gpos=(456.0,144.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@462 text_len=4 size=12 rect=(396.0,134.0,102.0,23.0) gpos=(456.0,162.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@466 text_len=7 size=12 rect=(396.0,152.0,102.0,23.0) gpos=(456.0,180.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@470 text_len=7 size=12 rect=(396.0,170.0,102.0,23.0) gpos=(456.0,198.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@474 text_len=4 size=12 rect=(396.0,188.0,102.0,23.0) gpos=(456.0,216.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@478 text_len=4 size=12 rect=(396.0,206.0,102.0,23.0) gpos=(456.0,234.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@479 text_len=20 size=12 rect=(262.0,246.0,285.0,32.0) gpos=(322.0,274.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/@Label@481 text_len=4 size=24 rect=(16.0,6.0,300.0,32.0) gpos=(26.0,36.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/@Label@482 text_len=22 size=12 rect=(16.0,34.0,430.0,23.0) gpos=(26.0,64.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_polarity/RowName_polarity text_len=2 size=12 rect=(48.0,3.0,72.0,23.0) gpos=(58.0,91.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_polarity/RowSummary_polarity text_len=13 size=12 rect=(128.0,3.0,400.0,23.0) gpos=(138.0,91.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_gate/RowName_gate text_len=3 size=12 rect=(48.0,3.0,72.0,23.0) gpos=(58.0,115.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_gate/RowSummary_gate text_len=23 size=12 rect=(128.0,3.0,400.0,23.0) gpos=(138.0,115.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_rune/RowName_rune text_len=3 size=12 rect=(48.0,3.0,72.0,23.0) gpos=(58.0,139.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_rune/RowSummary_rune text_len=14 size=12 rect=(128.0,3.0,400.0,23.0) gpos=(138.0,139.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_bay/RowName_bay text_len=3 size=12 rect=(48.0,3.0,72.0,23.0) gpos=(58.0,163.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_bay/RowSummary_bay text_len=16 size=12 rect=(128.0,3.0,400.0,23.0) gpos=(138.0,163.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_checkpoint/RowName_checkpoint text_len=3 size=12 rect=(48.0,3.0,72.0,23.0) gpos=(58.0,187.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_checkpoint/RowSummary_checkpoint text_len=17 size=12 rect=(128.0,3.0,400.0,23.0) gpos=(138.0,187.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_checkpoint/@Label@493 text_len=1 size=12 rect=(544.0,3.0,60.0,23.0) gpos=(554.0,187.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_guard/RowName_guard text_len=2 size=12 rect=(48.0,3.0,72.0,23.0) gpos=(58.0,211.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_guard/RowSummary_guard text_len=16 size=12 rect=(128.0,3.0,400.0,23.0) gpos=(138.0,211.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_inversion/RowName_inversion text_len=3 size=12 rect=(48.0,3.0,72.0,23.0) gpos=(58.0,235.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_inversion/RowSummary_inversion text_len=11 size=12 rect=(128.0,3.0,400.0,23.0) gpos=(138.0,235.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_inversion/@Label@497 text_len=1 size=12 rect=(544.0,3.0,60.0,23.0) gpos=(554.0,235.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_bridge/RowName_bridge text_len=3 size=12 rect=(48.0,3.0,72.0,23.0) gpos=(58.0,259.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_bridge/RowSummary_bridge text_len=15 size=12 rect=(128.0,3.0,400.0,23.0) gpos=(138.0,259.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/ManualPageIndicator text_len=5 size=12 rect=(480.0,266.0,120.0,23.0) gpos=(490.0,296.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@449 text_len=13 size=12 rect=(262.0,80.0,130.0,16.0) gpos=(322.0,108.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@453 text_len=54 size=12 rect=(262.0,98.0,130.0,16.0) gpos=(322.0,126.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@457 text_len=54 size=12 rect=(262.0,116.0,130.0,16.0) gpos=(322.0,144.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@461 text_len=50 size=12 rect=(262.0,134.0,130.0,16.0) gpos=(322.0,162.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@465 text_len=50 size=12 rect=(262.0,152.0,130.0,16.0) gpos=(322.0,180.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@469 text_len=50 size=12 rect=(262.0,170.0,130.0,16.0) gpos=(322.0,198.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@473 text_len=50 size=12 rect=(262.0,188.0,130.0,16.0) gpos=(322.0,216.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@477 text_len=52 size=12 rect=(262.0,206.0,130.0,16.0) gpos=(322.0,234.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page1 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/ManualFooter text_len=124 size=12 rect=(16.0,266.0,420.0,14.0) gpos=(26.0,296.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+MANUAL p2=2 / 2 rows=["core_delivery", "loom_node", "fire", "gear", "wisp", "mirror", "lives"]
+SHOT 07_manual_page2.png size=640x360 error=0
+AUDIT_PAGE manual_page2
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@436 text_len=3 size=24 rect=(0.0,8.0,520.0,32.0) gpos=(60.0,36.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@437 text_len=10 size=12 rect=(0.0,40.0,520.0,23.0) gpos=(60.0,68.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@443 text_len=12 size=12 rect=(22.0,220.0,208.0,32.0) gpos=(82.0,248.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@445 text_len=4 size=12 rect=(262.0,58.0,160.0,23.0) gpos=(322.0,86.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@450 text_len=2 size=12 rect=(396.0,80.0,102.0,23.0) gpos=(456.0,108.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@454 text_len=2 size=12 rect=(396.0,98.0,102.0,23.0) gpos=(456.0,126.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@458 text_len=2 size=12 rect=(396.0,116.0,102.0,23.0) gpos=(456.0,144.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@462 text_len=4 size=12 rect=(396.0,134.0,102.0,23.0) gpos=(456.0,162.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@466 text_len=7 size=12 rect=(396.0,152.0,102.0,23.0) gpos=(456.0,180.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@470 text_len=7 size=12 rect=(396.0,170.0,102.0,23.0) gpos=(456.0,198.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@474 text_len=4 size=12 rect=(396.0,188.0,102.0,23.0) gpos=(456.0,216.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@478 text_len=4 size=12 rect=(396.0,206.0,102.0,23.0) gpos=(456.0,234.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@Label@479 text_len=20 size=12 rect=(262.0,246.0,285.0,32.0) gpos=(322.0,274.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/@Label@481 text_len=4 size=24 rect=(16.0,6.0,300.0,32.0) gpos=(26.0,36.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/@Label@482 text_len=22 size=12 rect=(16.0,34.0,430.0,23.0) gpos=(26.0,64.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_core_delivery/RowName_core_delivery text_len=2 size=12 rect=(48.0,3.0,72.0,23.0) gpos=(58.0,91.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_core_delivery/RowSummary_core_delivery text_len=12 size=12 rect=(128.0,3.0,400.0,23.0) gpos=(138.0,91.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_loom_node/RowName_loom_node text_len=4 size=12 rect=(48.0,3.0,72.0,23.0) gpos=(58.0,115.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_loom_node/RowSummary_loom_node text_len=15 size=12 rect=(128.0,3.0,400.0,23.0) gpos=(138.0,115.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_fire/RowName_fire text_len=4 size=12 rect=(48.0,3.0,72.0,23.0) gpos=(58.0,139.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_fire/RowSummary_fire text_len=13 size=12 rect=(128.0,3.0,400.0,23.0) gpos=(138.0,139.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_fire/@Label@505 text_len=1 size=12 rect=(544.0,3.0,60.0,23.0) gpos=(554.0,139.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_gear/RowName_gear text_len=2 size=12 rect=(48.0,3.0,72.0,23.0) gpos=(58.0,163.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_gear/RowSummary_gear text_len=13 size=12 rect=(128.0,3.0,400.0,23.0) gpos=(138.0,163.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_wisp/RowName_wisp text_len=2 size=12 rect=(48.0,3.0,72.0,23.0) gpos=(58.0,187.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_wisp/RowSummary_wisp text_len=13 size=12 rect=(128.0,3.0,400.0,23.0) gpos=(138.0,187.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_mirror/RowName_mirror text_len=3 size=12 rect=(48.0,3.0,72.0,23.0) gpos=(58.0,211.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_mirror/RowSummary_mirror text_len=16 size=12 rect=(128.0,3.0,400.0,23.0) gpos=(138.0,211.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_lives/RowName_lives text_len=3 size=12 rect=(48.0,3.0,72.0,23.0) gpos=(58.0,235.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_lives/RowSummary_lives text_len=14 size=12 rect=(128.0,3.0,400.0,23.0) gpos=(138.0,235.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/Row_lives/@Label@513 text_len=1 size=12 rect=(544.0,3.0,60.0,23.0) gpos=(554.0,235.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/ManualPageIndicator text_len=5 size=12 rect=(480.0,266.0,120.0,23.0) gpos=(490.0,296.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@449 text_len=13 size=12 rect=(262.0,80.0,130.0,16.0) gpos=(322.0,108.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@453 text_len=54 size=12 rect=(262.0,98.0,130.0,16.0) gpos=(322.0,126.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@457 text_len=54 size=12 rect=(262.0,116.0,130.0,16.0) gpos=(322.0,144.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@461 text_len=50 size=12 rect=(262.0,134.0,130.0,16.0) gpos=(322.0,162.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@465 text_len=50 size=12 rect=(262.0,152.0,130.0,16.0) gpos=(322.0,180.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@469 text_len=50 size=12 rect=(262.0,170.0,130.0,16.0) gpos=(322.0,198.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@473 text_len=50 size=12 rect=(262.0,188.0,130.0,16.0) gpos=(322.0,216.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/PauseMenuRoot/@Panel@435/@RichTextLabel@477 text_len=52 size=12 rect=(262.0,206.0,130.0,16.0) gpos=(322.0,234.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT manual_page2 Level01/PauseMenu/MechanicManual/MechanicManualRoot/ManualPanel/ManualFooter text_len=124 size=12 rect=(16.0,266.0,420.0,14.0) gpos=(26.0,296.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+COMPLETION_L1 绗竴鍏冲畬鎴?路 鐢ㄦ椂 00:00
+SHOT 08_completion_l1.png size=640x360 error=0
+AUDIT_PAGE completion_l1
+AUDIT completion_l1 Level01/HUD/LevelHUDRoot/@ColorRect@391/@Panel@392/@Label@393 text_len=16 size=24 rect=(0.0,12.0,400.0,34.0) gpos=(120.0,87.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT completion_l1 Level01/HUD/LevelHUDRoot/@ColorRect@391/@Panel@392/@Label@394 text_len=13 size=12 rect=(0.0,50.0,400.0,23.0) gpos=(120.0,125.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT completion_l1 Level01/HUD/LevelHUDRoot/@ColorRect@391/@Panel@392/@Label@399 text_len=18 size=12 rect=(0.0,158.0,400.0,23.0) gpos=(120.0,233.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+PAUSE_L2 controls=true
+SHOT 09_pause_l2.png size=640x360 error=0
+AUDIT_PAGE pause_l2
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@Label@579 text_len=3 size=24 rect=(0.0,8.0,520.0,32.0) gpos=(60.0,36.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@Label@580 text_len=10 size=12 rect=(0.0,40.0,520.0,23.0) gpos=(60.0,68.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@Label@586 text_len=12 size=12 rect=(22.0,220.0,208.0,32.0) gpos=(82.0,248.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@Label@588 text_len=4 size=12 rect=(262.0,58.0,160.0,23.0) gpos=(322.0,86.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@Label@593 text_len=2 size=12 rect=(396.0,80.0,102.0,23.0) gpos=(456.0,108.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@Label@597 text_len=2 size=12 rect=(396.0,98.0,102.0,23.0) gpos=(456.0,126.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@Label@601 text_len=2 size=12 rect=(396.0,116.0,102.0,23.0) gpos=(456.0,144.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@Label@605 text_len=4 size=12 rect=(396.0,134.0,102.0,23.0) gpos=(456.0,162.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@Label@609 text_len=7 size=12 rect=(396.0,152.0,102.0,23.0) gpos=(456.0,180.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@Label@613 text_len=7 size=12 rect=(396.0,170.0,102.0,23.0) gpos=(456.0,198.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@Label@617 text_len=4 size=12 rect=(396.0,188.0,102.0,23.0) gpos=(456.0,216.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@Label@621 text_len=4 size=12 rect=(396.0,206.0,102.0,23.0) gpos=(456.0,234.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@Label@625 text_len=4 size=12 rect=(396.0,224.0,102.0,23.0) gpos=(456.0,252.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@Label@626 text_len=20 size=12 rect=(262.0,246.0,285.0,32.0) gpos=(322.0,274.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@RichTextLabel@592 text_len=13 size=12 rect=(262.0,80.0,130.0,16.0) gpos=(322.0,108.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@RichTextLabel@596 text_len=54 size=12 rect=(262.0,98.0,130.0,16.0) gpos=(322.0,126.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@RichTextLabel@600 text_len=54 size=12 rect=(262.0,116.0,130.0,16.0) gpos=(322.0,144.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@RichTextLabel@604 text_len=50 size=12 rect=(262.0,134.0,130.0,16.0) gpos=(322.0,162.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@RichTextLabel@608 text_len=50 size=12 rect=(262.0,152.0,130.0,16.0) gpos=(322.0,180.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@RichTextLabel@612 text_len=50 size=12 rect=(262.0,170.0,130.0,16.0) gpos=(322.0,198.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@RichTextLabel@616 text_len=5 size=12 rect=(262.0,188.0,130.0,16.0) gpos=(322.0,216.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@RichTextLabel@620 text_len=50 size=12 rect=(262.0,206.0,130.0,16.0) gpos=(322.0,234.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l2 Level02/PauseMenu/PauseMenuRoot/@Panel@578/@RichTextLabel@624 text_len=52 size=12 rect=(262.0,224.0,130.0,16.0) gpos=(322.0,252.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+COMPLETION_L2 绗簩鍏冲畬鎴?路 鐢ㄦ椂 01:32
+SHOT 10_completion_l2.png size=640x360 error=0
+AUDIT_PAGE completion_l2
+AUDIT completion_l2 Level02/HUD/Level02HUDRoot/@ColorRect@568/@Panel@569/@Label@570 text_len=16 size=24 rect=(0.0,12.0,400.0,34.0) gpos=(120.0,92.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT completion_l2 Level02/HUD/Level02HUDRoot/@ColorRect@568/@Panel@569/@Label@571 text_len=12 size=12 rect=(0.0,50.0,400.0,23.0) gpos=(120.0,130.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT completion_l2 Level02/HUD/Level02HUDRoot/@ColorRect@568/@Panel@569/@Label@576 text_len=18 size=12 rect=(0.0,158.0,400.0,23.0) gpos=(120.0,238.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+PAUSE_L3 controls=true
+SHOT 11_pause_l3.png size=640x360 error=0
+AUDIT_PAGE pause_l3
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@Label@730 text_len=3 size=24 rect=(0.0,8.0,520.0,32.0) gpos=(60.0,36.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@Label@731 text_len=10 size=12 rect=(0.0,40.0,520.0,23.0) gpos=(60.0,68.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@Label@737 text_len=12 size=12 rect=(22.0,220.0,208.0,32.0) gpos=(82.0,248.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@Label@739 text_len=4 size=12 rect=(262.0,58.0,160.0,23.0) gpos=(322.0,86.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@Label@744 text_len=2 size=12 rect=(396.0,80.0,102.0,23.0) gpos=(456.0,108.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@Label@748 text_len=2 size=12 rect=(396.0,96.0,102.0,23.0) gpos=(456.0,124.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@Label@752 text_len=2 size=12 rect=(396.0,112.0,102.0,23.0) gpos=(456.0,140.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@Label@756 text_len=4 size=12 rect=(396.0,128.0,102.0,23.0) gpos=(456.0,156.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@Label@760 text_len=6 size=12 rect=(396.0,144.0,102.0,23.0) gpos=(456.0,172.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@Label@764 text_len=7 size=12 rect=(396.0,160.0,102.0,23.0) gpos=(456.0,188.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@Label@768 text_len=7 size=12 rect=(396.0,176.0,102.0,23.0) gpos=(456.0,204.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@Label@772 text_len=4 size=12 rect=(396.0,192.0,102.0,23.0) gpos=(456.0,220.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@Label@776 text_len=4 size=12 rect=(396.0,208.0,102.0,23.0) gpos=(456.0,236.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@Label@780 text_len=4 size=12 rect=(396.0,224.0,102.0,23.0) gpos=(456.0,252.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@Label@781 text_len=20 size=12 rect=(262.0,260.0,285.0,32.0) gpos=(322.0,288.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@RichTextLabel@743 text_len=13 size=12 rect=(262.0,80.0,130.0,16.0) gpos=(322.0,108.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@RichTextLabel@747 text_len=54 size=12 rect=(262.0,96.0,130.0,16.0) gpos=(322.0,124.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@RichTextLabel@751 text_len=54 size=12 rect=(262.0,112.0,130.0,16.0) gpos=(322.0,140.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@RichTextLabel@755 text_len=50 size=12 rect=(262.0,128.0,130.0,16.0) gpos=(322.0,156.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@RichTextLabel@759 text_len=50 size=12 rect=(262.0,144.0,130.0,16.0) gpos=(322.0,172.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@RichTextLabel@763 text_len=50 size=12 rect=(262.0,160.0,130.0,16.0) gpos=(322.0,188.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@RichTextLabel@767 text_len=50 size=12 rect=(262.0,176.0,130.0,16.0) gpos=(322.0,204.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@RichTextLabel@771 text_len=5 size=12 rect=(262.0,192.0,130.0,16.0) gpos=(322.0,220.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@RichTextLabel@775 text_len=50 size=12 rect=(262.0,208.0,130.0,16.0) gpos=(322.0,236.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT pause_l3 Level03/PauseMenu/PauseMenuRoot/@Panel@729/@RichTextLabel@779 text_len=52 size=12 rect=(262.0,224.0,130.0,16.0) gpos=(322.0,252.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+SHOT 11b_completion_l3.png size=640x360 error=0
+AUDIT_PAGE completion_l3
+AUDIT completion_l3 Level03/HUD/Level03HUDRoot/@ColorRect@719/@Panel@720/@Label@721 text_len=16 size=24 rect=(0.0,12.0,400.0,34.0) gpos=(120.0,92.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT completion_l3 Level03/HUD/Level03HUDRoot/@ColorRect@719/@Panel@720/@Label@722 text_len=11 size=12 rect=(0.0,50.0,400.0,23.0) gpos=(120.0,130.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT completion_l3 Level03/HUD/Level03HUDRoot/@ColorRect@719/@Panel@720/@Label@727 text_len=16 size=12 rect=(0.0,158.0,400.0,23.0) gpos=(120.0,238.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+SHOT 12_pause_trial.png size=640x360 error=0
+AUDIT_PAGE 12_pause_trial
+AUDIT 12_pause_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/@Label@870 text_len=3 size=24 rect=(0.0,6.0,360.0,32.0) gpos=(140.0,62.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12_pause_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseSubtitle text_len=11 size=12 rect=(0.0,36.0,360.0,23.0) gpos=(140.0,92.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12_pause_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseNote text_len=12 size=12 rect=(0.0,220.0,360.0,23.0) gpos=(140.0,276.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+SHOT 12b_controls_trial.png size=640x360 error=0
+AUDIT_PAGE 12b_controls_trial
+AUDIT 12b_controls_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/@Label@870 text_len=3 size=24 rect=(0.0,6.0,360.0,32.0) gpos=(140.0,62.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12b_controls_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseSubtitle text_len=11 size=12 rect=(0.0,36.0,360.0,23.0) gpos=(140.0,92.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12b_controls_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseControls/ControlsHeader text_len=4 size=12 rect=(0.0,0.0,360.0,23.0) gpos=(140.0,112.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12b_controls_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseControls/@Label@875 text_len=2 size=12 rect=(178.0,24.0,128.0,23.0) gpos=(318.0,136.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12b_controls_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseControls/@Label@879 text_len=2 size=12 rect=(178.0,42.0,128.0,23.0) gpos=(318.0,154.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12b_controls_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseControls/@Label@883 text_len=2 size=12 rect=(178.0,60.0,128.0,23.0) gpos=(318.0,172.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12b_controls_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseControls/@Label@887 text_len=2 size=12 rect=(178.0,78.0,128.0,23.0) gpos=(318.0,190.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12b_controls_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseControls/@Label@891 text_len=2 size=12 rect=(178.0,96.0,128.0,23.0) gpos=(318.0,208.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12b_controls_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseControls/@Label@895 text_len=2 size=12 rect=(178.0,114.0,128.0,23.0) gpos=(318.0,226.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12b_controls_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseControls/@Label@896 text_len=10 size=12 rect=(0.0,134.0,360.0,23.0) gpos=(140.0,246.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12b_controls_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseControls/@RichTextLabel@874 text_len=13 size=12 rect=(54.0,24.0,110.0,16.0) gpos=(194.0,136.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12b_controls_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseControls/@RichTextLabel@878 text_len=54 size=12 rect=(54.0,42.0,110.0,16.0) gpos=(194.0,154.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12b_controls_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseControls/@RichTextLabel@882 text_len=50 size=12 rect=(54.0,60.0,110.0,16.0) gpos=(194.0,172.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12b_controls_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseControls/@RichTextLabel@886 text_len=50 size=12 rect=(54.0,78.0,110.0,16.0) gpos=(194.0,190.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12b_controls_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseControls/@RichTextLabel@890 text_len=52 size=12 rect=(54.0,96.0,110.0,16.0) gpos=(194.0,208.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 12b_controls_trial TrialChambers/HUD/TrialHUDRoot/PauseOverlay/PausePanel/PauseControls/@RichTextLabel@894 text_len=50 size=12 rect=(54.0,114.0,110.0,16.0) gpos=(194.0,226.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+COMPLETION trial_chambers.tscn 璇曠偧瀹屾垚 路 鐢ㄦ椂 01:32
+SHOT 13_completion_trial.png size=640x360 error=0
+AUDIT_PAGE 13_completion_trial
+AUDIT 13_completion_trial TrialChambers/HUD/TrialHUDRoot/CompletionOverlay/CompletionPanel/CompletionTitle text_len=15 size=24 rect=(0.0,12.0,400.0,34.0) gpos=(120.0,87.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 13_completion_trial TrialChambers/HUD/TrialHUDRoot/CompletionOverlay/CompletionPanel/CompletionSubtitle text_len=20 size=12 rect=(0.0,50.0,400.0,23.0) gpos=(120.0,125.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 13_completion_trial TrialChambers/HUD/TrialHUDRoot/CompletionOverlay/CompletionPanel/CompletionNote text_len=16 size=12 rect=(0.0,158.0,400.0,23.0) gpos=(120.0,233.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+SHOT 14_pause_rift.png size=640x360 error=0
+AUDIT_PAGE 14_pause_rift
+AUDIT 14_pause_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseTitle text_len=3 size=24 rect=(0.0,10.0,360.0,32.0) gpos=(140.0,66.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14_pause_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseSubtitle text_len=10 size=12 rect=(0.0,38.0,360.0,23.0) gpos=(140.0,94.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14_pause_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseFooter text_len=12 size=12 rect=(0.0,220.0,360.0,23.0) gpos=(140.0,276.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+SHOT 14b_controls_rift.png size=640x360 error=0
+AUDIT_PAGE 14b_controls_rift
+AUDIT 14b_controls_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseTitle text_len=3 size=24 rect=(0.0,10.0,360.0,32.0) gpos=(140.0,66.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14b_controls_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseSubtitle text_len=10 size=12 rect=(0.0,38.0,360.0,23.0) gpos=(140.0,94.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14b_controls_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseControls/ControlsHeader text_len=4 size=12 rect=(0.0,0.0,360.0,23.0) gpos=(140.0,112.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14b_controls_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseControls/@Label@958 text_len=2 size=12 rect=(178.0,24.0,128.0,23.0) gpos=(318.0,136.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14b_controls_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseControls/@Label@962 text_len=2 size=12 rect=(178.0,42.0,128.0,23.0) gpos=(318.0,154.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14b_controls_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseControls/@Label@966 text_len=2 size=12 rect=(178.0,60.0,128.0,23.0) gpos=(318.0,172.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14b_controls_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseControls/@Label@970 text_len=2 size=12 rect=(178.0,78.0,128.0,23.0) gpos=(318.0,190.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14b_controls_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseControls/@Label@974 text_len=2 size=12 rect=(178.0,96.0,128.0,23.0) gpos=(318.0,208.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14b_controls_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseControls/@Label@978 text_len=2 size=12 rect=(178.0,114.0,128.0,23.0) gpos=(318.0,226.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14b_controls_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseControls/@Label@979 text_len=10 size=12 rect=(0.0,134.0,360.0,23.0) gpos=(140.0,246.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14b_controls_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseControls/@RichTextLabel@957 text_len=13 size=12 rect=(54.0,24.0,110.0,16.0) gpos=(194.0,136.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14b_controls_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseControls/@RichTextLabel@961 text_len=54 size=12 rect=(54.0,42.0,110.0,16.0) gpos=(194.0,154.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14b_controls_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseControls/@RichTextLabel@965 text_len=50 size=12 rect=(54.0,60.0,110.0,16.0) gpos=(194.0,172.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14b_controls_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseControls/@RichTextLabel@969 text_len=4 size=12 rect=(54.0,78.0,110.0,16.0) gpos=(194.0,190.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14b_controls_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseControls/@RichTextLabel@973 text_len=52 size=12 rect=(54.0,96.0,110.0,16.0) gpos=(194.0,208.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 14b_controls_rift RiftWorkshop/HUD/RiftHUDRoot/PauseRoot/PausePanel/PauseControls/@RichTextLabel@977 text_len=50 size=12 rect=(54.0,114.0,110.0,16.0) gpos=(194.0,226.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+COMPLETION rift_workshop.tscn 瑁傞殭灏侀棴 路 鐢ㄦ椂 00:00
+SHOT 15_completion_rift.png size=640x360 error=0
+AUDIT_PAGE 15_completion_rift
+AUDIT 15_completion_rift RiftWorkshop/HUD/RiftHUDRoot/CompletionRoot/CompletionPanel/CompletionTitle text_len=15 size=24 rect=(0.0,12.0,400.0,34.0) gpos=(120.0,87.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 15_completion_rift RiftWorkshop/HUD/RiftHUDRoot/CompletionRoot/CompletionPanel/CompletionSubtitle text_len=15 size=12 rect=(0.0,50.0,400.0,23.0) gpos=(120.0,125.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 15_completion_rift RiftWorkshop/HUD/RiftHUDRoot/CompletionRoot/CompletionPanel/CompletionFooter text_len=16 size=12 rect=(0.0,158.0,400.0,23.0) gpos=(120.0,233.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+SHOT 16_pause_loom.png size=640x360 error=0
+AUDIT_PAGE 16_pause_loom
+AUDIT 16_pause_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseTitle text_len=3 size=24 rect=(0.0,8.0,360.0,32.0) gpos=(140.0,64.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16_pause_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseSubtitle text_len=9 size=12 rect=(0.0,40.0,360.0,23.0) gpos=(140.0,96.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16_pause_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseNote text_len=12 size=12 rect=(0.0,220.0,360.0,23.0) gpos=(140.0,276.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+SHOT 16b_controls_loom.png size=640x360 error=0
+AUDIT_PAGE 16b_controls_loom
+AUDIT 16b_controls_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseTitle text_len=3 size=24 rect=(0.0,8.0,360.0,32.0) gpos=(140.0,64.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16b_controls_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseSubtitle text_len=9 size=12 rect=(0.0,40.0,360.0,23.0) gpos=(140.0,96.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16b_controls_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseControls/ControlsHeader text_len=4 size=12 rect=(0.0,0.0,360.0,23.0) gpos=(140.0,112.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16b_controls_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseControls/@Label@1036 text_len=2 size=12 rect=(178.0,24.0,128.0,23.0) gpos=(318.0,136.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16b_controls_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseControls/@Label@1040 text_len=2 size=12 rect=(178.0,42.0,128.0,23.0) gpos=(318.0,154.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16b_controls_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseControls/@Label@1044 text_len=2 size=12 rect=(178.0,60.0,128.0,23.0) gpos=(318.0,172.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16b_controls_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseControls/@Label@1048 text_len=2 size=12 rect=(178.0,78.0,128.0,23.0) gpos=(318.0,190.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16b_controls_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseControls/@Label@1052 text_len=2 size=12 rect=(178.0,96.0,128.0,23.0) gpos=(318.0,208.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16b_controls_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseControls/@Label@1056 text_len=2 size=12 rect=(178.0,114.0,128.0,23.0) gpos=(318.0,226.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16b_controls_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseControls/@Label@1057 text_len=10 size=12 rect=(0.0,134.0,360.0,23.0) gpos=(140.0,246.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16b_controls_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseControls/@RichTextLabel@1035 text_len=13 size=12 rect=(54.0,24.0,110.0,16.0) gpos=(194.0,136.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16b_controls_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseControls/@RichTextLabel@1039 text_len=54 size=12 rect=(54.0,42.0,110.0,16.0) gpos=(194.0,154.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16b_controls_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseControls/@RichTextLabel@1043 text_len=50 size=12 rect=(54.0,60.0,110.0,16.0) gpos=(194.0,172.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16b_controls_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseControls/@RichTextLabel@1047 text_len=50 size=12 rect=(54.0,78.0,110.0,16.0) gpos=(194.0,190.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16b_controls_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseControls/@RichTextLabel@1051 text_len=52 size=12 rect=(54.0,96.0,110.0,16.0) gpos=(194.0,208.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 16b_controls_loom StarLoom/HUD/LoomHUDRoot/PauseOverlay/PausePanel/PauseControls/@RichTextLabel@1055 text_len=50 size=12 rect=(54.0,114.0,110.0,16.0) gpos=(194.0,226.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+COMPLETION star_loom.tscn 缁囨満鍋滆浆 路 鐢ㄦ椂 00:00
+SHOT 17_completion_loom.png size=640x360 error=0
+AUDIT_PAGE 17_completion_loom
+AUDIT 17_completion_loom StarLoom/HUD/LoomHUDRoot/CompletionOverlay/CompletionPanel/CompletionTitle text_len=15 size=24 rect=(0.0,12.0,400.0,34.0) gpos=(120.0,87.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 17_completion_loom StarLoom/HUD/LoomHUDRoot/CompletionOverlay/CompletionPanel/CompletionSubtitle text_len=18 size=12 rect=(0.0,50.0,400.0,23.0) gpos=(120.0,125.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+AUDIT 17_completion_loom StarLoom/HUD/LoomHUDRoot/CompletionOverlay/CompletionPanel/CompletionNote text_len=16 size=12 rect=(0.0,158.0,400.0,23.0) gpos=(120.0,233.0) scale=(1.00,1.00) alpha=1.00 outline=1 font= flags=ok
+GUIDE rift page=1 / 3 title=绱箷涓庢湀闂?demo=rift_inversion frames=24
+SHOT 18_guide_rift_p1.png size=640x360 error=0
+AUDIT_PAGE 18_guide_rift_p1
+AUDIT 18_guide_rift_p1 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/Title text_len=5 size=24 rect=(282.0,6.0,196.0,32.0) gpos=(322.0,68.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 18_guide_rift_p1 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/PageIndicator text_len=5 size=12 rect=(486.0,12.0,62.0,23.0) gpos=(526.0,74.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 18_guide_rift_p1 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/Body text_len=53 size=12 rect=(282.0,43.0,266.0,62.0) gpos=(322.0,105.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 18_guide_rift_p1 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/Key text_len=18 size=12 rect=(282.0,108.0,266.0,38.0) gpos=(322.0,170.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 18_guide_rift_p1 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Footer text_len=64 size=12 rect=(16.0,210.0,420.0,18.0) gpos=(56.0,272.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+GUIDE rift page=2 / 3 title=鐩告€у厜妗?demo=rift_bridge frames=24
+SHOT 18_guide_rift_p2.png size=640x360 error=0
+AUDIT_PAGE 18_guide_rift_p2
+AUDIT 18_guide_rift_p2 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/Title text_len=4 size=24 rect=(282.0,6.0,196.0,32.0) gpos=(322.0,68.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 18_guide_rift_p2 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/PageIndicator text_len=5 size=12 rect=(486.0,12.0,62.0,23.0) gpos=(526.0,74.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 18_guide_rift_p2 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/Body text_len=51 size=12 rect=(282.0,43.0,266.0,62.0) gpos=(322.0,105.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 18_guide_rift_p2 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/Key text_len=18 size=12 rect=(282.0,108.0,266.0,38.0) gpos=(322.0,170.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 18_guide_rift_p2 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Footer text_len=64 size=12 rect=(16.0,210.0,420.0,18.0) gpos=(56.0,272.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+GUIDE rift page=3 / 3 title=鍙岄潰闀?demo=rift_mirror frames=24
+SHOT 18_guide_rift_p3.png size=640x360 error=0
+AUDIT_PAGE 18_guide_rift_p3
+AUDIT 18_guide_rift_p3 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/Title text_len=3 size=24 rect=(282.0,6.0,196.0,32.0) gpos=(322.0,68.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 18_guide_rift_p3 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/PageIndicator text_len=5 size=12 rect=(486.0,12.0,62.0,23.0) gpos=(526.0,74.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 18_guide_rift_p3 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/Body text_len=55 size=12 rect=(282.0,43.0,266.0,62.0) gpos=(322.0,105.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 18_guide_rift_p3 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/Key text_len=19 size=12 rect=(282.0,108.0,266.0,38.0) gpos=(322.0,170.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 18_guide_rift_p3 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Footer text_len=63 size=12 rect=(16.0,210.0,420.0,18.0) gpos=(56.0,272.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+GUIDE loom page=1 / 2 title=鏄熸牳缁囨満 demo=loom_nodes frames=24
+SHOT 19_guide_loom_p1.png size=640x360 error=0
+AUDIT_PAGE 19_guide_loom_p1
+AUDIT 19_guide_loom_p1 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/Title text_len=4 size=24 rect=(282.0,6.0,196.0,32.0) gpos=(322.0,68.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 19_guide_loom_p1 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/PageIndicator text_len=5 size=12 rect=(486.0,12.0,62.0,23.0) gpos=(526.0,74.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 19_guide_loom_p1 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/Body text_len=58 size=12 rect=(282.0,43.0,266.0,62.0) gpos=(322.0,105.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 19_guide_loom_p1 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/Key text_len=18 size=12 rect=(282.0,108.0,266.0,38.0) gpos=(322.0,170.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 19_guide_loom_p1 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Footer text_len=64 size=12 rect=(16.0,210.0,420.0,18.0) gpos=(56.0,272.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+GUIDE loom page=2 / 2 title=鍩庡灒鐨勬姢鎸?demo=loom_gear frames=24
+SHOT 19_guide_loom_p2.png size=640x360 error=0
+AUDIT_PAGE 19_guide_loom_p2
+AUDIT 19_guide_loom_p2 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/Title text_len=5 size=24 rect=(282.0,6.0,196.0,32.0) gpos=(322.0,68.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 19_guide_loom_p2 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/PageIndicator text_len=5 size=12 rect=(486.0,12.0,62.0,23.0) gpos=(526.0,74.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 19_guide_loom_p2 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/Body text_len=55 size=12 rect=(282.0,43.0,266.0,62.0) gpos=(322.0,105.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 19_guide_loom_p2 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Content/Key text_len=13 size=12 rect=(282.0,108.0,266.0,38.0) gpos=(322.0,170.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+AUDIT 19_guide_loom_p2 FontClarityCapture/CaptureGuide/DlcGuideRoot/GuidePanel/Footer text_len=63 size=12 rect=(16.0,210.0,420.0,18.0) gpos=(56.0,272.0) scale=(1.00,1.00) alpha=1.00 outline=0 font= flags=ok
+FONT_AUDIT_DONE saved=27 audit=27 bad=1 files=01_title_page.png, 02_chapter_page.png, 03_opening_dialogue.png, 04a_hud_row.png, 04b_event_row.png, 05_pause_l1.png, 06_manual_page1.png, 07_manual_page2.png, 08_completion_l1.png, 09_pause_l2.png, 10_completion_l2.png, 11_pause_l3.png, 11b_completion_l3.png, 12_pause_trial.png, 12b_controls_trial.png, 13_completion_trial.png, 14_pause_rift.png, 14b_controls_rift.png, 15_completion_rift.png, 16_pause_loom.png, 16b_controls_loom.png, 17_completion_loom.png, 18_guide_rift_p1.png, 18_guide_rift_p2.png, 18_guide_rift_p3.png, 19_guide_loom_p1.png, 19_guide_loom_p2.png

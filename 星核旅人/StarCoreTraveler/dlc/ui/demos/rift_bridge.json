@@ -14,6 +14,6 @@
 	"frame_width": 256,
 	"frames": 24,
 	"id": "rift_bridge",
-	"note": "Formal rift terrace. The old clip shows the phase deck and a hovering wisp; in the current chapter the player kills the deck wisp with J to make the bridge permanent instead of pressing Q.",
-	"source": "formal DLC scene, real input/state"
+	"note": "Formal rift terrace. Current rule: the gold deck is only solid on its phase. A real J at frame 4 kills the hovering wisp; the chapter then marks the deck stable (pale locked core) and it stays solid for either phase. Frames 12-23 walk across the permanent deck. No Q, no fake kill.",
+	"source": "formal DLC scene, real J hit and real walk"
 }

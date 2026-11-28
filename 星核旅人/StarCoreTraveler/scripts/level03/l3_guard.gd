@@ -1539,22 +1539,5 @@ func _draw_ring_warning(color: Color) -> void:
 
 
 static func _get_font() -> FontFile:
-	if _font_checked:
-		return _shared_font
-	_font_checked = true
-	if not ResourceLoader.exists(FONT_PATH):
-		return null
-	var base: FontFile = ResourceLoader.load(FONT_PATH) as FontFile
-	if base == null:
-		return null
-	var font: FontFile = base.duplicate() as FontFile
-	if font != null:
-		font.antialiasing = TextServer.FONT_ANTIALIASING_NONE
-		font.hinting = TextServer.HINTING_NONE
-		font.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
-		font.allow_system_fallback = false
-		font.oversampling = 1.0
-		_shared_font = font
-	else:
-		_shared_font = base
-	return _shared_font
+	return UiFont.get_font_file()
+

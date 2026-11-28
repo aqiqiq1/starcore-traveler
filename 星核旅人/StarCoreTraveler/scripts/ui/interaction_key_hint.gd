@@ -14,7 +14,7 @@ extends RefCounted
 
 const KEY_SIZE: Vector2 = Vector2(11.0, 13.0)
 const KEY_GAP: float = 4.0
-const KEY_FONT_SIZE: int = 9
+const KEY_FONT_SIZE: int = UiFont.BODY_SIZE
 const ACTION_FONT_SIZE: int = 12
 ## Both the key glyph and the action word share this baseline offset from the
 ## top of the cap (old L3: cap top pos.y-1, baseline pos.y+9).

@@ -65,20 +65,7 @@ func _process(_delta: float) -> void:
 
 
 func _load_font() -> Font:
-	if not ResourceLoader.exists(FONT_PATH):
-		push_warning("Level01HUD: %s is missing; falling back" % FONT_PATH)
-		return ThemeDB.fallback_font
-	var font_file: FontFile = ResourceLoader.load(FONT_PATH) as FontFile
-	if font_file == null:
-		return ThemeDB.fallback_font
-	var copy: FontFile = font_file.duplicate() as FontFile
-	if copy != null:
-		copy.antialiasing = TextServer.FONT_ANTIALIASING_NONE
-		copy.hinting = TextServer.HINTING_NONE
-		copy.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
-		copy.allow_system_fallback = false
-		return copy
-	return font_file
+	return UiFont.get_font()
 
 
 func _label(

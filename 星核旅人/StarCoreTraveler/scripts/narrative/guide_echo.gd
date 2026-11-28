@@ -766,7 +766,7 @@ func _make_label(font: Font, font_size: int, color: Color, alignment: Horizontal
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
-	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_constant_override("outline_size", UiFont.OUTLINE_SIZE)
 	label.add_theme_constant_override("line_spacing", 0)
 	return label
 
@@ -966,22 +966,4 @@ func _draw_dialog_frame() -> void:
 
 
 static func _get_shared_font() -> FontFile:
-	if _font_checked:
-		return _shared_font
-	_font_checked = true
-	if not ResourceLoader.exists(FONT_PATH):
-		return null
-	var base_font: FontFile = ResourceLoader.load(FONT_PATH) as FontFile
-	if base_font == null:
-		return null
-	var font: FontFile = base_font.duplicate() as FontFile
-	if font == null:
-		font = base_font
-	font.antialiasing = TextServer.FONT_ANTIALIASING_NONE
-	font.hinting = TextServer.HINTING_NONE
-	font.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
-	font.allow_system_fallback = false
-	font.generate_mipmaps = false
-	font.oversampling = 1.0
-	_shared_font = font
-	return font
+	return UiFont.get_font_file()

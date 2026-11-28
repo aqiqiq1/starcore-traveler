@@ -38,18 +38,8 @@ func _process(_delta: float) -> void:
 
 
 func _load_font() -> void:
-	if _font != null or not ResourceLoader.exists(FONT_PATH):
-		return
-	var font_file: FontFile = ResourceLoader.load(FONT_PATH) as FontFile
-	if font_file == null:
-		return
-	var copy: FontFile = font_file.duplicate() as FontFile
-	if copy != null:
-		copy.antialiasing = TextServer.FONT_ANTIALIASING_NONE
-		copy.hinting = TextServer.HINTING_NONE
-		copy.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
-		copy.allow_system_fallback = false
-		_font = copy
+	if _font == null:
+		_font = UiFont.get_font_file()
 
 
 func _draw() -> void:
@@ -70,8 +60,8 @@ func _draw_intro_path() -> void:
 	draw_circle(end_marker.position, 4.0, PATH_COLOR)
 	draw_line(end_marker.position + Vector2(0.0, -14.0), end_marker.position + Vector2(0.0, 14.0), PATH_COLOR, 1.0)
 	if _font != null:
-		draw_string(_font, player.position + Vector2(-34.0, -20.0), "出生 / 开场起点", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 10, LABEL_COLOR)
-		draw_string(_font, end_marker.position + Vector2(6.0, -8.0), "交还控制", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 10, LABEL_COLOR)
+		draw_string(_font, player.position + Vector2(-34.0, -20.0), "出生 / 开场起点", HORIZONTAL_ALIGNMENT_LEFT, -1.0, UiFont.BODY_SIZE, LABEL_COLOR)
+		draw_string(_font, end_marker.position + Vector2(6.0, -8.0), "交还控制", HORIZONTAL_ALIGNMENT_LEFT, -1.0, UiFont.BODY_SIZE, LABEL_COLOR)
 
 
 func _draw_camera_rect() -> void:
@@ -88,14 +78,14 @@ func _draw_camera_rect() -> void:
 	draw_rect(rect, Color(CAMERA_COLOR, 0.03), true)
 	_dashed_rect(rect, CAMERA_COLOR)
 	if _font != null:
-		draw_string(_font, rect.position + Vector2(6.0, 14.0), "相机边界（Camera2D 属性）", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 10, LABEL_COLOR)
+		draw_string(_font, rect.position + Vector2(6.0, 14.0), "相机边界（Camera2D 属性）", HORIZONTAL_ALIGNMENT_LEFT, -1.0, UiFont.BODY_SIZE, LABEL_COLOR)
 
 
 func _draw_pit_rect() -> void:
 	draw_rect(pit_guide_rect, Color(PIT_COLOR, 0.06), true)
 	_dashed_rect(pit_guide_rect, PIT_COLOR)
 	if _font != null:
-		draw_string(_font, pit_guide_rect.position + Vector2(8.0, pit_guide_rect.size.y - 8.0), "大坑 / 借力区", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 10, PIT_COLOR)
+		draw_string(_font, pit_guide_rect.position + Vector2(8.0, pit_guide_rect.size.y - 8.0), "大坑 / 借力区", HORIZONTAL_ALIGNMENT_LEFT, -1.0, UiFont.BODY_SIZE, PIT_COLOR)
 
 
 func _dashed_rect(rect: Rect2, color: Color) -> void:

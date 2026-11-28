@@ -486,20 +486,7 @@ func _refresh_focus_chain() -> void:
 # --- Build UI --------------------------------------------------------------
 
 func _load_font() -> Font:
-	if not ResourceLoader.exists(FONT_PATH):
-		push_warning("PauseMenu: %s is missing; falling back" % FONT_PATH)
-		return ThemeDB.fallback_font
-	var font_file: FontFile = ResourceLoader.load(FONT_PATH) as FontFile
-	if font_file == null:
-		return ThemeDB.fallback_font
-	var copy: FontFile = font_file.duplicate() as FontFile
-	if copy != null:
-		copy.antialiasing = TextServer.FONT_ANTIALIASING_NONE
-		copy.hinting = TextServer.HINTING_NONE
-		copy.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
-		copy.allow_system_fallback = false
-		return copy
-	return font_file
+	return UiFont.get_font()
 
 
 func _build_ui() -> void:
@@ -656,7 +643,7 @@ func _label(
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
-	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_constant_override("outline_size", UiFont.OUTLINE_SIZE)
 	return label
 
 
@@ -677,7 +664,7 @@ func _keys_label(text_value: String, position_value: Vector2, size_value: Vector
 	label.add_theme_font_size_override("normal_font_size", 12)
 	label.add_theme_color_override("default_color", TEXT)
 	label.add_theme_color_override("font_outline_color", Color(0.006, 0.014, 0.018, 0.96))
-	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_constant_override("outline_size", UiFont.OUTLINE_SIZE)
 	label.text = KeyGlyph.decorate(text_value)
 	return label
 

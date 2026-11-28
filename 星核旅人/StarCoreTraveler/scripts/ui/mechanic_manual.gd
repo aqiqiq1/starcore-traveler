@@ -34,8 +34,11 @@ const ROW_STEP: float = 24.0
 const ROW_HEIGHT: float = 22.0
 const ROW_TEXT_Y: float = 3.0
 const ROW_ICON_X: float = 14.0
-## 48 leaves a 7 px gap after the widest icon: the SPACE keycap is 27 px at
-## 16 px high, so a 36 px name column let it touch the first glyph.
+## 12x12 icons are vertically centred in the 22 px row (3 + 16 text = 22).
+const ROW_ICON_Y: float = 5.0
+const ICON_SIZE: float = 12.0
+## 48 leaves a 22 px gap after the 12x12 icon.  The key column is unchanged:
+## the SPACE keycap is still 27 px at 16 px high.
 const ROW_NAME_X: float = 48.0
 const ROW_NAME_WIDTH: float = 72.0
 const ROW_SUMMARY_X: float = 128.0
@@ -49,9 +52,6 @@ const FOOTER_HEIGHT: float = 14.0
 const ELLIPSIS: String = "…"
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 const KEYCAP_DIR: String = "res://assets/ui/keycaps/"
-const SUN_PATH: String = "res://assets/ui/icons/affinity_sun_20.png"
-const MOON_PATH: String = "res://assets/ui/icons/affinity_moon_20.png"
-const HEART_PATH: String = "res://assets/ui/icons/heart_10.png"
 
 const GOLD: Color = Color("#f4cd63")
 const CYAN: Color = Color("#5fe1e6")
@@ -259,7 +259,7 @@ func get_panel_rect() -> Rect2:
 ## tests use this to prove the gutter instead of trusting the screenshot.
 func get_column_rects() -> Dictionary:
 	return {
-		"icon": Rect2(ROW_ICON_X, ROW_TEXT_Y, 16.0, 16.0),
+		"icon": Rect2(ROW_ICON_X, ROW_ICON_Y, ICON_SIZE, ICON_SIZE),
 		"name": Rect2(ROW_NAME_X, ROW_TEXT_Y, ROW_NAME_WIDTH, 16.0),
 		"summary": Rect2(ROW_SUMMARY_X, ROW_TEXT_Y, ROW_SUMMARY_WIDTH, 16.0),
 		"key": Rect2(ROW_KEY_X, ROW_TEXT_Y, 60.0, 16.0),
@@ -313,9 +313,10 @@ func get_current_row_rects() -> Array[Dictionary]:
 	return out
 
 
-## Icon/key boxes in row-local space for the visible rows.  A TextureRect whose
-## minimum size was not ignored used to report 20 px here instead of the 10/16
-## the layout asks for, which is exactly the row-overlap regression.
+## Icon/key boxes in row-local space for the visible rows.  Icons are dedicated
+## 12x12 textures; the key column keeps its 16 px-high keycaps.  A TextureRect
+## whose minimum size was not ignored used to report 20 px here instead of the
+## requested size, which is exactly the row-overlap regression.
 func get_current_row_glyph_rects() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for index: int in range(_rows.size()):
@@ -329,6 +330,56 @@ func get_current_row_glyph_rects() -> Array[Dictionary]:
 			"name": Rect2(ROW_NAME_X, ROW_TEXT_Y, ROW_NAME_WIDTH, 16.0),
 			"icon": Rect2(icon.position, icon.size) if icon != null and icon.visible else Rect2(),
 			"key": Rect2(key_node.position, key_node.size) if key_node != null and key_node.visible else Rect2(),
+		})
+	return out
+
+
+## Actual 12x12 icon textures for the visible rows.  The acceptance test checks
+## both the loaded path and the on-screen 12x12 box; a missing file leaves the
+## icon node null/invisible instead of silently falling back to a keycap.
+func get_current_row_icon_textures() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for index: int in range(_rows.size()):
+		if int(index / ROWS_PER_PAGE) != _page_index:
+			continue
+		var row: Dictionary = _rows[index]
+		var icon_node: Control = row.get("icon", null) as Control
+		var path: String = ""
+		var texture_size: Vector2 = Vector2.ZERO
+		if icon_node is TextureRect:
+			var texture_rect: TextureRect = icon_node as TextureRect
+			if texture_rect.texture != null:
+				path = texture_rect.texture.resource_path
+				texture_size = texture_rect.size
+		out.append({
+			"id": String(row.get("id", "")),
+			"path": path,
+			"size": texture_size,
+		})
+	return out
+
+
+## Actual key-column textures for the visible rows.  The manual never turns a
+## keycap into a row icon any more; this lets the acceptance test prove the
+## right-hand key column still shows the real keycap art.
+func get_current_row_key_textures() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for index: int in range(_rows.size()):
+		if int(index / ROWS_PER_PAGE) != _page_index:
+			continue
+		var row: Dictionary = _rows[index]
+		var key_node: Control = row.get("key", null) as Control
+		var path: String = ""
+		var texture_size: Vector2 = Vector2.ZERO
+		if key_node is TextureRect:
+			var texture_rect: TextureRect = key_node as TextureRect
+			if texture_rect.texture != null:
+				path = texture_rect.texture.resource_path
+				texture_size = texture_rect.size
+		out.append({
+			"id": String(row.get("id", "")),
+			"path": path,
+			"size": texture_size,
 		})
 	return out
 
@@ -380,19 +431,7 @@ func _focus_back() -> void:
 
 
 func _load_font() -> Font:
-	if not ResourceLoader.exists(FONT_PATH):
-		return ThemeDB.fallback_font
-	var font_file: FontFile = ResourceLoader.load(FONT_PATH) as FontFile
-	if font_file == null:
-		return ThemeDB.fallback_font
-	var copy: FontFile = font_file.duplicate() as FontFile
-	if copy != null:
-		copy.antialiasing = TextServer.FONT_ANTIALIASING_NONE
-		copy.hinting = TextServer.HINTING_NONE
-		copy.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
-		copy.allow_system_fallback = false
-		return copy
-	return font_file
+	return UiFont.get_font()
 
 
 func _build_ui() -> void:
@@ -566,16 +605,14 @@ func _apply_page_layout() -> void:
 
 func _make_icon(id: String) -> Control:
 	var icon_data: Dictionary = REGISTRY.get_icon(id)
-	var kind: String = String(icon_data.get("kind", ""))
-	var value: String = String(icon_data.get("value", ""))
-	if kind == "key":
-		return _make_keycap(value, ROW_ICON_X, ROW_TEXT_Y)
-	if kind == "phase":
-		var path: String = SUN_PATH if value != "moon" else MOON_PATH
-		return _make_texture(path, Vector2(ROW_ICON_X + 3.0, ROW_TEXT_Y + 3.0), Vector2(10.0, 10.0))
-	if kind == "heart":
-		return _make_texture(HEART_PATH, Vector2(ROW_ICON_X + 3.0, ROW_TEXT_Y + 3.0), Vector2(10.0, 10.0))
-	return null
+	if String(icon_data.get("kind", "")) != "texture":
+		return null
+	var path: String = String(icon_data.get("value", ""))
+	if path.is_empty() or not ResourceLoader.exists(path):
+		return null
+	return _make_texture(
+		path, Vector2(ROW_ICON_X, ROW_ICON_Y), Vector2(ICON_SIZE, ICON_SIZE)
+	)
 
 
 func _make_key(id: String) -> Control:
@@ -607,9 +644,9 @@ func _make_texture(path: String, position_value: Vector2, size_value: Vector2) -
 	rect.texture = ResourceLoader.load(path) if ResourceLoader.exists(path) else null
 	rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	# Without EXPAND_IGNORE_SIZE the Control is clamped to the source texture's
-	# size (18 px keycaps, 20 px affinity art), so a 10x10 request silently
-	# became 20x20 and reached into the next row.  The manual really draws the
-	# requested 10/16 px box.
+	# size (18 px keycaps, 12 px icons), so a requested 12/16 px box could be
+	# overridden and reach into the next row.  The manual really draws the
+	# requested 12/16 px box.
 	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	rect.stretch_mode = TextureRect.STRETCH_SCALE
 	rect.position = position_value

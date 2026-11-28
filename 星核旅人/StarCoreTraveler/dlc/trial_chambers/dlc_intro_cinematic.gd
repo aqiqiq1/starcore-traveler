@@ -93,19 +93,7 @@ func _ready() -> void:
 
 
 func _load_font() -> Font:
-	if not ResourceLoader.exists(FONT_PATH):
-		return ThemeDB.fallback_font
-	var base: FontFile = ResourceLoader.load(FONT_PATH) as FontFile
-	if base == null:
-		return ThemeDB.fallback_font
-	var copy: FontFile = base.duplicate() as FontFile
-	if copy != null:
-		copy.antialiasing = TextServer.FONT_ANTIALIASING_NONE
-		copy.hinting = TextServer.HINTING_NONE
-		copy.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
-		copy.allow_system_fallback = false
-		return copy
-	return base
+	return UiFont.get_font()
 
 
 func _build_surface() -> void:

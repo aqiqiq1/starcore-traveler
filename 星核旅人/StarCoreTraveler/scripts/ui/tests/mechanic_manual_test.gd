@@ -116,10 +116,33 @@ func _run() -> void:
 		_check(not String(entry.get("name", "")).is_empty(), "row %s has a name" % id)
 		var icon: Dictionary = REGISTRY.get_icon(id)
 		var icon_kind: String = String(icon.get("kind", ""))
+		var icon_path: String = String(icon.get("value", ""))
 		_check(
-			icon_kind in ["key", "phase", "heart"],
-			"row %s has an existing-art icon" % id,
+			icon_kind == "texture",
+			"row %s uses a dedicated texture icon" % id,
 			icon_kind
+		)
+		_check(
+			icon_path == "res://assets/ui/mechanic_icons/%s_12.png" % id,
+			"row %s icon path is the 12x12 manual art" % id,
+			icon_path
+		)
+		_check(
+			ResourceLoader.exists(icon_path),
+			"row %s icon file exists" % id,
+			icon_path
+		)
+		var icon_texture: Texture2D = (
+			ResourceLoader.load(icon_path) as Texture2D
+			if ResourceLoader.exists(icon_path) else null
+		)
+		_check(
+			icon_texture != null
+			and icon_texture.get_width() == 12
+			and icon_texture.get_height() == 12,
+			"row %s icon source is 12x12" % id,
+			(("%dx%d" % [icon_texture.get_width(), icon_texture.get_height()])
+				if icon_texture != null else "null")
 		)
 
 	# --- missing / corrupt progress --------------------------------------
@@ -199,6 +222,14 @@ func _run() -> void:
 		manual.get_visible_unlocked_count() == 3 and manual.get_locked_count() == 12,
 		"manual reports 3 unlocked / 12 locked",
 		"%d / %d" % [manual.get_visible_unlocked_count(), manual.get_locked_count()]
+	)
+	var locked_icon_visible: bool = false
+	for glyph: Dictionary in manual.get_current_row_glyph_rects():
+		if String(glyph.get("id", "")) == "bay":
+			locked_icon_visible = (glyph["icon"] as Rect2).size != Vector2.ZERO
+	_check(
+		not locked_icon_visible,
+		"a locked row still hides its icon"
 	)
 	var sizes: Array[int] = manual.get_row_font_sizes()
 	var all_twelve: bool = not sizes.is_empty()
@@ -383,6 +414,97 @@ func _run() -> void:
 		manual.get_page_index() == 0,
 		"F on the last page wraps to page 1 instead of closing",
 		str(manual.get_page_index())
+	)
+
+	# --- all-unlocked icon grid: 15 x 12x12, keycaps untouched ----------
+	var all_progress: String = "[mechanics]\n"
+	for id: String in REGISTRY.all_ids():
+		all_progress += "%s=true\n" % id
+	_write_text(TEST_PATH, all_progress)
+	manual.refresh()
+	_check(
+		manual.get_visible_unlocked_count() == REGISTRY.count(),
+		"all 15 rows unlock for the icon-grid check",
+		str(manual.get_visible_unlocked_count())
+	)
+	var columns_all: Dictionary = manual.get_column_rects()
+	var icon_column_all: Rect2 = columns_all["icon"] as Rect2
+	var key_column_all: Rect2 = columns_all["key"] as Rect2
+	_check(
+		icon_column_all == Rect2(14.0, 5.0, 12.0, 12.0),
+		"manual icon column is declared at 12x12",
+		str(icon_column_all)
+	)
+	_check(
+		key_column_all == Rect2(544.0, 3.0, 60.0, 16.0),
+		"manual key column is unchanged",
+		str(key_column_all)
+	)
+	var icon_ids: Array[String] = []
+	var keycap_paths: Array[String] = []
+	for page: int in range(manual.get_page_count()):
+		if manual.get_page_index() != page:
+			manual.turn_page(1)
+		var glyphs_all: Array[Dictionary] = manual.get_current_row_glyph_rects()
+		var icons_all: Array[Dictionary] = manual.get_current_row_icon_textures()
+		var keys_all: Array[Dictionary] = manual.get_current_row_key_textures()
+		for glyph: Dictionary in glyphs_all:
+			var id: String = String(glyph.get("id", ""))
+			var icon_box: Rect2 = glyph["icon"] as Rect2
+			var key_box: Rect2 = glyph["key"] as Rect2
+			icon_ids.append(id)
+			_check(
+				icon_box.size == Vector2(12.0, 12.0)
+				and icon_box.position == Vector2(14.0, 5.0),
+				"row %s draws its icon at 12x12 (x14 y5)" % id,
+				str(icon_box)
+			)
+			_check(
+				key_box.position.x == 544.0 and key_box.size.x > 0.0,
+				"row %s key cell stays at the key-column x=544" % id,
+				str(key_box)
+			)
+		for icon_info: Dictionary in icons_all:
+			var id: String = String(icon_info.get("id", ""))
+			var path: String = String(icon_info.get("path", ""))
+			var size_value: Vector2 = icon_info["size"] as Vector2
+			_check(
+				path == "res://assets/ui/mechanic_icons/%s_12.png" % id
+				and not path.contains("keycaps/"),
+				"row %s loads its dedicated 12x12 texture" % id,
+				path
+			)
+			_check(
+				size_value == Vector2(12.0, 12.0),
+				"row %s icon control is 12x12" % id,
+				str(size_value)
+			)
+		for key_info: Dictionary in keys_all:
+			var path: String = String(key_info.get("path", ""))
+			if path.is_empty():
+				continue
+			keycap_paths.append(path)
+			_check(
+				path.begins_with("res://assets/ui/keycaps/"),
+				"row %s key cell still uses a real keycap" % String(key_info["id"]),
+				path
+			)
+			_check(
+				(key_info["size"] as Vector2).y == 16.0,
+				"row %s keycap keeps its 16 px height" % String(key_info["id"]),
+				str(key_info["size"])
+			)
+	_check(
+		icon_ids.size() == 15 and icon_ids == REGISTRY.all_ids(),
+		"both pages expose exactly the 15 registry icons",
+		str(icon_ids)
+	)
+	_check(
+		keycap_paths.size() == 11
+		and keycap_paths.has("res://assets/ui/keycaps/key_q.png")
+		and keycap_paths.has("res://assets/ui/keycaps/key_space.png"),
+		"11 real keycaps remain in the key column, Q and SPACE included",
+		str(keycap_paths)
 	)
 
 	await _push_key(KEY_ESCAPE)

@@ -14,6 +14,6 @@
 	"frame_width": 256,
 	"frames": 24,
 	"id": "rift_mirror",
-	"note": "Formal mirror arena. Frames 0-5 show both face plates; frame 6 is a real J with 澜相 at the gold face, frames 13 a real J with 辉相 at the cyan face, and frame 18 a real J into the exposed core. The player is repositioned between swings for the 3 s guide clip; no fake damage or debug shatter is used. The HUD is hidden in this strip.",
-	"source": "formal DLC scene, real swings and real boss hit resolution"
+	"note": "Formal mirror arena. Frames 0-5 show both face plates; frame 6 is a real J with 澜相 at the gold face, frame 13 a real J with 辉相 at the cyan face, and frame 18 a real J into the exposed core. No debug shatter or fake damage. The HUD is hidden in this strip.",
+	"source": "formal DLC scene, real input/state"
 }

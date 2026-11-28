@@ -14,6 +14,6 @@
 	"frame_width": 256,
 	"frames": 24,
 	"id": "rift_inversion",
-	"note": "Formal rift corridor. The player walks slowly through InversionA; the violet curtain flips the phase once and flashes, and the moon GateMoon is visible ahead. No Q is used in the locked-Q chapter.",
+	"note": "Formal rift workshop. Player walks left through the current InversionA at x=160; the violet curtain flips the phase once and flashes, with the moon gate ahead. No Q (the chapter locks it).",
 	"source": "formal DLC scene, real input/state"
 }

@@ -59,6 +59,11 @@ func open_guide() -> bool:
 	if _skip_bar != null:
 		_skip_bar.hide_progress()
 	_root.visible = true
+	# The base open_guide() plays the shared 0.18 s reveal; this override must
+	# too, otherwise the panel stays at its closed +5 px offset and the dimmer
+	# never fades in (the page would sit 5 px lower than the rift guide).
+	if _reveal != null:
+		_reveal.play_open()
 	_clean_player_input()
 	opened.emit(guide_kind)
 	return true

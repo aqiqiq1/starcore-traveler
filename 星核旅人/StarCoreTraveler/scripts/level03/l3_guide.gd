@@ -301,8 +301,8 @@ func _draw_symbol() -> void:
 	var bob: float = -1.0 if fmod(symbol_time, 0.5) < 0.25 else 0.0
 	var pos: Vector2 = Vector2(clampf(screen.x - 4.0, 8.0, 624.0),
 		clampf(screen.y + bob, 92.0, 300.0))
-	draw_string(_font, pos + Vector2(1.0, 1.0), symbol_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, DARK)
-	draw_string(_font, pos, symbol_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, GOLD)
+	draw_string(_font, pos + Vector2(1.0, 1.0), symbol_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, UiFont.BODY_SIZE, DARK)
+	draw_string(_font, pos, symbol_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, UiFont.BODY_SIZE, GOLD)
 
 
 func _draw_world_text() -> void:
@@ -323,20 +323,7 @@ func _text_width(text: String) -> float:
 
 
 func _load_font() -> Font:
-	var path: String = "res://assets/fonts/tutorial_zh.ttf"
-	if not ResourceLoader.exists(path):
-		return ThemeDB.fallback_font
-	var base: FontFile = ResourceLoader.load(path) as FontFile
-	if base == null:
-		return ThemeDB.fallback_font
-	var copy: FontFile = base.duplicate() as FontFile
-	if copy != null:
-		copy.antialiasing = TextServer.FONT_ANTIALIASING_NONE
-		copy.hinting = TextServer.HINTING_NONE
-		copy.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
-		copy.allow_system_fallback = false
-		return copy
-	return base
+	return UiFont.get_font()
 
 
 func get_guide_visible() -> bool:
