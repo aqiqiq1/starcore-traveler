@@ -573,6 +573,33 @@ func _complete_await_release() -> void:
 	_emit_finished()
 
 
+## Pause while the post-skip "wait for Space release" latch is held.  The
+## player has already seen the gameplay view, so consume the latch and finish
+## the hand-off now.  The chapter's three-tick input override owns the still
+## held Space after resume, so it cannot become the first jump.
+func handle_pause_opened() -> void:
+	if not _await_release:
+		return
+	_space_held = false
+	_space_time = 0.0
+	_space_latched = false
+	_set_hold_bar(false, 0.0)
+	_complete_await_release()
+
+
+## Safety net for a pause path that did not consume the latch on open; do not
+## finish while Space is still physically held, or the release would be lost.
+func handle_pause_resumed() -> void:
+	if not _await_release:
+		return
+	_space_held = false
+	_space_time = 0.0
+	_space_latched = false
+	_set_hold_bar(false, 0.0)
+	if not Input.is_physical_key_pressed(KEY_SPACE):
+		_complete_await_release()
+
+
 func _emit_finished() -> void:
 	if _finished_emitted:
 		return

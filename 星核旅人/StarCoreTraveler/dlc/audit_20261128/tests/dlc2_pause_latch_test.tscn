@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://dlc/audit_20261128/tests/dlc2_pause_latch_test.gd" id="1_latch"]
+
+[node name="Dlc2PauseLatchTest" type="Node"]
+script = ExtResource("1_latch")

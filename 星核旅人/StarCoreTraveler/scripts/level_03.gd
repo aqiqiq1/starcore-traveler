@@ -66,7 +66,8 @@ const KEY_CORE_SHEET: Texture2D = preload("res://assets/level03_prototype/key_co
 @onready var _audio = $Audio
 @onready var _checkpoint: LevelCheckpoint = $BufferCheckpoint
 ## The trial stele entrance was removed from the main flow on 2026-11-28.
-## DLC1 still runs standalone, but L3 no longer carries the gate node.
+## DLC1 is retired from the chapter page and still runs standalone, but L3 no
+## longer carries the gate node; this lookup is a guarded historical fallback.
 @onready var _side_gate: HiddenRouteGate = get_node_or_null("TrialSteleGate") as HiddenRouteGate
 @onready var _link: BayRuneLink = $LinkController
 @onready var _rune_field: RuneStoneField = $RuneField
@@ -1706,7 +1707,7 @@ func _update_level_hud() -> void:
 		target = GATE_TARGET
 		stage_key = "gate"
 	elif _guard != null and _guard.is_defeated():
-		phase = "取走守卫核心"
+		phase = "取走守卫的星核"
 		target = _key_drop_position
 		stage_key = "key"
 	elif _guard != null and _guard.is_waiting_teaching_rubble():

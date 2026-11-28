@@ -72,7 +72,7 @@ const PENDING_PANEL_RECT: Rect2 = Rect2(150.0, 100.0, 340.0, 150.0)
 const PENDING_CONFIRM_RECT: Rect2 = Rect2(166.0, 190.0, 140.0, 26.0)
 const PENDING_CANCEL_RECT: Rect2 = Rect2(334.0, 190.0, 140.0, 26.0)
 
-## 章节 page geometry.  Six 30 px rows keep the same STONE face/border as the
+## 章节 page geometry.  Five 30 px rows keep the same STONE face/border as the
 ## DLC entries; the panel uses the settings page's flat pixel frame.
 const CHAPTERS_PANEL_RECT: Rect2 = Rect2(88.0, 28.0, 464.0, 304.0)
 const CHAPTER_ROW_ORIGIN: Vector2 = Vector2(104.0, 90.0)
@@ -101,7 +101,7 @@ enum Phase { INACTIVE, MENU, START_FADE, TITLE_FADE, CAMERA_PAN, SETTLE, ENTRY, 
 
 @export var audio_settings_path: String = DEFAULT_AUDIO_PATH
 @export var display_settings_path: String = DEFAULT_DISPLAY_PATH
-## Six-boolean chapter completion file.  Tests point this at a throwaway path
+## Five-boolean chapter completion file.  Tests point this at a throwaway path
 ## before add_child(); production keeps user://chapter_progress.cfg.
 @export var chapter_progress_path: String = DEFAULT_CHAPTER_PROGRESS_PATH
 ## Full-black fade on 开始游戏. It happens over the old title, then the real
@@ -648,7 +648,7 @@ func _build_ui() -> void:
 	_root.add_child(_chapters_layer)
 	_chapters_layer.visible = false
 	# PixelMenuButton._ready() enables focus; the bottom 返回 is mouse/Esc only
-	# so the ↑↓ ring is exactly the six chapter rows.
+	# so the ↑↓ ring is exactly the five chapter rows.
 	if _chapters_return_button != null:
 		_chapters_return_button.focus_mode = Control.FOCUS_NONE
 
@@ -1263,7 +1263,7 @@ func _set_main_menu_enabled(enabled: bool) -> void:
 	_quit_button.disabled = not enabled
 
 
-## Re-reads the six flags and repaints every row.  Locked rows are truly
+## Re-reads the five flags and repaints every row.  Locked rows are truly
 ## unfocusable and mouse-transparent, so neither Tab nor a click can enter them.
 func _refresh_chapters(grab_entry_focus: bool) -> void:
 	_chapters_progress = CHAPTER_PROGRESS.load_completed(chapter_progress_path)

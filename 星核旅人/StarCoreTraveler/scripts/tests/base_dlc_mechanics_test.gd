@@ -14,8 +14,11 @@ extends Node
 
 const L1_SCENE: String = "res://scenes/level_01.tscn"
 const L2_SCENE: String = "res://scenes/level_02.tscn"
-const L1_GATE_FULL_TEXT: String = "同相门只认同相 · 看门上日/月 · 按 Q 换相"
-const L1_GATE_SHORT_TEXT: String = "按 Q 换相"
+const L1_GATE_FULL_TEXT: String = "同相门只认同相 · 看门上日/月 · 按换相键"
+const L1_GATE_SHORT_TEXT: String = "按换相键"
+## The shared mechanic progress would suppress the first-encounter lesson after
+## any earlier run; this test uses a throwaway file so the lesson is real.
+const TEST_MECH_PROGRESS: String = "user://test_base_mechanics.cfg"
 
 var _checks: int = 0
 var _failures: Array[String] = []
@@ -27,8 +30,12 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	await get_tree().process_frame
 	MechanicTips.reset_for_test()
+	if FileAccess.file_exists(TEST_MECH_PROGRESS):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_MECH_PROGRESS))
+	MechanicTeach.set_progress_path_override(TEST_MECH_PROGRESS)
 	await _test_l1()
 	await _test_l2()
+	MechanicTeach.clear_progress_path_override()
 	# Give the audio thread and queued frees a few frames to settle; this is
 	# teardown only and does not change any assertion.
 	await _wait_process(20)
@@ -242,7 +249,7 @@ func _test_l1() -> void:
 		"contact leaves exactly one short reminder",
 		str(_l1.call("get_exit_gate_short_hint_count")))
 	_check(String(hud.call("get_toast_text")) == L1_GATE_SHORT_TEXT,
-		"the short contact reminder is only 按 Q 换相",
+		"the short contact reminder is only 按换相键",
 		String(hud.call("get_toast_text")))
 	_check(bool(hud.call("is_toast_visible")), "the short reminder is visible")
 

@@ -49,7 +49,7 @@ D:/Godot/Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 res://d
 
 ## 第九轮（2026-11-27）：运送星核 + 阶段 1 浮灵提前
 
-入口段不再用符文石：`CoreDeliveryCarrier`（2026-11-27 起位于
+入口段使用星核：`CoreDeliveryCarrier`（2026-11-27 起位于
 `dlc/shared/core_delivery/`，DLC2/DLC3 共用）用 `StarCoreVisual` 的
 `star_core_positive_12f` 金色 12 帧（16×16，1:1）运送真星核；`RuneStoneField`
 的 160 px 场、同相斥/异相吸、250–330 行程与无实体碰撞规则不变。x=330 改为
@@ -86,7 +86,7 @@ BGM 未在片内启动、HUD 隐藏、移动/J/Q 锁定、F/长按空格跳过�
 
 ## 第七轮（2026-11-27）：补回入厅三件本体机制
 
-`run_all.ps1` 实际结果：机制 **216 / 0**、门/石/检查点 **48 / 0**、
+`run_all.ps1` 实际结果：机制 **216 / 0**、门/星核/检查点 **48 / 0**、
 路线 **37 / 0**、说明页 **42 / 0**、UI 对齐 **113 / 0**、开场 **39 / 0**、
 标题 **42 / 0**；本章 90 帧与本体三关 90 帧均 0 错误；`--headless --import`
 0 错误。`base_level_90_clean` 是本次为本体三关补的干净收尾包装：跑满 90 帧后
@@ -98,12 +98,13 @@ BGM 未在片内启动、HUD 隐藏、移动/J/Q 锁定、F/长按空格跳过�
 - `gate_closed.png`：澜相被日门挡住，门上太阳与锁扣清晰，事件行给出辉相。
 - `gate_opening_1..3.png`：0.15 s 开门连续三帧，光幕/锁扣变化，角色遮挡不跳。
 - `gate_open.png`：真实 Q 后同一门打开，事件行「同相门已开 · 通过」。
-- `stone_socket.png`：符文石在 x≈330 槽内，槽唇/金线亮，月门打开。
-- `stone_pulled_back.png`：真实换相把石拉回约 20 px，槽线变暗、月门关锁。
+- `loom_core_wisp_20261127/01_core_before_bay.png`：星核在仓外，月门未通电。
+- `loom_core_wisp_20261127/03_core_seated_lit.png`：星核入仓，基座/玻璃罩/导线亮起，月门打开。
+- `loom_core_wisp_20261127/04_core_pulled_door_closed.png`：真实换相把星核拉回约 20 px，仓线变暗、月门关锁。
 - `checkpoint.png`：40×36 本体检查点在角色右侧完整可见并已激活。
 
-`gate_test.gd` 用真实移动/Q 断言：错相阻挡、对相通过、石上槽开门、石可拉回、
-走过石头不被顶出、检查点失败恢复、检查点后拉石不锁死、R 复位。`route_test`
+`gate_test.gd` 用真实移动/Q 断言：错相阻挡、对相通过、星核入仓开门、星核可拉回、
+走过星核不被顶出、检查点失败恢复、检查点后拉星核不锁死、R 复位。`route_test`
 把这条真实路线接在完整三阶段通关之前。参考实看记录见
 `dlc/star_loom/REF_MECHANICS_20261127.md`。
 

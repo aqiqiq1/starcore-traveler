@@ -38,13 +38,13 @@ const ORDER: Array[String] = [
 const ENTRIES: Dictionary = {
 	"polarity": {
 		"name": "相性",
-		"summary": "按 Q 切换辉相 / 澜相",
+		"summary": "按换相键切换辉相 / 澜相",
 		"key": "Q",
 		"icon": {"kind": "key", "value": "Q"},
 	},
 	"gate": {
 		"name": "同相门",
-		"summary": "同相门只认同相 · 看门上日/月 · 按 Q 换相",
+		"summary": "同相门只认同相 · 看门上日/月 · 按换相键",
 		"key": "Q",
 		"icon": {"kind": "phase", "value": "sun"},
 	},

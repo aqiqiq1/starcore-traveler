@@ -25,8 +25,8 @@ const OPENING_SCRIPT = preload("res://scripts/narrative/opening_cinematic.gd")
 const MECHANIC_POPUP_SCENE: PackedScene = preload("res://scenes/ui/mechanic_popup.tscn")
 ## The full gate lesson lives here, at the first same-phase door in the game.
 ## Later chapters only repeat the short phase reminder.
-const GATE_FULL_HINT: String = "同相门只认同相 · 看门上日/月 · 按 Q 换相"
-const GATE_SHORT_HINT: String = "按 Q 换相"
+const GATE_FULL_HINT: String = "同相门只认同相 · 看门上日/月 · 按换相键"
+const GATE_SHORT_HINT: String = "按换相键"
 
 @export_range(2.0, 15.0, 0.05, "suffix:s") var intro_max_duration: float = 9.0
 ## Legacy safety cap for callers that inspect it. The opening itself hands off

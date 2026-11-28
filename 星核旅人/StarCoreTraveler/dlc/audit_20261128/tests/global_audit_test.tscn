@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://dlc/audit_20261128/tests/global_audit_test.gd" id="1_audit"]
+
+[node name="GlobalAuditTest" type="Node"]
+script = ExtResource("1_audit")

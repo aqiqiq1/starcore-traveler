@@ -176,7 +176,7 @@ func _check_completion_fade(hud: Node, tag: String) -> void:
 
 func _run() -> void:
 	await _test_dlc_pause(TRIAL, "trial", "{Q}")
-	await _test_dlc_pause(RIFT, "rift", "本章锁 Q")
+	await _test_dlc_pause(RIFT, "rift", "本章锁定")
 	await _test_dlc_pause(LOOM, "loom", "{Q}")
 	await _test_completion_wording_only()
 	await _test_l1_completion()
@@ -239,11 +239,11 @@ func _test_dlc_pause(path: String, tag: String, phase_copy: String) -> void:
 		and controls_text.contains("攻击") and controls_text.contains("换相")
 		and controls_text.contains("暂停") and controls_text.contains("重开"),
 		tag + " table lists all six real actions", controls_text)
-	if phase_copy == "本章锁 Q":
-		_check(controls_text.contains("本章锁 Q"),
-			tag + " locked-Q copy is 本章锁 Q", controls_text)
+	if phase_copy == "本章锁定":
+		_check(controls_text.contains("本章锁定"),
+			tag + " locked copy is 本章锁定", controls_text)
 	else:
-		_check(controls_text.contains("Q  换相") and not controls_text.contains("本章锁 Q"),
+		_check(controls_text.contains("Q  换相") and not controls_text.contains("本章锁定"),
 			tag + " live-Q copy is Q 换相", controls_text)
 	_check(_all_twelve(hud.call("get_control_label_font_sizes")),
 		tag + " every table label is 12 px",

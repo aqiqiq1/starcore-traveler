@@ -828,7 +828,7 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _intro_active:
+	if _intro_active and not _pause_open and not _intro_pause_allowed():
 		return
 	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
 		return
@@ -884,10 +884,17 @@ func _quit_after_audio_release() -> void:
 
 
 func _set_paused(value: bool) -> void:
-	if _intro_active or value == _pause_open:
+	if value == _pause_open:
+		return
+	var intro_pause: bool = value and _intro_active and _intro_pause_allowed()
+	if value and _intro_active and not intro_pause:
 		return
 	_pause_open = value
 	_hud.show_pause(value)
+	if intro_pause and _intro_cinematic != null and is_instance_valid(_intro_cinematic):
+		# Finish the skip hand-off before the tree pauses; the still-held Space
+		# is released by LEVEL_FLOW and the three-tick override owns the resume.
+		_intro_cinematic.handle_pause_opened()
 	_attack_key_down = false
 	_player.reset_movement_input_state()
 	_player.clear_input_buffers()
@@ -905,11 +912,25 @@ func _set_paused(value: bool) -> void:
 	_audio.resume_music()
 	LEVEL_FLOW.release_one_shot_actions()
 	_player.clear_input_buffers()
+	if _intro_cinematic != null and is_instance_valid(_intro_cinematic):
+		_intro_cinematic.handle_pause_resumed()
 	# A pause during the 0.9 s intro must not shorten or skip it; the intro
 	# timer resumes with the tree and wakes the boss itself.
 	if _arena_entered and not _completed and _arena_intro_left <= 0.0:
 		if not _boss.is_defeated():
 			_boss.set_suspended(false)
+
+
+## True only for the post-skip "wait for Space release" state.  The film is
+## already showing the gameplay view there, so Esc may open the pause page;
+## normal film playback and the prologue stay unskippable by pause.
+func _intro_pause_allowed() -> bool:
+	return (
+		_intro_active
+		and _intro_cinematic != null
+		and is_instance_valid(_intro_cinematic)
+		and _intro_cinematic.is_awaiting_release()
+	)
 
 
 # --- room 1: inversion / gate / wisps --------------------------------------

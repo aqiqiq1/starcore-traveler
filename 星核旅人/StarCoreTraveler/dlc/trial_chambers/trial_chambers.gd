@@ -655,7 +655,7 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _intro_active:
+	if _intro_active and not _pause_open and not _intro_pause_allowed():
 		return
 	if _mechanic_popup != null and is_instance_valid(_mechanic_popup) and _mechanic_popup.is_open():
 		return
@@ -701,10 +701,17 @@ func _on_hud_quit_requested() -> void:
 
 
 func _set_paused(value: bool) -> void:
-	if _intro_active or value == _pause_open:
+	if value == _pause_open:
+		return
+	var intro_pause: bool = value and _intro_active and _intro_pause_allowed()
+	if value and _intro_active and not intro_pause:
 		return
 	_pause_open = value
 	_hud.show_pause(value)
+	if intro_pause and _intro_cinematic != null and is_instance_valid(_intro_cinematic):
+		# Finish the skip hand-off before the tree pauses; the still-held Space
+		# is released by LEVEL_FLOW and the three-tick override owns the resume.
+		_intro_cinematic.handle_pause_opened()
 	_attack_key_down = false
 	_player.reset_movement_input_state()
 	_player.clear_input_buffers()
@@ -721,8 +728,22 @@ func _set_paused(value: bool) -> void:
 	_ambience.set_paused(false)
 	LEVEL_FLOW.release_one_shot_actions()
 	_player.clear_input_buffers()
+	if _intro_cinematic != null and is_instance_valid(_intro_cinematic):
+		_intro_cinematic.handle_pause_resumed()
 	if _arena_entered and not _guard_defeated and not _completed:
 		_guard.set_suspended(false)
+
+
+## True only for the post-skip "wait for Space release" state.  The film is
+## already showing the gameplay view there, so Esc may open the pause page;
+## normal film playback and the prologue stay unskippable by pause.
+func _intro_pause_allowed() -> bool:
+	return (
+		_intro_active
+		and _intro_cinematic != null
+		and is_instance_valid(_intro_cinematic)
+		and _intro_cinematic.is_awaiting_release()
+	)
 
 
 # --- guard / combat --------------------------------------------------------

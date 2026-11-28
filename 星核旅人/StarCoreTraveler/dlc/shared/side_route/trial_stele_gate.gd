@@ -2,10 +2,13 @@ class_name TrialSteleGate
 extends HiddenRouteGate
 
 ## Optional 星核试炼场 entrance in L3 断桥外郭, built from the game's existing
-## tutorial stele.  The 26x52 cyan stele stands on a low cut-stone plinth at
-## native size (no scale), with a dim cyan groove glow and a few rising sparks.
-## It has no collision and is drawn just in front of the city ground, behind
-## the player, so the main path is never blocked.
+## tutorial stele.  DLC1 星核试炼场 has been retired from the chapter page and
+## L3 no longer instantiates this gate (2026-11-28); the class and its guarded
+## lookups remain only for historical compatibility and the standalone trial.
+## The 26x52 cyan stele stands at native size (no scale), with a dim cyan
+## groove glow and a few rising sparks.  It has no collision and is drawn just
+## in front of the city ground, behind the player, so the main path is never
+## blocked.
 ##
 ## Reference use: the in-project L1 stele (assets/tutorial_stele) and the
 ## Hollow Knight White Palace lore-tablet close-up recorded in

@@ -3,6 +3,8 @@ extends RefCounted
 
 ## One-shot "hidden side chapter" route state shared by the two in-level
 ## entrances (DLC3 镜面裂隙 -> 裂隙工坊, L3 试炼碑 -> 星核试炼场).
+## The L3 trial entrance is retired (2026-11-28); its id remains only for the
+## standalone trial scene and historical compatibility.
 ##
 ## The route is deliberately small and process-local:
 ##   - the entrance records the origin id/path, the real return position and an
