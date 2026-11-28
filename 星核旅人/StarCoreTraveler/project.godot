@@ -11,6 +11,7 @@ config_version=5
 [application]
 
 config/name="Star Core Traveler"
+config/icon="res://assets/icon/icon_256.png"
 run/main_scene="res://scenes/level_01.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
