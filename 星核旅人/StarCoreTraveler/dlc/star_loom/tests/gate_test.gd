@@ -19,6 +19,7 @@ extends Node
 const LOOM_SCENE: String = "res://dlc/star_loom/star_loom.tscn"
 const REGISTRY = preload("res://scripts/mechanics/mechanic_registry.gd")
 const TEST_MECH_PROGRESS: String = "user://test_loom_gate_mechanics.cfg"
+const TEST_HINT_PROGRESS: String = "user://test_loom_gate_hints.cfg"
 
 var _loom: StarLoom
 var _player: L3Player
@@ -46,8 +47,9 @@ func _ready() -> void:
 
 
 func _remove_test_progress() -> void:
-	if FileAccess.file_exists(TEST_MECH_PROGRESS):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_MECH_PROGRESS))
+	for path: String in [TEST_MECH_PROGRESS, TEST_HINT_PROGRESS]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
 func _check(condition: bool, label: String, detail: String = "") -> void:
@@ -112,11 +114,17 @@ func _load_loom() -> bool:
 	_loom = packed.instantiate() as StarLoom
 	_loom.show_intro_guide = false
 	_loom.show_intro_cinematic = false
+	_loom.hint_progress_path = TEST_HINT_PROGRESS
 	get_tree().root.add_child(_loom)
 	get_tree().current_scene = _loom
 	await _wait_process(3)
 	await _wait_physics(10)
 	_player = _loom.get_player()
+	# gate_test covers gate/core/checkpoint mechanics, not the one-time
+	# checkpoint lesson.  Mark it seen so this run always reaches the checkpoint
+	# HUD line without a queued teaching page in front of it.
+	if _loom.get_mechanic_teach() != null:
+		_loom.get_mechanic_teach().mark_unlocked("checkpoint")
 	return _player != null
 
 

@@ -7,8 +7,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File dlc\star_loom\tests\run_all.
 ```
 
 覆盖：开场电影契约 `intro_test`、机制 `mechanics_test`、门/星核/检查点 `gate_test`、
-阶段 1 首轮浮灵 `core_wisp_test`、真实路线 `route_test`、说明页 `guide_test`、
+检查点镜面轻提示 `hidden_hint_test`、阶段 1 首轮浮灵 `core_wisp_test`、真实路线 `route_test`、说明页 `guide_test`、
 标题 `title_test`，本章 90 帧、本体三关 90 帧（`base_level_90_clean` 干净收尾）。
+章节页“未发现支线”页脚由 `dlc/chapter_select/tests/chapter_select_test.gd` 覆盖。
 
 检查点之后、竞技场之前的隐藏 `镜面裂隙`（x=420）和 `resume_from_side` 主线恢复由
 `dlc/hidden_levels_20261127/tests/hidden_levels_test.tscn` 覆盖；本目录的 90 帧冒烟只保证
@@ -28,6 +29,10 @@ D:/Godot/Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 res://d
 
 # 640x360 入厅机制：同相门开/关、星核入仓/拉出、检查点、阶段 1 浮灵
 D:/Godot/Godot_v4.7.2-stable_win64_console.exe --path . --position 60,60 res://dlc/star_loom/tests/capture_mechanics.tscn
+
+# 640x360 两处隐藏支线轻提示（检查点 / 章节页页脚）
+D:/Godot/Godot_v4.7.2-stable_win64_console.exe --resolution 640x360 --path . \
+  res://dlc/star_loom/tests/capture_hidden_hint.tscn
 ```
 
 `capture_mechanics` 写到 `screenshots/loom_core_wisp_20261127/`；该目录带

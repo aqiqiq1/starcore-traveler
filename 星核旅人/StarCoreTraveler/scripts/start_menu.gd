@@ -80,6 +80,12 @@ const CHAPTER_ROW_SIZE: Vector2 = Vector2(432.0, 30.0)
 const CHAPTER_ROW_GAP: float = 3.0
 const CHAPTERS_RETURN_RECT: Rect2 = Rect2(430.0, 292.0, 110.0, 24.0)
 const CHAPTERS_HINT_RECT: Rect2 = Rect2(104.0, 294.0, 300.0, 14.0)
+## One weak 12 px line below the last visible chapter row, only while a side
+## chapter is still undiscovered.  It occupies the hidden side row's own slot
+## (no extra row, no layout shift); the four visible rows and the ↑↓ ring are
+## untouched.  The line is data-derived, not a fixed "裂隙" string.
+const CHAPTERS_SIDE_HINT_TEXT: String = "还有未发现的支线 · 留意主线里的镜子"
+const CHAPTERS_SIDE_HINT_SIZE: Vector2 = Vector2(432.0, 30.0)
 
 ## Title-only hidden unlock.  Keys are matched by physical/key code so Shift or
 ## Caps Lock cannot change the sequence; no text box or caret is created.
@@ -137,6 +143,7 @@ var _quit_button: Button = null
 
 var _chapters_layer: Control = null
 var _chapters_progress_label: Label = null
+var _chapters_side_hint: Label = null
 var _chapters_return_button: PixelMenuButton = null
 var _chapter_rows: Dictionary = {}
 var _chapter_index_labels: Dictionary = {}
@@ -382,6 +389,26 @@ func get_chapters_layer() -> Control:
 
 func get_chapters_progress_text() -> String:
 	return _chapters_progress_label.text if _chapters_progress_label != null else ""
+
+
+func is_chapter_side_hint_visible() -> bool:
+	return _chapters_side_hint != null and _chapters_side_hint.visible
+
+
+func get_chapter_side_hint_text() -> String:
+	return _chapters_side_hint.text if _chapters_side_hint != null else ""
+
+
+func get_chapter_side_hint_rect() -> Rect2:
+	if _chapters_side_hint == null:
+		return Rect2()
+	return Rect2(_chapters_side_hint.position, _chapters_side_hint.size)
+
+
+func get_chapter_side_hint_font_size() -> int:
+	if _chapters_side_hint == null:
+		return 0
+	return _chapters_side_hint.get_theme_font_size("font_size")
 
 
 func is_cheat_feedback_visible() -> bool:
@@ -756,6 +783,25 @@ func _build_chapters_layer() -> Control:
 		status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		row.add_child(status_label)
 		_chapter_status_labels[id] = status_label
+
+	# Undiscovered-side footer.  It draws in the free slot the hidden side row
+	# would occupy, so the four visible rows never move; visibility and slot are
+	# recomputed in _refresh_chapters.
+	_chapters_side_hint = _label(
+		CHAPTERS_SIDE_HINT_TEXT,
+		Vector2(
+			CHAPTER_ROW_ORIGIN.x + 12.0,
+			CHAPTER_ROW_ORIGIN.y
+				+ 4.0 * (CHAPTER_ROW_SIZE.y + CHAPTER_ROW_GAP)
+		),
+		CHAPTERS_SIDE_HINT_SIZE,
+		12,
+		DIM
+	)
+	_chapters_side_hint.name = "ChapterSideHint"
+	_chapters_side_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_chapters_side_hint.visible = false
+	layer_control.add_child(_chapters_side_hint)
 
 	var hint: Label = _label(
 		"↑↓ 选择 · Enter 进入 · Esc 返回",
@@ -1269,6 +1315,8 @@ func _refresh_chapters(grab_entry_focus: bool) -> void:
 	_chapters_progress = CHAPTER_PROGRESS.load_completed(chapter_progress_path)
 	var completed_count: int = 0
 	var visible_count: int = 0
+	var has_undiscovered_side: bool = false
+	var last_row_bottom: float = CHAPTER_ROW_ORIGIN.y - CHAPTER_ROW_GAP
 	for chapter: Dictionary in CHAPTER_PROGRESS.CHAPTERS:
 		var id: String = String(chapter["id"])
 		var row: PixelMenuButton = _chapter_rows.get(id) as PixelMenuButton
@@ -1289,8 +1337,14 @@ func _refresh_chapters(grab_entry_focus: bool) -> void:
 		)
 		if row_visible:
 			visible_count += 1
+			last_row_bottom = (
+				row.position.y + CHAPTER_ROW_SIZE.y
+			)
 			if completed:
 				completed_count += 1
+		elif CHAPTER_PROGRESS.is_side_chapter(id) and available:
+			# A real side chapter exists but has not been entered yet.
+			has_undiscovered_side = true
 		row.visible = row_visible
 		row.disabled = not can_enter or not row_visible
 		row.selected = false
@@ -1325,6 +1379,10 @@ func _refresh_chapters(grab_entry_focus: bool) -> void:
 				status_label.text = "可进入"
 				status_label.add_theme_color_override("font_color", CYAN)
 
+	if _chapters_side_hint != null:
+		_chapters_side_hint.visible = has_undiscovered_side
+		if has_undiscovered_side:
+			_chapters_side_hint.position.y = last_row_bottom + CHAPTER_ROW_GAP
 	if _chapters_progress_label != null:
 		_chapters_progress_label.text = "已完成 %d / %d" % [
 			completed_count, visible_count

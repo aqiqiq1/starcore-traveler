@@ -16,6 +16,8 @@ $summary = @()
 function Invoke-Case([string]$name, [string]$scene, [string]$logName, [bool]$strict) {
     $env:STAR_CORE_MECHANIC_PROGRESS = Join-Path $env:TEMP ("starcore_mechanic_loom_" + $logName + ".cfg")
     Remove-Item $env:STAR_CORE_MECHANIC_PROGRESS -ErrorAction SilentlyContinue
+    $env:STAR_CORE_HIDDEN_HINT = Join-Path $env:TEMP ("starcore_hidden_hint_" + $logName + ".cfg")
+    Remove-Item $env:STAR_CORE_HIDDEN_HINT -ErrorAction SilentlyContinue
     $out = & $Godot --headless --path . $scene 2>&1
     $code = $LASTEXITCODE
     $out | Set-Content -Path (Join-Path $tests "$logName.log") -Encoding UTF8
@@ -30,6 +32,8 @@ function Invoke-Case([string]$name, [string]$scene, [string]$logName, [bool]$str
 function Invoke-Smoke([string]$name, [string]$scene, [string]$logName) {
     $env:STAR_CORE_MECHANIC_PROGRESS = Join-Path $env:TEMP ("starcore_mechanic_loom_" + $logName + ".cfg")
     Remove-Item $env:STAR_CORE_MECHANIC_PROGRESS -ErrorAction SilentlyContinue
+    $env:STAR_CORE_HIDDEN_HINT = Join-Path $env:TEMP ("starcore_hidden_hint_" + $logName + ".cfg")
+    Remove-Item $env:STAR_CORE_HIDDEN_HINT -ErrorAction SilentlyContinue
     $out = & $Godot --headless --path . $scene --quit-after 90 2>&1
     $code = $LASTEXITCODE
     $out | Set-Content -Path (Join-Path $tests "$logName.log") -Encoding UTF8
@@ -44,6 +48,8 @@ function Invoke-Smoke([string]$name, [string]$scene, [string]$logName) {
 function Invoke-CleanSmoke([string]$name, [string]$scene, [string]$key, [string]$logName) {
     $env:STAR_CORE_MECHANIC_PROGRESS = Join-Path $env:TEMP ("starcore_mechanic_loom_" + $logName + ".cfg")
     Remove-Item $env:STAR_CORE_MECHANIC_PROGRESS -ErrorAction SilentlyContinue
+    $env:STAR_CORE_HIDDEN_HINT = Join-Path $env:TEMP ("starcore_hidden_hint_" + $logName + ".cfg")
+    Remove-Item $env:STAR_CORE_HIDDEN_HINT -ErrorAction SilentlyContinue
     $out = & $Godot --headless --path . $scene -- $key 2>&1
     $code = $LASTEXITCODE
     $out | Set-Content -Path (Join-Path $tests "$logName.log") -Encoding UTF8
@@ -62,6 +68,7 @@ if (-not (Test-Path $Godot)) {
 $summary += Invoke-Case "loom_intro" "res://dlc/star_loom/tests/intro_test.tscn" "intro_test" $true
 $summary += Invoke-Case "loom_mech" "res://dlc/star_loom/tests/mechanics_test.tscn" "mechanics_test" $true
 $summary += Invoke-Case "loom_gate" "res://dlc/star_loom/tests/gate_test.tscn" "gate_test" $true
+$summary += Invoke-Case "loom_hidden_hint" "res://dlc/star_loom/tests/hidden_hint_test.tscn" "hidden_hint_test" $true
 $summary += Invoke-Case "loom_wisp" "res://dlc/star_loom/tests/core_wisp_test.tscn" "core_wisp_test" $true
 $summary += Invoke-Case "loom_route" "res://dlc/star_loom/tests/route_test.tscn" "route_test" $true
 $summary += Invoke-Case "loom_guide" "res://dlc/star_loom/tests/guide_test.tscn" "guide_test" $true

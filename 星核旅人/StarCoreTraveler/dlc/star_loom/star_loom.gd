@@ -37,6 +37,9 @@ signal level_completed
 ## Empty = the shared user://chapter_progress.cfg.  Tests may point this at a
 ## throwaway file before add_child(); gameplay never sets it.
 @export var chapter_progress_path: String = ""
+## One-shot hint markers.  Empty = the shared user://hidden_hint.cfg.  Tests
+## may point this at a throwaway file before add_child(); gameplay never sets it.
+@export var hint_progress_path: String = ""
 ## One-shot seed used only by the hidden 镜面裂隙 return path.  Normal starts
 ## leave it false; _ready also fills it from the SideRoute static hand-off.
 @export var resume_from_side: bool = false
@@ -44,6 +47,7 @@ signal level_completed
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
 const SIDE_ROUTE = preload("res://dlc/shared/side_route/side_route.gd")
+const HIDDEN_HINT = preload("res://dlc/shared/side_route/hidden_hint_progress.gd")
 const MIRROR_BLACK_COVER = preload("res://dlc/shared/side_route/mirror_black_cover.gd")
 const DLC_GUIDE_SCENE: PackedScene = preload("res://dlc/ui/dlc_guide.tscn")
 const LOOM_GUIDE_SCRIPT: Script = preload("res://dlc/star_loom/loom_guide.gd")
@@ -68,6 +72,14 @@ const LOOM_TIPS: Dictionary = {
 	},
 }
 const TIP_FIRE: String = "loom_fire_tip"
+
+## First recorded checkpoint of this save: the HUD event line names the mirror
+## beside it once.  It replaces the generic checkpoint line and is suppressed
+## after any teaching line so the two never write over each other.
+const CHECKPOINT_MIRROR_HINT: String = "检查点已记录 · 旁边那面镜子好像有反应"
+const CHECKPOINT_MIRROR_SECONDS: float = 2.6
+const CHECKPOINT_MIRROR_AFTER_TEACH: float = 2.6
+const CHECKPOINT_LINE: String = "检查点已记录 · 失败从门前恢复"
 
 const WORLD_LEFT: float = 0.0
 const WORLD_RIGHT: float = 960.0
@@ -203,6 +215,11 @@ var _gate_hint: ApproachHint = ApproachHint.new()
 var _gate_second_hint: ApproachHint = ApproachHint.new()
 var _core_hint: ApproachHint = ApproachHint.new()
 var _bay_was_powered: bool = false
+## First-checkpoint mirror nudge.  `_mirror_hint_left >= 0` means it is queued
+## (behind a teaching line or a blocked page); it is marked in the hint file
+## only when the HUD line is really written.
+var _mirror_hint_left: float = -1.0
+var _mirror_hint_waiting_for_teach: bool = false
 
 var _attack_state: AttackState = AttackState.IDLE
 var _attack_kind: String = ""
@@ -508,7 +525,16 @@ func _setup_mechanic_teach() -> void:
 	_mechanic_teach.show_line = func(text_value: String) -> void:
 		_hud.show_event(text_value, 2.4)
 	_mechanic_teach.blocked_check = Callable(self, "_is_mechanic_teach_blocked")
+	_mechanic_teach.taught.connect(_on_mechanic_taught)
 	add_child(_mechanic_teach)
+
+
+## A checkpoint lesson that was queued behind a popup/guide owns the event line
+## first.  The mirror nudge waits for that line to finish, then replaces it.
+func _on_mechanic_taught(id: String) -> void:
+	if id == "checkpoint" and _mirror_hint_waiting_for_teach:
+		_mirror_hint_waiting_for_teach = false
+		_mirror_hint_left = CHECKPOINT_MIRROR_AFTER_TEACH
 
 
 ## Retried every physics tick while a condition remains true; the popup itself
@@ -620,6 +646,7 @@ func _physics_process(delta: float) -> void:
 	_damage_immunity_left = maxf(_damage_immunity_left - delta, 0.0)
 	if _recovery_active:
 		return
+	_tick_checkpoint_mirror_hint(delta)
 	if _retry_pending:
 		_retry_pending_left = maxf(_retry_pending_left - delta, 0.0)
 		if _retry_pending_left <= 0.0:
@@ -806,11 +833,62 @@ func _on_checkpoint_entered(checkpoint: LevelCheckpoint) -> void:
 	_checkpoint_position = checkpoint.global_position
 	_player.set_spawn_point(_checkpoint_position)
 	checkpoint.set_activated(true)
+	# The mirror entrance is 10 px past this checkpoint.  Its 56 px line must not
+	# land on top of the checkpoint line in the same frame; the entrance speaks
+	# after this line has had its full read, or not at all if it already spoke.
+	if _side_gate != null and is_instance_valid(_side_gate):
+		_side_gate.hold_hints(CHECKPOINT_MIRROR_SECONDS + 0.8)
 	if is_instance_valid(DemoAudio):
 		DemoAudio.play_record_save()
 	var taught: bool = _mechanic_teach != null and _mechanic_teach.request("checkpoint")
-	if not taught:
-		_hud.show_event("检查点已记录 · 失败从门前恢复", 2.0)
+	var hint_available: bool = not HIDDEN_HINT.is_shown(
+		HIDDEN_HINT.CHECKPOINT_MIRROR, hint_progress_path
+	)
+	if hint_available:
+		_queue_or_show_checkpoint_mirror_hint(taught)
+	elif not taught:
+		_hud.show_event(CHECKPOINT_LINE, 2.0)
+
+
+## The mirror nudge is the only line on the first recorded checkpoint.  If the
+## checkpoint lesson is on screen (or queued behind a popup), wait for its 2.4 s
+## line instead of stacking a second message on the same event row.
+func _queue_or_show_checkpoint_mirror_hint(taught_now: bool) -> void:
+	if taught_now:
+		_mirror_hint_waiting_for_teach = false
+		_mirror_hint_left = CHECKPOINT_MIRROR_AFTER_TEACH
+		return
+	if (
+		_mechanic_teach != null
+		and _mechanic_teach.get_pending_ids().has("checkpoint")
+	):
+		_mirror_hint_waiting_for_teach = true
+		return
+	_show_checkpoint_mirror_hint()
+
+
+func _tick_checkpoint_mirror_hint(delta: float) -> void:
+	if _mirror_hint_left < 0.0:
+		return
+	_mirror_hint_left = maxf(_mirror_hint_left - delta, 0.0)
+	if _mirror_hint_left > 0.0:
+		return
+	if _is_mechanic_teach_blocked():
+		_mirror_hint_left = 0.25
+		return
+	_show_checkpoint_mirror_hint()
+
+
+## Writes the marker only when the HUD line is really drawn, so a restart during
+## a blocked/queued window cannot eat the one hint.
+func _show_checkpoint_mirror_hint() -> bool:
+	_mirror_hint_left = -1.0
+	_mirror_hint_waiting_for_teach = false
+	if HIDDEN_HINT.is_shown(HIDDEN_HINT.CHECKPOINT_MIRROR, hint_progress_path):
+		return false
+	HIDDEN_HINT.mark_shown(HIDDEN_HINT.CHECKPOINT_MIRROR, hint_progress_path)
+	_hud.show_event(CHECKPOINT_MIRROR_HINT, CHECKPOINT_MIRROR_SECONDS)
+	return true
 
 
 ## R and a fresh scene both return every approach mechanism to its initial
@@ -825,6 +903,8 @@ func _reset_loom_mechanics() -> void:
 	_core_bay.set_occupied(false)
 	_checkpoint.set_activated(false)
 	_checkpoint_position = ARENA_SPAWN
+	_mirror_hint_left = -1.0
+	_mirror_hint_waiting_for_teach = false
 	_player.set_spawn_point(START_SPAWN)
 	_gate_hint.reset()
 	_gate_second_hint.reset()
@@ -2026,6 +2106,18 @@ func get_checkpoint() -> LevelCheckpoint:
 
 func get_checkpoint_position() -> Vector2:
 	return _checkpoint_position
+
+
+func get_checkpoint_mirror_hint_text() -> String:
+	return CHECKPOINT_MIRROR_HINT
+
+
+func is_checkpoint_mirror_hint_queued() -> bool:
+	return _mirror_hint_left >= 0.0 or _mirror_hint_waiting_for_teach
+
+
+func is_checkpoint_mirror_hint_shown() -> bool:
+	return HIDDEN_HINT.is_shown(HIDDEN_HINT.CHECKPOINT_MIRROR, hint_progress_path)
 
 
 func get_intro_guide() -> DlcGuide:

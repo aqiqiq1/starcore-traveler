@@ -197,6 +197,12 @@ func suppress_hints(seconds: float) -> void:
 	_hint.reset()
 
 
+## Keep the next proximity line quiet without re-arming an already shown hint.
+## A nearby checkpoint line owns the event row for its full read.
+func hold_hints(seconds: float) -> void:
+	_hint_grace = maxf(_hint_grace, seconds)
+
+
 func is_hint_grace_active() -> bool:
 	return _hint_grace > 0.0
 

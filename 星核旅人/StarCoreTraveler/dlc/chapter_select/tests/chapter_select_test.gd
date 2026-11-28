@@ -27,6 +27,7 @@ const P_COMPLETE: String = "user://chapter_select_test_complete.cfg"
 const P_L3: String = "user://chapter_select_test_l3.cfg"
 const P_CHEAT: String = "user://chapter_select_test_cheat.cfg"
 const P_LEGACY: String = "user://chapter_select_test_legacy.cfg"
+const P_SIDE_HINT: String = "user://chapter_select_test_side_hint.cfg"
 
 var _checks: int = 0
 var _failures: Array[String] = []
@@ -42,6 +43,7 @@ func _ready() -> void:
 	_test_unlock_chain()
 	_test_corrupt_file()
 	await _test_locked_page()
+	await _test_side_hint_footer()
 	await _test_locked_focus_skip()
 	await _test_start_route_to_l2()
 	await _test_unlocked_page_and_entry()
@@ -119,7 +121,7 @@ func _push_click(position: Vector2) -> void:
 func _clear_paths() -> void:
 	for path: String in [
 		P_MISSING, P_ONE, P_FLOW, P_UNLOCKED, P_CORRUPT, P_COMPLETE, P_L3, P_CHEAT,
-		P_LEGACY,
+		P_LEGACY, P_SIDE_HINT,
 	]:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
@@ -377,6 +379,89 @@ func _test_locked_page() -> void:
 	await _drop_current_scene()
 
 
+func _test_side_hint_footer() -> void:
+	print("=== CHAPTER SIDE HINT ===")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(P_SIDE_HINT))
+	CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_L1, P_SIDE_HINT)
+	CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_L2, P_SIDE_HINT)
+	CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_L3, P_SIDE_HINT)
+	var level: Node = await _load_level_with_menu(P_SIDE_HINT)
+	_check(level != null, "L1 loads for the side-hint footer")
+	if level == null:
+		return
+	var menu: StartMenu = level.get_node_or_null("StartMenu") as StartMenu
+	if menu == null:
+		_check(false, "title menu exists for the side-hint footer")
+		await _drop_current_scene()
+		return
+	await _open_chapters(menu)
+	_check(menu.is_chapter_side_hint_visible(),
+		"undiscovered side chapter shows the footer")
+	_check(menu.get_chapter_side_hint_text()
+			== "还有未发现的支线 · 留意主线里的镜子",
+		"the footer uses the requested line", menu.get_chapter_side_hint_text())
+	_check(menu.get_chapter_side_hint_font_size() == 12,
+		"the footer is 12 px", str(menu.get_chapter_side_hint_font_size()))
+	var hint_rect: Rect2 = menu.get_chapter_side_hint_rect()
+	var l1: PixelMenuButton = menu.get_chapter_row(CHAPTER_PROGRESS.ID_L1)
+	var l2: PixelMenuButton = menu.get_chapter_row(CHAPTER_PROGRESS.ID_L2)
+	var l3: PixelMenuButton = menu.get_chapter_row(CHAPTER_PROGRESS.ID_L3)
+	var loom: PixelMenuButton = menu.get_chapter_row(CHAPTER_PROGRESS.ID_LOOM)
+	var rift: PixelMenuButton = menu.get_chapter_row(CHAPTER_PROGRESS.ID_RIFT)
+	var row_ys: Array[float] = [90.0, 123.0, 156.0, 189.0]
+	var rows: Array[PixelMenuButton] = [l1, l2, l3, loom]
+	var layout_ok: bool = true
+	for index: int in range(rows.size()):
+		var row: PixelMenuButton = rows[index]
+		if row == null or not row.visible or row.size.y != 30.0 \
+				or absf(row.position.y - row_ys[index]) > 0.01:
+			layout_ok = false
+	_check(layout_ok, "the four visible rows keep their 30 px slots")
+	_check(absf(hint_rect.position.x - 116.0) < 0.01
+			and absf(hint_rect.position.y - 222.0) < 0.01,
+		"the footer occupies the hidden side row's slot, not a new row",
+		str(hint_rect))
+	_check(absf(hint_rect.position.y - (row_ys[3] + 30.0 + 3.0)) < 0.01,
+		"the footer starts below the last visible row")
+	_check(menu.get_chapters_progress_text() == "已完成 3 / 4",
+		"the footer adds no visible total", menu.get_chapters_progress_text())
+	_check(l1 != null and l2 != null and l1.focus_next == l1.get_path_to(l2)
+			and loom != null and loom.focus_next == loom.get_path_to(l1),
+		"the ↑↓ ring still runs L1 -> L2 -> L3 -> 城内 -> L1")
+	_check(menu.get_chapters_layer().find_child("ChapterSideHint", true, false)
+			is Label,
+		"the footer is a plain Label, outside the focus ring")
+	await _tap_key(KEY_ESCAPE)
+	await _wait_process(2)
+
+	# discovered_rift=true (the entrance's real write): row appears, hint goes.
+	CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_RIFT, P_SIDE_HINT)
+	menu.call("_refresh_chapters", false)
+	await _wait_process(2)
+	_check(menu.get_chapter_row(CHAPTER_PROGRESS.ID_RIFT).visible,
+		"discovered rift row is visible")
+	_check(not menu.is_chapter_side_hint_visible(),
+		"the footer disappears after discovery")
+	_check(menu.get_chapters_progress_text() == "已完成 3 / 5",
+		"discovery adds the side row to the visible total",
+		menu.get_chapters_progress_text())
+	_check(rift != null and rift.visible
+			and absf(rift.position.y - 222.0) < 0.01,
+		"the side row takes back its own slot")
+
+	# kskbl writes the same discovery schema: no footer either.
+	CHAPTER_PROGRESS.complete_all(P_SIDE_HINT)
+	menu.call("_refresh_chapters", false)
+	await _wait_process(2)
+	_check(not menu.is_chapter_side_hint_visible(),
+		"the kskbl schema leaves no footer")
+	_check(menu.get_chapters_progress_text() == "已完成 5 / 5",
+		"the kskbl schema still shows 5 / 5",
+		menu.get_chapters_progress_text())
+	await _drop_current_scene()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(P_SIDE_HINT))
+
+
 func _test_locked_focus_skip() -> void:
 	CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_L1, P_ONE)
 	var level: Node = await _load_level_with_menu(P_ONE)
@@ -591,6 +676,8 @@ func _test_title_cheat_unlock() -> void:
 	_check(menu.get_chapters_progress_text() == "已完成 5 / 5",
 		"all five listed chapters show as complete",
 		menu.get_chapters_progress_text())
+	_check(not menu.is_chapter_side_hint_visible(),
+		"the real kskbl sequence leaves no side-route footer")
 	for id: String in CHAPTER_PROGRESS.chapter_ids():
 		_check(menu.get_chapter_status_text(id) == "已通关",
 			"%s row reads 已通关" % id, menu.get_chapter_status_text(id))
