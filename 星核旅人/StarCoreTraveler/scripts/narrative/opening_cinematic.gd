@@ -14,7 +14,7 @@ extends Node
 ##   0.0-1.95 pure black, no lit pixel at all; low rumble + debris, shake <= 2 px
 ##   2.5-3.1  warm 3x3 embers fade in (lower-middle band, slow upward drift)
 ##   2.5-5.0  fade-in to the wide bridge courtyard, cold sky, clouds running
-##   5.0-8.0  player staggers in from the right edge, stops, looks around
+##   5.0-8.0  player staggers in from the left edge, stops, looks around
 ##   8.0-9.25 camera pushes to 1.7x on the stele and player; 9.25 touch
 ##   10.0-17.2 echo: whisper first, then a translucent projection and 3 pages
 ##   17.2-18.70 first star core travels from the stele to the player's chest
@@ -83,7 +83,7 @@ const HUD_FADE_DURATION: float = 0.25
 const STAND_DURATION: float = 0.25
 const HANDOFF_TIME: float = 20.40
 
-const ENTRY_POSITION: Vector2 = Vector2(656.0, 300.0)
+const ENTRY_POSITION: Vector2 = Vector2(-16.0, 300.0)
 const HANDOFF_X: float = 286.0
 ## Pages wait for F.  If the reader takes longer than the scripted page window,
 ## the film holds just before the core beat so the final camera/HUD hand-off is
@@ -412,7 +412,7 @@ func start() -> bool:
 	_player.set_physics_process(true)
 	_player.begin_input_override()
 	_player.set_input_override_axis(0.0, false)
-	_player.set_facing_direction(-1)
+	_player.set_facing_direction(1)
 	_player.clear_input_buffers()
 	_player.begin_input_override()
 	_player.set_input_override_axis(0.0, false)
@@ -537,31 +537,31 @@ func _drive_player(time: float) -> void:
 		_player.set_input_override_axis(0.0, false)
 		return
 	if time < 5.90:
-		_player.set_input_override_axis(-1.0, true)
+		_player.set_input_override_axis(1.0, true)
 		return
 	if time < 6.10:
 		_player.set_input_override_axis(0.0, false)
 		return
 	if time < 7.00:
-		_player.set_input_override_axis(-1.0, true)
+		_player.set_input_override_axis(1.0, true)
 		return
 	if time < 7.20:
 		_player.set_input_override_axis(0.0, false)
 		return
 	if time < 7.55:
 		_player.set_input_override_axis(0.0, false)
-		# Two short beats: look right, then back toward the stele.
-		_player.set_facing_direction(1 if time < 7.38 else -1)
+		# Two short beats: look away from the stele, then back toward it.
+		_player.set_facing_direction(-1 if time < 7.38 else 1)
 		return
 	if time < 8.0:
-		if _player.global_position.x > HANDOFF_X + 12.0:
-			_player.set_input_override_axis(-1.0, true)
+		if _player.global_position.x < HANDOFF_X - 12.0:
+			_player.set_input_override_axis(1.0, true)
 		else:
 			_player.set_input_override_axis(0.0, false)
 		return
 	if time < 8.65:
-		if _player.global_position.x > HANDOFF_X + 2.0:
-			_player.set_input_override_axis(-1.0, false)
+		if _player.global_position.x < HANDOFF_X - 2.0:
+			_player.set_input_override_axis(1.0, false)
 		else:
 			_player.set_input_override_axis(0.0, false)
 		return

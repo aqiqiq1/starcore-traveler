@@ -30,7 +30,8 @@ const GATE_SHORT_HINT: String = "按 Q 换相"
 
 @export_range(2.0, 15.0, 0.05, "suffix:s") var intro_max_duration: float = 9.0
 ## Legacy safety cap for callers that inspect it. The opening itself hands off
-## at the local stop point (echo x - 32 px), never at the old IntroEnd x=100.
+## at the local stop point (HANDOFF_X = 286, just right of the stele), never at
+## the old IntroEnd x=100.
 ## Opening auto-run axis, paired with sprint: target speed = ratio * RUN_SPEED.
 ## The default 0.75 is 120 px/s, slower than the normal 160 px/s run, while the
 ## run animation, path, local hand-off and normal gameplay stay unchanged.
@@ -88,6 +89,7 @@ var _scene_leaving: bool = false
 var _footsteps: Node = null
 var _opening: OpeningCinematic = null
 var _mechanic_popup: MechanicPopup = null
+var _mechanic_teach: MechanicTeach = null
 ## The new opening plays once per Level01 instance. R and failure recovery
 ## never call the film again; a fresh new game is a fresh scene instance.
 var _opening_played: bool = false
@@ -141,6 +143,7 @@ func _ready() -> void:
 	_hud.return_to_menu_requested.connect(_return_to_main_menu)
 	_setup_pause_menu()
 	_setup_mechanic_popup()
+	_setup_mechanic_teach()
 	_setup_footsteps()
 	_setup_opening()
 
@@ -192,6 +195,7 @@ func _process(delta: float) -> void:
 		and not _scene_leaving
 	):
 		_tick_exit_gate_hint()
+		_tick_mechanic_teach()
 
 
 func _physics_process(_delta: float) -> void:
@@ -259,22 +263,50 @@ func _setup_mechanic_popup() -> void:
 	add_child(_mechanic_popup)
 
 
-## The first high-step/pit rune is the level's only early mechanism. It is the
-## same Q/rune force that later carries the player across the pit, so the
-## "borrow force" step is folded into this one entry rather than invented as a
-## separate mechanic.
+## The shared first-encounter teaching node.  It shows the registry summary
+## once through the existing event line and persists it; it owns no gameplay.
+func _setup_mechanic_teach() -> void:
+	_mechanic_teach = MechanicTeach.new()
+	_mechanic_teach.name = "MechanicTeach"
+	_mechanic_teach.show_line = func(text_value: String) -> void:
+		_hud.show_toast(text_value, 2.4)
+	_mechanic_teach.blocked_check = Callable(self, "_is_mechanic_teach_blocked")
+	add_child(_mechanic_teach)
+
+
+## The old chapter-fixed popup trigger for 相性 is disabled here; the rune
+## stones below own the first teaching request.  The popup node stays for the
+## shared UI tests, but it never opens a duplicate on its own.
 func _tick_mechanic_popup() -> void:
-	if _mechanic_popup == null or _mechanic_popup.is_open():
-		return
-	if _intro_active or _resetting or _scene_leaving:
-		return
-	if _player == null or not is_instance_valid(_player):
-		return
-	if _player.global_position.x >= 640.0:
-		_mechanic_popup.request("polarity")
+	pass
 
 
-func is_mechanic_popup_blocked() -> bool:
+func _tick_mechanic_teach() -> void:
+	if _mechanic_teach == null or _player == null or not is_instance_valid(_player):
+		return
+	if _intro_active or _resetting or _scene_leaving or _completed:
+		return
+	var player_position: Vector2 = _player.global_position
+	var facing: int = _player.get_facing()
+	# The first rune is where Q is actually needed.  Polarity (the key) is
+	# queued before the rune's push/pull rule so the two lines never stack.
+	for stone: RuneStoneField in _rune_stones:
+		if stone == null or not is_instance_valid(stone):
+			continue
+		if _mechanic_teach.observe_near(
+			"polarity", stone.global_position, player_position, facing, 64.0, 96.0
+		):
+			break
+	for stone: RuneStoneField in _rune_stones:
+		if stone == null or not is_instance_valid(stone):
+			continue
+		if _mechanic_teach.observe_near(
+			"rune", stone.global_position, player_position, facing, 64.0, 96.0
+		):
+			break
+
+
+func _is_mechanic_teach_blocked() -> bool:
 	if get_tree().paused:
 		return true
 	if _completed or _intro_active or _resetting or _scene_leaving:
@@ -282,6 +314,11 @@ func is_mechanic_popup_blocked() -> bool:
 	if _menu != null and _menu.is_gameplay_blocked():
 		return true
 	if _pause_menu != null and _pause_menu.has_method("is_open") and bool(_pause_menu.call("is_open")):
+		return true
+	if _mechanic_popup != null and _mechanic_popup.is_open():
+		return true
+	if _pause_menu != null and _pause_menu.has_method("is_manual_open") \
+			and bool(_pause_menu.call("is_manual_open")):
 		return true
 	if is_instance_valid(_narrative_guide) and _narrative_guide.is_dialogue_open():
 		return true
@@ -563,6 +600,14 @@ func get_mechanic_popup() -> MechanicPopup:
 	return _mechanic_popup
 
 
+func get_mechanic_teach() -> MechanicTeach:
+	return _mechanic_teach
+
+
+func is_mechanic_popup_blocked() -> bool:
+	return _is_mechanic_teach_blocked()
+
+
 func get_pause_menu() -> Node:
 	return _pause_menu
 
@@ -652,7 +697,9 @@ func _tick_exit_gate_hint() -> void:
 		distance, can_show and facing_toward, Time.get_ticks_msec()
 	):
 		_exit_gate_short_pending = true
-		_hud.show_toast(GATE_FULL_HINT, 2.4)
+		# Registry copy is the single source of the full door lesson.
+		if _mechanic_teach != null:
+			_mechanic_teach.request("gate")
 
 
 ## The exit-side polarity gate only reads the player's phase.  Contact never
@@ -678,7 +725,9 @@ func _on_checkpoint_entered(checkpoint: LevelCheckpoint) -> void:
 	_player.set_spawn_point(_checkpoint_position)
 	checkpoint.set_activated(true)
 	DemoAudio.play_record_save()
-	_hud.show_toast("恢复点已激活", 1.4)
+	var taught: bool = _mechanic_teach != null and _mechanic_teach.request("checkpoint")
+	if not taught:
+		_hud.show_toast("恢复点已激活", 1.4)
 
 
 func _on_exit_reached() -> void:

@@ -14,6 +14,8 @@ $tests = "dlc/rift_workshop/tests"
 $summary = @()
 
 function Invoke-Case([string]$name, [string]$scene, [string]$logName, [bool]$strict) {
+    $env:STAR_CORE_MECHANIC_PROGRESS = Join-Path $env:TEMP ("starcore_mechanic_rift_" + $logName + ".cfg")
+    Remove-Item $env:STAR_CORE_MECHANIC_PROGRESS -ErrorAction SilentlyContinue
     $out = & $Godot --headless --path . $scene 2>&1
     $code = $LASTEXITCODE
     $out | Set-Content -Path (Join-Path $tests "$logName.log") -Encoding UTF8
@@ -26,6 +28,8 @@ function Invoke-Case([string]$name, [string]$scene, [string]$logName, [bool]$str
 }
 
 function Invoke-Smoke([string]$name, [string]$scene, [string]$logName) {
+    $env:STAR_CORE_MECHANIC_PROGRESS = Join-Path $env:TEMP ("starcore_mechanic_rift_" + $logName + ".cfg")
+    Remove-Item $env:STAR_CORE_MECHANIC_PROGRESS -ErrorAction SilentlyContinue
     $out = & $Godot --headless --path . $scene --quit-after 90 2>&1
     $code = $LASTEXITCODE
     $out | Set-Content -Path (Join-Path $tests "$logName.log") -Encoding UTF8
@@ -41,6 +45,8 @@ function Invoke-CleanSmoke([string]$name, [string]$scene, [string]$levelKey, [st
     # Base levels: same 90-frame load/run, plus a teardown that releases the
     # new title BGM before quit (the raw --quit-after path leaves the OGG
     # playback alive and the engine reports a false resource-leak ERROR).
+    $env:STAR_CORE_MECHANIC_PROGRESS = Join-Path $env:TEMP ("starcore_mechanic_rift_" + $logName + ".cfg")
+    Remove-Item $env:STAR_CORE_MECHANIC_PROGRESS -ErrorAction SilentlyContinue
     $out = & $Godot --headless --path . $scene -- $levelKey 2>&1
     $code = $LASTEXITCODE
     $out | Set-Content -Path (Join-Path $tests "$logName.log") -Encoding UTF8
@@ -59,6 +65,7 @@ if (-not (Test-Path $Godot)) {
 $summary += Invoke-Case "rift_intro" "res://dlc/rift_workshop/tests/intro_test.tscn" "intro_test" $true
 $summary += Invoke-Case "rift_mech" "res://dlc/rift_workshop/tests/mechanics_test.tscn" "mechanics_test" $true
 $summary += Invoke-Case "rift_boss_v2" "res://dlc/rift_workshop/tests/boss_v2_test.tscn" "boss_v2_test" $true
+$summary += Invoke-Case "rift_mirror" "res://dlc/rift_workshop/tests/mirror_pass_test.tscn" "mirror_pass_test" $true
 $summary += Invoke-Case "rift_route" "res://dlc/rift_workshop/tests/route_test.tscn" "route_test" $true
 $summary += Invoke-Case "rift_polish" "res://dlc/rift_workshop/tests/polish_test.tscn" "polish_test" $true
 $summary += Invoke-Case "rift_parity" "res://dlc/rift_workshop/tests/parity_test.tscn" "parity_test" $true

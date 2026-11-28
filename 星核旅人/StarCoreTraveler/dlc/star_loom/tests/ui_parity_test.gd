@@ -471,30 +471,38 @@ func _run() -> void:
 	_check(hud.get_pause_controls_button().text == "操作"
 		and hud.get_pause_controls_button().variant == PixelMenuButton.Variant.OPTION,
 		"pause button 5 is 操作 / OPTION")
+	_check(hud.get_manual_button().text == "手册"
+		and hud.get_manual_button().variant == PixelMenuButton.Variant.OPTION,
+		"pause button 6 is 手册 / OPTION")
 	var pause_buttons: Array[PixelMenuButton] = [
 		hud.get_continue_button(), hud.get_restart_button(),
 		hud.get_title_button(), hud.get_quit_button(),
-		hud.get_pause_controls_button(),
+		hud.get_pause_controls_button(), hud.get_manual_button(),
 	]
 	var pause_positions: Array[Vector2] = [
 		Vector2(76.0, 56.0), Vector2(76.0, 90.0),
 		Vector2(76.0, 124.0), Vector2(76.0, 158.0),
-		Vector2(76.0, 192.0),
+		Vector2(76.0, 192.0), Vector2(184.0, 192.0),
+	]
+	var pause_sizes: Array[Vector2] = [
+		Vector2(208.0, 24.0), Vector2(208.0, 24.0),
+		Vector2(208.0, 24.0), Vector2(208.0, 24.0),
+		Vector2(100.0, 24.0), Vector2(100.0, 24.0),
 	]
 	var pause_layout_ok: bool = true
 	for index: int in range(pause_buttons.size()):
 		var button: PixelMenuButton = pause_buttons[index]
-		if button.size != Vector2(208.0, 24.0) or button.position != pause_positions[index]:
+		if button.size != pause_sizes[index] or button.position != pause_positions[index]:
 			pause_layout_ok = false
 	_check(pause_layout_ok,
-		"pause buttons are 208x24 at x=76 / y=56,90,124,158,192")
+		"pause buttons keep the four full rows and split 操作/手册 on the last row")
 	var pause_ring_ok: bool = true
 	for index: int in range(pause_buttons.size()):
 		var current: PixelMenuButton = pause_buttons[index]
 		var next_button: PixelMenuButton = pause_buttons[(index + 1) % pause_buttons.size()]
 		if current.get_node(current.focus_next) != next_button:
 			pause_ring_ok = false
-	_check(pause_ring_ok, "the pause page has a five-item focus ring")
+	_check(pause_ring_ok, "the pause page has a six-item focus ring")
 	_check(hud.get_continue_button().has_focus(),
 		"pause focus starts on 继续游戏")
 	_check(hud.resume_requested.is_connected(Callable(_loom, "_on_hud_resume_requested")),

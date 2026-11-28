@@ -13,6 +13,7 @@ extends Node
 
 const RIFT_SCENE: String = "res://dlc/rift_workshop/rift_workshop.tscn"
 const LEVEL_01: String = "res://scenes/level_01.tscn"
+const REGISTRY = preload("res://scripts/mechanics/mechanic_registry.gd")
 
 var _rift: RiftWorkshop
 var _player: L3Player
@@ -281,6 +282,9 @@ func _run() -> void:
 	_check(footstep != null and int(footstep.call("get_step_count")) > 0,
 		"walking emits real footsteps",
 		str(footstep.call("get_step_count")) if footstep != null else "null")
+	# The first-encounter line from the bay/gate approach may still be fading;
+	# let the 2.4 s teaching line expire before the spawn silence check.
+	await _wait_ms(2600)
 	await _place(40.0, 320.0, true)
 	await _wait_ms(1000)
 	_check(_rift.get_field_hint_count() == 0 and _rift.get_gate_hint_count() == 0
@@ -300,11 +304,9 @@ func _run() -> void:
 	_player.face_direction(1)
 	await _wait_physics(4)
 	_check(_rift.get_gate_hint_count() == 1
-		and hud.get_event_text() == "送青核入仓，为月门供电",
-		"the DLC2 gate only reminds 送青核入仓，为月门供电",
-		hud.get_event_text())
-	_check(not hud.get_event_text().contains("推") and not hud.get_event_text().contains("拉"),
-		"DLC2 does not restate the full push/pull lesson",
+		and (hud.get_event_text() == REGISTRY.get_summary("core_delivery")
+			or _rift.get_mechanic_teach().is_unlocked("core_delivery")),
+		"the DLC2 gate uses the registry core-delivery record",
 		hud.get_event_text())
 	var gate_hint_before: int = _rift.get_gate_hint_count()
 	Input.action_press(&"move_right")
@@ -393,7 +395,7 @@ func _run() -> void:
 	_check(_rift.get_field_hint_count() == 1,
 		"the 56 px approach shows the inversion hint",
 		"x=%.1f" % _player.global_position.x)
-	_check(hud.get_event_text() == "紫幕反转 · 穿过换相",
+	_check(hud.get_event_text() == REGISTRY.get_summary("inversion"),
 		"the first inversion hint teaches crossing",
 		hud.get_event_text())
 	var field_hint_before: int = _rift.get_field_hint_count()

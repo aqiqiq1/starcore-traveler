@@ -129,6 +129,7 @@ var _intro_skipped: bool = false
 var _post_intro_guide_pending: bool = false
 var _post_intro_guide_left: float = 0.0
 var _mechanic_popup: MechanicPopup = null
+var _mechanic_teach: MechanicTeach = null
 var _gate_gold_passed: bool = false
 var _gate_cyan_passed: bool = false
 var _prev_player_x: float = START_SPAWN.x
@@ -214,6 +215,12 @@ func _ready() -> void:
 	_mechanic_popup.level_node = self
 	_mechanic_popup.opened.connect(_on_mechanic_popup_opened)
 	add_child(_mechanic_popup)
+	_mechanic_teach = MechanicTeach.new()
+	_mechanic_teach.name = "MechanicTeach"
+	_mechanic_teach.show_line = func(text_value: String) -> void:
+		_hud.show_event(text_value, 2.4)
+	_mechanic_teach.blocked_check = Callable(self, "_is_mechanic_teach_blocked")
+	add_child(_mechanic_teach)
 
 	_prev_player_x = _player.global_position.x
 	_camera.reset_smoothing()
@@ -403,7 +410,9 @@ func _physics_process(delta: float) -> void:
 	if not _arena_entered and _player.global_position.x >= ARENA_ENTER_X:
 		_arena_entered = true
 		_guard.set_suspended(false)
-		_hud.show_event("守卫苏醒", 1.8)
+		var taught: bool = _mechanic_teach != null and _mechanic_teach.request("guard")
+		if not taught:
+			_hud.show_event("守卫苏醒", 1.8)
 		DemoAudio.play_record_save()
 	_apply_guard_force()
 	_update_objective()
@@ -422,6 +431,7 @@ func _process(delta: float) -> void:
 		_elapsed += delta
 	_advance_recovery(delta)
 	_tick_mechanic_popups()
+	_tick_mechanic_teach()
 	if _finish_core != null:
 		_finish_time += delta
 		_finish_core.frame = int(_finish_time * 10.0) % 12
@@ -456,6 +466,39 @@ func _track_gate_progress() -> void:
 ## One teaching popup at a time.  Only real combat events open one now: the gate
 ## itself teaches through its sun/moon lock and the Q keycap, and the old
 ## text popup at the first gate has been removed.
+## First-encounter line for the trial's two polarity gates, crystal and guard.
+## It uses the real gate/crystal/guard objects, never a fixed chapter x.
+func _tick_mechanic_teach() -> void:
+	if _mechanic_teach == null or _player == null or not is_instance_valid(_player):
+		return
+	if _intro_active or _completed or _scene_leaving or _recovery_active:
+		return
+	var pos: Vector2 = _player.global_position
+	var facing: int = _player.get_facing()
+	for gate: PolarityGate in [_gate_gold, _gate_cyan]:
+		if gate == null or not is_instance_valid(gate):
+			continue
+		_mechanic_teach.observe_near("gate", gate.global_position, pos, facing, 56.0, 72.0, true)
+	if _crystal != null and is_instance_valid(_crystal):
+		_mechanic_teach.observe_near("polarity", _crystal.global_position, pos, facing, 56.0, 72.0)
+	if _guard != null and is_instance_valid(_guard) and not _guard.is_defeated():
+		_mechanic_teach.observe_near("guard", _guard.global_position, pos, facing, 140.0, 120.0)
+
+
+func _is_mechanic_teach_blocked() -> bool:
+	if get_tree().paused:
+		return true
+	if _completed or _scene_leaving or _recovery_active or _retry_pending:
+		return true
+	if _pause_open or _intro_active:
+		return true
+	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
+		return true
+	if _mechanic_popup != null and is_instance_valid(_mechanic_popup) and _mechanic_popup.is_open():
+		return true
+	return false
+
+
 func _tick_mechanic_popups() -> void:
 	if not show_mechanic_tips:
 		return
@@ -1092,6 +1135,10 @@ func was_intro_skipped() -> bool:
 
 func get_mechanic_popup() -> MechanicPopup:
 	return _mechanic_popup
+
+
+func get_mechanic_teach() -> MechanicTeach:
+	return _mechanic_teach
 
 
 func has_gate_gold_passed() -> bool:

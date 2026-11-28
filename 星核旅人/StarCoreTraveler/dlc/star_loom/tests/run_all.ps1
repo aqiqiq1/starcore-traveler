@@ -14,6 +14,8 @@ $tests = "dlc/star_loom/tests"
 $summary = @()
 
 function Invoke-Case([string]$name, [string]$scene, [string]$logName, [bool]$strict) {
+    $env:STAR_CORE_MECHANIC_PROGRESS = Join-Path $env:TEMP ("starcore_mechanic_loom_" + $logName + ".cfg")
+    Remove-Item $env:STAR_CORE_MECHANIC_PROGRESS -ErrorAction SilentlyContinue
     $out = & $Godot --headless --path . $scene 2>&1
     $code = $LASTEXITCODE
     $out | Set-Content -Path (Join-Path $tests "$logName.log") -Encoding UTF8
@@ -26,6 +28,8 @@ function Invoke-Case([string]$name, [string]$scene, [string]$logName, [bool]$str
 }
 
 function Invoke-Smoke([string]$name, [string]$scene, [string]$logName) {
+    $env:STAR_CORE_MECHANIC_PROGRESS = Join-Path $env:TEMP ("starcore_mechanic_loom_" + $logName + ".cfg")
+    Remove-Item $env:STAR_CORE_MECHANIC_PROGRESS -ErrorAction SilentlyContinue
     $out = & $Godot --headless --path . $scene --quit-after 90 2>&1
     $code = $LASTEXITCODE
     $out | Set-Content -Path (Join-Path $tests "$logName.log") -Encoding UTF8
@@ -38,6 +42,8 @@ function Invoke-Smoke([string]$name, [string]$scene, [string]$logName) {
 }
 
 function Invoke-CleanSmoke([string]$name, [string]$scene, [string]$key, [string]$logName) {
+    $env:STAR_CORE_MECHANIC_PROGRESS = Join-Path $env:TEMP ("starcore_mechanic_loom_" + $logName + ".cfg")
+    Remove-Item $env:STAR_CORE_MECHANIC_PROGRESS -ErrorAction SilentlyContinue
     $out = & $Godot --headless --path . $scene -- $key 2>&1
     $code = $LASTEXITCODE
     $out | Set-Content -Path (Join-Path $tests "$logName.log") -Encoding UTF8

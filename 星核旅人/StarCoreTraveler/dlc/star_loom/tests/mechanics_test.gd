@@ -18,6 +18,8 @@ extends Node
 ## J key -> attack_hit_window -> phase comparison path, and every player hit
 ## goes through L3Player.receive_enemy_strike().
 
+const REGISTRY = preload("res://scripts/mechanics/mechanic_registry.gd")
+
 const LOOM_SCENE: String = "res://dlc/star_loom/star_loom.tscn"
 const LEVEL_01: String = "res://scenes/level_01.tscn"
 
@@ -718,8 +720,8 @@ func _run() -> void:
 	_check(recovery_ended, "the recovery fade finishes")
 	if recovery_ended:
 		_check(_loom.get_hud().is_event_visible()
-			and _loom.get_hud().get_event_text() == "失败 · 从门前检查点恢复",
-			"failure row is 失败 · 从门前检查点恢复",
+			and _loom.get_hud().get_event_text() == REGISTRY.get_summary("lives"),
+			"first death teaches the registry lives line",
 			_loom.get_hud().get_event_text())
 		await _wait_physics(6)
 		_check(_loom.get_stage() == 2,

@@ -84,6 +84,7 @@ var _special_wall_unlocked: bool = false
 ## cancelled by restart.
 var _record_save_token: int = 0
 var _mechanic_popup: MechanicPopup = null
+var _mechanic_teach: MechanicTeach = null
 
 
 func _ready() -> void:
@@ -143,6 +144,7 @@ func _ready() -> void:
 		get_window().focus_entered.connect(_on_window_focus_entered)
 	_setup_pause_menu()
 	_setup_mechanic_popup()
+	_setup_mechanic_teach()
 	_camera.reset_smoothing()
 	_update_level_hud()
 	_setup_footsteps()
@@ -281,7 +283,7 @@ func _physics_process(delta: float) -> void:
 			_conductive_activation.clear_force_target()
 	else:
 		_notify_force_visual()
-		_tick_mechanic_popup()
+		_tick_mechanic_teach()
 
 
 ## Presentation only: hand this tick's real shared-field result to the layered
@@ -353,22 +355,66 @@ func _setup_mechanic_popup() -> void:
 	add_child(_mechanic_popup)
 
 
+## The old chapter-x popup triggers for core carry and relay link are disabled;
+## the shared MechanicTeach now requests the registry copy from the real bays
+## and rune field.  The popup node stays instantiated for the shared UI tests.
+func _setup_mechanic_teach() -> void:
+	_mechanic_teach = MechanicTeach.new()
+	_mechanic_teach.name = "MechanicTeach"
+	_mechanic_teach.show_line = func(text_value: String) -> void:
+		_hud02.show_toast(text_value, 2.4)
+	_mechanic_teach.blocked_check = Callable(self, "_is_mechanic_teach_blocked")
+	add_child(_mechanic_teach)
+
+
 func _tick_mechanic_popup() -> void:
-	if _mechanic_popup == null or _mechanic_popup.is_open():
+	pass
+
+
+func _tick_mechanic_teach() -> void:
+	if _mechanic_teach == null or _player == null or not is_instance_valid(_player):
 		return
-	if _player == null or not is_instance_valid(_player):
+	if _completed or _resetting or _scene_leaving or _next_level_started:
 		return
-	var player_x: float = _player.global_position.x
-	# Start bay is at x=128 with a 46 px E radius (first E at x=82), so 78 is
-	# just before the first core action, not on spawn.
-	if _stable_stage == STABLE_START and player_x >= 78.0:
-		_mechanic_popup.request("core_carry")
-	# The relay unlock happens at the real relay store (player x<=398). The
-	# special ConductiveRoof starts at x=464; trigger at 420 so the tip opens
-	# before the player can step onto it. No upper bound: if paused/dialogue
-	# blocks it, later ticks keep requesting until it has been seen.
-	if _special_wall_unlocked and _stable_stage >= STABLE_RELAY and player_x >= 420.0:
-		_mechanic_popup.request("relay_link")
+	var player_position: Vector2 = _player.global_position
+	var facing: int = _player.get_facing()
+	for bay: StarCoreBayInteractable in _all_bays:
+		if bay == null or not is_instance_valid(bay):
+			continue
+		if _mechanic_teach.observe_near(
+			"core_delivery", bay.global_position, player_position, facing, 56.0, 72.0
+		):
+			break
+	if _linked_bay != null and is_instance_valid(_linked_bay):
+		_mechanic_teach.observe_near(
+			"bay", _linked_bay.global_position, player_position, facing, 56.0, 72.0
+		)
+	if _rune_field != null and is_instance_valid(_rune_field):
+		_mechanic_teach.observe_near(
+			"polarity", _rune_field.global_position, player_position, facing, 72.0, 120.0
+		)
+		_mechanic_teach.observe_near(
+			"rune", _rune_field.global_position, player_position, facing, 72.0, 120.0
+		)
+
+
+func _is_mechanic_teach_blocked() -> bool:
+	if get_tree().paused:
+		return true
+	if _completed or _resetting or _scene_leaving or _next_level_started:
+		return true
+	if _pause_menu != null and _pause_menu.has_method("is_open") and bool(_pause_menu.call("is_open")):
+		return true
+	if _pause_menu != null and _pause_menu.has_method("is_manual_open") \
+			and bool(_pause_menu.call("is_manual_open")):
+		return true
+	if _mechanic_popup != null and _mechanic_popup.is_open():
+		return true
+	if _stele != null and _stele.is_dialogue_open():
+		return true
+	if _pending_release or _store_bay != null:
+		return true
+	return false
 
 
 func is_mechanic_popup_blocked() -> bool:
@@ -377,6 +423,9 @@ func is_mechanic_popup_blocked() -> bool:
 	if _completed or _resetting or _scene_leaving or _next_level_started:
 		return true
 	if _pause_menu != null and _pause_menu.has_method("is_open") and bool(_pause_menu.call("is_open")):
+		return true
+	if _pause_menu != null and _pause_menu.has_method("is_manual_open") \
+			and bool(_pause_menu.call("is_manual_open")):
 		return true
 	if _stele != null and _stele.is_dialogue_open():
 		return true
@@ -389,6 +438,10 @@ func is_mechanic_popup_blocked() -> bool:
 
 func get_mechanic_popup() -> MechanicPopup:
 	return _mechanic_popup
+
+
+func get_mechanic_teach() -> MechanicTeach:
+	return _mechanic_teach
 
 
 func _on_pause_opened() -> void:
@@ -630,6 +683,8 @@ func _set_stable(stage: int, positive: bool) -> void:
 		return
 	_stable_stage = stage
 	_stable_positive = positive
+	if stage >= STABLE_RELAY and _mechanic_teach != null:
+		_mechanic_teach.request("checkpoint")
 	if _relay_checkpoint != null:
 		_relay_checkpoint.set_activated(stage >= STABLE_RELAY)
 	if _linked_checkpoint != null:

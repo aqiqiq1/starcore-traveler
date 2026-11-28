@@ -5,8 +5,8 @@ extends Node
 ##   - DLC2 / DLC3 delivered cores carry the cyan 澜相 sheet of the moon gate
 ##     they power, independent of the player's Q;
 ##   - the L3 floating-platform device shows the new 12-frame core sheets;
-##   - the shared completion gate emblem exists at 32x32 and is not a guard
-##     core or a star core.
+##   - the shared completion double-mirror emblem is the 32x32 mirror art and
+##     is not a guard core, a star core or the retired gate emblem.
 ##
 ## Run:
 ##   Godot_v4.7.2-stable_win64_console.exe --headless --path . \
@@ -16,7 +16,6 @@ const BASE_CARRIER: String = "res://scenes/star_core_carrier.tscn"
 const LOOM: String = "res://dlc/star_loom/star_loom.tscn"
 const RIFT: String = "res://dlc/rift_workshop/rift_workshop.tscn"
 const LEVEL_03: String = "res://scenes/level_03.tscn"
-const EMBLEM_PATH: String = "res://assets/ui/icons/completion_gate_emblem_32.png"
 const POSITIVE_SHEET: String = "res://assets/star_core/star_core_positive_12f.png"
 const NEGATIVE_SHEET: String = "res://assets/star_core/star_core_negative_12f.png"
 const LOCKED_SHEET: String = "res://assets/star_core/star_core_locked_12f.png"
@@ -188,21 +187,15 @@ func _check_fixed_device() -> void:
 
 
 func _check_emblem() -> void:
-	var texture: Texture2D = load(EMBLEM_PATH) as Texture2D
-	_check(texture != null, "completion gate emblem loads")
-	if texture != null:
-		_check(texture.get_size() == Vector2(32.0, 32.0),
-			"completion gate emblem is 32x32",
-			str(texture.get_size()))
 	var script: Script = load("res://scripts/ui/completion_emblem.gd") as Script
 	_check(script != null, "completion emblem script loads")
 	var emblem: CompletionEmblem = CompletionEmblem.new()
 	add_child(emblem)
 	await _wait_process(1)
-	_check(emblem.get_texture_path() == EMBLEM_PATH,
-		"completion emblem points at the dedicated gate art",
-		emblem.get_texture_path())
-	_check(emblem.is_dedicated_emblem(),
+	_check(emblem.get_art_id() == CompletionEmblem.ART_ID,
+		"completion emblem is the dedicated double-mirror art",
+		emblem.get_art_id())
+	_check(emblem.has_mirror_art() and emblem.is_dedicated_emblem(),
 		"completion emblem is not a guard core and not a star core")
 	_check(emblem.size == CompletionEmblem.ICON_SIZE,
 		"completion emblem is shown at 32x32",

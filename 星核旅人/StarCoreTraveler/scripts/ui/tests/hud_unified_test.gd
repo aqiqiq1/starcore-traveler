@@ -162,14 +162,14 @@ func _test_dlc(path: String, tag: String, boss_name: String) -> void:
 		if hud.has_method("get_player_health_bar")
 		else hud.call("get_hit_pips") as PlayerHealthBar
 	)
-	_check_health_bar(health, tag, 3 if tag == "loom" else 2)
+	_check_health_bar(health, tag, 3 if tag in ["loom", "rift"] else 2)
 
 	var boss: HudBossBar
 	if tag == "rift":
 		boss = hud.call("get_boss_status") as HudBossBar
 	else:
 		boss = hud.call("get_boss_bar") as HudBossBar
-	_check_boss_bar(boss, tag, boss_name, tag == "loom")
+	_check_boss_bar(boss, tag, boss_name, tag in ["loom", "rift"])
 	if boss != null:
 		_check(not boss.is_bar_visible(), tag + " boss bar starts hidden")
 		if tag == "trial":
@@ -327,7 +327,7 @@ func _check_boss_bar(bar: HudBossBar, tag: String, expected_name: String, hearts
 	_check(bar.get_node_or_null("AffinityText") == null,
 		tag + " boss bar has no separate affinity text")
 	_check(bar.is_lives_visible() == hearts,
-		tag + " life hearts visible only on the loom", str(bar.is_lives_visible()))
+		tag + " life hearts follow the DLC boss bar", str(bar.is_lives_visible()))
 	_check(not bar.has_core_diamonds() and bar.get_core_diamond_count() == 0,
 		tag + " boss bar has no core diamond row",
 		str(bar.get_core_diamond_count()))

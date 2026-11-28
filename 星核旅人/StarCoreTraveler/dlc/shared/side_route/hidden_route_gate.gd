@@ -103,8 +103,30 @@ func try_enter() -> bool:
 
 
 func _begin_route() -> bool:
+	if _entering:
+		return false
+	if not ResourceLoader.exists(scene_path):
+		_show_hint("支线场景缺失 · 暂时无法进入", 2.0)
+		return false
+	_entering = true
+	# Subclasses may own a short in-world transition (walk + fade).  When they
+	# return true they are responsible for calling _commit_route() when their
+	# presentation has actually reached the cut.
+	if _start_enter_presentation():
+		return true
+	_commit_route()
+	return true
+
+
+## The real scene change, separated from the trigger so a subclass can hold it
+## behind a walk/fade.  Returns true only when the side route really started.
+func _commit_route() -> bool:
+	if _player == null or not is_instance_valid(_player):
+		_fail_route()
+		return false
 	var tree: SceneTree = get_tree()
 	if tree == null:
+		_fail_route()
 		return false
 	var parent: Node = get_parent()
 	var return_position: Vector2 = _player.global_position
@@ -123,10 +145,29 @@ func _begin_route() -> bool:
 	)
 	if error != OK:
 		_show_hint("支线场景缺失 · 暂时无法进入", 2.0)
+		_entering = false
 		return false
-	_entering = true
+	_on_route_committed()
 	route_entered.emit(target_id)
 	return true
+
+
+func _fail_route() -> void:
+	_entering = false
+	_show_hint("支线场景缺失 · 暂时无法进入", 2.0)
+
+
+## Subclasses with an in-world transition override this.  Return true when the
+## route is being presented and _commit_route() will follow; return false for
+## the original immediate scene change.
+func _start_enter_presentation() -> bool:
+	return false
+
+
+## Called once the real scene change has been accepted.  A fade cover can snap
+## its last pixel here so the outgoing frame is exactly black.
+func _on_route_committed() -> void:
+	pass
 
 
 func set_chapter_progress_path(path: String) -> void:

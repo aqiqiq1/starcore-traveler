@@ -14,6 +14,8 @@ $tests = "scripts/ui/tests"
 $summary = @()
 
 function Invoke-Case([string]$name, [string]$scene, [string]$logName) {
+    $env:STAR_CORE_MECHANIC_PROGRESS = Join-Path $env:TEMP ("starcore_mechanic_ui_" + $logName + ".cfg")
+    Remove-Item $env:STAR_CORE_MECHANIC_PROGRESS -ErrorAction SilentlyContinue
     $out = & $Godot --headless --path . $scene 2>&1
     $code = $LASTEXITCODE
     $out | Set-Content -Path (Join-Path $tests "$logName.log") -Encoding UTF8
@@ -36,6 +38,7 @@ $summary += Invoke-Case "completion_reveal" "res://scripts/ui/tests/completion_r
 $summary += Invoke-Case "prompt_footer" "res://scripts/ui/tests/prompt_footer_test.tscn" "prompt_footer_test"
 $summary += Invoke-Case "level03_health" "res://scripts/level03/tests/health_bar_test.tscn" "health_bar_test"
 $summary += Invoke-Case "pause_completion" "res://scripts/ui/tests/pause_completion_alignment_test.tscn" "pause_completion_alignment_test"
+$summary += Invoke-Case "mechanic_manual" "res://scripts/ui/tests/mechanic_manual_test.tscn" "mechanic_manual_test"
 
 Write-Host ""
 Write-Host "SHARED_UI_RUN_ALL"

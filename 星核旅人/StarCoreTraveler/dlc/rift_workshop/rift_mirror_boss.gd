@@ -227,6 +227,9 @@ var _core_hit_flash: float = 0.0
 var _phase_flash: float = 0.0
 var _bursts: Array[Dictionary] = []
 var _defeat_time: float = 0.0
+## Child node: the last-0.25 s defeat pop is the mirror's own disc, not a
+## full-screen white rectangle.
+var _defeat_flash: RiftDefeatFlash = null
 var _transition_started_msec: int = 0
 var _last_transition_ms: int = 0
 var _wave_warning_draws: int = 0
@@ -271,9 +274,19 @@ func _ready() -> void:
 	# core flashes, defeat) stays above the plates.  Player is raised to z=6.
 	z_index = 5
 	_build_sprites()
+	_build_defeat_flash()
 	_resolve_player()
 	_update_face_visuals()
 	queue_redraw()
+
+
+func _build_defeat_flash() -> void:
+	_defeat_flash = RiftDefeatFlash.new()
+	_defeat_flash.name = "DefeatFlash"
+	# Above the plates, core effects and the player (z=6) so the pop is the
+	# last light in the arena; still local to the boss origin.
+	_defeat_flash.z_index = 3
+	add_child(_defeat_flash)
 
 
 func _build_sprites() -> void:
@@ -359,6 +372,12 @@ func _process(delta: float) -> void:
 	_tick_homing(delta)
 	if _defeated:
 		_defeat_time += delta
+		if (
+			_defeat_flash != null
+			and not _defeat_flash.is_playing()
+			and _defeat_time >= DEFEAT_COLLAPSE_TIME - RiftDefeatFlash.FLASH_TIME
+		):
+			_defeat_flash.play()
 		if not _collapse_finished and _defeat_time >= DEFEAT_COLLAPSE_TIME:
 			_finish_collapse()
 		queue_redraw()
@@ -575,6 +594,8 @@ func reset_full() -> void:
 	_last_swing_id = -1
 	_last_result = {}
 	_defeat_time = 0.0
+	if _defeat_flash != null:
+		_defeat_flash.reset()
 	_transition_started_msec = 0
 	_last_transition_ms = 0
 	_wave_warning_draws = 0
@@ -2061,22 +2082,8 @@ func _draw_defeat() -> void:
 	if t < 0.22:
 		draw_rect(Rect2(-64.0, -56.0, 128.0, 112.0),
 			Color(WHITE, 0.78 * (1.0 - t / 0.22)))
-	# Final white pop near the end of the 1.35 s collapse.
-	if t > 0.72:
-		var pop: float = sin((t - 0.72) / 0.28 * PI)
-		# Layered pixel glow: wide soft wash, then a brighter core band.  The
-		# steps avoid the hard rectangle seam of a single full-alpha square.
-		draw_rect(Rect2(-420.0, -300.0, 840.0, 600.0), Color(WHITE, 0.28 * pop))
-		draw_rect(Rect2(-240.0, -180.0, 480.0, 360.0), Color(WHITE, 0.40 * pop))
-		draw_rect(Rect2(-110.0, -80.0, 220.0, 160.0), Color(WHITE, 0.62 * pop))
-		for index: int in range(18):
-			var angle: float = float(index) * TAU / 18.0 + 0.1
-			var distance: float = 24.0 + 110.0 * pop
-			draw_rect(
-				Rect2(Vector2(cos(angle), sin(angle)) * distance - Vector2(1.0, 1.0),
-					Vector2(2.0, 2.0)),
-				Color(PURPLE_PALE if index % 2 == 0 else GOLD_PALE, 0.86 * pop)
-			)
+	# The final white pop is the DefeatFlash child: a 124x108 ellipse that
+	# contracts in 0.25 s.  No full-screen rectangle is drawn here.
 
 
 # --- read API (HUD / tests / capture) --------------------------------------
@@ -2107,6 +2114,10 @@ func get_defeat_collapse_time() -> float:
 
 func get_defeat_time() -> float:
 	return _defeat_time
+
+
+func get_defeat_flash() -> RiftDefeatFlash:
+	return _defeat_flash
 
 
 func get_form_transition_time() -> float:

@@ -345,8 +345,12 @@ func _run() -> void:
 		"quit button text is 退出游戏")
 	_check(hud.get_pause_controls_button().text == "操作",
 		"controls button text is 操作")
+	_check(hud.get_manual_button().text == "手册",
+		"manual button text is 手册")
 	_check(not hud.get_pause_controls_button().pressed.get_connections().is_empty(),
 		"操作 button opens the in-panel table")
+	_check(not hud.get_manual_button().pressed.get_connections().is_empty(),
+		"手册 button opens the manual")
 	_check(not hud.get_quit_button().pressed.get_connections().is_empty()
 		and not hud.get_signal_connection_list("quit_requested").is_empty(),
 		"quit button is wired to the chapter quit handler")
@@ -356,8 +360,9 @@ func _run() -> void:
 	_check(hud.get_restart_button().position == Vector2(76.0, 90.0)
 		and hud.get_title_button().position == Vector2(76.0, 124.0)
 		and hud.get_quit_button().position == Vector2(76.0, 158.0)
-		and hud.get_pause_controls_button().position == Vector2(76.0, 192.0),
-		"pause rows step by 34 px")
+		and hud.get_pause_controls_button().position == Vector2(76.0, 192.0)
+		and hud.get_manual_button().position == Vector2(184.0, 192.0),
+		"pause rows step by 34 px and split the last row")
 	_check(hud.get_pause_note_text() == "返回主界面不保存本章进度",
 		"pause footnote is the base note", hud.get_pause_note_text())
 	_check(hud.get_continue_button().has_focus(),

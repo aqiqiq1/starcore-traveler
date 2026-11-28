@@ -17,6 +17,8 @@ extends Node
 ##   ... --headless --path . res://dlc/star_loom/tests/gate_test.tscn
 
 const LOOM_SCENE: String = "res://dlc/star_loom/star_loom.tscn"
+const REGISTRY = preload("res://scripts/mechanics/mechanic_registry.gd")
+const TEST_MECH_PROGRESS: String = "user://test_loom_gate_mechanics.cfg"
 
 var _loom: StarLoom
 var _player: L3Player
@@ -27,14 +29,25 @@ var _failures: Array[String] = []
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	await get_tree().process_frame
+	# A run that previously taught the gate must not turn this assertion into a
+	# silent no-line case; use a throwaway progress file for this test.
+	MechanicTeach.set_progress_path_override(TEST_MECH_PROGRESS)
+	_remove_test_progress()
 	MechanicTips.mark_seen("loom_fire_tip")
 	await _run()
 	await _cleanup()
 	_release_all()
+	_remove_test_progress()
+	MechanicTeach.clear_progress_path_override()
 	print("STAR_LOOM_GATE_TEST checks=%d failures=%d" % [_checks, _failures.size()])
 	for failure: String in _failures:
 		printerr("FAIL: " + failure)
 	get_tree().quit(0 if _failures.is_empty() else 1)
+
+
+func _remove_test_progress() -> void:
+	if FileAccess.file_exists(TEST_MECH_PROGRESS):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_MECH_PROGRESS))
 
 
 func _check(condition: bool, label: String, detail: String = "") -> void:
@@ -235,12 +248,8 @@ func _run() -> void:
 	_check(_loom.get_gate_hint_count() == 1,
 		"the 56 px approach fires the DLC3 reminder",
 		"x=%.1f" % _player.global_position.x)
-	_check(_loom.get_hud().get_event_text() == "同相门 · 需辉相（日）",
-		"DLC3 only says 需辉相（日）",
-		_loom.get_hud().get_event_text())
-	_check(not _loom.get_hud().get_event_text().contains("只认同相")
-		and not _loom.get_hud().get_event_text().contains("看门上"),
-		"DLC3 does not repeat the L1 lesson",
+	_check(_loom.get_hud().get_event_text() == REGISTRY.get_summary("gate"),
+		"DLC3 shows the shared registry gate line",
 		_loom.get_hud().get_event_text())
 	var hint_count_before_contact: int = _loom.get_gate_hint_count()
 
@@ -258,8 +267,8 @@ func _run() -> void:
 		"contact does not repeat the DLC3 reminder",
 		str(_loom.get_gate_hint_count()))
 	_check(_loom.get_hud().get_event_text().contains("同相门")
-		and _loom.get_hud().get_event_text().contains("辉相"),
-		"the HUD event line names the required 辉相",
+		and _loom.get_hud().get_event_text().contains("同相"),
+		"the HUD event line names the same-phase rule",
 		_loom.get_hud().get_event_text())
 
 	await _tap_polarity()

@@ -2,25 +2,29 @@ extends RefCounted
 
 ## Tiny, chapter-only progress store for the title's 章节 page.
 ##
-## It keeps six "completed" flags (one per chapter) plus two "discovered"
-## flags for the hidden side chapters.  Unlocking is derived from the
+## It keeps five "completed" flags (one per listed chapter) plus one
+## "discovered" flag for the hidden side chapter.  Unlocking is derived from the
 ## completion flags, never stored:
 ##   L1  always
 ##   L2  L1 complete        L3  L2 complete
 ##   loom (DLC3 / 4th) L3 complete
-##   trial (DLC1)      L1 complete
 ##   rift (DLC2)       L2 complete
 ##
+## 星核试炼场 (DLC1) is no longer a chapter-page row (2026-11-28).  Its scenes
+## and tests stay in the project and the chapter can still be launched directly,
+## but it has no row, no discovery write and no 开始游戏 target.  ID_TRIAL stays
+## exported only so the standalone trial scene can keep referring to its old id.
+##
 ## Visibility is separate from unlocking: the four mainline rows are always
-## part of the chapter page, while trial/rift stay hidden until their in-level
-## entrances have really been entered.  Discovery is written by the entrance,
+## part of the chapter page, while rift stays hidden until its in-level
+## entrance has really been entered.  Discovery is written by the entrance,
 ## not by completion, and never changes the unlock rule.
 ##
 ## A missing, unreadable or malformed file falls back to "nothing completed,
-## nothing discovered", which leaves only L1 open and hides the two side rows.
-## Older files that only contain the six completion booleans still load: their
-## discovery flags default to false.  Existing checkpoints/audio/display
-## settings are separate files and are never touched here.
+## nothing discovered", which leaves only L1 open and hides the side row.
+## Older files that contain the old six booleans still load: the extra trial
+## key is ignored.  Existing checkpoints/audio/display settings are separate
+## files and are never touched here.
 
 const DEFAULT_PATH: String = "user://chapter_progress.cfg"
 const SECTION: String = "chapters"
@@ -29,13 +33,15 @@ const ID_L1: String = "l1"
 const ID_L2: String = "l2"
 const ID_L3: String = "l3"
 const ID_LOOM: String = "loom"
+## Legacy standalone-scene id, intentionally not a chapter row.
 const ID_TRIAL: String = "trial"
 const ID_RIFT: String = "rift"
 
 const DISCOVERY_KEY_PREFIX: String = "discovered_"
-const SIDE_CHAPTERS: Array[String] = [ID_TRIAL, ID_RIFT]
+const SIDE_CHAPTERS: Array[String] = [ID_RIFT]
 
 ## Display order is also the "first unfinished chapter" order used by 开始游戏.
+## Exactly five rows: four mainline chapters plus the rift side chapter.
 const CHAPTERS: Array[Dictionary] = [
 	{
 		"id": ID_L1,
@@ -64,13 +70,6 @@ const CHAPTERS: Array[Dictionary] = [
 		"tag": "DLC3 · 第四关",
 		"path": "res://dlc/star_loom/star_loom.tscn",
 		"requires": ID_L3,
-	},
-	{
-		"id": ID_TRIAL,
-		"title": "星核试炼场",
-		"tag": "DLC1 · 支线",
-		"path": "res://dlc/trial_chambers/trial_chambers.tscn",
-		"requires": ID_L1,
 	},
 	{
 		"id": ID_RIFT,
@@ -146,9 +145,12 @@ static func is_side_chapter(id: String) -> bool:
 
 
 ## Mainline rows are always part of the page.  A side row appears only after
-## its in-level entrance has been entered; a legacy file therefore keeps both
-## side rows hidden until the player really finds them.
+## its in-level entrance has been entered; a legacy file therefore keeps the
+## side row hidden until the player really finds it.  An id that is not one of
+## the five listed chapters (for example the retired trial id) is never visible.
 static func is_discovered(id: String, completed: Dictionary) -> bool:
+	if get_chapter(id).is_empty():
+		return false
 	if not is_side_chapter(id):
 		return true
 	return bool(completed.get(discovery_key(id), false))

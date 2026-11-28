@@ -151,6 +151,32 @@ func _test_first_play_locks_and_finish() -> void:
 	_check(hud.get_player_health_bar().get_current() == hp,
 		"no damage during film")
 
+	# 2026-11-28 staging: the player now enters from the left edge and walks
+	# right toward the stele.  Sample the real driven player, not a pose.
+	var stele: GuideEcho = level.get_narrative_stele()
+	var stele_x: float = stele.global_position.x if stele != null else 250.0
+	var entry_start_x: float = player.global_position.x
+	_check(entry_start_x <= -8.0,
+		"opening starts off-screen on the left", str(entry_start_x))
+	_check(stele_x - entry_start_x >= 200.0,
+		"start is at least 200 px left of the stele",
+		"stele=%.1f start=%.1f" % [stele_x, entry_start_x])
+	while opening.get_elapsed() < 5.05 and opening.is_active():
+		await get_tree().process_frame
+	var entry_x_a: float = player.global_position.x
+	var entry_facing_ok: bool = true
+	while opening.get_elapsed() < 5.75 and opening.is_active():
+		if player.get_facing() != 1:
+			entry_facing_ok = false
+		await get_tree().process_frame
+	var entry_x_b: float = player.global_position.x
+	_check(entry_x_b > entry_x_a + 10.0,
+		"player enters from the left moving right",
+		"x %.1f -> %.1f" % [entry_x_a, entry_x_b])
+	_check(entry_facing_ok,
+		"player faces the stele while entering from the left",
+		str(player.get_facing()))
+
 	await _test_doubt_performance(opening, player)
 
 	# The echo must introduce herself by the project's existing display name on
@@ -215,8 +241,10 @@ func _test_first_play_locks_and_finish() -> void:
 		"player camera is current after film")
 	_check(not player.is_input_override_active(), "player override released")
 	_check(level.get_music().is_playing(), "music still playing after film")
-	_check(player.global_position.x > 240.0 and player.global_position.x < 340.0,
-		"player handed off beside the stele", str(player.global_position.x))
+	_check(player.global_position.x > 278.0 and player.global_position.x < 298.0,
+		"player stops in front of the stele", str(player.global_position.x))
+	_check(absf(player.global_position.x - stele_x) <= 48.0,
+		"hand-off stays beside the stele", str(player.global_position.x - stele_x))
 
 	var resumed_x: float = player.global_position.x
 	Input.action_press(&"move_right")
@@ -330,7 +358,7 @@ func _test_space_skip() -> void:
 	_check(not level.is_intro_active(), "space skip: release hands control back")
 	_check(not player.is_input_override_active(), "space skip: lock released")
 	_check(not opening.is_awaiting_release(), "space skip: await-release cleared")
-	_check(player.global_position.x > 240.0 and player.global_position.x < 340.0,
+	_check(player.global_position.x > 278.0 and player.global_position.x < 298.0,
 		"space skip: snapped to the stele", str(player.global_position.x))
 
 	level.queue_free()

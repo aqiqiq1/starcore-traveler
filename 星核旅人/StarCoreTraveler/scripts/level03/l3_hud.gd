@@ -219,7 +219,7 @@ func _build_completion() -> void:
 			PixelMenuButton.Variant.STONE
 		)
 		_completion_primary.pressed.connect(
-			func() -> void: next_level_requested.emit()
+			_on_completion_primary_pressed
 		)
 		panel.add_child(_completion_primary)
 		_completion_replay = _menu_button(
@@ -233,7 +233,7 @@ func _build_completion() -> void:
 			PixelMenuButton.Variant.OPTION
 		)
 		_completion_return.pressed.connect(
-			func() -> void: return_to_menu_requested.emit()
+			_on_completion_return_pressed
 		)
 		panel.add_child(_completion_return)
 	else:
@@ -241,9 +241,7 @@ func _build_completion() -> void:
 			"返回主界面", Vector2(110.0, 86.0), Vector2(180.0, 28.0),
 			PixelMenuButton.Variant.STONE
 		)
-		_completion_primary.pressed.connect(
-			func() -> void: return_to_menu_requested.emit()
-		)
+		_completion_primary.pressed.connect(_on_completion_primary_pressed)
 		panel.add_child(_completion_primary)
 		_completion_replay = _menu_button(
 			"重玩本关", Vector2(120.0, 126.0), Vector2(160.0, 24.0),
@@ -501,6 +499,39 @@ func release_completion_focus() -> void:
 		_completion_replay.release_focus()
 	if _completion_return != null:
 		_completion_return.release_focus()
+
+
+## Leaving rows use the shared 0.5 s settlement mirror fade before the real
+## scene change.  The primary is 进入城内 when the next scene exists and
+## 返回主界面 otherwise; 重玩本关 keeps its immediate in-place route.
+func _on_completion_primary_pressed() -> void:
+	if _completion_primary != null:
+		_completion_primary.disabled = true
+	if _completion_has_next:
+		if not CompletionMirrorFade.play(self, _emit_next_level):
+			_emit_next_level()
+		return
+	if not CompletionMirrorFade.play(self, _emit_return_to_menu):
+		_emit_return_to_menu()
+
+
+func _emit_next_level() -> void:
+	next_level_requested.emit()
+
+
+func _on_completion_return_pressed() -> void:
+	if _completion_return != null:
+		_completion_return.disabled = true
+	if not CompletionMirrorFade.play(self, _emit_return_to_menu):
+		_emit_return_to_menu()
+
+
+func _emit_return_to_menu() -> void:
+	return_to_menu_requested.emit()
+
+
+func get_completion_mirror_fade() -> CompletionMirrorFade:
+	return get_node_or_null("CompletionMirrorFade") as CompletionMirrorFade
 
 
 func set_completion_buttons_enabled(value: bool) -> void:

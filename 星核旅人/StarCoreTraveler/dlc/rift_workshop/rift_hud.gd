@@ -89,6 +89,8 @@ var _pause_restart: PixelMenuButton
 var _pause_title: PixelMenuButton
 var _pause_quit: PixelMenuButton
 var _pause_controls: PixelMenuButton
+var _manual_button: PixelMenuButton
+var _manual: MechanicManual
 var _pause_controls_root: Control
 var _pause_controls_back: PixelMenuButton
 var _pause_controls_labels: Array[Control] = []
@@ -128,6 +130,7 @@ func _ready() -> void:
 	_build_recovery_cover()
 	_build_completion()
 	_build_pause()
+	_build_manual()
 	_build_game_over()
 
 	_completion_reveal = UiReveal.new()
@@ -201,6 +204,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			title_requested.emit()
 		elif focused == _pause_quit:
 			quit_requested.emit()
+		elif focused == _pause_controls:
+			open_controls()
+		elif focused == _manual_button:
+			open_manual()
 		else:
 			resume_requested.emit()
 	elif code == int(KEY_DOWN) or code == int(KEY_TAB):
@@ -587,12 +594,20 @@ func _build_pause() -> void:
 	# The four existing entries keep their order; 操作 is appended so the real
 	# route reference stays one click/F away without adding a settings page.
 	_pause_controls = _menu_button(
-		"操作", Vector2(76.0, 192.0), Vector2(208.0, 24.0),
+		"操作", Vector2(76.0, 192.0), Vector2(100.0, 24.0),
 		PixelMenuButton.Variant.OPTION
 	)
 	_pause_controls.name = "ControlsButton"
 	_pause_controls.pressed.connect(_on_controls_pressed)
 	panel.add_child(_pause_controls)
+
+	_manual_button = _menu_button(
+		"手册", Vector2(184.0, 192.0), Vector2(100.0, 24.0),
+		PixelMenuButton.Variant.OPTION
+	)
+	_manual_button.name = "ManualButton"
+	_manual_button.pressed.connect(_on_manual_pressed)
+	panel.add_child(_manual_button)
 
 	_pause_footer = _label(
 		PAUSE_FOOTER, Vector2(0.0, 220.0), Vector2(360.0, 14.0), 12, DIM
@@ -605,7 +620,7 @@ func _build_pause() -> void:
 
 	var order: Array[PixelMenuButton] = [
 		_pause_continue, _pause_restart, _pause_title, _pause_quit,
-		_pause_controls,
+		_pause_controls, _manual_button,
 	]
 	for index: int in range(order.size()):
 		var current: PixelMenuButton = order[index]
@@ -679,6 +694,35 @@ func _on_controls_pressed() -> void:
 	open_controls()
 
 
+func _build_manual() -> void:
+	_manual = MechanicManual.new()
+	_manual.name = "MechanicManual"
+	_manual.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_manual)
+
+
+func _on_manual_pressed() -> void:
+	open_manual()
+
+
+func open_manual() -> void:
+	if not _pause_visible or _controls_visible or _manual == null:
+		return
+	_manual.open()
+
+
+func is_manual_open() -> bool:
+	return _manual != null and _manual.is_open()
+
+
+func get_manual() -> MechanicManual:
+	return _manual
+
+
+func get_manual_button() -> PixelMenuButton:
+	return _manual_button
+
+
 func open_controls() -> void:
 	if not _pause_visible or _controls_visible:
 		return
@@ -703,7 +747,7 @@ func close_controls() -> void:
 func _set_pause_menu_rows_visible(value: bool) -> void:
 	for button: PixelMenuButton in [
 		_pause_continue, _pause_restart, _pause_title, _pause_quit,
-		_pause_controls,
+		_pause_controls, _manual_button,
 	]:
 		if button != null:
 			button.visible = value
@@ -993,6 +1037,8 @@ func show_completion(value: bool, elapsed_seconds: float = 0.0) -> void:
 func show_pause(value: bool) -> void:
 	var changed: bool = value != _pause_visible
 	_pause_visible = value
+	if not value and _manual != null and _manual.is_open():
+		_manual.close()
 	if _pause_root == null:
 		return
 	if value:
@@ -1055,7 +1101,7 @@ func _set_controls_open_immediate(value: bool) -> void:
 func _move_pause_focus(step: int) -> void:
 	var order: Array[PixelMenuButton] = [
 		_pause_continue, _pause_restart, _pause_title, _pause_quit,
-		_pause_controls,
+		_pause_controls, _manual_button,
 	]
 	var focused: Control = get_viewport().gui_get_focus_owner()
 	var index: int = order.find(focused as PixelMenuButton)
@@ -1161,10 +1207,22 @@ func is_completion_primary_mainline() -> bool:
 
 
 func _on_completion_primary_pressed() -> void:
+	if _completion_primary != null:
+		_completion_primary.disabled = true
+	if not CompletionMirrorFade.play(self, _emit_completion_primary):
+		_emit_completion_primary()
+
+
+## 0.5 s mirror ripple + black, then the real title/mainline hand-off.
+func _emit_completion_primary() -> void:
 	if _completion_primary_mainline:
 		mainline_requested.emit()
 		return
 	title_requested.emit()
+
+
+func get_completion_mirror_fade() -> CompletionMirrorFade:
+	return get_node_or_null("CompletionMirrorFade") as CompletionMirrorFade
 
 
 func get_completion_panel_rect() -> Rect2:

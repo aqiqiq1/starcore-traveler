@@ -349,12 +349,12 @@ func _test_pause_page_and_restart() -> void:
 	var buttons: Array[PixelMenuButton] = [
 		_hud.get_continue_button(), _hud.get_restart_button(),
 		_hud.get_title_button(), _hud.get_quit_button(),
-		_hud.get_pause_controls_button(),
+		_hud.get_pause_controls_button(), _hud.get_manual_button(),
 	]
 	var labels: Array[String] = [
-		"继续游戏", "重新开始本章", "返回主界面", "退出游戏", "操作",
+		"继续游戏", "重新开始本章", "返回主界面", "退出游戏", "操作", "手册",
 	]
-	for index: int in range(5):
+	for index: int in range(buttons.size()):
 		_check(buttons[index].text == labels[index],
 			"pause row %d text" % (index + 1), buttons[index].text)
 	await _wait_process(2)

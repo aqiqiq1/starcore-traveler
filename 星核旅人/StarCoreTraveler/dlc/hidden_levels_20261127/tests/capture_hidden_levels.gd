@@ -1,6 +1,6 @@
 extends Node
 
-## 640x360 evidence for the two hidden side-chapter entrances.
+## 640x360 evidence for the mirror-rift side entrance and the chapter page.
 ## Run WITHOUT --headless:
 ##
 ##   D:/Godot/Godot_v4.7.2-stable_win64_console.exe --resolution 640x360 \
@@ -9,22 +9,22 @@ extends Node
 ## Saves to res://screenshots/hidden_levels_20261127/:
 ##   00_chapter_page_before_discovery_640.png  four mainline rows only
 ##   01_dlc3_rift_entrance_640.png             mirror rift at x=420, no prompt
-##   02_l3_trial_stele_640.png                 stele before the city gate
 ##   03_dlc3_rift_hint_56px_640.png            one-shot line at 56 px
-##   04_l3_trial_hint_56px_640.png             one-shot line at 56 px
 ##   05_dlc3_return_checkpoint_640.png         continue-mainline return state
 ##   06_chapter_page_after_discovery_640.png   side rows revealed
 ##
-## Every frame is the live 640x360 viewport; hints are caused by moving the
-## real player into range, never by calling show_event() directly.
+## The old L3 trial-stele frames (02, 04) are no longer captured: that entrance
+## is disabled.  Every remaining frame is the live 640x360 viewport; hints are
+## caused by moving the real player into range, never by calling show_event().
 
 const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
+const REGISTRY = preload("res://scripts/mechanics/mechanic_registry.gd")
 
 const OUT_DIR: String = "res://screenshots/hidden_levels_20261127"
 const LEVEL_01: String = "res://scenes/level_01.tscn"
-const LEVEL_03: String = "res://scenes/level_03.tscn"
 const LOOM: String = "res://dlc/star_loom/star_loom.tscn"
 const PROGRESS: String = "user://hidden_levels_capture.cfg"
+const MECH_PROGRESS: String = "user://hidden_levels_capture_mechanics.cfg"
 
 var _saved: Array[String] = []
 
@@ -33,17 +33,29 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	for tip_id: String in ["polarity", "core_carry", "relay_link", "float_platform"]:
 		MechanicTips.mark_seen(tip_id)
+	_prepare_mechanic_progress()
 	await get_tree().process_frame
 	get_window().size = Vector2i(640, 360)
 	await get_tree().process_frame
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PROGRESS))
 	await _capture_dlc3()
-	await _capture_l3()
 	await _capture_return()
 	await _capture_chapter_pages()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PROGRESS))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(MECH_PROGRESS))
+	MechanicTeach.clear_progress_path_override()
 	print("HIDDEN_LEVELS_CAPTURE saved=%d files=%s" % [_saved.size(), ", ".join(_saved)])
-	get_tree().quit(0 if _saved.size() == 7 else 1)
+	get_tree().quit(0 if _saved.size() == 5 else 1)
+
+
+## Mark every registered mechanism already seen in a throwaway file, so the
+## capture frames contain only the entrance/chapter-page evidence under test.
+func _prepare_mechanic_progress() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	for id: String in REGISTRY.all_ids():
+		config.set_value("mechanics", id, true)
+	config.save(MECH_PROGRESS)
+	MechanicTeach.set_progress_path_override(MECH_PROGRESS)
 
 
 func _capture_dlc3() -> void:
@@ -83,38 +95,6 @@ func _capture_dlc3() -> void:
 		(level.call("get_hud") as LoomHUD).get_event_text()
 	])
 	await _save("03_dlc3_rift_hint_56px_640")
-	await _cleanup(level)
-
-
-func _capture_l3() -> void:
-	var level: Node = await _load(LEVEL_03)
-	if level == null:
-		return
-	(level.call("get_guard") as L3Guard).set_suspended(true)
-	var gate: HiddenRouteGate = level.call("get_hidden_trial_gate") as HiddenRouteGate
-	var player: L3Player = level.call("get_player") as L3Player
-	var camera: Camera2D = level.call("get_camera") as Camera2D
-	player.global_position = Vector2(gate.global_position.x - 80.0, 320.0)
-	player.velocity = Vector2.ZERO
-	player.face_direction(1)
-	camera.reset_smoothing()
-	await _wait_physics(6)
-	await _wait_seconds(0.4)
-	print("SHOT_L3_ENTRANCE gate=%s hint=%d event=%s" % [
-		str(gate.global_position), gate.get_hint_shown_count(),
-		(level.call("get_hud") as L3HUD).get_event_text()
-	])
-	await _save("02_l3_trial_stele_640")
-	player.global_position = Vector2(gate.global_position.x - 56.0, 320.0)
-	player.velocity = Vector2.ZERO
-	camera.reset_smoothing()
-	await _wait_physics(5)
-	await _wait_seconds(0.3)
-	print("SHOT_L3_HINT hint=%d event=%s" % [
-		gate.get_hint_shown_count(),
-		(level.call("get_hud") as L3HUD).get_event_text()
-	])
-	await _save("04_l3_trial_hint_56px_640")
 	await _cleanup(level)
 
 
@@ -159,20 +139,17 @@ func _capture_chapter_pages() -> void:
 	await _wait_process(8)
 	menu.get_chapter_button().pressed.emit()
 	await _wait_process(8)
-	print("SHOT_PAGE_BEFORE trial_visible=%s rift_visible=%s text=%s" % [
-		str(menu.get_chapter_row(CHAPTER_PROGRESS.ID_TRIAL).visible),
+	print("SHOT_PAGE_BEFORE rift_visible=%s text=%s" % [
 		str(menu.get_chapter_row(CHAPTER_PROGRESS.ID_RIFT).visible),
 		menu.get_chapters_progress_text()
 	])
 	await _save("00_chapter_page_before_discovery_640")
 	menu.call("_close_chapters")
 	await _wait_process(3)
-	CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_TRIAL, PROGRESS)
 	CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_RIFT, PROGRESS)
 	menu.get_chapter_button().pressed.emit()
 	await _wait_process(8)
-	print("SHOT_PAGE_AFTER trial_visible=%s rift_visible=%s text=%s" % [
-		str(menu.get_chapter_row(CHAPTER_PROGRESS.ID_TRIAL).visible),
+	print("SHOT_PAGE_AFTER rift_visible=%s text=%s" % [
 		str(menu.get_chapter_row(CHAPTER_PROGRESS.ID_RIFT).visible),
 		menu.get_chapters_progress_text()
 	])

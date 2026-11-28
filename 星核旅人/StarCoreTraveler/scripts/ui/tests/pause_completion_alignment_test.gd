@@ -134,24 +134,44 @@ func _all_twelve(sizes: Array[int]) -> bool:
 	return true
 
 
-## Every completion page owns the same 32x32 gate emblem; it must not reuse a
-## guard weakpoint or a star-core texture.
+## Every completion page owns the same 32x32 double-mirror emblem; it must not
+## reuse a guard weakpoint, a star-core texture or the retired gate art.
 func _check_completion_emblem(hud: Node, tag: String) -> void:
 	var emblem: CompletionEmblem = hud.find_child(
 		"CompletionEmblem", true, false
 	) as CompletionEmblem
-	_check(emblem != null, tag + " completion page has the shared gate emblem")
+	_check(emblem != null, tag + " completion page has the shared mirror emblem")
 	if emblem == null:
 		return
-	_check(emblem.get_texture_path() == CompletionEmblem.TEXTURE_PATH,
-		tag + " emblem path is the dedicated gate art",
-		emblem.get_texture_path())
-	_check(emblem.is_dedicated_emblem(),
+	_check(emblem.get_art_id() == CompletionEmblem.ART_ID,
+		tag + " emblem is the double-faced mirror art",
+		emblem.get_art_id())
+	_check(emblem.has_mirror_art() and emblem.is_dedicated_emblem(),
 		tag + " emblem is not a guard/star core texture")
 	_check(emblem.size == CompletionEmblem.ICON_SIZE,
 		tag + " emblem is shown at 32x32", str(emblem.size))
 	_check(emblem.position == CompletionEmblem.DEFAULT_POSITION,
 		tag + " emblem is in the top-right panel slot", str(emblem.position))
+
+
+## The primary leaving row must start the shared 0.5 s mirror ripple + black;
+## the test tears the level down before the callback changes the scene.
+func _check_completion_fade(hud: Node, tag: String) -> void:
+	if not hud.has_method("get_completion_mirror_fade"):
+		_check(false, tag + " completion page exposes the mirror fade")
+		return
+	var primary: PixelMenuButton = hud.call("get_completion_primary_button") as PixelMenuButton
+	if primary == null or primary.disabled:
+		_check(false, tag + " completion primary is pressable")
+		return
+	primary.pressed.emit()
+	await _wait_process(2)
+	var fade: CompletionMirrorFade = hud.call("get_completion_mirror_fade") as CompletionMirrorFade
+	_check(fade != null, tag + " completion primary starts the mirror fade")
+	if fade == null:
+		return
+	_check(fade.get_cover_alpha() < 0.5,
+		tag + " mirror fade starts transparent and darkens", "%.2f" % fade.get_cover_alpha())
 
 
 func _run() -> void:
@@ -185,21 +205,23 @@ func _test_dlc_pause(path: String, tag: String, phase_copy: String) -> void:
 	_check(_panel_border_width(hud) == 2, tag + " pause panel border is 2 px",
 		str(_panel_border_width(hud)))
 
-	var labels: Array[String] = ["继续游戏", "重新开始本章", "返回主界面", "退出游戏", "操作"]
+	var labels: Array[String] = ["继续游戏", "重新开始本章", "返回主界面", "退出游戏", "操作", "手册"]
 	var buttons: Array[PixelMenuButton] = [
 		hud.call("get_continue_button") as PixelMenuButton,
 		hud.call("get_restart_button") as PixelMenuButton,
 		hud.call("get_title_button") as PixelMenuButton,
 		hud.call("get_quit_button") as PixelMenuButton,
 		hud.call("get_pause_controls_button") as PixelMenuButton,
+		hud.call("get_manual_button") as PixelMenuButton,
 	]
 	var order_ok: bool = true
 	for index: int in range(buttons.size()):
 		if buttons[index] == null or buttons[index].text != labels[index]:
 			order_ok = false
-	_check(order_ok, tag + " keeps the four original rows then 操作")
-	_check(buttons[4] != null and buttons[4].position == Vector2(76.0, 192.0),
-		tag + " 操作 button sits at y=192")
+	_check(order_ok, tag + " keeps the four original rows then 操作/手册")
+	_check(buttons[4] != null and buttons[4].position == Vector2(76.0, 192.0)
+		and buttons[5] != null and buttons[5].position == Vector2(184.0, 192.0),
+		tag + " 操作 / 手册 split the y=192 row")
 	_check(not bool(hud.call("is_controls_visible")),
 		tag + " starts on the pause menu, not the table")
 
@@ -210,7 +232,7 @@ func _test_dlc_pause(path: String, tag: String, phase_copy: String) -> void:
 	_check(bool(hud.call("is_pause_visible")) and get_tree().paused,
 		tag + " 操作 table keeps the pause page open")
 	_check(_resume_count == 0, tag + " 操作 click never resumes")
-	_check(not buttons[0].visible and not buttons[4].visible,
+	_check(not buttons[0].visible and not buttons[4].visible and not buttons[5].visible,
 		tag + " menu rows hide behind the table")
 	var controls_text: String = String(hud.call("get_controls_text"))
 	_check(controls_text.contains("移动") and controls_text.contains("跳跃")
@@ -268,6 +290,7 @@ func _test_completion_wording_only() -> void:
 			"trial footnote keeps the true table promise",
 			String(trial_hud.call("get_completion_note_text")))
 		_check_completion_emblem(trial_hud, "trial")
+		await _check_completion_fade(trial_hud, "trial")
 		await _cleanup_level(trial)
 
 	var rift: Node = await _load_level(RIFT, false, true)
@@ -284,6 +307,7 @@ func _test_completion_wording_only() -> void:
 			== "本章结算 · 暂停菜单可查看操作",
 			"rift footnote keeps the true table promise")
 		_check_completion_emblem(rift_hud, "rift")
+		await _check_completion_fade(rift_hud, "rift")
 		await _cleanup_level(rift)
 
 	var loom: Node = await _load_level(LOOM, false, true)
@@ -300,6 +324,7 @@ func _test_completion_wording_only() -> void:
 			== "本章结算 · 暂停菜单可查看操作",
 			"loom footnote keeps the true table promise")
 		_check_completion_emblem(loom_hud, "loom")
+		await _check_completion_fade(loom_hud, "loom")
 		await _cleanup_level(loom)
 
 
@@ -330,6 +355,7 @@ func _test_l1_completion() -> void:
 	_check(_completion_buttons_match(hud, "进入第二关"),
 		"L1 buttons are 进入第二关 / 重玩本关 / 返回主界面")
 	_check_completion_emblem(hud, "L1")
+	await _check_completion_fade(hud, "L1")
 	var completed: Dictionary = CHAPTER_PROGRESS.load_completed(P_L1)
 	_check(CHAPTER_PROGRESS.is_completed(CHAPTER_PROGRESS.ID_L1, completed),
 		"L1 completion still writes l1 progress")
@@ -386,6 +412,7 @@ func _test_l2_completion() -> void:
 	_check(_completion_buttons_match(hud, "进入第三关"),
 		"L2 buttons are 进入第三关 / 重玩本关 / 返回主界面")
 	_check_completion_emblem(hud, "L2")
+	await _check_completion_fade(hud, "L2")
 	var completed: Dictionary = CHAPTER_PROGRESS.load_completed(P_L2)
 	_check(CHAPTER_PROGRESS.is_completed(CHAPTER_PROGRESS.ID_L2, completed),
 		"L2 completion still writes l2 progress")
@@ -411,6 +438,7 @@ func _test_l3_completion() -> void:
 	_check(hud.has_next_level_button() and _completion_buttons_match(hud, "进入城内"),
 		"L3 buttons are 进入城内 / 重玩本关 / 返回主界面")
 	_check_completion_emblem(hud, "L3")
+	await _check_completion_fade(hud, "L3")
 	var completed: Dictionary = CHAPTER_PROGRESS.load_completed(P_L3)
 	_check(CHAPTER_PROGRESS.is_completed(CHAPTER_PROGRESS.ID_L3, completed),
 		"L3 completion still writes l3 progress")

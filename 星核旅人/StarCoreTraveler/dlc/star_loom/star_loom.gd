@@ -44,6 +44,7 @@ signal level_completed
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
 const SIDE_ROUTE = preload("res://dlc/shared/side_route/side_route.gd")
+const MIRROR_BLACK_COVER = preload("res://dlc/shared/side_route/mirror_black_cover.gd")
 const DLC_GUIDE_SCENE: PackedScene = preload("res://dlc/ui/dlc_guide.tscn")
 const LOOM_GUIDE_SCRIPT: Script = preload("res://dlc/star_loom/loom_guide.gd")
 const INTRO_CINEMATIC_SCENE: PackedScene = preload(
@@ -165,6 +166,7 @@ var _intro_skipped: bool = false
 var _post_intro_guide_pending: bool = false
 var _post_intro_guide_left: float = 0.0
 var _mechanic_popup: MechanicPopup = null
+var _mechanic_teach: MechanicTeach = null
 var _fire_tip_pending: bool = false
 ## The white opening flash is a once-per-run event; later exposures keep the
 ## body-only diamond read but do not replay the flash.
@@ -228,6 +230,10 @@ var _recovery_alpha: float = 0.0
 var _recovery_elapsed: float = 0.0
 var _side_resume_position: Vector2 = Vector2.ZERO
 var _side_resume_applied: bool = false
+## Mirror-return presentation: the chapter opens under black and the checkpoint
+## beside the entrance ripples as the player steps back out of the glass.
+var _mirror_black_cover: MirrorBlackCover = null
+var _side_return_ripple_played: bool = false
 
 
 func _ready() -> void:
@@ -300,6 +306,7 @@ func _ready() -> void:
 	_hud.title_requested.connect(_on_hud_title_requested)
 	_hud.quit_requested.connect(_on_hud_quit_requested)
 	_setup_mechanic_popup()
+	_setup_mechanic_teach()
 	_hud.bind_player_overhead(_player, Callable(self, "_overhead_hits_suppressed"))
 	_hud.set_polarity(false)
 	_hud.set_objective("目标：向右进入织机厅")
@@ -495,6 +502,15 @@ func _setup_mechanic_popup() -> void:
 	add_child(_mechanic_popup)
 
 
+func _setup_mechanic_teach() -> void:
+	_mechanic_teach = MechanicTeach.new()
+	_mechanic_teach.name = "MechanicTeach"
+	_mechanic_teach.show_line = func(text_value: String) -> void:
+		_hud.show_event(text_value, 2.4)
+	_mechanic_teach.blocked_check = Callable(self, "_is_mechanic_teach_blocked")
+	add_child(_mechanic_teach)
+
+
 ## Retried every physics tick while a condition remains true; the popup itself
 ## refuses while the guide, pause page, completion, recovery or a stage switch
 ## owns the screen.  MechanicTips marks an id seen when it really opens, so a
@@ -516,6 +532,37 @@ func _tick_mechanic_popups() -> void:
 			MechanicTips.mark_seen(TIP_FIRE)
 			return
 		_mechanic_popup.request(TIP_FIRE)
+
+
+func _is_mechanic_teach_blocked() -> bool:
+	if get_tree() == null:
+		return true
+	if get_tree().paused:
+		return true
+	if _completed or _pending_completion or _scene_leaving or _game_over:
+		return true
+	if _pause_open or _recovery_active or _retry_pending:
+		return true
+	if _stage_flash > 0.0:
+		return true
+	if _intro_active:
+		return true
+	if _intro_guide != null and is_instance_valid(_intro_guide) and _intro_guide.is_open():
+		return true
+	if _mechanic_popup != null and is_instance_valid(_mechanic_popup) and _mechanic_popup.is_open():
+		return true
+	return false
+
+
+func _tick_mechanic_teach() -> void:
+	if _mechanic_teach == null or _player == null or not is_instance_valid(_player):
+		return
+	var pos: Vector2 = _player.global_position
+	var facing: int = _player.get_facing()
+	if _core_bay != null and is_instance_valid(_core_bay):
+		_mechanic_teach.observe_near(
+			"core_delivery", _core_bay.global_position, pos, facing, 56.0, 72.0
+		)
 
 
 ## Same contract as level_01/02/03: the popup may not appear over the intro
@@ -597,6 +644,7 @@ func _physics_process(delta: float) -> void:
 	# A blocked teaching request stays pending and retries once the guide,
 	# pause page, recovery or stage switch releases the screen.
 	_tick_mechanic_popups()
+	_tick_mechanic_teach()
 	_tick_loom_mechanics(delta)
 
 	if not _boss_active:
@@ -691,8 +739,8 @@ func _update_mechanics_hints(powered: bool) -> void:
 		not _gate_first.is_open() and gate_toward,
 		now
 	):
-		# DLC3 has already met the door in L1.  Keep only the phase reminder.
-		_hud.show_event("同相门 · 需辉相（日）", 1.8)
+		if _mechanic_teach != null:
+			_mechanic_teach.request("gate")
 	if _gate_second != null:
 		var gate_second_dx: float = _gate_second.global_position.x - player_x
 		var gate_second_toward: bool = (
@@ -705,7 +753,8 @@ func _update_mechanics_hints(powered: bool) -> void:
 			not _gate_second.is_open() and gate_second_toward,
 			now
 		):
-			_hud.show_event("第二道月门 · 送青核入仓供电", 1.8)
+			if _mechanic_teach != null:
+				_mechanic_teach.request("core_delivery")
 	if _core_carrier != null:
 		var core_dx: float = _core_carrier.global_position.x - player_x
 		var core_toward: bool = (
@@ -713,9 +762,9 @@ func _update_mechanics_hints(powered: bool) -> void:
 			and signf(core_dx) == float(_player.get_facing())
 		)
 		if _core_hint.tick(absf(core_dx), core_toward, now):
-			# First mainline star-core delivery: full push/pull and bay-power
-			# lesson lives here; DLC2 later only reminds.
-			_hud.show_event("澜相青核 · 同相推、异相拉 · 入仓供月门", 2.8)
+			if _mechanic_teach != null:
+				_mechanic_teach.request("rune")
+				_mechanic_teach.request("core_delivery")
 	if powered and not _bay_was_powered:
 		_hud.show_event("青核入仓 · 第二道月门开启", 1.8)
 	elif not powered and _bay_was_powered and not _checkpoint.is_activated():
@@ -759,7 +808,9 @@ func _on_checkpoint_entered(checkpoint: LevelCheckpoint) -> void:
 	checkpoint.set_activated(true)
 	if is_instance_valid(DemoAudio):
 		DemoAudio.play_record_save()
-	_hud.show_event("检查点已记录 · 失败从门前恢复", 2.0)
+	var taught: bool = _mechanic_teach != null and _mechanic_teach.request("checkpoint")
+	if not taught:
+		_hud.show_event("检查点已记录 · 失败从门前恢复", 2.0)
 
 
 ## R and a fresh scene both return every approach mechanism to its initial
@@ -827,9 +878,26 @@ func _apply_side_resume() -> void:
 	_hud.set_objective("目标：向右进入织机厅")
 	if _side_gate != null:
 		_side_gate.suppress_hints(3.0)
+	# Return from the mirror: open under black, then let the entrance ripple
+	# once as the black clears.  The player's position is the real checkpoint,
+	# unchanged; only the presentation is added.
+	_mirror_black_cover = MIRROR_BLACK_COVER.attach(self)
+	if _side_gate != null:
+		var ripple_tween: Tween = create_tween()
+		ripple_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		ripple_tween.tween_interval(0.28)
+		ripple_tween.tween_callback(_on_side_return_ripple)
 	# Deferred so the event row is not overwritten by the generic HUD setup
 	# above during the same _ready.
 	call_deferred("_announce_side_resume")
+
+
+func _on_side_return_ripple() -> void:
+	if _side_return_ripple_played or _side_gate == null:
+		return
+	_side_return_ripple_played = true
+	_side_gate.play_emerge_ripple()
+
 
 
 func _announce_side_resume() -> void:
@@ -865,7 +933,9 @@ func _start_boss() -> void:
 	_audio.start_music()
 	_audio.play_core_exposed()
 	_hud.set_gear_warning(false, 0.0)
-	_hud.show_event("织机启动 · 异相攻击打节点", 2.2)
+	var taught: bool = _mechanic_teach != null and _mechanic_teach.request("loom_node")
+	if not taught:
+		_hud.show_event("织机启动 · 异相攻击打节点", 2.2)
 	_hud.set_objective("目标：用异相攻击打掉两个节点")
 	_update_hud_state()
 	_core_burst_played = false
@@ -1168,6 +1238,8 @@ func _spawn_sweep() -> void:
 func _spawn_wisps() -> void:
 	if _wisps.size() >= 3:
 		return
+	if _mechanic_teach != null:
+		_mechanic_teach.request("wisp")
 	_summon_serial += 1
 	var count: int = 1 + (1 if _summon_serial % 2 == 0 else 0)
 	count = mini(count, mini(_summon_points.size(), 3 - _wisps.size()))
@@ -1182,6 +1254,8 @@ func _spawn_wisps() -> void:
 
 
 func _spawn_fire() -> void:
+	if _mechanic_teach != null:
+		_mechanic_teach.request("fire")
 	var fire: LoomFire = LoomFire.new()
 	fire.name = "FloorFire"
 	_hazards.add_child(fire)
@@ -1193,6 +1267,8 @@ func _spawn_fire() -> void:
 func _spawn_gears() -> void:
 	if _gears.size() >= 4:
 		return
+	if _mechanic_teach != null:
+		_mechanic_teach.request("gear")
 	var left: LoomGear = LoomGear.new()
 	left.name = "GearLeft"
 	_hazards.add_child(left)
@@ -1374,6 +1450,8 @@ func _begin_recovery(kind: String) -> void:
 	_lives = maxi(_lives - 1, 0)
 	_update_hud_state()
 	_recovery_active = true
+	if _lives == PLAYER_LIVES - 1 and _mechanic_teach != null:
+		_mechanic_teach.request("lives")
 	_recovery_phase = RecoveryPhase.FADE_OUT
 	_recovery_elapsed = 0.0
 	_recovery_alpha = 0.0
@@ -1870,6 +1948,22 @@ func is_side_resume_active() -> bool:
 	return resume_from_side
 
 
+func has_mirror_black_cover() -> bool:
+	return (
+		_mirror_black_cover != null and is_instance_valid(_mirror_black_cover)
+	)
+
+
+func get_mirror_black_cover_alpha() -> float:
+	if not has_mirror_black_cover():
+		return 0.0
+	return _mirror_black_cover.get_alpha()
+
+
+func has_side_return_ripple_played() -> bool:
+	return _side_return_ripple_played
+
+
 ## Keeps the optional entrance hint off the opening film, completion page,
 ## pause page and active boss fight.
 func is_side_route_gate_allowed() -> bool:
@@ -1935,6 +2029,10 @@ func was_intro_skipped() -> bool:
 
 func get_mechanic_popup() -> MechanicPopup:
 	return _mechanic_popup
+
+
+func get_mechanic_teach() -> MechanicTeach:
+	return _mechanic_teach
 
 
 func get_attack_time_left() -> float:

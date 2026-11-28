@@ -89,6 +89,7 @@ Public domain and free to use, personal or commercial. Credit is not required bu
 
 ## 结算城门徽记（项目自制，2026-11-27）
 
+- （历史资产，2026-11-28 起不再被结算页引用；六章结算改用代码绘制的金/青双面镜徽记）
 - `assets/ui/icons/completion_gate_emblem_32.png`：32×32 透明 PNG，深冷石圆牌 + 金线城门 + 一圈细光。由 `dlc/core_badge_20261127/gen_completion_emblem.py`（Python + Pillow）程序化绘制，没有读取或采样任何第三方图像。
 - 用途：六个章节结算面板右上角的统一标识；不是守卫核心，也不是星核。运行中 1:1 最近邻显示。
 - 参考只用于 HUD 小图标的“深底 + 细金线 + 单一剪影”读法；参考截图/链接见 `dlc/core_badge_20261127/REFERENCE_20261127.md`，没有把参考像素或调色板放进游戏。

@@ -13,6 +13,8 @@ $tests = "dlc/trial_chambers/tests"
 $summary = @()
 
 function Invoke-Case([string]$name, [string]$scene, [string]$logName) {
+    $env:STAR_CORE_MECHANIC_PROGRESS = Join-Path $env:TEMP ("starcore_mechanic_trial_" + $logName + ".cfg")
+    Remove-Item $env:STAR_CORE_MECHANIC_PROGRESS -ErrorAction SilentlyContinue
     $out = & $Godot --headless --path . $scene 2>&1
     $code = $LASTEXITCODE
     $out | Set-Content -Path (Join-Path $tests "$logName.log") -Encoding UTF8
@@ -25,6 +27,8 @@ function Invoke-Case([string]$name, [string]$scene, [string]$logName) {
 }
 
 function Invoke-Smoke([string]$name, [string]$scene, [string]$logName) {
+    $env:STAR_CORE_MECHANIC_PROGRESS = Join-Path $env:TEMP ("starcore_mechanic_trial_" + $logName + ".cfg")
+    Remove-Item $env:STAR_CORE_MECHANIC_PROGRESS -ErrorAction SilentlyContinue
     $out = & $Godot --headless --path . $scene --quit-after 90 2>&1
     $code = $LASTEXITCODE
     $out | Set-Content -Path (Join-Path $tests "$logName.log") -Encoding UTF8
@@ -40,6 +44,8 @@ function Invoke-CleanSmoke([string]$name, [string]$scene, [string]$levelKey, [st
     # Base levels: same 90-frame load/run, plus a teardown that releases the
     # title BGM before quit (the raw --quit-after path leaves the OGG playback
     # alive and the engine reports a false resource-leak ERROR).
+    $env:STAR_CORE_MECHANIC_PROGRESS = Join-Path $env:TEMP ("starcore_mechanic_trial_" + $logName + ".cfg")
+    Remove-Item $env:STAR_CORE_MECHANIC_PROGRESS -ErrorAction SilentlyContinue
     $out = & $Godot --headless --path . $scene -- $levelKey 2>&1
     $code = $LASTEXITCODE
     $out | Set-Content -Path (Join-Path $tests "$logName.log") -Encoding UTF8

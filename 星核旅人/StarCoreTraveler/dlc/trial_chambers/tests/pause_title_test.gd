@@ -104,8 +104,9 @@ func _run() -> void:
 		and hud.get_restart_button().text == "重新开始本章"
 		and hud.get_title_button().text == "返回主界面"
 		and hud.get_quit_button().text == "退出游戏"
-		and hud.get_pause_controls_button().text == "操作",
-		"pause page exposes all five entries")
+		and hud.get_pause_controls_button().text == "操作"
+		and hud.get_manual_button().text == "手册",
+		"pause page exposes all six entries")
 	_check(hud.get_continue_button().get_node(hud.get_continue_button().focus_next)
 		== hud.get_restart_button(),
 		"continue focus_next reaches restart")
@@ -113,10 +114,14 @@ func _run() -> void:
 		== hud.get_pause_controls_button(),
 		"quit focus_next reaches 操作")
 	_check(hud.get_pause_controls_button().get_node(
-		hud.get_pause_controls_button().focus_next) == hud.get_continue_button(),
-		"操作 focus_next cycles to continue")
-	_check(hud.get_pause_controls_button().position == Vector2(76.0, 192.0),
-		"操作 row sits at (76,192)")
+		hud.get_pause_controls_button().focus_next) == hud.get_manual_button(),
+		"操作 focus_next reaches 手册")
+	_check(hud.get_manual_button().get_node(
+		hud.get_manual_button().focus_next) == hud.get_continue_button(),
+		"手册 focus_next cycles to continue")
+	_check(hud.get_pause_controls_button().position == Vector2(76.0, 192.0)
+		and hud.get_manual_button().position == Vector2(184.0, 192.0),
+		"操作 / 手册 share the last row")
 
 	# Down once reaches 重新开始本章 and really resets the chapter.
 	await _tap_key(KEY_DOWN)

@@ -54,6 +54,7 @@ signal level_completed
 const LEVEL_FLOW = preload("res://scripts/ui/level_flow.gd")
 const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
 const SIDE_ROUTE = preload("res://dlc/shared/side_route/side_route.gd")
+const MIRROR_BLACK_COVER = preload("res://dlc/shared/side_route/mirror_black_cover.gd")
 const RIFT_GUIDE_SCRIPT: Script = preload("res://dlc/rift_workshop/rift_guide.gd")
 const INTRO_CINEMATIC_SCENE: PackedScene = preload(
 	"res://dlc/rift_workshop/rift_intro_cinematic.tscn"
@@ -214,9 +215,13 @@ var _intro_skipped: bool = false
 var _post_intro_guide_pending: bool = false
 var _post_intro_guide_left: float = 0.0
 var _mechanic_popup: MechanicPopup = null
+var _mechanic_teach: MechanicTeach = null
 ## True only when DLC3's 镜面裂隙 really loaded this chapter.  A title-page
 ## entry leaves this false and keeps the normal 返回主界面 completion action.
 var _side_entry: bool = false
+## One-shot black cover for a mirror entrance.  The origin fades to black
+## before the scene change; this chapter opens under that same black.
+var _mirror_black_cover: MirrorBlackCover = null
 
 
 func _ready() -> void:
@@ -225,6 +230,10 @@ func _ready() -> void:
 	_side_entry = SIDE_ROUTE.claim_entry(CHAPTER_PROGRESS.ID_RIFT)
 	if _side_entry and chapter_progress_path.is_empty():
 		chapter_progress_path = SIDE_ROUTE.get_progress_path()
+	# A mirror entrance already faded its own scene to black; open this one
+	# under the same black so no frame of the old scene can flash through.
+	if SIDE_ROUTE.consume_black_entry(CHAPTER_PROGRESS.ID_RIFT):
+		_mirror_black_cover = MIRROR_BLACK_COVER.attach(self)
 	for node: Node in [
 		$Background, $Terrain, $Decorations, $Player, $MirrorBoss,
 		$InversionA, $CoreBay, $CoreCarrier, $GateMoonProxy, $GateMoon,
@@ -513,6 +522,12 @@ func _setup_mechanic_popup() -> void:
 	_mechanic_popup.name = "MechanicPopup"
 	_mechanic_popup.level_node = self
 	add_child(_mechanic_popup)
+	_mechanic_teach = MechanicTeach.new()
+	_mechanic_teach.name = "MechanicTeach"
+	_mechanic_teach.show_line = func(text_value: String) -> void:
+		_hud.show_event(text_value, 2.4)
+	_mechanic_teach.blocked_check = Callable(self, "_is_mechanic_teach_blocked")
+	add_child(_mechanic_teach)
 
 
 func _tick_mechanic_popups() -> void:
@@ -618,6 +633,7 @@ func _physics_process(delta: float) -> void:
 	if _boss_defeated and not _completed:
 		_check_finish()
 	_tick_mechanic_popups()
+	_tick_mechanic_teach()
 	_sync_boss_hud()
 
 
@@ -944,7 +960,8 @@ func _tick_room_hints() -> void:
 		and signf(field_dx) == float(_player.get_facing())
 	)
 	if _field_hint.tick(absf(field_dx), field_toward, now):
-		_hud.show_event("紫幕反转 · 穿过换相", 1.8)
+		if _mechanic_teach != null:
+			_mechanic_teach.request("inversion")
 	var gate_dx: float = _gate_moon.global_position.x - player_x
 	var gate_toward: bool = (
 		absf(player_y - _gate_moon.global_position.y) <= 72.0
@@ -956,11 +973,44 @@ func _tick_room_hints() -> void:
 		not is_first_gate_powered() and gate_toward,
 		now
 	):
-		_hud.show_event("送青核入仓，为月门供电", 1.8)
+		# The registry owns the delivery copy; no chapter-fixed sentence.
+		if _mechanic_teach != null:
+			_mechanic_teach.request("core_delivery")
 
 
-func _on_gate_moon_denied(_required_positive: bool) -> void:
-	if _completed or _scene_leaving or _recovery_active:
+## First-encounter line for mechanisms whose real object is near the player:
+## bay, the first phase bridge, a live wisp, and the checkpoint (event below).
+## The inversion and gate approaches stay in _tick_room_hints so their existing
+## ApproachHint counts and facing rules remain exact.
+func _tick_mechanic_teach() -> void:
+	if _mechanic_teach == null or _player == null or not is_instance_valid(_player):
+		return
+	var pos: Vector2 = _player.global_position
+	var facing: int = _player.get_facing()
+	if _core_bay != null and is_instance_valid(_core_bay):
+		_mechanic_teach.observe_near(
+			"core_delivery", _core_bay.global_position, pos, facing, 56.0, 72.0
+		)
+	if _bridge_a != null and is_instance_valid(_bridge_a):
+		_mechanic_teach.observe_near(
+			"bridge", _bridge_a.global_position, pos, facing, 64.0, 80.0
+		)
+	for wisp: RiftPolarityWisp in _all_wisps():
+		if wisp == null or not is_instance_valid(wisp) or not wisp.is_alive():
+			continue
+		if _mechanic_teach.observe_near("wisp", wisp.global_position, pos, facing, 72.0, 96.0):
+			break
+
+
+func _is_mechanic_teach_blocked() -> bool:
+	if is_mechanic_popup_blocked():
+		return true
+	if _pause_open:
+		return true
+	return false
+
+
+func _on_gate_moon_denied(_required_positive: bool) -> void:	if _completed or _scene_leaving or _recovery_active:
 		return
 	# The approach reminder owns the line; contact adds no duplicate.
 
@@ -1139,7 +1189,9 @@ func _on_checkpoint_entered(checkpoint: LevelCheckpoint) -> void:
 		return
 	_checkpoint_active = true
 	checkpoint.set_activated(true)
-	_hud.show_event("检查点已记录 · 前方是双面镜长廊", 1.8)
+	var taught: bool = _mechanic_teach != null and _mechanic_teach.request("checkpoint")
+	if not taught:
+		_hud.show_event("检查点已记录 · 前方是双面镜长廊", 1.8)
 	DemoAudio.play_record_save()
 	_update_objective(true)
 
@@ -1157,11 +1209,13 @@ func _wake_boss() -> void:
 	_boss.begin_fight()
 	_mirror_tip_pending = true
 	_hud.set_boss_visible(true)
-	if _resume_note.is_empty():
-		_hud.show_event("守门者睁眼 · 异相攻击才能碎面盘", 2.2)
-	else:
-		_hud.show_event(_resume_note, 2.6)
-		_resume_note = ""
+	var taught: bool = _mechanic_teach != null and _mechanic_teach.request("mirror")
+	if not taught:
+		if _resume_note.is_empty():
+			_hud.show_event("守门者睁眼 · 异相攻击才能碎面盘", 2.2)
+		else:
+			_hud.show_event(_resume_note, 2.6)
+			_resume_note = ""
 	_sync_boss_hud()
 
 
@@ -1881,6 +1935,10 @@ func get_mechanic_popup() -> MechanicPopup:
 	return _mechanic_popup
 
 
+func get_mechanic_teach() -> MechanicTeach:
+	return _mechanic_teach
+
+
 func get_boss() -> RiftMirrorBoss:
 	return _boss
 
@@ -2040,6 +2098,18 @@ func get_elapsed_seconds() -> float:
 
 func is_side_entry() -> bool:
 	return _side_entry
+
+
+func has_mirror_black_cover() -> bool:
+	return (
+		_mirror_black_cover != null and is_instance_valid(_mirror_black_cover)
+	)
+
+
+func get_mirror_black_cover_alpha() -> float:
+	if not has_mirror_black_cover():
+		return 0.0
+	return _mirror_black_cover.get_alpha()
 
 
 func is_completed() -> bool:

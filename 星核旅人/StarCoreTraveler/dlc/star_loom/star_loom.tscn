@@ -139,7 +139,7 @@ target_id = "rift"
 scene_path = "res://dlc/rift_workshop/rift_workshop.tscn"
 origin_id = "loom"
 origin_path = "res://dlc/star_loom/star_loom.tscn"
-hint_text = "镜面裂隙 · 可进入支线"
+hint_text = "双面镜 · 进入裂隙工坊"
 player_path = NodePath("../Player")
 hud_path = NodePath("../HUD")
 

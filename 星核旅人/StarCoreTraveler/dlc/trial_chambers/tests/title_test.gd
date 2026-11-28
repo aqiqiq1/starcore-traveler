@@ -2,14 +2,15 @@ extends Node
 
 ## Chapter-page entry test for 星核试炼场 (DLC1).
 ##
-## The title page has no DLC direct rows: 试炼场 is reachable only through the
-## 章节 page, and only while chapter_progress unlocks its row.
-##   locked (no L1 completion): row greyed, unfocusable, unclickable;
-##   unlocked (L1 complete):    row enabled, Enter loads the trial scene.
+## 2026-11-28: the trial entrance was removed from the main flow.  The trial
+## scene is kept and still starts standalone, but the 章节 page must not build
+## a trial row and no progress flag may bring it back.  The original title rows,
+## focus ring and 开始游戏 route still work.
 ##
 ##   ... --headless --path . res://dlc/trial_chambers/tests/title_test.tscn
 
 const CHAPTER_PROGRESS = preload("res://scripts/ui/chapter_progress.gd")
+const SIDE_ROUTE = preload("res://dlc/shared/side_route/side_route.gd")
 
 const LEVEL_01: String = "res://scenes/level_01.tscn"
 const TRIAL: String = "res://dlc/trial_chambers/trial_chambers.tscn"
@@ -178,13 +179,15 @@ func _cleanup() -> void:
 func _run() -> void:
 	await _wait_process(2)
 	_check(ResourceLoader.exists(TRIAL), "trial scene file exists on disk")
-	_check(CHAPTER_PROGRESS.is_available(CHAPTER_PROGRESS.ID_TRIAL),
-		"chapter_progress reports the trial scene")
+	_check(CHAPTER_PROGRESS.get_chapter(CHAPTER_PROGRESS.ID_TRIAL).is_empty(),
+		"trial is no longer a chapter entry")
+	_check(CHAPTER_PROGRESS.chapter_count() == 5,
+		"chapter page has exactly five rows", str(CHAPTER_PROGRESS.chapter_count()))
 
-	# --- locked page ------------------------------------------------------
+	# --- title + chapter page: no trial row ------------------------------
 	_remove_progress()
 	var level: Node = await _load_level_01()
-	_check(level != null, "level_01 loads for the locked chapter-page check")
+	_check(level != null, "level_01 loads for the chapter-page check")
 	if level == null:
 		return
 	var menu: StartMenu = level.get_node_or_null("StartMenu") as StartMenu
@@ -192,56 +195,60 @@ func _run() -> void:
 	if menu == null:
 		return
 	await _check_title_rows(menu)
-
 	await _open_chapters(menu)
 	_check(menu.is_chapters_open(), "章节 page opens")
-	var locked_row: PixelMenuButton = menu.get_chapter_row(CHAPTER_PROGRESS.ID_TRIAL)
-	_check(locked_row != null, "章节 page keeps a trial row node")
-	if locked_row != null:
-		_check(not locked_row.visible, "undiscovered trial row is hidden")
-		_check(locked_row.focus_mode == Control.FOCUS_NONE,
-			"hidden trial row cannot take focus")
-		_check(locked_row.mouse_filter == Control.MOUSE_FILTER_IGNORE,
-			"hidden trial row cannot be clicked")
-	_check(menu.get_chapter_status_text(CHAPTER_PROGRESS.ID_TRIAL) == "需先完成 断桥庭院",
-		"locked trial row keeps its prerequisite text for after discovery",
-		menu.get_chapter_status_text(CHAPTER_PROGRESS.ID_TRIAL))
+	_check(menu.get_chapter_row(CHAPTER_PROGRESS.ID_TRIAL) == null,
+		"章节 page builds no trial row")
+	_check(menu.get_chapters_progress_text() == "已完成 0 / 4",
+		"locked page still counts the four mainline rows",
+		menu.get_chapters_progress_text())
 	menu.call("_close_chapters")
 	await _wait_process(2)
 	await _drop_current_scene()
 
-	# --- discovered + unlocked page --------------------------------------
+	# Even a completed L1 and a hand-written legacy trial flag must not bring
+	# the row back.
 	_check(CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_L1, PROGRESS) == OK,
 		"L1 completion writes the test progress file")
-	_check(CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_TRIAL, PROGRESS) == OK,
-		"trial entrance writes the discovery flag")
+	var legacy_trial: ConfigFile = ConfigFile.new()
+	legacy_trial.load(PROGRESS)
+	legacy_trial.set_value("chapters", "trial", true)
+	legacy_trial.set_value("chapters", "discovered_trial", true)
+	legacy_trial.save(PROGRESS)
 	var level2: Node = await _load_level_01()
-	_check(level2 != null, "level_01 loads for the unlocked chapter-page check")
+	_check(level2 != null, "level_01 loads with a legacy trial flag")
 	if level2 == null:
 		return
 	var menu2: StartMenu = level2.get_node_or_null("StartMenu") as StartMenu
 	if menu2 == null:
 		return
 	await _open_chapters(menu2)
-	var trial_row: PixelMenuButton = menu2.get_chapter_row(CHAPTER_PROGRESS.ID_TRIAL)
-	_check(trial_row != null and trial_row.visible and not trial_row.disabled,
-		"discovery + L1 complete reveal the unlockable trial row")
-	if trial_row == null:
-		return
-	_check(trial_row.focus_mode == Control.FOCUS_ALL,
-		"unlocked trial row is keyboard focusable")
-	_check(menu2.get_chapter_status_text(CHAPTER_PROGRESS.ID_TRIAL) == "可进入",
-		"unlocked trial row is enterable")
-	trial_row.grab_focus()
+	_check(menu2.get_chapter_row(CHAPTER_PROGRESS.ID_TRIAL) == null,
+		"a legacy trial flag still builds no trial row")
+	_check(menu2.get_chapters_progress_text() == "已完成 1 / 4",
+		"legacy trial data does not change the visible total",
+		menu2.get_chapters_progress_text())
+	menu2.call("_close_chapters")
 	await _wait_process(2)
-	_check(trial_row.has_focus(), "trial row takes keyboard focus")
-	_push_key(KEY_ENTER, true)
-	await _wait_physics(1)
-	_push_key(KEY_ENTER, false)
-	var entered: bool = await _wait_for_scene(TRIAL, 360)
-	_check(entered, "Enter on the trial chapter row loads the trial scene",
-		_current_path())
 	await _drop_current_scene()
+
+	# --- trial still starts standalone -----------------------------------
+	SIDE_ROUTE.abort()
+	var trial_packed: PackedScene = load(TRIAL) as PackedScene
+	_check(trial_packed != null, "trial scene still loads")
+	if trial_packed != null:
+		var trial: Node = trial_packed.instantiate()
+		trial.set("show_intro_guide", false)
+		trial.set("show_intro_cinematic", false)
+		get_tree().root.add_child(trial)
+		get_tree().current_scene = trial
+		await _wait_process(8)
+		await _wait_physics(4)
+		_check(not bool(trial.call("is_side_entry")),
+			"standalone trial is not a side-route entry")
+		_check(trial.call("get_hud") != null,
+			"standalone trial builds its HUD")
+		await _drop_current_scene()
 
 	# --- original title rows still work ----------------------------------
 	var level3: Node = await _load_level_01()

@@ -1,18 +1,20 @@
 class_name CompletionEmblem
-extends TextureRect
+extends Control
 
-## One shared settlement mark for all six completion pages: a dark stone
-## roundel, a gold gate silhouette and a thin ring of pale light.  It is
-## deliberately not the guard's chest core and not a star core.
+## One shared settlement mark for all six completion pages: the same
+## gold/cyan double-faced mirror with one eye that opens 裂隙工坊.  It is
+## deliberately not the guard's chest core, not a star core and no longer the
+## old gate roundel.
 ##
-## The art is authored at 32x32 and shown 1:1 (nearest), matching the HUD's
-## 1 px gold-line language.  It owns no animation and no gameplay state.
+## The mark is drawn at runtime by MirrorFaceArt, the same module the DLC3
+## entrance uses for its frame, eye and ripple.  It is authored at 32x32 and
+## drawn 1:1 with nearest filtering, matching the HUD's 1 px gold-line
+## language.  It owns no animation and no gameplay state.
 
-const TEXTURE_PATH: String = "res://assets/ui/icons/completion_gate_emblem_32.png"
+const ART = preload("res://dlc/shared/side_route/mirror_face_art.gd")
+const ART_ID: String = "double_mirror_eye_32"
 const ICON_SIZE: Vector2 = Vector2(32.0, 32.0)
 const DEFAULT_POSITION: Vector2 = Vector2(356.0, 12.0)
-
-var _texture: Texture2D = null
 
 
 ## Shared insertion point for all six completion panels.  The panel already
@@ -29,29 +31,27 @@ static func attach_to(
 
 
 func _ready() -> void:
-	_ensure_icon()
 	custom_minimum_size = ICON_SIZE
 	size = ICON_SIZE
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	stretch_mode = TextureRect.STRETCH_KEEP
+	queue_redraw()
 
 
-func _ensure_icon() -> void:
-	if _texture == null:
-		_texture = load(TEXTURE_PATH) as Texture2D
-	texture = _texture
+func _draw() -> void:
+	var diameter: float = minf(size.x, size.y)
+	ART.draw_emblem(self, size * 0.5, diameter)
 
 
-func get_texture_path() -> String:
-	return _texture.resource_path if _texture != null else TEXTURE_PATH
+func get_art_id() -> String:
+	return ART_ID
 
 
-## Test hook: the paint is the dedicated gate emblem, never a guard/star core.
+func has_mirror_art() -> bool:
+	return true
+
+
+## Test hook: the paint is the dedicated mirror, never a guard/star core and
+## never the retired gate emblem.
 func is_dedicated_emblem() -> bool:
-	return get_texture_path() == TEXTURE_PATH and not (
-		get_texture_path().contains("weakpoint")
-		or get_texture_path().contains("guard")
-		or get_texture_path().contains("star_core")
-	)
+	return get_art_id() == ART_ID

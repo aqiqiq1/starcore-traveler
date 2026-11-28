@@ -1,16 +1,16 @@
 extends Node
 
-## Hidden side-chapter acceptance test (DLC1/DLC2 as optional entrances).
+## Hidden side-chapter acceptance test (DLC2 as an optional entrance).
 ##
 ## Covers:
-##   - the two discovery flags (default / legacy six-bool files / kskbl);
-##   - the 章节 page: four mainline rows always, trial/rift only after the
-##     real in-level entrance was entered;
-##   - the two entrance positions and their one-shot 56 px lines;
+##   - the rift discovery flag (default / legacy six-bool files / kskbl);
+##   - the 章节 page: four mainline rows + only the rift side row, with the
+##     星核试炼场 row removed even when the old trial flag is present;
+##   - the rift entrance position and its one-shot 56 px line;
 ##   - DLC3 镜面裂隙 -> 裂隙工坊 -> 继续主线 back at the checkpoint with both
 ##     gate mechanisms and the seated core restored;
-##   - L3 试炼碑 -> 星核试炼场 -> 继续主线 before the city gate with the real
-##     guard/key/door/checkpoint snapshot preserved;
+##   - L3 has no TrialSteleGate node, while the trial scene still loads
+##     standalone (its own files/tests are kept);
 ##   - a mid-run exit to the title does not write 已通关.
 ##
 ##   Godot_v4.7.2-stable_win64_console.exe --headless --path . \
@@ -33,6 +33,9 @@ const P_LEGACY: String = "user://hidden_levels_legacy.cfg"
 
 var _checks: int = 0
 var _failures: Array[String] = []
+## Captured at the entrance's route_entered signal, before the cut.
+var _mirror_commit_alpha: float = -1.0
+var _mirror_commit_count: int = 0
 
 
 func _ready() -> void:
@@ -44,7 +47,7 @@ func _ready() -> void:
 	await _test_progress_fields()
 	await _test_chapter_page()
 	await _test_rift_route()
-	await _test_trial_route()
+	await _test_trial_disabled()
 	_clear_paths()
 	SIDE_ROUTE.abort()
 	print("HIDDEN_LEVELS_TEST checks=%d failures=%d" % [_checks, _failures.size()])
@@ -73,12 +76,19 @@ func _clear_paths() -> void:
 
 func _test_progress_fields() -> void:
 	print("=== PROGRESS FIELDS ===")
+	_check(CHAPTER_PROGRESS.chapter_count() == 5,
+		"chapter page has exactly five chapters",
+		str(CHAPTER_PROGRESS.chapter_count()))
+	_check(CHAPTER_PROGRESS.get_chapter(CHAPTER_PROGRESS.ID_TRIAL).is_empty(),
+		"the trial is not a chapter entry")
 	var missing: Dictionary = CHAPTER_PROGRESS.load_completed(P_FIELDS)
-	for id: String in [CHAPTER_PROGRESS.ID_TRIAL, CHAPTER_PROGRESS.ID_RIFT]:
-		_check(not CHAPTER_PROGRESS.is_discovered(id, missing),
-			"%s discovery defaults to false" % id)
-		_check(not CHAPTER_PROGRESS.is_visible(id, missing),
-			"%s row is hidden by default" % id)
+	_check(not CHAPTER_PROGRESS.is_visible(CHAPTER_PROGRESS.ID_TRIAL, missing),
+		"the trial can never be visible")
+	var rift_id: String = CHAPTER_PROGRESS.ID_RIFT
+	_check(not CHAPTER_PROGRESS.is_discovered(rift_id, missing),
+		"rift discovery defaults to false")
+	_check(not CHAPTER_PROGRESS.is_visible(rift_id, missing),
+		"rift row is hidden by default")
 	_check(CHAPTER_PROGRESS.is_visible(CHAPTER_PROGRESS.ID_L1, missing),
 		"L1 is always a visible mainline row")
 	_check(CHAPTER_PROGRESS.is_visible(CHAPTER_PROGRESS.ID_LOOM, missing),
@@ -88,44 +98,49 @@ func _test_progress_fields() -> void:
 	var legacy: ConfigFile = ConfigFile.new()
 	legacy.set_value("chapters", "l1", true)
 	legacy.set_value("chapters", "l2", true)
+	legacy.set_value("chapters", "trial", true)
+	legacy.set_value("chapters", "discovered_trial", true)
 	legacy.save(P_LEGACY)
 	var old: Dictionary = CHAPTER_PROGRESS.load_completed(P_LEGACY)
 	_check(CHAPTER_PROGRESS.is_completed(CHAPTER_PROGRESS.ID_L1, old),
 		"legacy file still loads l1")
-	_check(not CHAPTER_PROGRESS.is_discovered(CHAPTER_PROGRESS.ID_TRIAL, old),
-		"legacy file keeps trial hidden")
+	_check(not old.has(CHAPTER_PROGRESS.ID_TRIAL),
+		"legacy trial booleans are ignored")
 	_check(not CHAPTER_PROGRESS.is_discovered(CHAPTER_PROGRESS.ID_RIFT, old),
 		"legacy file keeps rift hidden")
 
 	# Entry writes discovery without completion.
-	_check(CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_TRIAL, P_FIELDS) == OK,
-		"mark_discovered writes the trial flag")
+	_check(CHAPTER_PROGRESS.mark_discovered(rift_id, P_FIELDS) == OK,
+		"mark_discovered writes the rift flag")
 	var discovered: Dictionary = CHAPTER_PROGRESS.load_completed(P_FIELDS)
-	_check(CHAPTER_PROGRESS.is_discovered(CHAPTER_PROGRESS.ID_TRIAL, discovered),
-		"trial discovery persists")
-	_check(not CHAPTER_PROGRESS.is_completed(CHAPTER_PROGRESS.ID_TRIAL, discovered),
+	_check(CHAPTER_PROGRESS.is_discovered(rift_id, discovered),
+		"rift discovery persists")
+	_check(not CHAPTER_PROGRESS.is_completed(rift_id, discovered),
 		"discovery alone is not a completion")
-	_check(CHAPTER_PROGRESS.is_visible(CHAPTER_PROGRESS.ID_TRIAL, discovered),
-		"discovered trial is visible")
-	_check(not CHAPTER_PROGRESS.is_visible(CHAPTER_PROGRESS.ID_RIFT, discovered),
-		"undiscovered rift stays hidden")
+	_check(CHAPTER_PROGRESS.is_visible(rift_id, discovered),
+		"discovered rift is visible")
+	_check(CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_TRIAL, P_FIELDS)
+			== ERR_INVALID_PARAMETER,
+		"the trial can no longer write a discovery flag")
 	_check(CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_L1, P_FIELDS)
 			== ERR_INVALID_PARAMETER,
 		"mainline ids reject discovery writes")
 
-	# First-unfinished skips the hidden side chapters.
+	# First-unfinished skips the hidden side chapter.
 	CHAPTER_PROGRESS.mark_completed(CHAPTER_PROGRESS.ID_L1, P_FIELDS)
 	var after_l1: Dictionary = CHAPTER_PROGRESS.load_completed(P_FIELDS)
 	_check(CHAPTER_PROGRESS.first_uncompleted(after_l1) == CHAPTER_PROGRESS.ID_L2,
-		"L1 done: hidden trial does not become the 开始游戏 target",
+		"L1 done: hidden rift does not become the 开始游戏 target",
 		CHAPTER_PROGRESS.first_uncompleted(after_l1))
 
-	# kskbl fills completion + discovery.
+	# kskbl fills completion + discovery for the five listed chapters only.
 	_check(CHAPTER_PROGRESS.complete_all(P_FIELDS) == OK, "complete_all writes")
 	var all: Dictionary = CHAPTER_PROGRESS.load_completed(P_FIELDS)
 	for id: String in CHAPTER_PROGRESS.chapter_ids():
 		_check(CHAPTER_PROGRESS.is_completed(id, all), "complete_all completes %s" % id)
 		_check(CHAPTER_PROGRESS.is_visible(id, all), "complete_all reveals %s" % id)
+	_check(not all.has(CHAPTER_PROGRESS.ID_TRIAL),
+		"kskbl does not write the trial flag")
 
 
 # --- title chapter page ----------------------------------------------------
@@ -156,42 +171,55 @@ func _test_chapter_page() -> void:
 	]:
 		var row: PixelMenuButton = menu.get_chapter_row(id)
 		_check(row != null and row.visible, "%s mainline row is present" % id)
-	for id: String in [CHAPTER_PROGRESS.ID_TRIAL, CHAPTER_PROGRESS.ID_RIFT]:
-		var side_row: PixelMenuButton = menu.get_chapter_row(id)
-		_check(side_row != null and not side_row.visible,
-			"%s side row is hidden before discovery" % id)
-		_check(side_row != null and side_row.focus_mode == Control.FOCUS_NONE,
-			"%s hidden side row cannot take focus" % id)
+	_check(menu.get_chapter_row(CHAPTER_PROGRESS.ID_TRIAL) == null,
+		"the trial row is absent, not merely hidden")
+	var side_row: PixelMenuButton = menu.get_chapter_row(CHAPTER_PROGRESS.ID_RIFT)
+	_check(side_row != null and not side_row.visible,
+		"rift side row is hidden before discovery")
+	_check(side_row != null and side_row.focus_mode == Control.FOCUS_NONE,
+		"rift hidden side row cannot take focus")
 
 	menu.call("_close_chapters")
 	await _wait_process(3)
-	CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_TRIAL, P_PAGE)
+	_check(CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_TRIAL, P_PAGE)
+			== ERR_INVALID_PARAMETER,
+		"the old trial discovery write is rejected")
+	# Even a hand-written legacy trial discovery/completion flag must not add a
+	# row: load_completed only reads the five listed chapter ids.
+	var legacy_trial: ConfigFile = ConfigFile.new()
+	legacy_trial.load(P_PAGE)
+	legacy_trial.set_value("chapters", "trial", true)
+	legacy_trial.set_value("chapters", "discovered_trial", true)
+	legacy_trial.save(P_PAGE)
 	CHAPTER_PROGRESS.mark_discovered(CHAPTER_PROGRESS.ID_RIFT, P_PAGE)
 	await _open_chapters(menu)
-	for id: String in [CHAPTER_PROGRESS.ID_TRIAL, CHAPTER_PROGRESS.ID_RIFT]:
-		var side_row: PixelMenuButton = menu.get_chapter_row(id)
-		_check(side_row != null and side_row.visible,
-			"%s side row appears after discovery" % id)
-		_check(side_row != null and not side_row.disabled,
-			"%s discovered side row is enterable" % id)
-		_check(menu.get_chapter_status_text(id) == "可进入",
-			"%s discovered row reads 可进入" % id,
-			menu.get_chapter_status_text(id))
-	_check(menu.get_chapters_progress_text() == "已完成 3 / 6",
-		"discovery adds the two rows to the visible total",
+	_check(menu.get_chapter_row(CHAPTER_PROGRESS.ID_TRIAL) == null,
+		"the trial row stays absent even with a legacy trial flag")
+	var rift_row: PixelMenuButton = menu.get_chapter_row(CHAPTER_PROGRESS.ID_RIFT)
+	_check(rift_row != null and rift_row.visible,
+		"rift side row appears after discovery")
+	_check(rift_row != null and not rift_row.disabled,
+		"rift discovered side row is enterable")
+	_check(menu.get_chapter_status_text(CHAPTER_PROGRESS.ID_RIFT) == "可进入",
+		"rift discovered row reads 可进入",
+		menu.get_chapter_status_text(CHAPTER_PROGRESS.ID_RIFT))
+	_check(menu.get_chapters_progress_text() == "已完成 3 / 5",
+		"discovery adds the rift row to the visible total",
 		menu.get_chapters_progress_text())
 
-	# Same schema as kskbl: everything is completed and visible.
+	# Same schema as kskbl: everything listed is completed and visible.
 	CHAPTER_PROGRESS.complete_all(P_PAGE)
 	menu.call("_refresh_chapters", false)
-	_check(menu.get_chapters_progress_text() == "已完成 6 / 6",
-		"kskbl schema shows 6 / 6", menu.get_chapters_progress_text())
+	_check(menu.get_chapters_progress_text() == "已完成 5 / 5",
+		"kskbl schema shows 5 / 5", menu.get_chapters_progress_text())
 	for id: String in CHAPTER_PROGRESS.chapter_ids():
 		var row_after: PixelMenuButton = menu.get_chapter_row(id)
 		_check(row_after != null and row_after.visible,
 			"%s row visible after all-unlock" % id)
 		_check(menu.get_chapter_status_text(id) == "已通关",
 			"%s row reads 已通关" % id, menu.get_chapter_status_text(id))
+	_check(menu.get_chapter_row(CHAPTER_PROGRESS.ID_TRIAL) == null,
+		"kskbl still leaves no trial row")
 	await _drop_current_scene()
 
 
@@ -242,7 +270,7 @@ func _test_rift_route() -> void:
 		"rift entrance is after the recorded checkpoint")
 	_check(level.call("get_arena_enter_x") > gate.global_position.x,
 		"rift entrance is before the arena trigger")
-	_check(gate.get_hint_text() == "镜面裂隙 · 可进入支线",
+	_check(gate.get_hint_text() == "双面镜 · 进入裂隙工坊",
 		"rift entrance carries the requested line", gate.get_hint_text())
 	_check(not _gate_has_collision(gate), "rift entrance has no collision")
 
@@ -256,12 +284,17 @@ func _test_rift_route() -> void:
 	await _wait_physics(4)
 	_check(gate.get_hint_shown_count() == 1,
 		"rift hint fires once at 56 px")
-	_check(hud.get_event_text() == "镜面裂隙 · 可进入支线",
+	_check(hud.get_event_text() == "双面镜 · 进入裂隙工坊",
 		"rift hint shows the side line", hud.get_event_text())
 
+	if not gate.route_entered.is_connected(_on_mirror_route_entered):
+		gate.route_entered.connect(_on_mirror_route_entered.bind(gate))
 	await _push_key(KEY_E)
 	var entered: bool = await _wait_for_scene(RIFT, 240)
 	_check(entered, "E at the mirror rift loads 裂隙工坊", _current_path())
+	_check(_mirror_commit_count == 1 and _mirror_commit_alpha >= 0.999,
+		"the entrance is fully black at the scene cut",
+		"alpha=%.3f count=%d" % [_mirror_commit_alpha, _mirror_commit_count])
 	var rift: Node = get_tree().current_scene
 	_check(rift != null and bool(rift.call("is_side_entry")),
 		"裂隙工坊 knows it was entered from the mainline")
@@ -355,105 +388,56 @@ func _test_rift_route() -> void:
 	await _drop_current_scene()
 
 
-# --- L3 试炼碑 -------------------------------------------------------------
+# --- L3 trial entrance removed ---------------------------------------------
 
-func _test_trial_route() -> void:
-	print("=== TRIAL ROUTE ===")
+func _test_trial_disabled() -> void:
+	print("=== TRIAL ENTRANCE REMOVED ===")
 	var packed: PackedScene = load(LEVEL_03) as PackedScene
+	_check(packed != null, "level 03 loads")
+	if packed == null:
+		return
 	var level: Node = packed.instantiate()
 	level.set("chapter_progress_path", P_TRIAL)
 	get_tree().root.add_child(level)
 	get_tree().current_scene = level
 	await _wait_process(8)
 	await _wait_physics(6)
-	var gate: HiddenRouteGate = level.call("get_hidden_trial_gate") as HiddenRouteGate
-	var player: L3Player = level.call("get_player") as L3Player
-	var hud: L3HUD = level.call("get_hud") as L3HUD
-	_check(gate != null, "L3 has a trial-stele entrance")
-	if gate == null or player == null:
-		await _drop_current_scene()
-		return
-	var gate_x: float = gate.global_position.x
-	var distance_to_end: float = float(level.call("get_city_enter_x")) - gate_x
-	_check(distance_to_end >= 200.0 and distance_to_end <= 300.0,
-		"trial stele sits 200-300 px before the city end",
-		"%.1f px" % distance_to_end)
-	_check(gate_x < float(level.call("get_gate").global_position.x),
-		"trial stele is before the city gate")
-	_check(not _gate_has_collision(gate), "trial stele has no collision")
-
-	# Simulate the real post-guard state the player would have when reaching
-	# the stele, then prove the return seed preserves it.
-	var guard: L3Guard = level.call("get_guard") as L3Guard
-	var city_gate: L3Gate = level.call("get_gate") as L3Gate
-	var checkpoint: LevelCheckpoint = level.call("get_checkpoint") as LevelCheckpoint
-	guard.debug_force_death()
-	city_gate.force_open()
-	level.set("_key_taken", true)
-	level.set("_key_embedded", true)
-	level.set("_stable_stage", 3)
-	checkpoint.set_activated(true)
-	(level.call("get_cine") as L3Cinematic).mark_played()
-	player.global_position = Vector2(gate.global_position.x - 56.0, 320.0)
-	player.velocity = Vector2.ZERO
-	await _wait_physics(5)
-	_check(gate.get_hint_shown_count() == 1, "trial hint fires once at 56 px")
-	_check(hud.get_event_text() == "试炼碑 · 可进入支线",
-		"trial hint shows the side line", hud.get_event_text())
-
-	await _push_key(KEY_E)
-	var entered: bool = await _wait_for_scene(TRIAL, 240)
-	_check(entered, "E at the trial stele loads 星核试炼场", _current_path())
-	var trial: Node = get_tree().current_scene
-	_check(trial != null and bool(trial.call("is_side_entry")),
-		"星核试炼场 knows it was entered from L3")
-	var after_entry: Dictionary = CHAPTER_PROGRESS.load_completed(P_TRIAL)
-	_check(CHAPTER_PROGRESS.is_discovered(CHAPTER_PROGRESS.ID_TRIAL, after_entry),
-		"entering the trial writes discovered_trial")
-	_check(not CHAPTER_PROGRESS.is_completed(CHAPTER_PROGRESS.ID_TRIAL, after_entry),
-		"entering the trial does not mark it completed")
-
-	await _settle_side_intro(trial)
-	trial.call("_complete_trial")
-	await _wait_process(4)
-	var trial_hud: TrialHUD = trial.call("get_hud") as TrialHUD
-	_check(trial_hud.get_completion_primary_button().text == "继续主线",
-		"completed trial page changes 返回主界面 to 继续主线",
-		trial_hud.get_completion_primary_button().text)
-	_check(trial_hud.is_completion_primary_mainline(),
-		"completed trial page uses the mainline action")
-	trial_hud.get_completion_primary_button().pressed.emit()
-	var returned: bool = await _wait_for_scene(LEVEL_03, 240)
-	_check(returned, "继续主线 changes back to 断桥外郭", _current_path())
-	if not returned:
-		await _drop_current_scene()
-		return
-	await _wait_process(8)
-	var l3: Node = get_tree().current_scene
-	var l3_player: L3Player = l3.call("get_player") as L3Player
-	var l3_gate: L3Gate = l3.call("get_gate") as L3Gate
-	var l3_guard: L3Guard = l3.call("get_guard") as L3Guard
-	var l3_checkpoint: LevelCheckpoint = l3.call("get_checkpoint") as LevelCheckpoint
-	var l3_hud: L3HUD = l3.call("get_hud") as L3HUD
-	_check(bool(l3.call("is_side_resume_active")),
-		"returned L3 consumed the one-shot resume seed")
-	_check(absf(l3_player.global_position.x - (gate_x - 56.0)) <= 2.0,
-		"player returns to the stele spot before the city gate",
-		str(l3_player.global_position))
-	_check(l3_gate.is_open(), "city gate stays open on return")
-	_check(l3_guard.is_defeated(), "defeated guard stays defeated on return")
-	_check(bool(l3.call("is_key_taken")), "key core stays taken on return")
-	_check(bool(l3.call("is_key_embedded")), "key core stays embedded on return")
-	_check(l3_checkpoint.is_activated(), "L3 checkpoint stays recorded on return")
-	_check(bool(l3.call("is_checkpoint_mark_visible")),
-		"checkpoint mark stays visible on return")
-	_check(int(l3.call("get_stable_stage")) >= 3,
-		"stable stage stays at the arena")
-	_check(bool(l3.call("get_cine").has_played()),
-		"near-gate echo film does not replay")
-	_check(l3_hud.get_event_text() == "回到城门前 · 继续主线",
-		"L3 return shows the mainline continuation line", l3_hud.get_event_text())
+	_check(level.get_node_or_null("TrialSteleGate") == null,
+		"L3 scene has no TrialSteleGate node")
+	_check(level.call("get_hidden_trial_gate") == null,
+		"L3 exposes no trial gate")
+	_check(CHAPTER_PROGRESS.get_chapter(CHAPTER_PROGRESS.ID_TRIAL).is_empty(),
+		"trial has no chapter entry")
+	_check(not CHAPTER_PROGRESS.chapter_ids().has(CHAPTER_PROGRESS.ID_TRIAL),
+		"trial id is not in the chapter list")
 	await _drop_current_scene()
+
+	# The trial scene itself is kept and still starts standalone.
+	_check(ResourceLoader.exists(TRIAL), "trial scene file still exists")
+	SIDE_ROUTE.abort()
+	var trial_packed: PackedScene = load(TRIAL) as PackedScene
+	_check(trial_packed != null, "trial scene still loads")
+	if trial_packed == null:
+		return
+	var trial: Node = trial_packed.instantiate()
+	trial.set("show_intro_guide", false)
+	trial.set("show_intro_cinematic", false)
+	get_tree().root.add_child(trial)
+	get_tree().current_scene = trial
+	await _wait_process(8)
+	await _wait_physics(6)
+	_check(not bool(trial.call("is_side_entry")),
+		"standalone trial is not a side-route entry")
+	_check(trial.call("get_hud") != null, "standalone trial builds its HUD")
+	await _drop_current_scene()
+
+
+## Connected to the mirror entrance's one-shot signal.  The signal is emitted
+## after the 0.8 s fade and before the real scene change, so this is the exact
+## alpha the outgoing frame is drawn with.
+func _on_mirror_route_entered(_target_id: String, gate: MirrorRiftGate) -> void:
+	_mirror_commit_count += 1
+	_mirror_commit_alpha = gate.get_cover_alpha()
 
 
 # --- helpers ---------------------------------------------------------------

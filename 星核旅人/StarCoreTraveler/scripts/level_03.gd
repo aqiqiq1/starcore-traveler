@@ -65,7 +65,9 @@ const KEY_CORE_SHEET: Texture2D = preload("res://assets/level03_prototype/key_co
 @onready var _cine: L3Cinematic = $Cine
 @onready var _audio = $Audio
 @onready var _checkpoint: LevelCheckpoint = $BufferCheckpoint
-@onready var _side_gate: HiddenRouteGate = $TrialSteleGate
+## The trial stele entrance was removed from the main flow on 2026-11-28.
+## DLC1 still runs standalone, but L3 no longer carries the gate node.
+@onready var _side_gate: HiddenRouteGate = get_node_or_null("TrialSteleGate") as HiddenRouteGate
 @onready var _link: BayRuneLink = $LinkController
 @onready var _rune_field: RuneStoneField = $RuneField
 @onready var _music: BaseLevelMusic = $BaseLevelMusic
@@ -129,6 +131,7 @@ var _window_has_focus: bool = true
 ## cinematic deliberately leaves it untouched (the charge is frozen, not cut).
 var _charge_watch: bool = false
 var _mechanic_popup: MechanicPopup = null
+var _mechanic_teach: MechanicTeach = null
 ## Set only when the near-gate echo film hands control back (finished) or is
 ## explicitly aborted by pause/focus. Reset by R. The guard popup must never
 ## open before this film, including while it is playing.
@@ -193,6 +196,7 @@ func _ready() -> void:
 	_cine.stone_cue_requested.connect(_on_cine_stone_cue)
 	_setup_pause_menu()
 	_setup_mechanic_popup()
+	_setup_mechanic_teach()
 	_setup_process_modes()
 	_checkpoint.checkpoint_entered.connect(_on_checkpoint_entered)
 
@@ -348,14 +352,24 @@ func _setup_pause_menu() -> void:
 	_pause_menu.resumed.connect(_on_pause_resumed)
 
 
-## Teaching layer only. The device entry fires just before E becomes available
-## on the upper platform. The guard entry waits for the near-gate echo film to
-## hand control back, so it never opens during that dialogue or before it.
+## Teaching layer only.  The float device keeps its contextual popup; the guard
+## now uses the shared first-encounter line at arena entry, so its old
+## chapter-fixed popup trigger is disabled.  The popup node stays for the shared
+## UI tests.
 func _setup_mechanic_popup() -> void:
 	_mechanic_popup = MECHANIC_POPUP_SCENE.instantiate() as MechanicPopup
 	_mechanic_popup.name = "MechanicPopup"
 	_mechanic_popup.level_node = self
 	add_child(_mechanic_popup)
+
+
+func _setup_mechanic_teach() -> void:
+	_mechanic_teach = MechanicTeach.new()
+	_mechanic_teach.name = "MechanicTeach"
+	_mechanic_teach.show_line = func(text_value: String) -> void:
+		_hud03.show_event(text_value, 2.4)
+	_mechanic_teach.blocked_check = Callable(self, "_is_mechanic_teach_blocked")
+	add_child(_mechanic_teach)
 
 
 func _tick_mechanic_popup() -> void:
@@ -367,10 +381,49 @@ func _tick_mechanic_popup() -> void:
 	if not _device.is_active() and pos.y <= 220.0 and pos.x >= 180.0 and pos.x <= 380.0:
 		if pos.distance_to(_device.global_position) <= 110.0:
 			_mechanic_popup.request("float_platform")
-	if not _guard_tip_ready:
+
+
+func _tick_mechanic_teach() -> void:
+	if _mechanic_teach == null or _player == null or not is_instance_valid(_player):
 		return
-	if _stable_stage >= STAGE_ARENA and pos.x >= 1680.0 and not _guard.is_defeated():
-		_mechanic_popup.request("guard_field")
+	var pos: Vector2 = _player.global_position
+	var facing: int = _player.get_facing()
+	if _rune_field != null and is_instance_valid(_rune_field):
+		_mechanic_teach.observe_near(
+			"polarity", _rune_field.global_position, pos, facing, 72.0, 120.0
+		)
+		_mechanic_teach.observe_near(
+			"rune", _rune_field.global_position, pos, facing, 72.0, 120.0
+		)
+	for bay: StarCoreBayInteractable in [_start_bay, _target_bay]:
+		if bay == null or not is_instance_valid(bay):
+			continue
+		_mechanic_teach.observe_near(
+			"core_delivery", bay.global_position, pos, facing, 56.0, 72.0
+		)
+	if _guard_tip_ready and not _guard.is_defeated():
+		_mechanic_teach.observe_near(
+			"guard", _guard.global_position, pos, facing, 220.0, 120.0
+		)
+
+
+func _is_mechanic_teach_blocked() -> bool:
+	if get_tree().paused:
+		return true
+	if _completed or _resetting or _scene_leaving or _next_level_started:
+		return true
+	if _recovery_active or _retry_pending:
+		return true
+	if _cine.is_active():
+		return true
+	if _pause_menu != null and _pause_menu.has_method("is_open") and bool(_pause_menu.call("is_open")):
+		return true
+	if _pause_menu != null and _pause_menu.has_method("is_manual_open") \
+			and bool(_pause_menu.call("is_manual_open")):
+		return true
+	if _mechanic_popup != null and _mechanic_popup.is_open():
+		return true
+	return false
 
 
 func is_mechanic_popup_blocked() -> bool:
@@ -384,11 +437,18 @@ func is_mechanic_popup_blocked() -> bool:
 		return true
 	if _pause_menu != null and _pause_menu.has_method("is_open") and bool(_pause_menu.call("is_open")):
 		return true
+	if _pause_menu != null and _pause_menu.has_method("is_manual_open") \
+			and bool(_pause_menu.call("is_manual_open")):
+		return true
 	return false
 
 
 func get_mechanic_popup() -> MechanicPopup:
 	return _mechanic_popup
+
+
+func get_mechanic_teach() -> MechanicTeach:
+	return _mechanic_teach
 
 
 func is_guard_tip_ready() -> bool:
@@ -422,6 +482,7 @@ func _physics_process(delta: float) -> void:
 	_check_city_entry()
 	_update_level_hud()
 	_tick_mechanic_popup()
+	_tick_mechanic_teach()
 
 
 func _process(delta: float) -> void:
@@ -884,6 +945,8 @@ func _on_checkpoint_entered(checkpoint: LevelCheckpoint) -> void:
 		_checkpoint_mark_time = 0.0
 	_float_route.finish_crossing()
 	DemoAudio.play_record_save()
+	if _mechanic_teach != null:
+		_mechanic_teach.request("checkpoint")
 	_update_level_hud()
 
 

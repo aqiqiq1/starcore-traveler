@@ -34,6 +34,12 @@ static var _pending_origin_id: String = ""
 static var _pending_position: Vector2 = Vector2.ZERO
 static var _pending_state: Dictionary = {}
 
+## One-shot black-entry marker.  The mirror entrance fades the origin to black
+## before the real scene change; the side chapter consumes this flag during its
+## first _ready so its very first rendered frame is covered by black.
+static var _black_entry: bool = false
+static var _black_entry_target: String = ""
+
 
 ## Marks the side chapter discovered immediately, stores the return context and
 ## performs the real scene change.  A failed scene change clears the route.
@@ -50,6 +56,8 @@ static func enter(
 	if tree == null:
 		return ERR_UNCONFIGURED
 	if not ResourceLoader.exists(scene_path):
+		_black_entry = false
+		_black_entry_target = ""
 		return ERR_FILE_NOT_FOUND
 	active_clear()
 	CHAPTER_PROGRESS.mark_discovered(target_id, progress_path)
@@ -63,7 +71,30 @@ static func enter(
 	var error: Error = LEVEL_FLOW.change_scene(tree, scene_path)
 	if error != OK:
 		active_clear()
+		_black_entry = false
+		_black_entry_target = ""
 	return error
+
+
+## Called by an entrance that has already faded its own frame to black.  The
+## destination consumes it exactly once, after a successful scene change.
+static func mark_black_entry(target_id: String) -> void:
+	_black_entry = not target_id.is_empty()
+	_black_entry_target = target_id
+
+
+static func consume_black_entry(target_id: String) -> bool:
+	if not _black_entry or _black_entry_target != target_id:
+		return false
+	_black_entry = false
+	_black_entry_target = ""
+	return true
+
+
+static func clear_black_entry() -> void:
+	_black_entry = false
+	_black_entry_target = ""
+
 
 
 ## True only inside the side chapter that the entrance just loaded.  Merely

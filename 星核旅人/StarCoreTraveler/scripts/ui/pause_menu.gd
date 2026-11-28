@@ -55,8 +55,11 @@ var _font: Font = null
 var _reveal: UiReveal = null
 
 var _settings_host: StartMenu = null
+var _manual: MechanicManual = null
+var _manual_button: PixelMenuButton = null
 var _open: bool = false
 var _settings_open: bool = false
+var _manual_close_guard: bool = false
 var _completion_active: bool = false
 var _scene_leaving: bool = false
 
@@ -66,6 +69,7 @@ func _ready() -> void:
 	layer = 16
 	_font = _load_font()
 	_build_ui()
+	_build_manual()
 	_build_settings_host()
 	_reveal = UiReveal.new()
 	_reveal.setup(self, _root, _shade, _panel, _panel.position)
@@ -75,6 +79,14 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	if _scene_leaving or not _can_use():
+		return
+	# The manual is its own always-processing overlay above this page.  While it
+	# is open (or on the same frame its Esc/F closed it) the pause page must not
+	# also resume/restart from the same key press.
+	if _manual != null and _manual.is_open():
+		return
+	if _manual_close_guard:
+		_manual_close_guard = false
 		return
 	if Input.is_action_just_pressed(&"pause"):
 		_handle_pause()
@@ -130,6 +142,24 @@ func get_quit_button() -> PixelMenuButton:
 	return _quit_button
 
 
+func get_manual_button() -> PixelMenuButton:
+	return _manual_button
+
+
+func get_manual() -> MechanicManual:
+	return _manual
+
+
+func is_manual_open() -> bool:
+	return _manual != null and _manual.is_open()
+
+
+func open_manual() -> void:
+	if not _open or _settings_open or _manual == null:
+		return
+	_manual.open()
+
+
 func get_controls_text() -> String:
 	var lines: Array[String] = []
 	for row: Variant in controls_rows:
@@ -174,6 +204,7 @@ func open_pause() -> void:
 		level_node.call("before_pause_opened")
 	_open = true
 	_settings_open = false
+	_manual_close_guard = false
 	_root.visible = true
 	_panel.visible = true
 	get_tree().paused = true
@@ -189,6 +220,8 @@ func open_pause() -> void:
 func resume() -> void:
 	if not _open:
 		return
+	if _manual != null and _manual.is_open():
+		_manual.close()
 	if _settings_open:
 		close_settings()
 	# Resume (and any focus hand-back) is immediate; the root only remains for
@@ -209,6 +242,8 @@ func resume() -> void:
 ## Used by restart / scene changes.  Idempotent; never opens the game.
 func force_close() -> void:
 	_cancel_pending_for_leave()
+	if _manual != null and _manual.is_open():
+		_manual.close()
 	_open = false
 	_settings_open = false
 	if _settings_host != null:
@@ -230,6 +265,8 @@ func prepare_scene_change() -> void:
 
 func open_settings() -> void:
 	if not _open or _settings_open or _settings_host == null:
+		return
+	if _manual != null and _manual.is_open():
 		return
 	if _settings_host.is_display_pending():
 		return
@@ -267,6 +304,9 @@ func _can_use() -> bool:
 
 
 func _handle_pause() -> void:
+	if _manual != null and _manual.is_open():
+		_manual.close()
+		return
 	if _settings_open:
 		if _settings_host != null and _settings_host.is_display_pending():
 			# Highest priority: Esc cancels the unconfirmed display change and
@@ -283,8 +323,11 @@ func _handle_pause() -> void:
 
 func _handle_reset() -> void:
 	# R is deliberately inert while the settings / display confirmation layer is
-	# open, so it cannot restart behind the panel.
+	# open, so it cannot restart behind the panel.  The manual overlay owns its
+	# own close keys and never restarts the chapter.
 	if _settings_open or is_display_pending():
+		return
+	if _manual != null and _manual.is_open():
 		return
 	if _open:
 		_restart_from_pause()
@@ -341,6 +384,31 @@ func _on_quit_pressed() -> void:
 	prepare_scene_change()
 	quit_requested.emit()
 	get_tree().quit(0)
+
+
+# --- Manual ---------------------------------------------------------------
+
+func _build_manual() -> void:
+	_manual = MechanicManual.new()
+	_manual.name = "MechanicManual"
+	_manual.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_manual)
+	_manual.closed.connect(_on_manual_closed)
+
+
+func _on_manual_pressed() -> void:
+	if not _open or _settings_open:
+		return
+	if _manual != null:
+		_manual.open()
+
+
+func _on_manual_closed() -> void:
+	# Consume the same-frame Esc/F: the manual already handled it, so the pause
+	# page must not also run its pause action.
+	_manual_close_guard = true
+	if _manual_button != null:
+		_manual_button.grab_focus()
 
 
 # --- Settings host ---------------------------------------------------------
@@ -400,6 +468,7 @@ func _refresh_focus_chain() -> void:
 	var chain: Array[Control] = [
 		_continue_button,
 		_settings_button,
+		_manual_button,
 		_restart_button,
 		_return_button,
 		_quit_button,
@@ -504,8 +573,16 @@ func _build_ui() -> void:
 	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_panel.add_child(divider)
 
-	_controls_header = _label("本关操作", Vector2(262.0, 58.0), Vector2(236.0, 16.0), 12, CYAN)
+	_controls_header = _label("本关操作", Vector2(262.0, 58.0), Vector2(160.0, 16.0), 12, CYAN)
 	_panel.add_child(_controls_header)
+	# Manual entry sits at the right end of the 本关操作 header, one click from
+	# the control table it documents.  It is the only manual entrance outside
+	# the pause page; chapter/title pages stay unchanged.
+	_manual_button = _menu_button("手册", Vector2(430.0, 52.0), PixelMenuButton.Variant.OPTION)
+	_manual_button.name = "ManualButton"
+	_manual_button.size = Vector2(68.0, 20.0)
+	_manual_button.pressed.connect(_on_manual_pressed)
+	_panel.add_child(_manual_button)
 	var controls_divider: ColorRect = ColorRect.new()
 	controls_divider.position = Vector2(262.0, 76.0)
 	controls_divider.size = Vector2(236.0, 1.0)

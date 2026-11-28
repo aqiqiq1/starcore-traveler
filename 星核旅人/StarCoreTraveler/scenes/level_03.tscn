@@ -23,7 +23,6 @@
 [ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_tall.tscn" id="23_col_tall"]
 [ext_resource type="PackedScene" path="res://scenes/decorations/doric_column_broken.tscn" id="24_col_broken"]
 [ext_resource type="Script" path="res://scripts/terrain_strip.gd" id="25_strip"]
-[ext_resource type="Script" path="res://dlc/shared/side_route/trial_stele_gate.gd" id="27_sidegate"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_terrain"]
 size = Vector2(560, 40)
@@ -242,19 +241,6 @@ start_positive = true
 [node name="Gate" parent="." instance=ExtResource("14_gate")]
 process_mode = 1
 position = Vector2(2380, 320)
-
-[node name="TrialSteleGate" type="Node2D" parent="."]
-process_mode = 1
-z_index = 3
-position = Vector2(2250, 320)
-script = ExtResource("27_sidegate")
-target_id = "trial"
-scene_path = "res://dlc/trial_chambers/trial_chambers.tscn"
-origin_id = "l3"
-origin_path = "res://scenes/level_03.tscn"
-hint_text = "试炼碑 · 可进入支线"
-player_path = NodePath("../Player")
-hud_path = NodePath("../HUD")
 
 [node name="Cine" parent="." instance=ExtResource("15_cine")]
 process_mode = 1

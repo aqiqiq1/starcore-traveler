@@ -102,6 +102,7 @@ func _run() -> void:
 	if bay_scene == null:
 		return
 	var bay: StarCoreBayVisual = bay_scene.instantiate() as StarCoreBayVisual
+	bay.set_sfx_enabled(false)
 	add_child(bay)
 	await get_tree().process_frame
 	bay.occupied = true
@@ -128,6 +129,7 @@ func _run() -> void:
 	if loom_scene == null:
 		return
 	var loom: CoreDeliveryBay = loom_scene.instantiate() as CoreDeliveryBay
+	loom.set_sfx_enabled(false)
 	add_child(loom)
 	await get_tree().process_frame
 	loom.set_occupied(false)

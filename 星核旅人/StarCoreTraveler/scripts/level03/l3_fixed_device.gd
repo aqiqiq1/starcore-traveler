@@ -6,13 +6,12 @@ extends Node2D
 ## the live 辉相 core.  The transport core is never read, moved or consumed
 ## here.
 ##
-## Art (2026-11-27 second pass): the old 48x40 PNG baked a purple orb into the
-## device.  The shell is now the same stone arch with a code-drawn dark socket,
-## and the core is the shared `StarCoreVisual` scene at 16x16 / 12 frames.  The
-## active sheet is `star_core_positive_12f.png`; the idle sheet is the locked
-## purple sheet, so the two states still read at 1:1 without a +/− badge.
-## The free core draws no outer metal ring; only this device's own stone arch
-## and socket remain around it.
+## Art (2026-11-28): the shell is the stone device itself, with its own baked
+## round stone face left visible; there is no code-drawn socket or dark recess,
+## so the device never reads as a hole in the platform.  The core is the shared
+## `StarCoreVisual` scene at 16x16 / 12 frames.  The active sheet is
+## `star_core_positive_12f.png`; the idle sheet is the locked purple sheet, so
+## the two states still read at 1:1 without a +/− badge.
 
 signal activated
 
@@ -21,13 +20,8 @@ const SHELL_TEXTURE: Texture2D = preload(
 )
 const CORE_SCENE: PackedScene = preload("res://scenes/star_core_visual.tscn")
 const FOOT_ANCHOR: Vector2 = Vector2(24.0, 39.0)
-const SOCKET_CENTER: Vector2 = Vector2(24.0, 16.0)
-const SOCKET_RADIUS: float = 8.5
-const SOCKET_DARK: Color = Color("#0d1517")
-const SOCKET_LIP: Color = Color("#485558")
-## The old orb bbox is x=17..30, y=9..22 (centre 23.5, 15.5).  The new 16x16
-## core uses integer pixels at (24,16), a half-pixel shift that stays inside the
-## 18 px socket.
+## The new 16x16 core uses integer pixels at (24,16), centred on the stone
+## device's own round face; no socket is drawn under it.
 const CORE_POSITION: Vector2 = Vector2(0.0, -23.0)
 
 @export var interaction_range: float = 46.0
@@ -117,21 +111,3 @@ func _apply_state() -> void:
 
 func _draw() -> void:
 	draw_texture(SHELL_TEXTURE, -FOOT_ANCHOR)
-	_draw_socket()
-
-
-## Cover the old baked orb with a clean dark recess.  The stone arch around it
-## belongs to the device, so the free core itself still has no outer ring.
-func _draw_socket() -> void:
-	var radius_sq: float = SOCKET_RADIUS * SOCKET_RADIUS
-	for y: int in range(int(SOCKET_CENTER.y - SOCKET_RADIUS - 1.0),
-			int(SOCKET_CENTER.y + SOCKET_RADIUS + 1.0)):
-		var dy: float = (float(y) + 0.5) - SOCKET_CENTER.y
-		for x: int in range(int(SOCKET_CENTER.x - SOCKET_RADIUS - 1.0),
-				int(SOCKET_CENTER.x + SOCKET_RADIUS + 1.0)):
-			var dx: float = (float(x) + 0.5) - SOCKET_CENTER.x
-			if dx * dx + dy * dy <= radius_sq:
-				draw_rect(Rect2(float(x), float(y), 1.0, 1.0), SOCKET_DARK)
-	# One dim top-left lip on the device itself; no ring is drawn on the core.
-	for x: int in range(17, 24):
-		draw_rect(Rect2(float(x), 7.0, 1.0, 1.0), SOCKET_LIP)
