@@ -1,20 +1,22 @@
 class_name CompletionEmblem
 extends Control
 
-## One shared settlement mark for all six completion pages: the same
-## gold/cyan double-faced mirror with one eye that opens 裂隙工坊.  It is
-## deliberately not the guard's chest core, not a star core and no longer the
-## old gate roundel.
+## One shared settlement mark for all six completion pages: the shipped game
+## icon, the half-gold / half-cyan star core (`assets/icon/icon_32.png`).
 ##
-## The mark is drawn at runtime by MirrorFaceArt, the same module the DLC3
-## entrance uses for its frame, eye and ripple.  It is authored at 32x32 and
-## drawn 1:1 with nearest filtering, matching the HUD's 1 px gold-line
-## language.  It owns no animation and no gameplay state.
+## 2026-11-28: replaces the old double-faced mirror thumbnail and every earlier
+## guard-weakpoint / star-core texture experiment.  The icon is authored at
+## 32x32 and drawn 1:1 with nearest filtering, no extra frame and no scaling,
+## so it stays crisp at 640x360.  The completion ripple/black hand-off is owned
+## by CompletionMirrorFade, which finds this node by name and centres its rings
+## on the emblem rect; the icon owns no animation and no gameplay state.
 
-const ART = preload("res://dlc/shared/side_route/mirror_face_art.gd")
-const ART_ID: String = "double_mirror_eye_32"
+const ICON_PATH: String = "res://assets/icon/icon_32.png"
+const ART_ID: String = "game_icon_32"
 const ICON_SIZE: Vector2 = Vector2(32.0, 32.0)
 const DEFAULT_POSITION: Vector2 = Vector2(356.0, 12.0)
+
+var _texture: Texture2D = null
 
 
 ## Shared insertion point for all six completion panels.  The panel already
@@ -35,23 +37,45 @@ func _ready() -> void:
 	size = ICON_SIZE
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_texture = _load_icon()
 	queue_redraw()
 
 
 func _draw() -> void:
-	var diameter: float = minf(size.x, size.y)
-	ART.draw_emblem(self, size * 0.5, diameter)
+	if _texture == null:
+		return
+	# 1:1 blit into the 32x32 box: no scale, no frame, no tint.
+	draw_texture_rect(_texture, Rect2(Vector2.ZERO, ICON_SIZE), false)
+
+
+func _load_icon() -> Texture2D:
+	if not ResourceLoader.exists(ICON_PATH):
+		return null
+	return ResourceLoader.load(ICON_PATH) as Texture2D
 
 
 func get_art_id() -> String:
 	return ART_ID
 
 
+## The exact asset the page draws; tests compare this string.
+func get_texture_path() -> String:
+	return ICON_PATH
+
+
+func get_texture() -> Texture2D:
+	return _texture
+
+
+func has_game_icon() -> bool:
+	return _texture != null
+
+
+## Kept for older call sites: the settlement page no longer uses mirror art.
 func has_mirror_art() -> bool:
-	return true
+	return false
 
 
-## Test hook: the paint is the dedicated mirror, never a guard/star core and
-## never the retired gate emblem.
+## True only when the shipped game icon really loaded; never a fallback drawing.
 func is_dedicated_emblem() -> bool:
-	return get_art_id() == ART_ID
+	return has_game_icon() and get_art_id() == ART_ID

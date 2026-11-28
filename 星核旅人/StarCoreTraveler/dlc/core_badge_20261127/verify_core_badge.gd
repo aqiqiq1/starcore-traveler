@@ -5,8 +5,9 @@ extends Node
 ##   - DLC2 / DLC3 delivered cores carry the cyan 澜相 sheet of the moon gate
 ##     they power, independent of the player's Q;
 ##   - the L3 floating-platform device shows the new 12-frame core sheets;
-##   - the shared completion double-mirror emblem is the 32x32 mirror art and
-##     is not a guard core, a star core or the retired gate emblem.
+##   - the shared completion emblem draws the shipped game icon
+##     (`res://assets/icon/icon_32.png`) at 32x32, not a mirror, a guard core,
+##     a star core or the retired gate emblem.
 ##
 ## Run:
 ##   Godot_v4.7.2-stable_win64_console.exe --headless --path . \
@@ -192,13 +193,19 @@ func _check_emblem() -> void:
 	var emblem: CompletionEmblem = CompletionEmblem.new()
 	add_child(emblem)
 	await _wait_process(1)
-	_check(emblem.get_art_id() == CompletionEmblem.ART_ID,
-		"completion emblem is the dedicated double-mirror art",
-		emblem.get_art_id())
-	_check(emblem.has_mirror_art() and emblem.is_dedicated_emblem(),
-		"completion emblem is not a guard core and not a star core")
+	_check(emblem.get_texture_path() == "res://assets/icon/icon_32.png",
+		"completion emblem draws res://assets/icon/icon_32.png",
+		emblem.get_texture_path())
+	_check(emblem.has_game_icon() and emblem.is_dedicated_emblem(),
+		"completion emblem really loads the shipped game icon")
+	_check(not emblem.has_mirror_art(),
+		"completion emblem is no longer the double-mirror art")
 	_check(emblem.size == CompletionEmblem.ICON_SIZE,
 		"completion emblem is shown at 32x32",
 		str(emblem.size))
+	_check(emblem.get_texture() != null
+		and emblem.get_texture().get_size() == Vector2(32.0, 32.0),
+		"game icon texture is authored 32x32",
+		str(emblem.get_texture().get_size()) if emblem.get_texture() != null else "null")
 	emblem.queue_free()
 	await _wait_process(1)

@@ -342,7 +342,7 @@ func _test_pause_page_and_restart() -> void:
 		== Rect2(Vector2(140.0, 56.0), Vector2(360.0, 236.0)),
 		"pause panel is 360x236, centred high")
 	_check(_hud.get_pause_title_text() == "已暂停", "pause heading is 已暂停")
-	_check(_hud.get_pause_subtitle_text() == "裂隙工坊 · 支线裂隙",
+	_check(_hud.get_pause_subtitle_text() == "裂隙工坊 · 隐藏关",
 		"pause subtitle is the branch chapter name")
 	_check(_hud.get_pause_footer_text() == "返回主界面不保存本章进度",
 		"pause footnote warns about progress")

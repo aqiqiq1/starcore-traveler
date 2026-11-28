@@ -88,8 +88,8 @@ func _run() -> void:
 	_check(trial.is_pause_open(), "Esc opens the pause page")
 	var hud: TrialHUD = trial.get_hud()
 	_check(hud.get_continue_button().has_focus(), "继续游戏 starts focused")
-	_check(hud.get_pause_subtitle_text() == "星核试炼场 · 支线试炼",
-		"pause subtitle is 星核试炼场 · 支线试炼", hud.get_pause_subtitle_text())
+	_check(hud.get_pause_subtitle_text() == "星核试炼场 · 旧试炼",
+		"pause subtitle is 星核试炼场 · 旧试炼", hud.get_pause_subtitle_text())
 	var health_bar: PlayerHealthBar = hud.get_hit_pips()
 	_check(health_bar != null and health_bar.get_style_name() == "bar",
 		"pause keeps the shared red health bar as the value display")

@@ -511,7 +511,7 @@ func _build_pause() -> void:
 	panel.add_child(title)
 
 	_pause_subtitle = _label(
-		"星核试炼场 · 支线试炼", Vector2(0.0, 36.0), Vector2(360.0, 16.0), 12, MUTED
+		"星核试炼场 · 旧试炼", Vector2(0.0, 36.0), Vector2(360.0, 16.0), 12, MUTED
 	)
 	_pause_subtitle.name = "PauseSubtitle"
 	_pause_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

@@ -333,7 +333,7 @@ func _run() -> void:
 	var pause_rect: Rect2 = hud.get_pause_panel_rect()
 	_check(pause_rect.size.is_equal_approx(Vector2(360.0, 236.0)),
 		"pause panel is 360x236", str(pause_rect.size))
-	_check(hud.get_pause_subtitle_text() == "星核试炼场 · 支线试炼",
+	_check(hud.get_pause_subtitle_text() == "星核试炼场 · 旧试炼",
 		"pause subtitle names the trial", hud.get_pause_subtitle_text())
 	_check(hud.get_continue_button().text == "继续游戏",
 		"continue button text is 继续游戏")

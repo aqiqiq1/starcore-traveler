@@ -67,14 +67,14 @@ const CHAPTERS: Array[Dictionary] = [
 	{
 		"id": ID_LOOM,
 		"title": "星核织机·城内",
-		"tag": "DLC3 · 第四关",
+		"tag": "第四关",
 		"path": "res://dlc/star_loom/star_loom.tscn",
 		"requires": ID_L3,
 	},
 	{
 		"id": ID_RIFT,
 		"title": "裂隙工坊",
-		"tag": "DLC2 · 支线",
+		"tag": "隐藏关",
 		"path": "res://dlc/rift_workshop/rift_workshop.tscn",
 		"requires": ID_L2,
 	},

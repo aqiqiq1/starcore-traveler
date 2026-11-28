@@ -4,7 +4,7 @@ extends Node
 ##   - the DLC3 entrance is the 40x64 double mirror with the 0.35 s walk and
 ##     0.8 s black fade, not the old stone recess;
 ##   - the destination opens with a full-alpha black cover on its first frame;
-##   - all six settlement pages share the 32x32 gold/cyan mirror emblem and no
+##   - all six settlement pages share the 32x32 shipped game icon and no
 ##     longer reference the gate emblem;
 ##   - the mirror defeat pop is a circular 124x108 child flash with no
 ##     full-screen rectangle;
@@ -103,20 +103,27 @@ func _check_black_cover() -> void:
 
 func _check_emblem() -> void:
 	_check(
-		CompletionEmblem.ART_ID == "double_mirror_eye_32",
-		"completion art id is the double mirror", CompletionEmblem.ART_ID
+		CompletionEmblem.ART_ID == "game_icon_32",
+		"completion art id is the shipped game icon", CompletionEmblem.ART_ID
 	)
 	var emblem: CompletionEmblem = CompletionEmblem.new()
 	add_child(emblem)
 	await _wait_process(1)
 	_check(emblem.size.is_equal_approx(Vector2(32.0, 32.0)),
 		"completion emblem is 32x32", str(emblem.size))
-	_check(emblem.has_mirror_art() and emblem.is_dedicated_emblem(),
-		"completion emblem is the dedicated mirror, not a guard/star core")
-	_check(not CompletionEmblem.ART_ID.contains("weakpoint")
-		and not CompletionEmblem.ART_ID.contains("guard")
-		and not CompletionEmblem.ART_ID.contains("star_core"),
-		"completion art id carries no guard/star-core source")
+	_check(emblem.get_texture_path() == "res://assets/icon/icon_32.png",
+		"completion emblem draws the game icon", emblem.get_texture_path())
+	_check(emblem.has_game_icon() and emblem.is_dedicated_emblem(),
+		"completion emblem really loads the icon, not a fallback drawing")
+	_check(not emblem.has_mirror_art(),
+		"completion emblem no longer uses the mirror art")
+	_check(emblem.get_texture() != null
+		and emblem.get_texture().get_size() == Vector2(32.0, 32.0),
+		"game icon texture is 32x32")
+	_check(not CompletionEmblem.ICON_PATH.contains("mirror")
+		and not CompletionEmblem.ICON_PATH.contains("guard")
+		and not CompletionEmblem.ICON_PATH.contains("star_core"),
+		"completion icon path carries no mirror/guard/star-core source")
 	emblem.queue_free()
 	await _wait_process(2)
 

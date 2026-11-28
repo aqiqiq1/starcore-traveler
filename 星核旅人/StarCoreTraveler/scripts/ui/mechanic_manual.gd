@@ -8,8 +8,16 @@ extends CanvasLayer
 ## unlocked rows read the registry copy.  The page never changes gameplay or
 ## pause state: it is an overlay above the already-paused pause page.
 ##
-## Close routes: Esc, F, or the in-panel 返回 button.  Opening focus goes to the
-## 返回 button so the same keyboard route always works.
+## Layout (2026-11-28 rework): 620x300 panel inside 640x360, 8 rows per page at
+## a 24 px pitch, so 15 registry rows need two pages.  Columns are separated
+## with a real gutter (icon / name / summary / key); an over-wide summary is
+## trimmed and ellipsised before it can reach the key column.  Page indicator
+## sits bottom-right in its own band, clear of the last row.
+##
+## Close routes: Esc or the in-panel 返回 button.  F / → turn to the next page
+## (wrapping), ← to the previous page.  Every key is swallowed while open, so
+## a page turn can never also press a pause-page button.  Opening focus goes to
+## the 返回 button so the same keyboard route always works.
 
 signal opened
 signal closed
@@ -18,16 +26,27 @@ const REGISTRY = preload("res://scripts/mechanics/mechanic_registry.gd")
 const TEACH = preload("res://scripts/ui/mechanic_teach.gd")
 
 const VIEW_SIZE: Vector2 = Vector2(640.0, 360.0)
-const PANEL_POSITION: Vector2 = Vector2(20.0, 8.0)
-const PANEL_SIZE: Vector2 = Vector2(600.0, 344.0)
+const PANEL_POSITION: Vector2 = Vector2(10.0, 30.0)
+const PANEL_SIZE: Vector2 = Vector2(620.0, 300.0)
+const ROWS_PER_PAGE: int = 8
 const ROW_START_Y: float = 58.0
-const ROW_STEP: float = 18.0
-const ROW_ICON_X: float = 12.0
-const ROW_NAME_X: float = 32.0
-const ROW_NAME_WIDTH: float = 78.0
-const ROW_SUMMARY_X: float = 112.0
+const ROW_STEP: float = 24.0
+const ROW_HEIGHT: float = 22.0
+const ROW_TEXT_Y: float = 3.0
+const ROW_ICON_X: float = 14.0
+## 48 leaves a 7 px gap after the widest icon: the SPACE keycap is 27 px at
+## 16 px high, so a 36 px name column let it touch the first glyph.
+const ROW_NAME_X: float = 48.0
+const ROW_NAME_WIDTH: float = 72.0
+const ROW_SUMMARY_X: float = 128.0
 const ROW_SUMMARY_WIDTH: float = 400.0
-const ROW_KEY_X: float = 520.0
+const ROW_KEY_X: float = 544.0
+const DIVIDER_Y: float = 52.0
+## Footer band sits below the 8th row (58 + 7*24 + 22 = 248) with a 6 px gap.
+const FOOTER_DIVIDER_Y: float = 254.0
+const FOOTER_Y: float = 266.0
+const FOOTER_HEIGHT: float = 14.0
+const ELLIPSIS: String = "…"
 const FONT_PATH: String = "res://assets/fonts/tutorial_zh.ttf"
 const KEYCAP_DIR: String = "res://assets/ui/keycaps/"
 const SUN_PATH: String = "res://assets/ui/icons/affinity_sun_20.png"
@@ -52,6 +71,7 @@ var _title: Label = null
 var _subtitle: Label = null
 var _back_button: PixelMenuButton = null
 var _footer: RichTextLabel = null
+var _page_indicator: Label = null
 var _font: Font = null
 var _rows: Array[Dictionary] = []
 var _row_name_labels: Array[Label] = []
@@ -59,6 +79,7 @@ var _row_summary_labels: Array[Label] = []
 var _row_state: Dictionary = {}
 var _open: bool = false
 var _unlocked: Dictionary = {}
+var _page_index: int = 0
 
 
 func _ready() -> void:
@@ -83,8 +104,12 @@ func _input(event: InputEvent) -> void:
 	var code: int = int(key_event.physical_keycode)
 	if code == 0:
 		code = int(key_event.keycode)
-	if code == KEY_ESCAPE or code == KEY_F:
+	if code == KEY_ESCAPE:
 		close()
+	elif code == KEY_F or code == KEY_RIGHT:
+		turn_page(1)
+	elif code == KEY_LEFT:
+		turn_page(-1)
 	# Every key belongs to the manual while it is open, so the pause/chapter
 	# input handlers cannot resume, restart or act behind the page.
 	get_viewport().set_input_as_handled()
@@ -96,6 +121,8 @@ func open() -> bool:
 	if _open or _root == null:
 		return false
 	refresh()
+	_page_index = 0
+	_apply_page_layout()
 	_open = true
 	_root.visible = true
 	if _back_button != null:
@@ -142,6 +169,20 @@ func get_back_button() -> PixelMenuButton:
 	return _back_button
 
 
+## Real 12 px pixel font used by every row, so the acceptance test can measure
+## the same text widths the manual measures.
+func get_row_font() -> Font:
+	return _font
+
+
+func get_summary_overrun_behaviors() -> Array[int]:
+	var out: Array[int] = []
+	for label: Label in _row_summary_labels:
+		if label != null:
+			out.append(int(label.text_overrun_behavior))
+	return out
+
+
 func get_row_font_sizes() -> Array[int]:
 	var sizes: Array[int] = []
 	for label: Label in _row_name_labels:
@@ -185,6 +226,139 @@ func get_row_text(id: String) -> String:
 	return ""
 
 
+func get_page_count() -> int:
+	return maxi(int(ceil(float(REGISTRY.count()) / float(ROWS_PER_PAGE))), 1)
+
+
+func get_page_index() -> int:
+	return _page_index
+
+
+## 1-based "1 / 2" copy, always present so the player can see the total.
+func get_page_indicator_text() -> String:
+	return _page_indicator.text if _page_indicator != null else ""
+
+
+func get_rows_per_page() -> int:
+	return ROWS_PER_PAGE
+
+
+func get_row_step() -> float:
+	return ROW_STEP
+
+
+func get_row_height() -> float:
+	return ROW_HEIGHT
+
+
+func get_panel_rect() -> Rect2:
+	return Rect2(PANEL_POSITION, PANEL_SIZE)
+
+
+## Panel-local column rectangles.  The summary rect never touches the key rect;
+## tests use this to prove the gutter instead of trusting the screenshot.
+func get_column_rects() -> Dictionary:
+	return {
+		"icon": Rect2(ROW_ICON_X, ROW_TEXT_Y, 16.0, 16.0),
+		"name": Rect2(ROW_NAME_X, ROW_TEXT_Y, ROW_NAME_WIDTH, 16.0),
+		"summary": Rect2(ROW_SUMMARY_X, ROW_TEXT_Y, ROW_SUMMARY_WIDTH, 16.0),
+		"key": Rect2(ROW_KEY_X, ROW_TEXT_Y, 60.0, 16.0),
+	}
+
+
+## Bottom band: footer text left, page indicator right.  Neither may overlap
+## the last row, the panel border or each other.
+func get_footer_rects() -> Dictionary:
+	return {
+		"footer": Rect2(16.0, FOOTER_Y, 420.0, FOOTER_HEIGHT),
+		"page_indicator": Rect2(480.0, FOOTER_Y, 120.0, FOOTER_HEIGHT),
+		"divider_y": FOOTER_DIVIDER_Y,
+	}
+
+
+func get_last_row_bottom() -> float:
+	var last_index: int = mini(ROWS_PER_PAGE, REGISTRY.count()) - 1
+	return ROW_START_Y + float(last_index) * ROW_STEP + ROW_HEIGHT
+
+
+## Ids that are visible on the current page, in row order.
+func get_visible_row_ids() -> Array[String]:
+	var ids: Array[String] = []
+	for index: int in range(_rows.size()):
+		if int(index / ROWS_PER_PAGE) != _page_index:
+			continue
+		var row: Dictionary = _rows[index]
+		var row_root: Control = row.get("root", null) as Control
+		if row_root != null and row_root.visible:
+			ids.append(String(row.get("id", "")))
+	return ids
+
+
+## Row rectangle in panel space for the current page (hidden rows return empty).
+func get_current_row_rects() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for index: int in range(_rows.size()):
+		if int(index / ROWS_PER_PAGE) != _page_index:
+			continue
+		var row: Dictionary = _rows[index]
+		out.append({
+			"id": String(row.get("id", "")),
+			"rect": Rect2(
+				ROW_NAME_X,
+				ROW_START_Y + float(index % ROWS_PER_PAGE) * ROW_STEP,
+				PANEL_SIZE.x - ROW_NAME_X * 2.0,
+				ROW_HEIGHT
+			),
+		})
+	return out
+
+
+## Icon/key boxes in row-local space for the visible rows.  A TextureRect whose
+## minimum size was not ignored used to report 20 px here instead of the 10/16
+## the layout asks for, which is exactly the row-overlap regression.
+func get_current_row_glyph_rects() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for index: int in range(_rows.size()):
+		if int(index / ROWS_PER_PAGE) != _page_index:
+			continue
+		var row: Dictionary = _rows[index]
+		var icon: Control = row.get("icon", null) as Control
+		var key_node: Control = row.get("key", null) as Control
+		out.append({
+			"id": String(row.get("id", "")),
+			"name": Rect2(ROW_NAME_X, ROW_TEXT_Y, ROW_NAME_WIDTH, 16.0),
+			"icon": Rect2(icon.position, icon.size) if icon != null and icon.visible else Rect2(),
+			"key": Rect2(key_node.position, key_node.size) if key_node != null and key_node.visible else Rect2(),
+		})
+	return out
+
+
+## Trim + ellipsis used for the summary column.  Kept static and public so the
+## acceptance test can feed an over-wide string and check the real rule.
+static func fit_text(text_value: String, font: Font, max_width: float, font_size: int) -> String:
+	if font == null or max_width <= 0.0:
+		return text_value
+	if font.get_string_size(text_value, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x <= max_width:
+		return text_value
+	var out: String = ""
+	for index: int in range(text_value.length()):
+		var candidate: String = out + text_value[index]
+		if font.get_string_size(candidate + ELLIPSIS, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > max_width:
+			break
+		out = candidate
+	return out + ELLIPSIS
+
+
+func turn_page(delta: int) -> void:
+	if not _open:
+		return
+	var count: int = get_page_count()
+	if count <= 1:
+		return
+	_page_index = posmod(_page_index + delta, count)
+	_apply_page_layout()
+
+
 ## Re-reads the progress file.  Called on every open so a mechanism taught in
 ## the same pause session is already readable.
 func refresh() -> void:
@@ -195,6 +369,7 @@ func refresh() -> void:
 		_subtitle.text = "已解锁 %d / %d · 首次遇到自动记录" % [
 			_unlocked.size(), REGISTRY.count()
 		]
+	_apply_page_layout()
 
 
 # --- Build UI --------------------------------------------------------------
@@ -252,17 +427,17 @@ func _build_ui() -> void:
 	_panel.add_theme_stylebox_override("panel", style)
 	_root.add_child(_panel)
 
-	_title = _label("机制手册", Vector2(16.0, 8.0), Vector2(360.0, 28.0), 24, GOLD)
+	_title = _label("机制手册", Vector2(16.0, 6.0), Vector2(300.0, 28.0), 24, GOLD)
 	_panel.add_child(_title)
 
-	_subtitle = _label("", Vector2(16.0, 36.0), Vector2(430.0, 14.0), 12, MUTED)
+	_subtitle = _label("", Vector2(16.0, 34.0), Vector2(430.0, 14.0), 12, MUTED)
 	_panel.add_child(_subtitle)
 
 	_back_button = PixelMenuButton.new()
 	_back_button.name = "ManualBackButton"
 	_back_button.text = "返回"
-	_back_button.position = Vector2(492.0, 10.0)
-	_back_button.size = Vector2(92.0, 22.0)
+	_back_button.position = Vector2(508.0, 8.0)
+	_back_button.size = Vector2(96.0, 24.0)
 	_back_button.font = _font
 	_back_button.font_size = 12
 	_back_button.variant = PixelMenuButton.Variant.OPTION
@@ -270,34 +445,45 @@ func _build_ui() -> void:
 	_panel.add_child(_back_button)
 
 	var divider: ColorRect = ColorRect.new()
-	divider.position = Vector2(16.0, 52.0)
-	divider.size = Vector2(568.0, 1.0)
+	divider.position = Vector2(16.0, DIVIDER_Y)
+	divider.size = Vector2(588.0, 1.0)
 	divider.color = Color(0.45, 0.66, 0.63, 0.40)
 	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_panel.add_child(divider)
 
 	var index: int = 0
 	for id: String in REGISTRY.all_ids():
-		var row_y: float = ROW_START_Y + float(index) * ROW_STEP
-		var icon: Control = _make_icon(id, row_y)
+		var row_root: Control = Control.new()
+		row_root.name = "Row_%s" % id
+		row_root.position = Vector2(0.0, ROW_START_Y + float(index % ROWS_PER_PAGE) * ROW_STEP)
+		row_root.size = Vector2(PANEL_SIZE.x, ROW_HEIGHT)
+		row_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_panel.add_child(row_root)
+
+		var icon: Control = _make_icon(id)
 		if icon != null:
-			_panel.add_child(icon)
-		var name_label: Label = _label("", Vector2(ROW_NAME_X, row_y), Vector2(ROW_NAME_WIDTH, 16.0), 12, TEXT)
+			row_root.add_child(icon)
+		var name_label: Label = _label(
+			"", Vector2(ROW_NAME_X, ROW_TEXT_Y), Vector2(ROW_NAME_WIDTH, 16.0), 12, TEXT
+		)
 		name_label.name = "RowName_%s" % id
-		_panel.add_child(name_label)
+		row_root.add_child(name_label)
 		_row_name_labels.append(name_label)
 		var summary_label: Label = _label(
-			"", Vector2(ROW_SUMMARY_X, row_y), Vector2(ROW_SUMMARY_WIDTH, 16.0), 12, MUTED
+			"", Vector2(ROW_SUMMARY_X, ROW_TEXT_Y), Vector2(ROW_SUMMARY_WIDTH, 16.0), 12, MUTED
 		)
 		summary_label.name = "RowSummary_%s" % id
+		# Clip + ellipsis: an over-wide line can never reach the key column.
 		summary_label.clip_text = true
-		_panel.add_child(summary_label)
+		summary_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		row_root.add_child(summary_label)
 		_row_summary_labels.append(summary_label)
-		var key_node: Control = _make_key(id, row_y)
+		var key_node: Control = _make_key(id)
 		if key_node != null:
-			_panel.add_child(key_node)
+			row_root.add_child(key_node)
 		_rows.append({
 			"id": id,
+			"root": row_root,
 			"name_label": name_label,
 			"summary_label": summary_label,
 			"icon": icon,
@@ -305,12 +491,27 @@ func _build_ui() -> void:
 		})
 		index += 1
 
+	var footer_divider: ColorRect = ColorRect.new()
+	footer_divider.position = Vector2(16.0, FOOTER_DIVIDER_Y)
+	footer_divider.size = Vector2(588.0, 1.0)
+	footer_divider.color = Color(0.45, 0.66, 0.63, 0.28)
+	footer_divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_panel.add_child(footer_divider)
+
 	_footer = _rich_label(
-		Vector2(16.0, 326.0), Vector2(460.0, 16.0), 12, DIM
+		Vector2(16.0, FOOTER_Y), Vector2(420.0, FOOTER_HEIGHT), 12, DIM
 	)
 	_footer.name = "ManualFooter"
-	_footer.text = KeyGlyph.decorate("{ESC} / {F} 关闭")
+	_footer.text = KeyGlyph.decorate("{ESC} 关闭 · {F} / → 下一页 · ← 上一页")
 	_panel.add_child(_footer)
+
+	_page_indicator = _label(
+		"1 / 1", Vector2(480.0, FOOTER_Y), Vector2(120.0, FOOTER_HEIGHT), 12, MUTED
+	)
+	_page_indicator.name = "ManualPageIndicator"
+	_page_indicator.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_panel.add_child(_page_indicator)
+	_apply_page_layout()
 
 
 func _apply_row(row: Dictionary) -> void:
@@ -325,7 +526,9 @@ func _apply_row(row: Dictionary) -> void:
 	if unlocked:
 		name_label.text = REGISTRY.display_name(id)
 		name_label.add_theme_color_override("font_color", TEXT)
-		summary_label.text = REGISTRY.get_summary(id)
+		summary_label.text = fit_text(
+			REGISTRY.get_summary(id), _font, ROW_SUMMARY_WIDTH, 12
+		)
 		summary_label.add_theme_color_override("font_color", MUTED)
 		if icon != null:
 			icon.visible = true
@@ -344,28 +547,47 @@ func _apply_row(row: Dictionary) -> void:
 			key_node.visible = false
 
 
-func _make_icon(id: String, row_y: float) -> Control:
+## Shows only the rows of `_page_index`, each at its own slot inside the page.
+func _apply_page_layout() -> void:
+	for index: int in range(_rows.size()):
+		var row: Dictionary = _rows[index]
+		var row_root: Control = row.get("root", null) as Control
+		if row_root == null:
+			continue
+		var in_page: bool = int(index / ROWS_PER_PAGE) == _page_index
+		row_root.visible = in_page
+		if in_page:
+			row_root.position = Vector2(
+				0.0, ROW_START_Y + float(index % ROWS_PER_PAGE) * ROW_STEP
+			)
+	if _page_indicator != null:
+		_page_indicator.text = "%d / %d" % [_page_index + 1, get_page_count()]
+
+
+func _make_icon(id: String) -> Control:
 	var icon_data: Dictionary = REGISTRY.get_icon(id)
 	var kind: String = String(icon_data.get("kind", ""))
 	var value: String = String(icon_data.get("value", ""))
 	if kind == "key":
-		return _make_keycap(value, ROW_ICON_X, row_y + 1.0)
+		return _make_keycap(value, ROW_ICON_X, ROW_TEXT_Y)
 	if kind == "phase":
 		var path: String = SUN_PATH if value != "moon" else MOON_PATH
-		return _make_texture(path, Vector2(15.0, row_y + 4.0), Vector2(10.0, 10.0))
+		return _make_texture(path, Vector2(ROW_ICON_X + 3.0, ROW_TEXT_Y + 3.0), Vector2(10.0, 10.0))
 	if kind == "heart":
-		return _make_texture(HEART_PATH, Vector2(15.0, row_y + 4.0), Vector2(10.0, 10.0))
+		return _make_texture(HEART_PATH, Vector2(ROW_ICON_X + 3.0, ROW_TEXT_Y + 3.0), Vector2(10.0, 10.0))
 	return null
 
 
-func _make_key(id: String, row_y: float) -> Control:
+func _make_key(id: String) -> Control:
 	var key_text: String = REGISTRY.get_key_text(id)
 	if key_text.is_empty():
-		var dash: Label = _label("—", Vector2(ROW_KEY_X, row_y), Vector2(60.0, 16.0), 12, DIM)
+		var dash: Label = _label(
+			"—", Vector2(ROW_KEY_X, ROW_TEXT_Y), Vector2(60.0, 16.0), 12, DIM
+		)
 		return dash
 	if key_text == "SPACE":
-		return _make_keycap("SPACE", ROW_KEY_X, row_y + 1.0)
-	return _make_keycap(key_text, ROW_KEY_X, row_y + 1.0)
+		return _make_keycap("SPACE", ROW_KEY_X, ROW_TEXT_Y)
+	return _make_keycap(key_text, ROW_KEY_X, ROW_TEXT_Y)
 
 
 func _make_keycap(key: String, x: float, y: float) -> Control:
@@ -384,6 +606,11 @@ func _make_texture(path: String, position_value: Vector2, size_value: Vector2) -
 	var rect: TextureRect = TextureRect.new()
 	rect.texture = ResourceLoader.load(path) if ResourceLoader.exists(path) else null
 	rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	# Without EXPAND_IGNORE_SIZE the Control is clamped to the source texture's
+	# size (18 px keycaps, 20 px affinity art), so a 10x10 request silently
+	# became 20x20 and reached into the next row.  The manual really draws the
+	# requested 10/16 px box.
+	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	rect.stretch_mode = TextureRect.STRETCH_SCALE
 	rect.position = position_value
 	rect.size = size_value

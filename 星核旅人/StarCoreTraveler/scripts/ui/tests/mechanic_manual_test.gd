@@ -11,7 +11,8 @@ extends Node
 ##   - first request shows once, second request and a fresh node stay silent
 ##   - missing/corrupt progress files never crash and start empty
 ##   - manual shows unlocked registry copy and ？？？ for locked rows
-##   - Esc, F and the 返回 button close the page
+##   - 8 rows per page, 24 px pitch, page indicator, F/→/← page turns
+##   - Esc and the 返回 button close the page
 ##   - the six chapter pause pages expose a working 手册 entry
 
 const REGISTRY = preload("res://scripts/mechanics/mechanic_registry.gd")
@@ -206,12 +207,191 @@ func _run() -> void:
 			all_twelve = false
 	_check(all_twelve, "every manual row uses 12 px", str(sizes))
 
+	# --- pagination / columns (2026-11-28 layout) ------------------------
+	_check(
+		manual.get_row_step() >= 22.0 and manual.get_row_step() <= 24.0,
+		"row pitch is 22-24 px so rows never touch",
+		"%.0f" % manual.get_row_step()
+	)
+	_check(manual.get_rows_per_page() == 8, "eight rows per page")
+	_check(manual.get_page_count() == 2, "15 rows split into two pages",
+		str(manual.get_page_count()))
+	_check(manual.get_page_index() == 0, "the manual opens on page 1")
+	_check(
+		manual.get_page_indicator_text() == "1 / 2",
+		"page indicator reads 1 / 2",
+		manual.get_page_indicator_text()
+	)
+	var page_one: Array[String] = manual.get_visible_row_ids()
+	_check(page_one.size() == 8, "page 1 shows eight rows", str(page_one.size()))
+	_check(
+		not page_one.is_empty() and page_one[0] == "polarity"
+		and page_one[page_one.size() - 1] == "bridge",
+		"page 1 shows registry rows 1-8",
+		str(page_one)
+	)
+	_check(
+		page_one.find("core_delivery") == -1,
+		"page 1 does not leak a page-2 row"
+	)
+	var columns: Dictionary = manual.get_column_rects()
+	var name_rect: Rect2 = columns["name"] as Rect2
+	var summary_rect: Rect2 = columns["summary"] as Rect2
+	var key_rect: Rect2 = columns["key"] as Rect2
+	_check(
+		name_rect.end.x <= summary_rect.position.x - 8.0,
+		"name and summary columns keep an 8 px gutter"
+	)
+	_check(
+		summary_rect.end.x <= key_rect.position.x - 12.0,
+		"summary and key columns keep a 12 px gutter"
+	)
+	_check(
+		summary_rect.size.x >= 300.0,
+		"summary column holds the longest registry line",
+		"%.0f" % summary_rect.size.x
+	)
+	var behaviors: Array[int] = manual.get_summary_overrun_behaviors()
+	var all_ellipsis: bool = not behaviors.is_empty()
+	for behavior: int in behaviors:
+		if behavior != int(TextServer.OVERRUN_TRIM_ELLIPSIS):
+			all_ellipsis = false
+	_check(all_ellipsis, "over-wide summaries would be ellipsised", str(behaviors))
+	var long_text: String = "长".repeat(80)
+	var fitted: String = MechanicManual.fit_text(long_text, manual.get_row_font(), 200.0, 12)
+	_check(
+		fitted.ends_with("…") and fitted.length() < long_text.length(),
+		"fit_text trims and appends an ellipsis",
+		fitted
+	)
+	_check(
+		manual.get_row_font().get_string_size(
+			fitted, HORIZONTAL_ALIGNMENT_LEFT, -1, 12
+		).x <= 200.0,
+		"the ellipsised summary fits the column"
+	)
+	var footer: Dictionary = manual.get_footer_rects()
+	var footer_rect: Rect2 = footer["footer"] as Rect2
+	var page_rect: Rect2 = footer["page_indicator"] as Rect2
+	_check(
+		float(footer["divider_y"]) > manual.get_last_row_bottom(),
+		"footer divider sits below the last row",
+		"%.0f > %.0f" % [float(footer["divider_y"]), manual.get_last_row_bottom()]
+	)
+	_check(
+		footer_rect.end.x <= page_rect.position.x - 8.0,
+		"footer copy and page number keep a gutter"
+	)
+	var panel_rect: Rect2 = manual.get_panel_rect()
+	_check(
+		panel_rect.position.x >= 0.0 and panel_rect.position.y >= 0.0
+		and panel_rect.end.x <= 640.0 and panel_rect.end.y <= 360.0,
+		"manual panel stays inside 640x360",
+		str(panel_rect)
+	)
+	_check(
+		page_rect.end.x <= panel_rect.size.x - 16.0
+		and footer_rect.end.y <= panel_rect.size.y,
+		"page number and footer stay inside the panel"
+	)
+	var glyph_rows: Array[Dictionary] = manual.get_current_row_glyph_rects()
+	var glyphs_inside: bool = not glyph_rows.is_empty()
+	var glyph_detail: String = ""
+	for row_rects: Dictionary in glyph_rows:
+		var icon_box: Rect2 = row_rects["icon"] as Rect2
+		var key_box: Rect2 = row_rects["key"] as Rect2
+		for box: Rect2 in [icon_box, key_box]:
+			if box.size == Vector2.ZERO:
+				continue
+			if box.position.y < 0.0 or box.end.y > manual.get_row_height() \
+					or box.position.x < 0.0 \
+					or box.end.x > panel_rect.size.x:
+				glyphs_inside = false
+				glyph_detail = "%s %s" % [String(row_rects["id"]), str(box)]
+	_check(
+		glyphs_inside,
+		"row icons and keycaps stay inside their 22 px row",
+		glyph_detail
+	)
+	var icon_gutter_ok: bool = not glyph_rows.is_empty()
+	var icon_gutter_detail: String = ""
+	for row_rects: Dictionary in glyph_rows:
+		var icon_box: Rect2 = row_rects["icon"] as Rect2
+		var name_box: Rect2 = row_rects["name"] as Rect2
+		if icon_box.size == Vector2.ZERO:
+			continue
+		if icon_box.end.x > name_box.position.x - 4.0:
+			icon_gutter_ok = false
+			icon_gutter_detail = "%s icon=%s name=%s" % [
+				String(row_rects["id"]), str(icon_box), str(name_box)
+			]
+	_check(
+		icon_gutter_ok,
+		"the widest row icon (SPACE) keeps a 4 px gutter to the name column",
+		icon_gutter_detail
+	)
+
+	# --- page turns ------------------------------------------------------
+	await _push_key(KEY_RIGHT)
+	_check(manual.is_open(), "→ keeps the manual open")
+	_check(manual.get_page_index() == 1, "→ turns to page 2")
+	_check(
+		manual.get_page_indicator_text() == "2 / 2",
+		"page indicator reads 2 / 2",
+		manual.get_page_indicator_text()
+	)
+	var page_two: Array[String] = manual.get_visible_row_ids()
+	_check(page_two.size() == 7, "page 2 shows the remaining seven rows",
+		str(page_two.size()))
+	_check(
+		not page_two.is_empty() and page_two[0] == "core_delivery"
+		and page_two[page_two.size() - 1] == "lives",
+		"page 2 shows registry rows 9-15",
+		str(page_two)
+	)
+	_check(page_two.find("polarity") == -1, "page 2 does not show a page-1 row")
+	var page_two_glyphs: Array[Dictionary] = manual.get_current_row_glyph_rects()
+	var page_two_ok: bool = not page_two_glyphs.is_empty()
+	var page_two_detail: String = ""
+	for row_rects: Dictionary in page_two_glyphs:
+		var icon_box: Rect2 = row_rects["icon"] as Rect2
+		var name_box: Rect2 = row_rects["name"] as Rect2
+		if icon_box.size == Vector2.ZERO:
+			continue
+		if icon_box.position.y < 0.0 or icon_box.end.y > manual.get_row_height() \
+				or icon_box.end.x > name_box.position.x - 4.0:
+			page_two_ok = false
+			page_two_detail = "%s icon=%s" % [
+				String(row_rects["id"]), str(icon_box)
+			]
+	_check(
+		page_two_ok,
+		"page 2 SPACE keycap keeps the row and the name gutter",
+		page_two_detail
+	)
+	await _push_key(KEY_LEFT)
+	_check(manual.get_page_index() == 0, "← returns to page 1")
+	_check(
+		manual.get_page_indicator_text() == "1 / 2",
+		"page indicator returns to 1 / 2",
+		manual.get_page_indicator_text()
+	)
+	await _push_key(KEY_F)
+	_check(manual.get_page_index() == 1, "F turns to page 2")
+	await _push_key(KEY_F)
+	_check(
+		manual.get_page_index() == 0,
+		"F on the last page wraps to page 1 instead of closing",
+		str(manual.get_page_index())
+	)
+
 	await _push_key(KEY_ESCAPE)
 	_check(not manual.is_open(), "Esc closes the manual")
 	_check(manual.open(), "manual reopens after Esc")
-	await _push_key(KEY_F)
-	_check(not manual.is_open(), "F closes the manual")
-	_check(manual.open(), "manual reopens before the button check")
+	_check(
+		manual.get_page_index() == 0 and manual.get_page_indicator_text() == "1 / 2",
+		"reopening starts again on page 1"
+	)
 	var back: PixelMenuButton = manual.get_back_button()
 	_check(back != null and back.text == "返回", "manual has a 返回 button")
 	if back != null:
@@ -351,7 +531,16 @@ func _check_shared_pause(pause: Node, label: String) -> void:
 	)
 	var manual: MechanicManual = pause.call("get_manual") as MechanicManual
 	if manual != null and manual.is_open():
-		manual.close()
+		await _push_key(KEY_RIGHT)
+		_check(
+			bool(pause.call("is_manual_open")) and bool(pause.call("is_open")),
+			"%s → turns a manual page without resuming the game" % label
+		)
+		await _push_key(KEY_ESCAPE)
+		_check(
+			not bool(pause.call("is_manual_open")) and bool(pause.call("is_open")),
+			"%s Esc closes the manual and keeps the pause page" % label
+		)
 	pause.call("force_close")
 	await _wait_process(2)
 	pause.queue_free()
@@ -371,6 +560,16 @@ func _check_hud_pause(hud: CanvasLayer, label: String) -> void:
 	_check(
 		bool(hud.call("is_manual_open")),
 		"%s opens the manual" % label
+	)
+	await _push_key(KEY_F)
+	_check(
+		bool(hud.call("is_manual_open")) and bool(hud.call("is_pause_visible")),
+		"%s F turns a manual page without leaving the pause page" % label
+	)
+	await _push_key(KEY_ESCAPE)
+	_check(
+		not bool(hud.call("is_manual_open")) and bool(hud.call("is_pause_visible")),
+		"%s Esc closes the manual and keeps the pause page" % label
 	)
 	hud.call("show_pause", false)
 	await _wait_process(2)

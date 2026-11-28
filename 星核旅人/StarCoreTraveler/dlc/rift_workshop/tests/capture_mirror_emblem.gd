@@ -12,7 +12,7 @@ extends Node
 ##   02_mirror_walk_ripple.png            body walking into the glass, ripple
 ##   03_mirror_fade_dark.png              the same entry at ~90% black
 ##   04_rift_first_frame_black.png        destination first frame under black
-##   05_completion_mirror_emblem.png      six-page shared 32x32 mirror emblem
+##   05_completion_mirror_emblem.png      completion page with the game icon
 ##   06_completion_ripple_fade.png        0.5 s ripple on the completion page
 ##   07_loom_return_emerge.png            back at the checkpoint, mirror ripple
 ##   08_defeat_mirror_flash.png           circular defeat flash, no rectangle

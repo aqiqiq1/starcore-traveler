@@ -2,14 +2,15 @@ class_name MirrorFaceArt
 extends RefCounted
 
 ## Shared pixel art for the "double-faced mirror with one eye" used by the
-## DLC3 镜面裂隙 entrance, the six settlement emblems and the boss defeat flash.
+## DLC3 镜面裂隙 entrance and the boss defeat flash.  (The six settlement pages
+## stopped using it on 2026-11-28; they now draw the shipped game icon.)
 ##
 ## The only source art is the approved 双面镜 boss material:
 ##   - `mirror_face_gold_48x48.png`  (left crescent)
 ##   - `mirror_face_cyan_48x48.png`  (right crescent)
-## The entrance pastes the outer 20x46 px of each crescent 1:1; the 32x32
-## settlement emblem cannot keep that 1:1 detail, so it redraws the same
-## split-disc silhouette and the same eye from the same palette here.
+## The entrance pastes the outer 20x46 px of each crescent 1:1; the smaller
+## defeat flash redraws the same split-disc silhouette and eye from the same
+## palette here.
 ##
 ## Everything is integer-rect drawing: one-pixel rims stay crisp at 640x360.
 ## No animation state, no gameplay state.

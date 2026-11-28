@@ -452,8 +452,8 @@ func _run() -> void:
 	_check(hud.get_pause_panel_rect().position == Vector2(140.0, 56.0),
 		"pause panel is centred and slightly high",
 		str(hud.get_pause_panel_rect().position))
-	_check(hud.get_pause_subtitle_text() == "星核织机 · 城内原型",
-		"pause subtitle is 星核织机 · 城内原型", hud.get_pause_subtitle_text())
+	_check(hud.get_pause_subtitle_text() == "星核织机 · 城内",
+		"pause subtitle is 星核织机 · 城内", hud.get_pause_subtitle_text())
 	_check(hud.get_pause_note_text() == "返回主界面不保存本章进度",
 		"pause footnote matches the base game", hud.get_pause_note_text())
 	_check(hud.get_continue_button().text == "继续游戏"

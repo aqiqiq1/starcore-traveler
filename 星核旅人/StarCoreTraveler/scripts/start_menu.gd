@@ -84,7 +84,7 @@ const CHAPTERS_HINT_RECT: Rect2 = Rect2(104.0, 294.0, 300.0, 14.0)
 ## chapter is still undiscovered.  It occupies the hidden side row's own slot
 ## (no extra row, no layout shift); the four visible rows and the ↑↓ ring are
 ## untouched.  The line is data-derived, not a fixed "裂隙" string.
-const CHAPTERS_SIDE_HINT_TEXT: String = "还有未发现的支线 · 留意主线里的镜子"
+const CHAPTERS_SIDE_HINT_TEXT: String = "还有未发现的隐藏关 · 留意主线里的镜子"
 const CHAPTERS_SIDE_HINT_SIZE: Vector2 = Vector2(432.0, 30.0)
 
 ## Title-only hidden unlock.  Keys are matched by physical/key code so Shift or
@@ -429,6 +429,12 @@ func get_chapter_row(id: String) -> PixelMenuButton:
 
 func get_chapter_status_text(id: String) -> String:
 	var label: Label = _chapter_status_labels.get(id) as Label
+	return label.text if label != null else ""
+
+
+## Rendered tag column copy ("L1" / "第四关" / "隐藏关"), not the raw table.
+func get_chapter_tag_text(id: String) -> String:
+	var label: Label = _chapter_tag_labels.get(id) as Label
 	return label.text if label != null else ""
 
 

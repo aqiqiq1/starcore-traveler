@@ -134,24 +134,49 @@ func _all_twelve(sizes: Array[int]) -> bool:
 	return true
 
 
-## Every completion page owns the same 32x32 double-mirror emblem; it must not
-## reuse a guard weakpoint, a star-core texture or the retired gate art.
+## Every completion page owns the same 32x32 shipped game icon; it must not
+## reuse a guard weakpoint, a mirror thumbnail or a star-core texture.
 func _check_completion_emblem(hud: Node, tag: String) -> void:
 	var emblem: CompletionEmblem = hud.find_child(
 		"CompletionEmblem", true, false
 	) as CompletionEmblem
-	_check(emblem != null, tag + " completion page has the shared mirror emblem")
+	_check(emblem != null, tag + " completion page has the shared game icon")
 	if emblem == null:
 		return
-	_check(emblem.get_art_id() == CompletionEmblem.ART_ID,
-		tag + " emblem is the double-faced mirror art",
-		emblem.get_art_id())
-	_check(emblem.has_mirror_art() and emblem.is_dedicated_emblem(),
-		tag + " emblem is not a guard/star core texture")
-	_check(emblem.size == CompletionEmblem.ICON_SIZE,
-		tag + " emblem is shown at 32x32", str(emblem.size))
-	_check(emblem.position == CompletionEmblem.DEFAULT_POSITION,
-		tag + " emblem is in the top-right panel slot", str(emblem.position))
+	_check(
+		emblem.get_texture_path() == "res://assets/icon/icon_32.png",
+		tag + " emblem texture is res://assets/icon/icon_32.png",
+		emblem.get_texture_path()
+	)
+	_check(
+		emblem.has_game_icon() and emblem.is_dedicated_emblem(),
+		tag + " emblem really loads the shipped icon"
+	)
+	_check(
+		not emblem.has_mirror_art(),
+		tag + " emblem is no longer the double-mirror drawing"
+	)
+	_check(
+		emblem.get_texture() != null
+		and emblem.get_texture().get_size() == Vector2(32.0, 32.0),
+		tag + " icon texture is authored 32x32",
+		str(emblem.get_texture().get_size()) if emblem.get_texture() != null else "null"
+	)
+	_check(
+		emblem.size == CompletionEmblem.ICON_SIZE,
+		tag + " emblem is shown at 32x32", str(emblem.size)
+	)
+	_check(
+		emblem.position == CompletionEmblem.DEFAULT_POSITION,
+		tag + " emblem is in the top-right panel slot", str(emblem.position)
+	)
+	var path: String = emblem.get_texture_path()
+	_check(
+		not path.contains("mirror") and not path.contains("guard")
+		and not path.contains("star_core"),
+		tag + " emblem path is not a mirror/guard/star-core texture",
+		path
+	)
 
 
 ## The primary leaving row must start the shared 0.5 s mirror ripple + black;

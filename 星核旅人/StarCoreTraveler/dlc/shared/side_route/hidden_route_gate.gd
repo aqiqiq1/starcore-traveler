@@ -106,7 +106,7 @@ func _begin_route() -> bool:
 	if _entering:
 		return false
 	if not ResourceLoader.exists(scene_path):
-		_show_hint("支线场景缺失 · 暂时无法进入", 2.0)
+		_show_hint("隐藏关场景缺失 · 暂时无法进入", 2.0)
 		return false
 	_entering = true
 	# Subclasses may own a short in-world transition (walk + fade).  When they
@@ -144,7 +144,7 @@ func _commit_route() -> bool:
 		return_position, origin_state, _chapter_progress_path
 	)
 	if error != OK:
-		_show_hint("支线场景缺失 · 暂时无法进入", 2.0)
+		_show_hint("隐藏关场景缺失 · 暂时无法进入", 2.0)
 		_entering = false
 		return false
 	_on_route_committed()
@@ -154,7 +154,7 @@ func _commit_route() -> bool:
 
 func _fail_route() -> void:
 	_entering = false
-	_show_hint("支线场景缺失 · 暂时无法进入", 2.0)
+	_show_hint("隐藏关场景缺失 · 暂时无法进入", 2.0)
 
 
 ## Subclasses with an in-world transition override this.  Return true when the

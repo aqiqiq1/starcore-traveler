@@ -304,6 +304,16 @@ func _test_locked_page() -> void:
 	_check(menu != null and menu.is_menu_open(), "title menu is open")
 	if menu == null:
 		return
+	_check(
+		menu.get_chapter_tag_text(CHAPTER_PROGRESS.ID_LOOM) == "第四关",
+		"loom 章节 row renders 第四关",
+		menu.get_chapter_tag_text(CHAPTER_PROGRESS.ID_LOOM)
+	)
+	_check(
+		menu.get_chapter_tag_text(CHAPTER_PROGRESS.ID_RIFT) == "隐藏关",
+		"rift 章节 row renders 隐藏关",
+		menu.get_chapter_tag_text(CHAPTER_PROGRESS.ID_RIFT)
+	)
 	_check(menu.get_start_target_chapter_id() == CHAPTER_PROGRESS.ID_L1,
 		"开始游戏 targets L1 when the file is missing")
 
@@ -398,7 +408,7 @@ func _test_side_hint_footer() -> void:
 	_check(menu.is_chapter_side_hint_visible(),
 		"undiscovered side chapter shows the footer")
 	_check(menu.get_chapter_side_hint_text()
-			== "还有未发现的支线 · 留意主线里的镜子",
+			== "还有未发现的隐藏关 · 留意主线里的镜子",
 		"the footer uses the requested line", menu.get_chapter_side_hint_text())
 	_check(menu.get_chapter_side_hint_font_size() == 12,
 		"the footer is 12 px", str(menu.get_chapter_side_hint_font_size()))

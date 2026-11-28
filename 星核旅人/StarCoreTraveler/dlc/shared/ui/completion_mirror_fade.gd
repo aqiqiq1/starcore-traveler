@@ -3,7 +3,7 @@ extends CanvasLayer
 
 ## 0.5 s settlement hand-off shared by all six completion pages.
 ##
-## The panel's own 32x32 mirror emblem ripples (three elliptical rings) while
+## The panel's own 32x32 game-icon emblem ripples (three elliptical rings) while
 ## the whole screen fades to black; the caller's real scene change runs only
 ## after the last frame is fully black.  This mirrors the entrance language:
 ## the mirror eats the frame, never a hard cut.
@@ -55,15 +55,9 @@ class RippleLayer:
 					round(cos(angle) * radius), round(sin(angle) * radius * 0.92)
 				)
 				draw_rect(Rect2(point, Vector2.ONE), color)
-		# A short inner flare keeps the first 0.12 s from reading as an empty
-		# black fade.
-		if progress < 0.34:
-			var flare: float = 1.0 - progress / 0.34
-			draw_rect(
-				Rect2(center - Vector2(10.0, 8.0) * flare,
-					Vector2(20.0, 16.0) * flare),
-				Color(PALE, 0.26 * flare)
-			)
+		# The rings start at the icon's rim and expand outward.  The old filled
+		# inner flare is gone: it painted over the 32x32 game icon for the first
+		# 0.12 s, and the icon must stay unobstructed.
 
 
 ## Starts the hand-off.  Returns false when another fade already owns this HUD
